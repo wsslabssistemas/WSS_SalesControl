@@ -1,0 +1,190 @@
+key: academia
+name: Academia
+version: 1.0.0
+
+# =====================================================================
+# Uma Skill é DADO, nunca código. Nenhuma linha do sistema muda
+# entre esta Skill e a de barbearia.
+# =====================================================================
+
+vocabulary:
+  lead: "aluno em potencial"
+  conversion: "matrícula"
+  churn: "cancelamento"
+  catalog_item: "modalidade"
+
+discovery_axis: "objetivo físico (emagrecer, ganhar massa, saúde)"
+
+# ---------------------------------------------------------------------
+# JORNADA
+# É um grafo, não uma linha: pode avançar, pular e RETROCEDER.
+# Um lead que recebeu proposta e levanta objeção nova volta à descoberta.
+# ---------------------------------------------------------------------
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Quebrar o gelo e descobrir o objetivo. Nunca abrir com preço."
+    - key: descoberta
+      label: "Descoberta"
+      goal: "Qualificar objetivo, experiência e rotina."
+    - key: proposta
+      label: "Proposta"
+      goal: "Apresentar a opção adequada e conduzir à experiência."
+    - key: experimentacao
+      label: "Semana experimental"
+      goal: "Conduzir a experiência e preparar o fechamento."
+      # Fases dentro do estágio: dia 2 e dia 8 pedem tratamento oposto,
+      # mas não são etapas diferentes da jornada.
+      phases:
+        - { key: inicio,        label: "Início",        offset_days: 0 }
+        - { key: acompanhamento,label: "Acompanhamento",offset_days: 2 }
+        - { key: pre_fechamento,label: "Pré-fechamento",offset_days: 6 }
+        - { key: conversao,     label: "Conversão",     offset_days: 8 }
+    - key: negociacao
+      label: "Negociação"
+      goal: "Isolar a objeção real e fechar."
+    - key: convertido
+      label: "Matriculado"
+      terminal: true
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+# ---------------------------------------------------------------------
+# CAMPOS PRÓPRIOS DO SEGMENTO
+# Vão para contacts.custom (jsonb). Enum sempre, nunca texto livre:
+# texto livre fragmenta o dado (ex.: "TotalPass" e "Totalpass" separados).
+# ---------------------------------------------------------------------
+contact_fields:
+  - key: objetivo
+    label: "Objetivo"
+    type: enum
+    options: [emagrecer, hipertrofia, saude, qualidade_de_vida, socializacao, reabilitacao]
+  - key: nivel
+    label: "Experiência"
+    type: enum
+    options: [nunca_treinou, retomando, experiente]
+  - key: turno_preferido
+    label: "Turno preferido"
+    type: enum
+    options: [manha, tarde, noite, sabado]
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - facebook
+  - presencial
+  - indicacao
+  - convenio
+  - campanha
+  - outro
+
+# ---------------------------------------------------------------------
+# SEÇÕES DE DNA
+# Os FATOS da empresa. O que não estiver aqui a IA não pode afirmar.
+# ---------------------------------------------------------------------
+dna_sections:
+  - key: pricing
+    label: "Planos e valores"
+    required: true
+    fields:
+      - { key: range,  type: money_range, required: true }
+      - { key: plans,  type: table, columns: [nome, valor, condicao, fidelidade] }
+      - { key: payment_methods, type: list }
+  - key: availability
+    label: "Horário de funcionamento"
+    required: true
+    fields:
+      - { key: weekly_hours, type: schedule, required: true }
+  - key: catalog
+    label: "Modalidades e grade de aulas"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [nome, dia, hora, publico, observacao] }
+  - key: risk_free_entry
+    label: "Oferta de entrada sem risco"
+    fields:
+      - { key: exists,   type: boolean, required: true }
+      - { key: duration, type: text }
+      - { key: gift,     type: text }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address,   type: text, required: true }
+      - { key: whatsapp,  type: text }
+      - { key: instagram, type: text }
+  - key: differentials
+    label: "Diferenciais"
+    fields:
+      - { key: items, type: list }
+  - key: policies
+    label: "Políticas"
+    fields:
+      - { key: cancellation, type: text }
+      - { key: partnerships, type: table, columns: [servico, profissional, valor] }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, horário ou política.
+
+# ---------------------------------------------------------------------
+# AS 12 CATEGORIAS CANÔNICAS
+# Toda Skill preenche as mesmas doze. Nenhuma inventa categoria nova.
+# ---------------------------------------------------------------------
+categories:
+  pricing:          "Planos e mensalidades"
+  risk_free_entry:  "Semana experimental"
+  availability:     "Horários"
+  expertise_proof:  "Professores em todos os turnos"
+  catalog:          "Musculação, ginástica, pilates, lutas, dança"
+  goal_matching:    "Objetivo → modalidade ideal"
+  objections:       "Caro, sem tempo, vergonha, comparação"
+  commitment_offer: "Plano anual"
+  reciprocity:      "Brindes de boas-vindas e de adesão"
+  limits_and_ethics: "Saúde, lesões e limites do que prometer"
+  retention:        "Aluno desanimado, sem resultado, renovação"
+  ecosystem:        "Parceiros no espaço"
+
+# ---------------------------------------------------------------------
+# CADÊNCIAS PROATIVAS
+# ---------------------------------------------------------------------
+cadences:
+  - key: trial_followup
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 2, intent: "Realização de valor — o que já conquistou" }
+      - { offset_days: 6, intent: "Projeção de futuro e pré-fechamento" }
+      - { offset_days: 8, intent: "Conversão com aversão à perda" }
+    stop_on: [converted, opted_out, lost]
+
+  - key: rescue_inactive
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,  intent: "Gancho pessoal e concreto, sem cobrar ausência" }
+      - { offset_days: 4,  intent: "Prova social + retorno sem risco" }
+      - { offset_days: 11, intent: "Encerrar com porta aberta" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+# ---------------------------------------------------------------------
+# REGRAS PERMANENTES DO SEGMENTO
+# Declarativas e testáveis, não correção de prompt.
+# ---------------------------------------------------------------------
+hard_rules:
+  - "Nunca afirmar horário, valor, modalidade ou serviço que não esteja no DNA."
+  - "Nunca prometer resultado de saúde, cura ou emagrecimento garantido."
+  - "Nunca dizer 'voltar', 'retornar' ou 'novamente' para quem nunca foi aluno."
+  - "Nunca mencionar vaga, reserva ou lotação se o modelo for de acesso livre."
+  - "Nunca encerrar com pergunta aberta do tipo 'o que acha?' — usar fechamento por alternativa."
+  - "Uma mensagem, um objetivo. Nunca fazer três perguntas seguidas."
+
+kpis:
+  - conversion_rate       # convertidos distintos / leads do período
+  - trial_rate            # trials distintos / leads do período
+  - trial_conversion      # convertidos / trials distintos
+  - median_response_time  # mediana, nunca média

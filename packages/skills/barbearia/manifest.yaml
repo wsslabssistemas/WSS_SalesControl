@@ -1,0 +1,160 @@
+key: barbearia
+name: Barbearia
+version: 1.0.0
+
+# =====================================================================
+# A PROVA DA TESE DO COS
+#
+# Compare este arquivo com o da academia. Mesma estrutura, mesmas 12
+# categorias, mesmo motor. Muda só o conteúdo.
+#
+# Se lançar uma barbearia exigir UMA linha de código nova, a promessa
+# de "um cérebro, várias especializações" está quebrada.
+# =====================================================================
+
+vocabulary:
+  lead: "cliente em potencial"
+  conversion: "primeiro agendamento"
+  churn: "cliente que parou de voltar"
+  catalog_item: "serviço"
+
+discovery_axis: "ocasião e frequência (rotina, evento, manutenção)"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir o que a pessoa procura e para quando."
+    - key: descoberta
+      label: "Descoberta"
+      goal: "Entender serviço desejado, urgência e preferência de profissional."
+    - key: proposta
+      label: "Proposta"
+      goal: "Indicar serviço e horário disponível."
+    - key: agendado
+      label: "Agendado"
+      goal: "Confirmar presença e reduzir falta."
+      phases:
+        - { key: confirmado,  label: "Confirmado",   offset_days: 0 }
+        - { key: lembrete,    label: "Lembrete",     offset_days: 1 }
+        - { key: pos_servico, label: "Pós-serviço",  offset_days: 1 }
+    - key: recorrente
+      label: "Cliente recorrente"
+      terminal: true
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+contact_fields:
+  - key: servico_preferido
+    label: "Serviço preferido"
+    type: enum
+    options: [corte, barba, corte_e_barba, coloracao, tratamento, infantil]
+  - key: frequencia
+    label: "Frequência"
+    type: enum
+    options: [semanal, quinzenal, mensal, esporadico]
+  - key: profissional_preferido
+    label: "Profissional preferido"
+    type: enum
+    options: [sem_preferencia, definido]
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - presencial
+  - indicacao
+  - google
+  - campanha
+  - outro
+
+dna_sections:
+  - key: pricing
+    label: "Tabela de serviços"
+    required: true
+    fields:
+      - { key: range, type: money_range, required: true }
+      - { key: plans, type: table, columns: [servico, valor, duracao] }
+      - { key: payment_methods, type: list }
+  - key: availability
+    label: "Horário e agenda"
+    required: true
+    fields:
+      - { key: weekly_hours,  type: schedule, required: true }
+      - { key: booking_rule,  type: text }
+  - key: catalog
+    label: "Serviços oferecidos"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [nome, duracao, profissional, observacao] }
+  - key: risk_free_entry
+    label: "Oferta de entrada"
+    fields:
+      - { key: exists, type: boolean, required: true }
+      - { key: offer,  type: text }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address,   type: text, required: true }
+      - { key: whatsapp,  type: text }
+      - { key: instagram, type: text }
+  - key: differentials
+    label: "Diferenciais"
+    fields:
+      - { key: items, type: list }
+  - key: policies
+    label: "Políticas"
+    fields:
+      - { key: no_show,      type: text }
+      - { key: cancellation, type: text }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+# As mesmas 12 categorias canônicas, outro conteúdo
+categories:
+  pricing:          "Tabela de serviços"
+  risk_free_entry:  "Primeira visita promocional"
+  availability:     "Agenda e horários"
+  expertise_proof:  "Barbeiro especialista e portfólio"
+  catalog:          "Corte, barba, coloração, tratamentos"
+  goal_matching:    "Tipo de cabelo e ocasião → serviço ideal"
+  objections:       "Caro, sem tempo, receio de mudar de barbeiro"
+  commitment_offer: "Pacote de sessões / plano de assinatura"
+  reciprocity:      "Brinde, bebida cortesia, desconto na indicação"
+  limits_and_ethics: "Não prometer resultado de coloração ou tratamento"
+  retention:        "Cliente que não volta há X semanas"
+  ecosystem:        "Produtos revendidos e parceiros"
+
+cadences:
+  # Falta é o maior problema do segmento — cadência própria
+  - key: appointment_confirm
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmação com fechamento por alternativa" }
+      - { offset_days: 1,  intent: "Pós-serviço: satisfação e reagendamento" }
+    stop_on: [converted, opted_out]
+
+  - key: rescue_lapsed
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0, intent: "Lembrete de manutenção baseado na frequência habitual" }
+      - { offset_days: 7, intent: "Oferta de retorno com horário específico" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 2
+
+hard_rules:
+  - "Nunca afirmar horário, valor ou serviço que não esteja no DNA."
+  - "Nunca confirmar disponibilidade de agenda sem consultar o fato no DNA."
+  - "Nunca prometer resultado exato de coloração ou tratamento capilar."
+  - "Nunca encerrar com pergunta aberta — oferecer dois horários concretos."
+  - "Uma mensagem, um objetivo."
+
+kpis:
+  - conversion_rate
+  - no_show_rate
+  - return_rate_30d
+  - median_response_time
