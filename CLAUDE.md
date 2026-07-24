@@ -52,14 +52,28 @@ Violação das três deve **falhar o build**, não gerar comentário em revisão
 ## Convenções do repositório
 
 ```
-packages/db/migrations/   # schema. Roda uma vez, em todo ambiente. Imutável.
-packages/db/seeds/        # dados fictícios. Local e staging apenas. NUNCA produção.
+packages/db/migrations/   # schema e dados de produto. Numerados, imutáveis.
+packages/db/seeds/        # seeds de demonstração. Local e staging. NUNCA produção.
 packages/db/tests/        # verificações com valor esperado escrito no arquivo.
 packages/skills/          # manifestos YAML por segmento. Dado puro.
 docs/blueprint/           # fundação, Journal, GRD, estado do projeto.
 ```
 
-- Migration e seed são coisas diferentes. Não misture.
+São **três categorias**, não duas. Confundi-las é o que faz dado fictício
+vazar para produção ou biblioteca faltar em ambiente novo:
+
+| Categoria | Onde | Roda em produção? | O que é |
+|---|---|---|---|
+| **Migration de schema** | `migrations/` | Sim | DDL. Cria e altera estrutura. |
+| **Product seed** | `migrations/` | **Sim** | Dado que *é* o produto: Skills e biblioteca curada. Sem ele o núcleo não funciona. |
+| **Demo seed** | `seeds/` | **Nunca** | Tenants e contatos fictícios para desenvolver e demonstrar. |
+
+- Product seed mora em `migrations/` de propósito: precisa rodar **uma vez, em
+  todo ambiente**, na mesma sequência numerada do schema. É por isso que
+  `0003_seed_skills.sql` e `0004_seed_knowledge_academia.sql` estão lá — o
+  prefixo `seed` no nome descreve o conteúdo, não a categoria.
+- Demo seed nunca entra na sequência numerada. Se um dia rodar em produção,
+  foi erro humano — e por isso existe a regra do prefixo abaixo.
 - Todo seed de demonstração usa slug com prefixo `demo-`, para que um `delete`
   jamais alcance um tenant real.
 - Todo teste declara o valor esperado em comentário. "Parece certo" não é critério.
