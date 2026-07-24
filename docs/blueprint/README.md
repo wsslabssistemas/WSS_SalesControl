@@ -11,9 +11,13 @@ Os três que o `CLAUDE.md` manda ler antes de propor qualquer coisa:
 - `COS_Journal_Migracao.md` — decisões tomadas e o porquê de cada uma.
 - `COS_GRD_Core.md` — requisitos do núcleo.
 
-**Os três são placeholders com TODO.** Enquanto estiverem assim, a referência
-real é o `CLAUDE.md` — ele já carrega estado, decisões e requisitos vigentes.
-A regra de prioridade acima só passa a valer quando o conteúdo for versionado.
+Os três estão versionados com conteúdo real desde julho de 2026.
+
+**Atenção ao estado das migrations.** `ESTADO_DO_PROJETO.md` e `COS_GRD_Core.md`
+registram `0004_seed_knowledge_academia.sql` como pendente e citam um
+`0005_seed_dna_demo.sql` que não existe no repositório. O `CLAUDE.md` registra o
+0004 como executado e a cobertura de DNA como validada. **O `CLAUDE.md` é o mais
+recente.** Ao retomar, confirmar no banco antes de confiar em qualquer um dos dois.
 
 ## Documentos fundadores — ainda não versionados
 
