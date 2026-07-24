@@ -1,0 +1,22 @@
+# Segredos e ambiente — NUNCA sobem pro GitHub.
+# O README garante que o .env está bloqueado; esta é a garantia.
+.env
+.env.*
+!.env.example
+
+# Config local do MCP. Pode conter project-ref e outros valores da máquina.
+# Use .mcp.json.example como modelo; cada máquina cria o seu .mcp.json.
+# Manter fora do Git torna impossível vazar token por acidente — a defesa
+# é estrutural, não "lembrar de não commitar".
+.mcp.json
+
+# Dependências e build (aparecem quando a aplicação Next.js existir).
+node_modules/
+.next/
+dist/
+build/
+
+# Sistema operacional / editor.
+.DS_Store
+Thumbs.db
+*.log

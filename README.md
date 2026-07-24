@@ -20,6 +20,7 @@ cos-platform/
 │     ├─ academia/
 │     └─ barbearia/
 ├─ .env.example             # Modelo de configuração (SEM senhas)
+├─ .mcp.json.example        # Modelo do MCP do Supabase (SEM valores reais)
 └─ .gitignore               # O que nunca sobe pro GitHub
 ```
 
@@ -53,6 +54,27 @@ Se aparecer "Success. No rows returned", deu certo.
 O teste cria duas empresas, coloca um usuário em cada, e tenta ler os dados da
 outra. **O resultado esperado é 0 linhas** — se aparecer qualquer dado da outra
 empresa, o isolamento falhou e nada mais deve ser construído até corrigir.
+
+---
+
+## Rodar SQL pelo Claude (MCP do Supabase — opcional)
+
+Permite ao Claude executar consultas direto no banco, sem copiar e colar no
+SQL Editor. É ferramenta de desenvolvimento; não faz parte do produto.
+
+1. Gere um **Personal Access Token** no Supabase (Account → Access Tokens).
+2. Defina duas variáveis de ambiente (o token é segredo; o ref, não):
+
+   ```
+   setx SUPABASE_ACCESS_TOKEN "sbp_seu_token"
+   setx SUPABASE_PROJECT_REF  "seu_project_ref"
+   ```
+
+3. Copie `.mcp.json.example` para `.mcp.json` (este fica fora do Git).
+4. Reinicie o Claude Code de um terminal novo e aprove o server `supabase`.
+
+O `.mcp.json` real é bloqueado pelo `.gitignore` de propósito: token e ref
+nunca entram no histórico.
 
 ---
 
