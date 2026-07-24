@@ -5,22 +5,31 @@
 -- Se ele falhar, nada mais deve ser construído até corrigir.
 --
 -- COMO USAR
---   1. Supabase → Authentication → Users → Add user
---      Cria dois usuários e copia o UUID (coluna id) de cada um.
---   2. Cola os dois UUIDs abaixo, nas linhas indicadas.
---   3. Cola este arquivo inteiro no SQL Editor e clica em Run.
+--   Cole este arquivo inteiro no SQL Editor do Supabase e clique em Run.
 --
 -- RESULTADO ESPERADO
---   Todas as verificações devem imprimir "PASSOU".
---   Qualquer "FALHOU" significa vazamento entre empresas.
+--   Uma tabela com 7 linhas, todas com "PASSOU".
+--   Qualquer "FALHOU" significa vazamento de dados entre empresas.
 -- =====================================================================
+
+drop table if exists _teste_isolamento;
+create temporary table _teste_isolamento (
+  ordem       int,
+  verificacao text,
+  esperado    text,
+  obtido      text,
+  status      text
+);
+
+-- Necessário: durante o teste o banco assume o papel "authenticated",
+-- e sem esta permissão ele não conseguiria gravar o resultado.
+grant all on _teste_isolamento to authenticated;
 
 do $$
 declare
-  -- ↓↓↓ COLE OS DOIS UUIDs AQUI ↓↓↓
-  user_a uuid := '00000000-0000-0000-0000-00000000000a';
-  user_b uuid := '00000000-0000-0000-0000-00000000000b';
-  -- ↑↑↑ COLE OS DOIS UUIDs AQUI ↑↑↑
+  -- Usuários de teste criados em Authentication → Users
+  user_a uuid := '59d85c34-a650-4ee0-88b5-675b21556824';
+  user_b uuid := 'a24006d8-57df-4367-8852-1456d0aa4544';
 
   tenant_a uuid;
   tenant_b uuid;
@@ -28,7 +37,8 @@ declare
 begin
 
   -- -------------------------------------------------------------------
-  -- PREPARAÇÃO (roda como superusuário, RLS não se aplica aqui)
+  -- PREPARAÇÃO
+  -- Roda como dono do banco: aqui o RLS não se aplica, de propósito.
   -- -------------------------------------------------------------------
   insert into public.profiles (id, full_name, email)
   values (user_a, 'Usuário A', 'teste-a@exemplo.com'),
@@ -36,11 +46,15 @@ begin
   on conflict (id) do nothing;
 
   insert into public.tenants (name, slug, skill_key)
-  values ('Academia Teste A', 'teste-a-' || substr(gen_random_uuid()::text,1,8), 'academia')
+  values ('Academia Teste A',
+          'teste-a-' || substr(gen_random_uuid()::text, 1, 8),
+          'academia')
   returning id into tenant_a;
 
   insert into public.tenants (name, slug, skill_key)
-  values ('Barbearia Teste B', 'teste-b-' || substr(gen_random_uuid()::text,1,8), 'barbearia')
+  values ('Barbearia Teste B',
+          'teste-b-' || substr(gen_random_uuid()::text, 1, 8),
+          'barbearia')
   returning id into tenant_b;
 
   insert into public.memberships (user_id, tenant_id, role)
@@ -55,87 +69,109 @@ begin
   values (tenant_a, '{"pricing":{"range":"R$ 99 a R$ 169"}}'::jsonb),
          (tenant_b, '{"pricing":{"range":"R$ 40 a R$ 90"}}'::jsonb);
 
-  raise notice '--- Empresas criadas: A=% | B=% ---', tenant_a, tenant_b;
-
 
   -- -------------------------------------------------------------------
-  -- TESTE 1 — Usuário A enxerga os próprios clientes
+  -- A partir daqui o banco trata as consultas como se fossem feitas
+  -- pelo Usuário A logado no sistema.
   -- -------------------------------------------------------------------
-  set local role authenticated;
+  perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims',
                      json_build_object('sub', user_a)::text, true);
 
-  select count(*) into visto from public.contacts where tenant_id = tenant_a;
-  raise notice 'TESTE 1  A vê os próprios clientes (esperado 1): % -> %',
-    visto, case when visto = 1 then 'PASSOU' else 'FALHOU' end;
+
+  -- TESTE 1 — A enxerga os próprios clientes
+  select count(*) into visto
+  from public.contacts where tenant_id = tenant_a;
+
+  insert into _teste_isolamento values
+    (1, 'A ve os proprios clientes', '1', visto::text,
+     case when visto = 1 then 'PASSOU' else 'FALHOU' end);
 
 
-  -- -------------------------------------------------------------------
-  -- TESTE 2 — Usuário A NÃO enxerga clientes da Empresa B
-  -- -------------------------------------------------------------------
-  select count(*) into visto from public.contacts where tenant_id = tenant_b;
-  raise notice 'TESTE 2  A vê clientes de B (esperado 0): % -> %',
-    visto, case when visto = 0 then 'PASSOU' else 'FALHOU' end;
+  -- TESTE 2 — A NÃO enxerga clientes da Empresa B
+  select count(*) into visto
+  from public.contacts where tenant_id = tenant_b;
+
+  insert into _teste_isolamento values
+    (2, 'A ve clientes da Empresa B', '0', visto::text,
+     case when visto = 0 then 'PASSOU' else 'FALHOU' end);
 
 
-  -- -------------------------------------------------------------------
-  -- TESTE 3 — "Select geral" devolve apenas a própria empresa
-  -- Este é o teste que simula um bug na aplicação.
-  -- -------------------------------------------------------------------
+  -- TESTE 3 — SELECT sem filtro devolve apenas a própria empresa
+  -- Simula um bug na aplicação que esquece de filtrar por empresa.
   select count(*) into visto from public.contacts;
-  raise notice 'TESTE 3  A faz SELECT sem filtro (esperado 1): % -> %',
-    visto, case when visto = 1 then 'PASSOU' else 'FALHOU' end;
+
+  insert into _teste_isolamento values
+    (3, 'A faz SELECT sem filtro nenhum', '1', visto::text,
+     case when visto = 1 then 'PASSOU' else 'FALHOU' end);
 
 
-  -- -------------------------------------------------------------------
-  -- TESTE 4 — A não enxerga o DNA (preços) da Empresa B
-  -- -------------------------------------------------------------------
-  select count(*) into visto from public.commercial_dna where tenant_id = tenant_b;
-  raise notice 'TESTE 4  A vê o DNA de B (esperado 0): % -> %',
-    visto, case when visto = 0 then 'PASSOU' else 'FALHOU' end;
+  -- TESTE 4 — A não enxerga os preços (DNA) da Empresa B
+  select count(*) into visto
+  from public.commercial_dna where tenant_id = tenant_b;
+
+  insert into _teste_isolamento values
+    (4, 'A ve o DNA/precos da Empresa B', '0', visto::text,
+     case when visto = 0 then 'PASSOU' else 'FALHOU' end);
 
 
-  -- -------------------------------------------------------------------
   -- TESTE 5 — A não consegue ESCREVER dentro da Empresa B
-  -- -------------------------------------------------------------------
   begin
     insert into public.contacts (tenant_id, name, phone)
     values (tenant_b, 'Invasor', '51900000003');
-    raise notice 'TESTE 5  A escreveu em B -> FALHOU (gravou!)';
-  exception when insufficient_privilege or check_violation then
-    raise notice 'TESTE 5  A escreveu em B -> PASSOU (bloqueado)';
+
+    insert into _teste_isolamento values
+      (5, 'A grava um cliente dentro da Empresa B',
+       'bloqueado', 'gravou', 'FALHOU');
+  exception
+    when insufficient_privilege or check_violation then
+      insert into _teste_isolamento values
+        (5, 'A grava um cliente dentro da Empresa B',
+         'bloqueado', 'bloqueado', 'PASSOU');
   end;
 
 
-  -- -------------------------------------------------------------------
-  -- TESTE 6 — Usuário B enxerga só o dele
-  -- -------------------------------------------------------------------
+  -- TESTE 6 — Agora como Usuário B: enxerga só o dele
   perform set_config('request.jwt.claims',
                      json_build_object('sub', user_b)::text, true);
 
   select count(*) into visto from public.contacts;
-  raise notice 'TESTE 6  B faz SELECT sem filtro (esperado 1): % -> %',
-    visto, case when visto = 1 then 'PASSOU' else 'FALHOU' end;
+
+  insert into _teste_isolamento values
+    (6, 'B faz SELECT sem filtro nenhum', '1', visto::text,
+     case when visto = 1 then 'PASSOU' else 'FALHOU' end);
 
 
-  -- -------------------------------------------------------------------
   -- TESTE 7 — Usuário sem vínculo nenhum não vê nada
-  -- -------------------------------------------------------------------
   perform set_config('request.jwt.claims',
                      json_build_object('sub', gen_random_uuid())::text, true);
 
   select count(*) into visto from public.contacts;
-  raise notice 'TESTE 7  Estranho faz SELECT (esperado 0): % -> %',
-    visto, case when visto = 0 then 'PASSOU' else 'FALHOU' end;
+
+  insert into _teste_isolamento values
+    (7, 'Usuario estranho faz SELECT', '0', visto::text,
+     case when visto = 0 then 'PASSOU' else 'FALHOU' end);
 
 
   -- -------------------------------------------------------------------
-  -- LIMPEZA
+  -- LIMPEZA — volta a ser dono do banco e apaga os dados de teste
   -- -------------------------------------------------------------------
-  reset role;
+  perform set_config('role', 'postgres', true);
   perform set_config('request.jwt.claims', '', true);
 
   delete from public.tenants where id in (tenant_a, tenant_b);
-  raise notice '--- Dados de teste removidos ---';
 
 end $$;
+
+
+-- =====================================================================
+-- RESULTADO
+-- =====================================================================
+select
+  ordem       as "#",
+  verificacao as "Verificacao",
+  esperado    as "Esperado",
+  obtido      as "Obtido",
+  status      as "Resultado"
+from _teste_isolamento
+order by ordem;
