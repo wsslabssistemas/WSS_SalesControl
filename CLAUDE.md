@@ -134,7 +134,8 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Edição de DNA (RF-04) — `0009_save_dna` versionado (teste 3/3); editor por tipo de campo (texto, valor, sim/não, lista, tabela em grade)
 - [x] Funil interativo (etapa → lista) + mover contato entre etapas (histórico da jornada)
 - [x] Equipe — convidar vendedor (link de senha, via service_role), trocar papel, remover com transferência de contatos (`0010_user_by_email`)
-- [ ] Console reativo (RF-05, precisa de chave de IA); alertas/cadência; questionário de onboarding; oportunidades; configurações
+- [x] Agenda/alertas — toques calculados das fases da jornada (offset_days do manifesto) + data de início editável no contato
+- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; taxa de conversão; configurações; métricas por vendedor (precisam de dados)
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 

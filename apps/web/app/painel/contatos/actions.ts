@@ -127,6 +127,26 @@ export async function moveStage(id: string, formData: FormData) {
   redirect(`/painel/contatos/${id}`);
 }
 
+export async function updateStageStart(id: string, formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+
+  const dateStr = String(formData.get("start") ?? "").trim();
+  if (!dateStr) redirect(`/painel/contatos/${id}`);
+
+  const supabase = await createClient();
+  await supabase
+    .from("contacts")
+    .update({ stage_entered_at: new Date(dateStr).toISOString() })
+    .eq("id", id)
+    .eq("tenant_id", tenant.id);
+
+  revalidatePath(`/painel/contatos/${id}`);
+  revalidatePath("/painel/agenda");
+  redirect(`/painel/contatos/${id}`);
+}
+
 export async function deleteContact(id: string) {
   const membership = await getActiveTenant();
   if (!membership?.tenant) redirect("/painel");

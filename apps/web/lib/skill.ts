@@ -6,7 +6,13 @@ export type ContactField = {
   type: string;
   options?: string[];
 };
-export type Stage = { key: string; label: string; terminal?: boolean };
+export type Phase = { key: string; label: string; offset_days: number };
+export type Stage = {
+  key: string;
+  label: string;
+  terminal?: boolean;
+  phases?: Phase[];
+};
 
 /** Config de formulário vinda do manifesto da Skill (campos são dado, não código). */
 export async function getSkillFormConfig(skillKey: string) {

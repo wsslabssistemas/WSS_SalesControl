@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { displayPhone } from "@/lib/phone";
-import { deleteContact, moveStage } from "../actions";
+import { deleteContact, moveStage, updateStageStart } from "../actions";
 
 type ContactRow = {
   id: string;
@@ -13,6 +13,7 @@ type ContactRow = {
   email: string | null;
   source: string | null;
   journey_stage: string;
+  stage_entered_at: string;
   created_at: string;
   custom: Record<string, string> | null;
 };
@@ -36,7 +37,7 @@ export default async function ContatoDetalhe({
   const supabase = await createClient();
   const { data } = await supabase
     .from("contacts")
-    .select("id, name, phone, email, source, journey_stage, created_at, custom")
+    .select("id, name, phone, email, source, journey_stage, stage_entered_at, created_at, custom")
     .eq("id", id)
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null)
@@ -179,8 +180,76 @@ export default async function ContatoDetalhe({
         </button>
       </form>
 
+      {(() => {
+        const stageDef = stages.find((s) => s.key === c.journey_stage);
+        if (!stageDef?.phases || stageDef.phases.length === 0) return null;
+        const startEditor = updateStageStart.bind(null, id);
+        const start = c.stage_entered_at ? new Date(c.stage_entered_at) : null;
+        const DAY = 86400000;
+        const ctrl: React.CSSProperties = {
+          padding: "7px 10px",
+          border: "1px solid rgba(128,128,128,0.4)",
+          borderRadius: 7,
+          background: "transparent",
+          color: "inherit",
+          font: "inherit",
+        };
+        return (
+          <section style={{ marginTop: 28 }}>
+            <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>
+              {stageDef.label} — linha do tempo
+            </h2>
+            <form
+              action={startEditor}
+              style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}
+            >
+              <span style={{ fontSize: 13, opacity: 0.6 }}>Início</span>
+              <input
+                type="date"
+                name="start"
+                defaultValue={start ? start.toISOString().slice(0, 10) : ""}
+                style={ctrl}
+              />
+              <button type="submit" style={{ ...ctrl, cursor: "pointer" }}>
+                Salvar
+              </button>
+            </form>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {stageDef.phases.map((ph) => {
+                const d = start
+                  ? new Date(start.getTime() + ph.offset_days * DAY)
+                  : null;
+                return (
+                  <li
+                    key={ph.key}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "7px 0",
+                      borderBottom: "1px solid rgba(128,128,128,0.12)",
+                      fontSize: 14,
+                    }}
+                  >
+                    <span>
+                      {ph.label}{" "}
+                      <span style={{ opacity: 0.5, fontSize: 12 }}>
+                        (dia {ph.offset_days})
+                      </span>
+                    </span>
+                    <span style={{ opacity: 0.7 }}>
+                      {d ? d.toLocaleDateString("pt-BR") : "—"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })()}
+
       <p style={{ marginTop: 20, fontSize: 12, opacity: 0.45 }}>
-        Cada mudança de etapa é registrada no histórico da jornada.
+        Cada mudança de etapa é registrada no histórico da jornada. Os toques
+        aparecem na Agenda.
       </p>
     </main>
   );

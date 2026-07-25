@@ -29,6 +29,7 @@ export default async function PainelLayout({
           <Link href="/painel">Início</Link>
           <Link href="/painel/contatos">Contatos</Link>
           <Link href="/painel/funil">Funil</Link>
+          <Link href="/painel/agenda">Agenda</Link>
           <Link href="/painel/equipe">Equipe</Link>
           <Link href="/painel/dna">DNA</Link>
         </nav>
