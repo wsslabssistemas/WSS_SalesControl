@@ -125,6 +125,7 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] `0006_hardening.sql` — P0 corrigidos + `hardening_test.sql` 6/6 PASSOU
 - [x] Validador de Skill (RF-02) — `packages/skill-loader`, 7/7 testes; academia e barbearia válidos
 - [x] `required_facts_check.sql` — cruza `required_facts` × `dna_sections` (achou 1 bug)
+- [x] `0007_dna_single_current.sql` — um DNA corrente por tenant; teste 2/2 PASSOU
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
@@ -158,8 +159,9 @@ desatualizado passa como PRONTA. Falta `updated_at` por seção.
 **P1 — Telefone não normalizado.** O índice único é sobre texto cru;
 `(51) 98251-2270` e `5551982512270` passam os dois. Correção: E.164.
 
-**P1 — Podem existir dois DNAs correntes.** `ix_dna_tenant_current` não é
-`unique`.
+**P1 — Podem existir dois DNAs correntes. ✅ RESOLVIDO (0007).**
+`ix_dna_tenant_current` virou `unique` — o banco garante um único DNA corrente
+por tenant. Teste: `dna_single_current_test.sql` 2/2.
 
 **P2 — Dinheiro como string de exibição** no DNA (`"R$ 169,00"`). Impede
 qualquer análise por faixa de preço. Correção: inteiro em centavos + moeda.
