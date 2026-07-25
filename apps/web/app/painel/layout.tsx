@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser, getActiveTenant } from "@/lib/auth";
+import { isPlatformAdmin } from "@/lib/platform";
 import { BRAND_NAME } from "@/lib/brand";
 import { signOut } from "./actions";
 
@@ -8,9 +9,10 @@ export default async function PainelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const membership = await getActiveTenant();
   const tenantName = membership?.tenant?.name ?? "(sem empresa)";
+  const showAdmin = isPlatformAdmin(user.email);
 
   return (
     <div style={{ maxWidth: 820, margin: "0 auto", padding: "1.5rem" }}>
@@ -32,6 +34,7 @@ export default async function PainelLayout({
           <Link href="/painel/agenda">Agenda</Link>
           <Link href="/painel/equipe">Equipe</Link>
           <Link href="/painel/dna">DNA</Link>
+          {showAdmin && <Link href="/painel/admin">Fabricante</Link>}
         </nav>
         <span style={{ marginLeft: "auto", fontSize: 13, opacity: 0.7 }}>
           {tenantName}

@@ -135,7 +135,9 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Funil interativo (etapa → lista) + mover contato entre etapas (histórico da jornada)
 - [x] Equipe — convidar vendedor (link de senha, via service_role), trocar papel, remover com transferência de contatos (`0010_user_by_email`)
 - [x] Agenda/alertas — toques calculados das fases da jornada (offset_days do manifesto) + data de início editável no contato
-- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; taxa de conversão; configurações; métricas por vendedor (precisam de dados)
+- [x] Contatos: aviso de duplicidade antes de salvar, botão WhatsApp, caixa de data na semana experimental
+- [x] Painel do fabricante (`/painel/admin`) — cross-tenant via service_role, gated por `PLATFORM_ADMIN_EMAILS`; empresas, atividade e custo de IA (`usage_ledger`)
+- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; taxa de conversão; equipe com desempenho; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
