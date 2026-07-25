@@ -132,7 +132,9 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Login (Supabase Auth: senha + Google/OAuth) + contexto de empresa; telas DNA (cobertura), Funil, Equipe — falta 1º login real
 - [x] Contatos — módulo completo: lista (busca+filtro+paginação), detalhe, edição, exclusão (soft), duplicidade por telefone normalizado; formulário Skill-driven. No ar em wss-kairos.vercel.app
 - [x] Edição de DNA (RF-04) — `0009_save_dna` versionado (teste 3/3); editor por tipo de campo (texto, valor, sim/não, lista, tabela em grade)
-- [ ] Console reativo (RF-05, precisa de chave de IA); taxa de conversão canônica; oportunidades; configurações
+- [x] Funil interativo (etapa → lista) + mover contato entre etapas (histórico da jornada)
+- [x] Equipe — convidar vendedor (link de senha, via service_role), trocar papel, remover com transferência de contatos (`0010_user_by_email`)
+- [ ] Console reativo (RF-05, precisa de chave de IA); alertas/cadência; questionário de onboarding; oportunidades; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
