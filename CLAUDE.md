@@ -123,8 +123,10 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] `demo_tenants.sql` + `dna_coverage_check.sql` — trava validada:
       Be Fitness 22/22 PRONTA, Academia Nova 7/22 PRONTA e 15 ESCALA
 - [x] `0006_hardening.sql` — P0 corrigidos + `hardening_test.sql` 6/6 PASSOU
-- [ ] Carregador e validador de Skill (RF-02)
-- [ ] Motor de decisão
+- [x] Validador de Skill (RF-02) — `packages/skill-loader`, 7/7 testes; academia e barbearia válidos
+- [x] `required_facts_check.sql` — cruza `required_facts` × `dna_sections` (achou 1 bug)
+- [ ] Instalação de Skill em tenant (RF-03)
+- [ ] Motor de decisão (RF-05)
 
 ---
 
