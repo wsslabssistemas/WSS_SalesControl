@@ -1,3 +1,5 @@
+import { BRAND_NAME, MAKER } from "@/lib/brand";
+
 const label: React.CSSProperties = {
   fontSize: 12,
   letterSpacing: 1,
@@ -8,12 +10,10 @@ const label: React.CSSProperties = {
 export default function Home() {
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <p style={{ ...label, letterSpacing: 2 }}>WSS Labs</p>
-      <h1 style={{ fontSize: 32, margin: "4px 0 0" }}>
-        COS — Commercial Operating System
-      </h1>
+      <p style={{ ...label, letterSpacing: 2 }}>{MAKER}</p>
+      <h1 style={{ fontSize: 32, margin: "4px 0 0" }}>{BRAND_NAME}</h1>
       <p style={{ opacity: 0.75, marginTop: 8 }}>
-        Modelo manual. Em construção.
+        Inteligência comercial · modelo manual. Em construção.
       </p>
 
       <section style={{ marginTop: 40 }}>

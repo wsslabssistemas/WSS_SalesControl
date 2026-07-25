@@ -1,4 +1,5 @@
 import { login, signInWithGoogle } from "./actions";
+import { BRAND_NAME, MAKER } from "@/lib/brand";
 
 const field: React.CSSProperties = {
   display: "block",
@@ -29,7 +30,7 @@ export default async function LoginPage({
           opacity: 0.55,
         }}
       >
-        COS · WSS Labs
+        {BRAND_NAME} · {MAKER}
       </p>
       <h1 style={{ fontSize: 24, margin: "4px 0 24px" }}>Entrar</h1>
 

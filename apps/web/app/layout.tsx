@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { BRAND_NAME, MAKER } from "@/lib/brand";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "COS — Commercial Operating System",
-  description: "Inteligência comercial multi-tenant. WSS Labs.",
+  title: `${BRAND_NAME} — inteligência comercial`,
+  description: `Inteligência comercial multi-tenant. ${MAKER}.`,
 };
 
 export default function RootLayout({

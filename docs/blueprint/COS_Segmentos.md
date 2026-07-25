@@ -113,9 +113,17 @@ contratação**, para o cliente montar o produto e aumentar o ticket:
 - **Integrações com ERPs de API aberta** — TOTVS (usado por muita empresa do
   perfil da Mercato) e outros, para o cliente puxar base de clientes, produtos e
   cadastros. Pesquisar quais têm API aberta e valem integração.
+- **Curso de vendas** — aperfeiçoar o vendedor no trato pessoal com o cliente,
+  usando as técnicas avançadas da própria biblioteca como referência. Se vamos
+  vender, precisa ser bom e ter **várias horas**. Produção de conteúdo (não só
+  código); fase mais adiante. Ganho de consistência: o curso ensina exatamente o
+  que o motor aplica.
 - (pesquisar outras ferramentas de venda)
 
 Regra de produto: as auxiliares aparecem como opção na tela de contratação.
+
+**Tutorial no sistema** (parte do produto, não add-on): explicar como usar o
+COS. Também serve de onboarding do vendedor no modelo manual.
 
 ## Go-to-market
 

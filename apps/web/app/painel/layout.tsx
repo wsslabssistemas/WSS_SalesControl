@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser, getActiveTenant } from "@/lib/auth";
+import { BRAND_NAME } from "@/lib/brand";
 import { signOut } from "./actions";
 
 export default async function PainelLayout({
@@ -23,7 +24,7 @@ export default async function PainelLayout({
           marginBottom: 28,
         }}
       >
-        <strong>COS</strong>
+        <strong>{BRAND_NAME}</strong>
         <nav style={{ display: "flex", gap: 14, fontSize: 14 }}>
           <Link href="/painel">Início</Link>
           <Link href="/painel/funil">Funil</Link>
