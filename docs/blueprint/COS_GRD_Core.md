@@ -239,10 +239,10 @@ Falham o build.
 | Requisito | Situação |
 |---|---|
 | RF-01 Isolamento | ✅ Implementado e testado (7/7) |
-| RF-02 Carga de Skill | 🟡 Manifestos prontos, validador pendente |
+| RF-02 Carga de Skill | 🟡 Manifestos prontos, validador em construção |
 | RF-03 Instalação | 🟡 Feita por SQL, falta aplicação |
 | RF-04 DNA | 🟡 Estrutura pronta, falta interface |
 | RF-05 a RF-16 | ⬜ Não iniciados |
 
-**Pendência imediata:** executar `0004_seed_knowledge_academia.sql`
-(`knowledge_entries` está com 0 registros) e reexecutar `0005`.
+**Feito desde então:** `0004` executado (22 entradas), P0 da auditoria fechados
+(`0006_hardening.sql`, `hardening_test.sql` 6/6). Em andamento: validador de Skill (RF-02).

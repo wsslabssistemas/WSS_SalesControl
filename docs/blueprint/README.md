@@ -11,13 +11,14 @@ Os três que o `CLAUDE.md` manda ler antes de propor qualquer coisa:
 - `COS_Journal_Migracao.md` — decisões tomadas e o porquê de cada uma.
 - `COS_GRD_Core.md` — requisitos do núcleo.
 
-Os três estão versionados com conteúdo real desde julho de 2026.
+Os três estão versionados com conteúdo real desde julho de 2026, e sincronizados
+com o estado do banco após o hardening 0006: `0004` foi executado (22 entradas
+confirmadas) e não existe `0005` — o equivalente é `seeds/demo_tenants.sql`.
 
-**Atenção ao estado das migrations.** `ESTADO_DO_PROJETO.md` e `COS_GRD_Core.md`
-registram `0004_seed_knowledge_academia.sql` como pendente e citam um
-`0005_seed_dna_demo.sql` que não existe no repositório. O `CLAUDE.md` registra o
-0004 como executado e a cobertura de DNA como validada. **O `CLAUDE.md` é o mais
-recente.** Ao retomar, confirmar no banco antes de confiar em qualquer um dos dois.
+## Curadoria
+
+- `COS_Segmentos.md` — os módulos-alvo por onda e as jogadas proativas de cada um.
+  É o ativo do produto; a escolha de segmentos é do fundador.
 
 ## Documentos fundadores — ainda não versionados
 

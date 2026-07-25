@@ -66,11 +66,13 @@ Tudo no Supabase, executado pelo SQL Editor. Ainda não existe aplicação.
 - [x] `0002_rls.sql` — RLS em todas as tabelas com `tenant_id`
 - [x] `isolation_test.sql` — **7 de 7 PASSOU**. Empresa A não lê nem escreve na B
 - [x] `0003_seed_skills.sql` — Skills academia e barbearia carregadas
-- [ ] `0004_seed_knowledge_academia.sql` — 22 entradas da biblioteca *(confirmar se rodou)*
-- [ ] `0005_seed_dna_demo.sql` — DNA das empresas demo *(verificação voltou vazia)*
+- [x] `0004_seed_knowledge_academia.sql` — 22 entradas (confirmado no banco)
+- [x] `demo_tenants.sql` + `dna_coverage_check.sql` — 2 empresas demo; trava de DNA validada
+- [x] `0006_hardening.sql` — P0 da auditoria fechados; `hardening_test.sql` 6/6 PASSOU
+- [ ] Validador de Skill (RF-02) — em andamento; `required_facts_check.sql` já achou 1 bug real
 
-**Pendência imediata:** a verificação do 0005 retornou zero linhas. Suspeita:
-a migration 0004 não foi executada. Conferir com:
+**Resolvido (jul/2026):** confirmado no banco — 2 / 22 / 2 / 2. O 0004 rodou.
+A consulta segue útil como health-check:
 
 ```sql
 select 'skills' as tabela, count(*) from public.skills
@@ -157,7 +159,7 @@ aprende" antes disso.**
 
 ## 9. Próximos passos
 
-1. Confirmar 0004 e 0005 no banco
+1. ✓ 0004 confirmado e P0 fechados (0006). Segue: validador de Skill e P1/P2 (0007)
 2. Biblioteca da Skill Barbearia (mesma estrutura, conteúdo próprio)
 3. Sair do SQL manual: Node + loader e validador de Skill em TypeScript
 4. Motor de decisão (Parte 2 do Blueprint)
