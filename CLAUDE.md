@@ -129,7 +129,8 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] `0008_manifest_reciprocity_academia.sql` — fecha o `reciprocity.gift`; órfãos: 0
 - [x] CI (`.github/workflows/ci.yml`) — valida manifestos a cada push
 - [x] App `apps/web` — Next.js 15 + Hono (`/api`) + Supabase; esqueleto navegável (modelo manual)
-- [x] Login (Supabase Auth) + contexto de empresa + tela de DNA (visão de cobertura, RF-04) — falta 1º login real e edição
+- [x] Login (Supabase Auth: senha + Google/OAuth) + contexto de empresa; telas DNA (cobertura), Funil, Equipe — falta 1º login real
+- [ ] Edição de DNA; taxa de conversão canônica (marcar etapa "ganha" no manifesto)
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 

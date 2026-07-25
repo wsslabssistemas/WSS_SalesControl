@@ -26,6 +26,8 @@ export default async function PainelLayout({
         <strong>COS</strong>
         <nav style={{ display: "flex", gap: 14, fontSize: 14 }}>
           <Link href="/painel">Início</Link>
+          <Link href="/painel/funil">Funil</Link>
+          <Link href="/painel/equipe">Equipe</Link>
           <Link href="/painel/dna">DNA</Link>
         </nav>
         <span style={{ marginLeft: "auto", fontSize: 13, opacity: 0.7 }}>
