@@ -28,6 +28,10 @@ Julho/2026   Blueprint Parte 2 (CIE) — ancorado em dados reais de operação
 Julho/2026   Primeiro código: banco, RLS e teste de isolamento — 7/7 PASSOU
      ↓
 Julho/2026   Skills academia e barbearia carregadas como DADO
+     ↓
+Julho/2026   Hardening 0006 — P0 fechados (biblioteca server-side, decisions append-only)
+     ↓
+Julho/2026   Validador de Skill iniciado (RF-02) — achado o 1º required_fact quebrado
 ```
 
 ---
@@ -206,6 +210,24 @@ e "Sales Mentor" ficam com o protótipo.
 dizem em várias páginas que o COS não é isso. A marca fica isolada em variável
 de ambiente — trocar depois custa uma linha.
 
+## Decisão 013 — Hardening P0 antes de cliente externo
+
+**Contexto:** a auditoria apontou dois P0 que bloqueiam qualquer cliente externo.
+
+**Decisão (migration 0006):** (1) a biblioteca curada sai do alcance de
+`authenticated` — `skills` só via Skill instalada, `knowledge_entries` só o
+conhecimento do próprio tenant; a biblioteca global fica com `service_role`
+(retrieval server-side). (2) `decisions` vira append-only de verdade por trigger
+de coluna: só `outcome`, `outcome_at`, `executed_at` mudam depois da inserção,
+para todo papel inclusive `service_role`.
+
+**Justificativa:** RLS é row-level — não protege coluna nem esconde a linha
+global de quem tem SELECT. A defesa real é estrutural, não de aplicação. DELETE
+segue livre em `decisions` (cascata LGPD): append-only é "não reescreve", não
+"nunca apaga".
+
+**Status:** ativa. Aplicada e provada — `hardening_test.sql` 6/6 PASSOU.
+
 ---
 
 # 03 — APRENDIZADOS
@@ -316,6 +338,18 @@ Oportunidade por sinal é fila individual priorizada (o dia do vendedor).
 Campanha de coorte é lote revisado e aprovado pelo gestor. Misturar as duas foi
 o que deixou a lista de clientes do protótipo ilegível.
 
+## Aprendizado 015 — `required_facts` sem validação já tinha vítima
+
+A auditoria previu (P1) que um caminho com typo em `required_facts` deixaria a
+entrada em ESCALA para sempre. Ao construir o validador, o cruzamento contra o
+manifesto achou o primeiro caso real: a entrada de categoria `reciprocity` exige
+`reciprocity.gift`, mas `reciprocity` é categoria, não seção de DNA — nenhum DNA
+satisfaz. A entrada nunca redige.
+
+**Aprendizado:** o contrato `required_facts → dna_sections` precisa de verificação
+automática (`required_facts_check.sql`), não de revisão humana. Falhar na direção
+segura é o pior tipo de falha: não gera erro, só silêncio.
+
 ---
 
 # 04 — HIPÓTESES EM ABERTO
@@ -344,8 +378,10 @@ Problemas sem contexto. Informações temporárias.
 | jul/2026 | `0002_rls.sql` | RLS em todas as tabelas com `tenant_id` |
 | jul/2026 | `isolation_test.sql` | **7 de 7 PASSOU** |
 | jul/2026 | `0003_seed_skills.sql` | 2 Skills carregadas |
-| jul/2026 | `0004_seed_knowledge_academia.sql` | 22 entradas — **pendente de execução** |
-| jul/2026 | `0005_seed_dna_demo.sql` | 2 empresas demo — **verificação pendente** |
+| jul/2026 | `0004_seed_knowledge_academia.sql` | 22 entradas — confirmado no banco (22) |
+| jul/2026 | `demo_tenants.sql` + `dna_coverage_check.sql` | 2 empresas demo; trava de DNA validada |
+| jul/2026 | `0006_hardening.sql` | P0 fechados; `hardening_test.sql` 6/6 PASSOU |
+| jul/2026 | `required_facts_check.sql` | achou 1 caminho quebrado: `reciprocity.gift` |
 
 **Incidente registrado:** o teste de isolamento falhou na primeira execução por
 falta de permissão na tabela temporária de resultados. O erro foi útil: mostrou
