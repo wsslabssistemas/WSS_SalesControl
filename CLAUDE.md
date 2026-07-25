@@ -122,7 +122,7 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] `0004_seed_knowledge_academia.sql` — 22 entradas
 - [x] `demo_tenants.sql` + `dna_coverage_check.sql` — trava validada:
       Be Fitness 22/22 PRONTA, Academia Nova 7/22 PRONTA e 15 ESCALA
-- [ ] `0006_hardening.sql` — correções P0 da auditoria
+- [x] `0006_hardening.sql` — P0 corrigidos + `hardening_test.sql` 6/6 PASSOU
 - [ ] Carregador e validador de Skill (RF-02)
 - [ ] Motor de decisão
 
@@ -130,16 +130,20 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 
 ## Auditoria pendente — corrigir antes de qualquer cliente externo
 
-**P0 — Biblioteca legível por qualquer usuário autenticado.**
-A policy de `knowledge_entries` permite `tenant_id is null` para todo
+**P0 — Biblioteca legível por qualquer usuário autenticado. ✅ RESOLVIDO (0006).**
+A policy de `knowledge_entries` permitia `tenant_id is null` para todo
 `authenticated`. Como o Supabase expõe `public` via PostgREST, qualquer trial
-baixa a curadoria inteira de todos os segmentos. Mesmo problema em `skills`.
-Correção: retrieval server-side com `service_role`; estratégia nunca chega ao browser.
+baixava a curadoria inteira de todos os segmentos. Mesmo problema em `skills`.
+Correção aplicada: `authenticated` só lê o conhecimento do próprio tenant e
+a Skill que instalou; a biblioteca global fica com `service_role` (retrieval
+server-side). Estratégia nunca chega ao browser.
 
-**P0 — `decisions` não é append-only.**
-RLS é row-level, não column-level. A policy de UPDATE permite reescrever
-`context_snapshot`, `rationale` e `cost_cents`. Correção: trigger que só
-aceita alteração em `outcome`, `outcome_at`, `executed_at`.
+**P0 — `decisions` não é append-only. ✅ RESOLVIDO (0006).**
+RLS é row-level, não column-level. A policy de UPDATE permitia reescrever
+`context_snapshot`, `rationale` e `cost_cents`. Correção aplicada: trigger
+`t_decisions_append_only` só aceita alteração em `outcome`, `outcome_at`,
+`executed_at` — para todo papel, inclusive `service_role`. DELETE fica livre
+(cascata LGPD).
 
 **P1 — `required_facts` é contrato sem validação.** Typo em caminho deixa a
 entrada em ESCALA para sempre, e falha na direção que parece segura.
