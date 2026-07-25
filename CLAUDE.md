@@ -130,7 +130,7 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] CI (`.github/workflows/ci.yml`) — valida manifestos a cada push
 - [x] App `apps/web` — Next.js 15 + Hono (`/api`) + Supabase; esqueleto navegável (modelo manual)
 - [x] Login (Supabase Auth: senha + Google/OAuth) + contexto de empresa; telas DNA (cobertura), Funil, Equipe — falta 1º login real
-- [x] Cadastro de contatos (CRUD) — formulário Skill-driven (campos do manifesto); no ar em wss-kairos.vercel.app
+- [x] Contatos — módulo completo: lista (busca+filtro+paginação), detalhe, edição, exclusão (soft), duplicidade por telefone normalizado; formulário Skill-driven. No ar em wss-kairos.vercel.app
 - [ ] Console reativo (RF-05, precisa de chave de IA); edição de DNA; taxa de conversão canônica
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
