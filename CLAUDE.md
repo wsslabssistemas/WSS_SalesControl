@@ -126,6 +126,8 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Validador de Skill (RF-02) — `packages/skill-loader`, 7/7 testes; academia e barbearia válidos
 - [x] `required_facts_check.sql` — cruza `required_facts` × `dna_sections` (achou 1 bug)
 - [x] `0007_dna_single_current.sql` — um DNA corrente por tenant; teste 2/2 PASSOU
+- [x] `0008_manifest_reciprocity_academia.sql` — fecha o `reciprocity.gift`; órfãos: 0
+- [x] CI (`.github/workflows/ci.yml`) — valida manifestos a cada push
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
@@ -148,10 +150,20 @@ RLS é row-level, não column-level. A policy de UPDATE permitia reescrever
 `executed_at` — para todo papel, inclusive `service_role`. DELETE fica livre
 (cascata LGPD).
 
-**P1 — `required_facts` é contrato sem validação.** Typo em caminho deixa a
-entrada em ESCALA para sempre, e falha na direção que parece segura.
-Correção: validador cruza todo `required_facts` contra `dna_sections` do
-manifesto e falha o build.
+**P1 — `required_facts` é contrato sem validação. ✅ RESOLVIDO.**
+Typo em caminho deixava a entrada em ESCALA para sempre, falhando na direção que
+parece segura. Agora `required_facts_check.sql` cruza todo `required_facts`
+contra as `dna_sections` do manifesto, e o validador de manifesto (RF-02,
+`packages/skill-loader`) roda no CI. O check achou um caso real —
+`reciprocity.gift` — corrigido no `0008` (a categoria `reciprocity` ganhou
+seção de DNA; o dado da Be Fitness já a assumia).
+
+**Achado (jul/2026) — dado de demonstração sem prefixo `demo-`.** Os tenants
+`be-fitness` e `academia-nova` no banco não têm o prefixo `demo-` exigido pela
+convenção. Efeito colateral: `dna_coverage_check.sql` filtra `slug like 'demo-%'`
+e volta VAZIO — a trava de cobertura é hoje um no-op contra o dado real. Decisão
+do fundador (Be Fitness é empresa real): renomear os slugs para `demo-` ou
+ajustar o filtro do check. Não resolvido por ser decisão de dado do fundador.
 
 **P1 — A trava verifica presença, não validade nem atualidade.** DNA
 desatualizado passa como PRONTA. Falta `updated_at` por seção.

@@ -131,6 +131,13 @@ dna_sections:
     type: rich_text
     # Entra no contexto marcado como não estruturado.
     # Nunca pode ser fonte de preço, horário ou política.
+  - key: reciprocity
+    label: "Brindes e cortesias de adesão"
+    # A categoria reciprocity precisa de um lar no DNA. Sem esta seção o
+    # required_fact reciprocity.gift era caminho órfão e a entrada escalava
+    # sempre — mesmo para quem tinha o brinde declarado. O DNA já a assumia.
+    fields:
+      - { key: gift, type: text }
 
 # ---------------------------------------------------------------------
 # AS 12 CATEGORIAS CANÔNICAS

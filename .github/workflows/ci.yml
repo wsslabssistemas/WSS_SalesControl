@@ -1,0 +1,24 @@
+name: CI
+
+# Falha o build quando um manifesto de Skill nasce inválido — a Lei 2
+# ("Skill é dado, nunca código") virando barreira automática, não revisão.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  skill-validator:
+    name: Validador de Skill (RF-02)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm install
+      - name: Validar manifestos
+        run: npm run -w @cos/skill-loader validate
+      - name: Testes do validador
+        run: npm run -w @cos/skill-loader test
