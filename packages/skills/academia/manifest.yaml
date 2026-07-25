@@ -49,6 +49,7 @@ journey:
     - key: convertido
       label: "Matriculado"
       terminal: true
+      won: true
     - key: perdido
       label: "Perdido"
       terminal: true

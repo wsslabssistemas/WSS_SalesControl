@@ -137,7 +137,9 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Agenda/alertas — toques calculados das fases da jornada (offset_days do manifesto) + data de início editável no contato
 - [x] Contatos: aviso de duplicidade antes de salvar, botão WhatsApp, caixa de data na semana experimental
 - [x] Painel do fabricante (`/painel/admin`) — cross-tenant via service_role, gated por `PLATFORM_ADMIN_EMAILS`; empresas, atividade e custo de IA (`usage_ledger`)
-- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; taxa de conversão; equipe com desempenho; configurações
+- [x] Inicio vira painel (números, toques de hoje, funil, atalhos)
+- [x] Equipe com desempenho (cadastros, em aberto, matrículas) + taxa de conversão no funil — etapa "ganha" no manifesto (`0011`, `won`)
+- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; fabricante financeiro (pagamentos/margem); calendário na agenda; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 

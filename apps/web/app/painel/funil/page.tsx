@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 
-type Stage = { key: string; label: string; terminal?: boolean };
+type Stage = { key: string; label: string; terminal?: boolean; won?: boolean };
 
 export default async function FunilPage() {
   const membership = await getActiveTenant();
@@ -41,10 +41,21 @@ export default async function FunilPage() {
     rows.filter((r) => r.journey_stage === key).length;
   const max = Math.max(1, ...stages.map((s) => countOf(s.key)));
 
+  const wonKeys = stages.filter((s) => s.won).map((s) => s.key);
+  const won = rows.filter((r) => wonKeys.includes(r.journey_stage)).length;
+  const conv = total > 0 ? Math.round((won / total) * 1000) / 10 : 0;
+
   return (
     <main>
       <h1 style={{ fontSize: 24, marginTop: 0 }}>Funil de vendas</h1>
-      <p style={{ opacity: 0.7 }}>{total} contatos no funil.</p>
+      <p style={{ opacity: 0.7 }}>
+        {total} contatos no funil
+        {wonKeys.length > 0 && (
+          <>
+            {" · "}conversão <strong>{conv}%</strong> ({won} de {total})
+          </>
+        )}
+      </p>
 
       {total === 0 && (
         <p style={{ opacity: 0.6 }}>
@@ -101,8 +112,8 @@ export default async function FunilPage() {
       </ul>
 
       <p style={{ marginTop: 24, fontSize: 13, opacity: 0.6 }}>
-        Taxa de conversão canônica (convertidos distintos ÷ leads) entra quando o
-        manifesto marcar qual etapa é a “ganha”.
+        Conversão = contatos na etapa ganha ÷ total de leads. Clique numa etapa
+        para ver as pessoas.
       </p>
     </main>
   );

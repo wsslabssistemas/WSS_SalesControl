@@ -11,6 +11,7 @@ export type Stage = {
   key: string;
   label: string;
   terminal?: boolean;
+  won?: boolean;
   phases?: Phase[];
 };
 

@@ -35,6 +35,7 @@ const stage = z.object({
   label: z.string().min(1),
   goal: z.string().optional(),
   terminal: z.boolean().optional(),
+  won: z.boolean().optional(), // etapa que conta como conversão (matrícula)
   phases: z.array(phase).optional(),
 });
 

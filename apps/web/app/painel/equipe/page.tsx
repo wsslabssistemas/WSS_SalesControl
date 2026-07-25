@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
+import { getSkillFormConfig } from "@/lib/skill";
 import { changeRole } from "./actions";
 
 type Member = {
@@ -29,6 +30,10 @@ export default async function EquipePage({
   }
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
+  const { stages } = await getSkillFormConfig(tenant.skill_key);
+  const wonKeys = new Set(stages.filter((s) => s.won).map((s) => s.key));
+  const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
+
   const supabase = await createClient();
   const { data: members } = await supabase
     .from("memberships")
@@ -37,13 +42,20 @@ export default async function EquipePage({
     .eq("status", "active");
   const { data: contacts } = await supabase
     .from("contacts")
-    .select("owner_id")
+    .select("owner_id, journey_stage")
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null);
 
   const team = (members as Member[] | null) ?? [];
-  const owned = (contacts as { owner_id: string | null }[] | null) ?? [];
-  const count = (id: string) => owned.filter((c) => c.owner_id === id).length;
+  const owned =
+    (contacts as { owner_id: string | null; journey_stage: string }[] | null) ??
+    [];
+  const mine = (id: string) => owned.filter((c) => c.owner_id === id);
+  const cadastros = (id: string) => mine(id).length;
+  const matriculas = (id: string) =>
+    mine(id).filter((c) => wonKeys.has(c.journey_stage)).length;
+  const emAberto = (id: string) =>
+    mine(id).filter((c) => !terminalKeys.has(c.journey_stage)).length;
 
   const inviteLink = sp.convite ? decodeURIComponent(sp.convite) : null;
 
@@ -114,7 +126,9 @@ export default async function EquipePage({
           <tr style={{ textAlign: "left", opacity: 0.6, fontSize: 12 }}>
             <th style={{ padding: "8px 0" }}>Pessoa</th>
             <th>Papel</th>
-            <th style={{ textAlign: "right" }}>Contatos</th>
+            <th style={{ textAlign: "right" }}>Cadastros</th>
+            <th style={{ textAlign: "right" }}>Em aberto</th>
+            <th style={{ textAlign: "right" }}>Matrículas</th>
             {isAdmin && <th style={{ textAlign: "right" }}>Ações</th>}
           </tr>
         </thead>
@@ -168,7 +182,11 @@ export default async function EquipePage({
                   mem.role
                 )}
               </td>
-              <td style={{ textAlign: "right" }}>{count(mem.id)}</td>
+              <td style={{ textAlign: "right" }}>{cadastros(mem.id)}</td>
+              <td style={{ textAlign: "right" }}>{emAberto(mem.id)}</td>
+              <td style={{ textAlign: "right", fontWeight: 600 }}>
+                {matriculas(mem.id)}
+              </td>
               {isAdmin && (
                 <td style={{ textAlign: "right" }}>
                   {mem.id !== membership.membershipId ? (
@@ -189,8 +207,8 @@ export default async function EquipePage({
       </table>
 
       <p style={{ marginTop: 24, fontSize: 13, opacity: 0.6 }}>
-        Métricas por vendedor (conversão, tempo de resposta) entram quando houver
-        atendimentos registrados.
+        Cadastros e matrículas vêm dos contatos de cada vendedor. Atendimentos e
+        tempo de resposta entram quando o console de mensagens existir.
       </p>
     </main>
   );
