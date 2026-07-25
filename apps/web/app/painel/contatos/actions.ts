@@ -11,6 +11,7 @@ type Parsed = {
   phone: string | null;
   source: string | null;
   journey_stage: string;
+  stageStart: string | null;
   custom: Record<string, string>;
 };
 
@@ -25,9 +26,41 @@ function parse(formData: FormData): Parsed {
     name: String(formData.get("name") ?? "").trim(),
     phone: normalizePhone(String(formData.get("phone") ?? "")),
     source: String(formData.get("source") ?? "").trim() || null,
-    journey_stage: String(formData.get("journey_stage") ?? "contato").trim() || "contato",
+    journey_stage:
+      String(formData.get("journey_stage") ?? "contato").trim() || "contato",
+    stageStart: String(formData.get("stage_start") ?? "").trim() || null,
     custom,
   };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function findPhoneDup(
+  supabase: any,
+  tenantId: string,
+  phone: string,
+  exceptId?: string,
+): Promise<{ id: string; name: string } | null> {
+  let q = supabase
+    .from("contacts")
+    .select("id, name")
+    .eq("tenant_id", tenantId)
+    .eq("phone", phone)
+    .is("deleted_at", null);
+  if (exceptId) q = q.neq("id", exceptId);
+  const { data } = await q.limit(1).maybeSingle();
+  return (data as { id: string; name: string } | null) ?? null;
+}
+
+function rowFrom(p: Parsed): Record<string, unknown> {
+  const row: Record<string, unknown> = {
+    name: p.name,
+    phone: p.phone,
+    source: p.source,
+    journey_stage: p.journey_stage,
+    custom: p.custom,
+  };
+  if (p.stageStart) row.stage_entered_at = new Date(p.stageStart).toISOString();
+  return row;
 }
 
 const DUP = "23505"; // unique_violation
@@ -41,16 +74,29 @@ export async function createContact(formData: FormData) {
   if (!p.name) redirect("/painel/contatos/novo?erro=Nome+e+obrigatorio");
 
   const supabase = await createClient();
+
+  // Duplicidade por telefone: avisa ANTES de salvar (com o nome de quem já existe).
+  if (p.phone) {
+    const dup = await findPhoneDup(supabase, tenant!.id, p.phone);
+    if (dup) {
+      redirect(
+        `/painel/contatos/novo?erro=${encodeURIComponent(
+          `Já existe um contato com esse telefone: ${dup.name}`,
+        )}`,
+      );
+    }
+  }
+
   const { error } = await supabase.from("contacts").insert({
     tenant_id: tenant!.id,
     owner_id: membership!.membershipId,
-    ...p,
+    ...rowFrom(p),
   });
 
   if (error) {
     const msg =
       error.code === DUP
-        ? "Ja existe um contato com esse telefone."
+        ? "Já existe um contato com esse telefone."
         : error.message;
     redirect(`/painel/contatos/novo?erro=${encodeURIComponent(msg)}`);
   }
@@ -66,16 +112,28 @@ export async function updateContact(id: string, formData: FormData) {
   if (!p.name) redirect(`/painel/contatos/${id}/editar?erro=Nome+e+obrigatorio`);
 
   const supabase = await createClient();
+
+  if (p.phone) {
+    const dup = await findPhoneDup(supabase, membership.tenant.id, p.phone, id);
+    if (dup) {
+      redirect(
+        `/painel/contatos/${id}/editar?erro=${encodeURIComponent(
+          `Já existe outro contato com esse telefone: ${dup.name}`,
+        )}`,
+      );
+    }
+  }
+
   const { error } = await supabase
     .from("contacts")
-    .update(p)
+    .update(rowFrom(p))
     .eq("id", id)
     .eq("tenant_id", membership.tenant.id);
 
   if (error) {
     const msg =
       error.code === DUP
-        ? "Ja existe um contato com esse telefone."
+        ? "Já existe um contato com esse telefone."
         : error.message;
     redirect(`/painel/contatos/${id}/editar?erro=${encodeURIComponent(msg)}`);
   }
@@ -92,6 +150,7 @@ export async function moveStage(id: string, formData: FormData) {
   const to = String(formData.get("to_stage") ?? "").trim();
   const reason =
     String(formData.get("reason") ?? "").trim() || "Movido manualmente";
+  const start = String(formData.get("stage_start") ?? "").trim() || null;
   if (!to) redirect(`/painel/contatos/${id}`);
 
   const supabase = await createClient();
@@ -106,11 +165,15 @@ export async function moveStage(id: string, formData: FormData) {
   if (from !== to) {
     await supabase
       .from("contacts")
-      .update({ journey_stage: to, stage_entered_at: new Date().toISOString() })
+      .update({
+        journey_stage: to,
+        stage_entered_at: start
+          ? new Date(start).toISOString()
+          : new Date().toISOString(),
+      })
       .eq("id", id)
       .eq("tenant_id", tenant.id);
 
-    // A jornada é um grafo: cada passo é gravado (append-only).
     await supabase.from("contact_stage_history").insert({
       tenant_id: tenant.id,
       contact_id: id,
@@ -124,6 +187,7 @@ export async function moveStage(id: string, formData: FormData) {
   revalidatePath(`/painel/contatos/${id}`);
   revalidatePath("/painel/contatos");
   revalidatePath("/painel/funil");
+  revalidatePath("/painel/agenda");
   redirect(`/painel/contatos/${id}`);
 }
 
@@ -152,7 +216,6 @@ export async function deleteContact(id: string) {
   if (!membership?.tenant) redirect("/painel");
 
   const supabase = await createClient();
-  // Exclusão reversível (soft delete): não perde histórico.
   await supabase
     .from("contacts")
     .update({ deleted_at: new Date().toISOString() })

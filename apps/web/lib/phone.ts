@@ -17,3 +17,15 @@ export function displayPhone(phone: string | null | undefined): string {
   if (!phone) return "—";
   return phone;
 }
+
+/**
+ * Número no formato que o wa.me espera (com código de país).
+ * Heurística BR: 10–11 dígitos = local (DDD + número) → prefixa 55.
+ * 12–13 dígitos = assume que já traz o código de país.
+ */
+export function whatsappNumber(phone: string | null | undefined): string | null {
+  const d = normalizePhone(phone);
+  if (!d) return null;
+  if (d.length === 10 || d.length === 11) return "55" + d;
+  return d;
+}

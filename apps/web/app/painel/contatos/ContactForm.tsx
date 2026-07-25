@@ -1,10 +1,15 @@
+"use client";
+
+import { useState } from "react";
+
 type ContactField = {
   key: string;
   label: string;
   type: string;
   options?: string[];
 };
-type Stage = { key: string; label: string };
+type Phase = { key: string; label: string; offset_days: number };
+type Stage = { key: string; label: string; phases?: Phase[] };
 
 export type ContactValues = {
   name?: string;
@@ -45,6 +50,11 @@ export function ContactForm({
   submitLabel: string;
 }) {
   const custom = contact?.custom ?? {};
+  const [stage, setStage] = useState<string>(
+    contact?.journey_stage ?? "contato",
+  );
+  const stageDef = stages.find((s) => s.key === stage);
+  const hasPhases = !!stageDef?.phases && stageDef.phases.length > 0;
 
   return (
     <form action={action} style={{ display: "grid", gap: 14, marginTop: 20 }}>
@@ -74,7 +84,8 @@ export function ContactForm({
         Etapa
         <select
           name="journey_stage"
-          defaultValue={contact?.journey_stage ?? "contato"}
+          value={stage}
+          onChange={(e) => setStage(e.target.value)}
           style={field}
         >
           {stages.map((s) => (
@@ -84,6 +95,17 @@ export function ContactForm({
           ))}
         </select>
       </label>
+
+      {hasPhases && (
+        <label style={lbl}>
+          Data de início ({stageDef!.label})
+          <input type="date" name="stage_start" style={field} />
+          <span style={{ fontSize: 12, opacity: 0.55 }}>
+            Os toques (ex.: dia {stageDef!.phases!.map((p) => p.offset_days).join(", ")})
+            são calculados a partir dessa data.
+          </span>
+        </label>
+      )}
 
       {fields.map((f) => (
         <label key={f.key} style={lbl}>
@@ -127,7 +149,20 @@ export function ContactForm({
         {submitLabel}
       </button>
 
-      {erro && <p style={{ color: "#c0392b", fontSize: 13 }}>{erro}</p>}
+      {erro && (
+        <p
+          style={{
+            color: "#c0392b",
+            fontSize: 13,
+            padding: "8px 10px",
+            border: "1px solid rgba(192,57,43,0.4)",
+            borderRadius: 8,
+            background: "rgba(192,57,43,0.08)",
+          }}
+        >
+          {erro}
+        </p>
+      )}
     </form>
   );
 }

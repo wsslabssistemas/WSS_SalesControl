@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { displayPhone } from "@/lib/phone";
+import { displayPhone, whatsappNumber } from "@/lib/phone";
 import { deleteContact, moveStage, updateStageStart } from "../actions";
 
 type ContactRow = {
@@ -52,6 +52,7 @@ export default async function ContatoDetalhe({
     stages.find((s) => s.key === c.journey_stage)?.label ?? c.journey_stage;
   const del = deleteContact.bind(null, id);
   const move = moveStage.bind(null, id);
+  const wa = whatsappNumber(c.phone);
 
   const rows: { label: string; value: string }[] = [
     { label: "Telefone", value: displayPhone(c.phone) },
@@ -81,6 +82,24 @@ export default async function ContatoDetalhe({
       >
         <h1 style={{ fontSize: 24, margin: 0 }}>{c.name}</h1>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {wa && (
+            <a
+              href={`https://wa.me/${wa}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 14,
+                padding: "6px 12px",
+                borderRadius: 8,
+                background: "#25D366",
+                color: "#0b2e13",
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+            >
+              WhatsApp
+            </a>
+          )}
           <Link href={`/painel/contatos/${c.id}/editar`} style={{ fontSize: 14 }}>
             Editar
           </Link>
