@@ -139,7 +139,8 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Painel do fabricante (`/painel/admin`) — cross-tenant via service_role, gated por `PLATFORM_ADMIN_EMAILS`; empresas, atividade e custo de IA (`usage_ledger`)
 - [x] Inicio vira painel (números, toques de hoje, funil, atalhos)
 - [x] Equipe com desempenho (cadastros, em aberto, matrículas) + taxa de conversão no funil — etapa "ganha" no manifesto (`0011`, `won`)
-- [ ] Console reativo (RF-05, precisa de chave de IA); questionário de onboarding; fabricante financeiro (pagamentos/margem); calendário na agenda; configurações
+- [x] Responder (console manual, SEM IA) — situação → estratégia da biblioteca (service_role) + fatos do DNA + trava anti-invenção; a pessoa escreve e manda
+- [ ] Geração automática de mensagem (versão paga, precisa de chave de IA); questionário de onboarding; fabricante financeiro (pagamentos/margem); calendário na agenda; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
