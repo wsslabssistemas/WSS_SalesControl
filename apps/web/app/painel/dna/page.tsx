@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 
@@ -54,7 +55,28 @@ export default async function DnaPage() {
 
   return (
     <main>
-      <h1 style={{ fontSize: 24, marginTop: 0 }}>DNA da empresa</h1>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <h1 style={{ fontSize: 24, marginTop: 0 }}>DNA da empresa</h1>
+        <Link
+          href="/painel/dna/editar"
+          style={{
+            fontSize: 14,
+            padding: "8px 14px",
+            borderRadius: 8,
+            background: "#111",
+            color: "#fff",
+            textDecoration: "none",
+          }}
+        >
+          Editar DNA
+        </Link>
+      </div>
       <p style={{ opacity: 0.7 }}>
         Os fatos que a IA pode afirmar. O que não estiver aqui, ela não inventa —
         escala para um humano. <strong>{prontas}</strong>/{sections.length} seções
@@ -96,9 +118,6 @@ export default async function DnaPage() {
         })}
       </ul>
 
-      <p style={{ marginTop: 24, fontSize: 13, opacity: 0.6 }}>
-        Edição das seções: próximo passo.
-      </p>
     </main>
   );
 }

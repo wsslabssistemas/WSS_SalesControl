@@ -131,7 +131,8 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] App `apps/web` — Next.js 15 + Hono (`/api`) + Supabase; esqueleto navegável (modelo manual)
 - [x] Login (Supabase Auth: senha + Google/OAuth) + contexto de empresa; telas DNA (cobertura), Funil, Equipe — falta 1º login real
 - [x] Contatos — módulo completo: lista (busca+filtro+paginação), detalhe, edição, exclusão (soft), duplicidade por telefone normalizado; formulário Skill-driven. No ar em wss-kairos.vercel.app
-- [ ] Console reativo (RF-05, precisa de chave de IA); edição de DNA; taxa de conversão canônica
+- [x] Edição de DNA (RF-04) — `0009_save_dna` versionado (teste 3/3); editor por tipo de campo (texto, valor, sim/não, lista, tabela em grade)
+- [ ] Console reativo (RF-05, precisa de chave de IA); taxa de conversão canônica; oportunidades; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
