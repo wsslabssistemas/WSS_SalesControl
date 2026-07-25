@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 
@@ -57,38 +58,43 @@ export default async function FunilPage() {
           const pct = Math.round((n / max) * 100);
           return (
             <li key={s.key} style={{ margin: "10px 0" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 14,
-                  marginBottom: 4,
-                }}
+              <Link
+                href={`/painel/contatos?etapa=${s.key}`}
+                style={{ display: "block", textDecoration: "none", color: "inherit" }}
               >
-                <span>
-                  {s.label}
-                  {s.terminal && (
-                    <span style={{ opacity: 0.4, fontSize: 11 }}> · final</span>
-                  )}
-                </span>
-                <strong>{n}</strong>
-              </div>
-              <div
-                style={{
-                  height: 8,
-                  borderRadius: 4,
-                  background: "rgba(128,128,128,0.15)",
-                }}
-              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 14,
+                    marginBottom: 4,
+                  }}
+                >
+                  <span>
+                    {s.label}
+                    {s.terminal && (
+                      <span style={{ opacity: 0.4, fontSize: 11 }}> · final</span>
+                    )}
+                  </span>
+                  <strong>{n}</strong>
+                </div>
                 <div
                   style={{
                     height: 8,
                     borderRadius: 4,
-                    width: `${pct}%`,
-                    background: "rgba(39,120,174,0.6)",
+                    background: "rgba(128,128,128,0.15)",
                   }}
-                />
-              </div>
+                >
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      width: `${pct}%`,
+                      background: "rgba(39,120,174,0.6)",
+                    }}
+                  />
+                </div>
+              </Link>
             </li>
           );
         })}

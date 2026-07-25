@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { displayPhone } from "@/lib/phone";
-import { deleteContact } from "../actions";
+import { deleteContact, moveStage } from "../actions";
 
 type ContactRow = {
   id: string;
@@ -50,6 +50,7 @@ export default async function ContatoDetalhe({
   const stageLabel =
     stages.find((s) => s.key === c.journey_stage)?.label ?? c.journey_stage;
   const del = deleteContact.bind(null, id);
+  const move = moveStage.bind(null, id);
 
   const rows: { label: string; value: string }[] = [
     { label: "Telefone", value: displayPhone(c.phone) },
@@ -119,9 +120,67 @@ export default async function ContatoDetalhe({
         ))}
       </dl>
 
+      <form
+        action={move}
+        style={{
+          marginTop: 24,
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontSize: 13, opacity: 0.6 }}>Mover para</span>
+        <select
+          name="to_stage"
+          defaultValue={c.journey_stage}
+          style={{
+            padding: "7px 10px",
+            border: "1px solid rgba(128,128,128,0.4)",
+            borderRadius: 7,
+            background: "transparent",
+            color: "inherit",
+            font: "inherit",
+          }}
+        >
+          {stages.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+        <input
+          name="reason"
+          placeholder="Motivo (opcional)"
+          style={{
+            padding: "7px 10px",
+            border: "1px solid rgba(128,128,128,0.4)",
+            borderRadius: 7,
+            background: "transparent",
+            color: "inherit",
+            font: "inherit",
+            flex: 1,
+            minWidth: 140,
+          }}
+        />
+        <button
+          type="submit"
+          style={{
+            padding: "7px 14px",
+            borderRadius: 7,
+            border: "none",
+            background: "#111",
+            color: "#fff",
+            font: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          Mover
+        </button>
+      </form>
+
       <p style={{ marginTop: 20, fontSize: 12, opacity: 0.45 }}>
-        Histórico de conversas e mudanças de etapa aparecem aqui quando o
-        atendimento começar.
+        Cada mudança de etapa é registrada no histórico da jornada.
       </p>
     </main>
   );
