@@ -27,6 +27,7 @@ export default async function PainelLayout({
         <strong>{BRAND_NAME}</strong>
         <nav style={{ display: "flex", gap: 14, fontSize: 14 }}>
           <Link href="/painel">Início</Link>
+          <Link href="/painel/contatos">Contatos</Link>
           <Link href="/painel/funil">Funil</Link>
           <Link href="/painel/equipe">Equipe</Link>
           <Link href="/painel/dna">DNA</Link>

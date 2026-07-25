@@ -12,6 +12,7 @@ export async function requireUser() {
 }
 
 export type ActiveTenant = {
+  membershipId: string;
   role: string;
   tenant: {
     id: string;
@@ -26,15 +27,22 @@ export type ActiveTenant = {
  * tabela. RLS garante que só vêm as empresas onde o usuário tem vínculo ativo.
  *
  * Asserção de tipo na fronteira: sem tipos gerados do banco, o supabase-js
- * devolve `any` aqui. Assumimos a forma exata do `select` acima.
+ * devolve `any` aqui. Assumimos a forma exata do `select`.
  */
 export async function getActiveTenant(): Promise<ActiveTenant | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("memberships")
-    .select("role, tenant:tenants(id, name, slug, skill_key)")
+    .select("id, role, tenant:tenants(id, name, slug, skill_key)")
     .eq("status", "active")
     .limit(1)
     .maybeSingle();
-  return (data as ActiveTenant | null) ?? null;
+  if (!data) return null;
+  // to-one no runtime; o supabase-js infere array sem tipos gerados → unknown.
+  const row = data as unknown as {
+    id: string;
+    role: string;
+    tenant: ActiveTenant["tenant"];
+  };
+  return { membershipId: row.id, role: row.role, tenant: row.tenant };
 }
