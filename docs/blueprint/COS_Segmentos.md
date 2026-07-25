@@ -92,3 +92,51 @@ lembrete/oportunidade. Base no modelo de dados: `signals` + `opportunities` +
 **Requisito honesto:** o motor proativo **não é retroativo**. Ele só fala 30 dias
 antes se capturou o dado na entrada. Por isso o onboarding e a captura disciplinada
 são o gargalo real do produto, não o motor. (Journal, Aprendizado 006)
+
+---
+
+## Módulos à parte (não são segmento de empresa)
+
+- **Licitações** — mapear licitações públicas: concorrentes, vencedores, tipo de
+  negócio, produtos, cadência de abertura por setor, e mais. Dado público →
+  prospecção B2B permitida (Journal, Decisão 004). É da família B2B (Onda 3):
+  outra engine, decisão futura. Anexável a um módulo de empresa (ex.: Mercato
+  Automação). Fonte: APIs públicas de compras/licitações.
+
+## Ferramentas auxiliares (add-ons pagos, escolhidos na contratação)
+
+Não são Skills de segmento — são opções pagas que aparecem **no momento da
+contratação**, para o cliente montar o produto e aumentar o ticket:
+
+- **CRM avançado** (o núcleo já tem a base; esta é a versão parruda).
+- **Financeiro** — previsão de custos, despesas, receita, comparativos.
+- **Integrações com ERPs de API aberta** — TOTVS (usado por muita empresa do
+  perfil da Mercato) e outros, para o cliente puxar base de clientes, produtos e
+  cadastros. Pesquisar quais têm API aberta e valem integração.
+- (pesquisar outras ferramentas de venda)
+
+Regra de produto: as auxiliares aparecem como opção na tela de contratação.
+
+## Go-to-market
+
+- **Auto-venda (dogfooding):** a WSS Labs usa o próprio COS para vender COS —
+  mapear via **Google Maps + segmento** empresas candidatas (B2B, dado público →
+  permitido). O fundador é o primeiro cliente do produto.
+- **30 dias grátis:** porta de entrada. Testar o sistema, achar melhorias, e o
+  cliente, vendo resultado, converte com menos atrito.
+
+## Jogada — Barbearia / salão: frequência de corte
+
+- **Captura:** data do último corte + frequência habitual do cliente (ex.: 15 dias).
+- **Sinal:** chegou a janela habitual daquele cliente.
+- **Oportunidade:** lembrar o cliente. Manual → vendedor envia mensagem específica
+  do banco. Automático → o sistema envia sozinho.
+- Mesmo padrão da casa de festas: **recorrência temporal**. É a dor real do
+  segmento — ninguém controla isso hoje.
+
+## Pesquisa pendente (fazer depois de travar os segmentos)
+
+Pesquisar a fundo cada segmento escolhido: dificuldades, dores, pontos fortes e
+ideias de melhoria — sempre ligado a **captação, vendas, receita e modelo de
+trabalho**. Cada achado vira jogada ou campo de captura. Não iniciar antes da
+lista de segmentos estar fechada.
