@@ -1,42 +1,92 @@
+import Image from "next/image";
+import Link from "next/link";
 import { BRAND_NAME, MAKER } from "@/lib/brand";
 
-const label: React.CSSProperties = {
-  fontSize: 12,
-  letterSpacing: 1,
-  textTransform: "uppercase",
-  opacity: 0.55,
-};
+const features = [
+  {
+    t: "Biblioteca curada",
+    d: "As técnicas de venda que convertem, casadas com os fatos da sua empresa. O ativo, não o código.",
+  },
+  {
+    t: "O momento certo",
+    d: "A jornada de cada contato vira toques na hora certa — sem planilha, sem esquecer ninguém.",
+  },
+  {
+    t: "Trava anti-invenção",
+    d: "Falta um fato? O sistema escala para um humano em vez de inventar. Confiança por construção.",
+  },
+];
 
 export default function Home() {
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <p style={{ ...label, letterSpacing: 2 }}>{MAKER}</p>
-      <h1 style={{ fontSize: 32, margin: "4px 0 0" }}>{BRAND_NAME}</h1>
-      <p style={{ opacity: 0.75, marginTop: 8 }}>
-        Inteligência comercial · modelo manual. Em construção.
-      </p>
+    <main>
+      <header className="container" style={{ paddingTop: 22 }}>
+        <div className="between">
+          <span className="brand-lockup">
+            <Image src="/icons/icon-192.png" alt="" width={32} height={32} priority />
+            <span>{BRAND_NAME}</span>
+          </span>
+          <Link href="/login" className="btn btn-sm btn-ghost">
+            Entrar
+          </Link>
+        </div>
+      </header>
 
-      <section style={{ marginTop: 40 }}>
-        <h2 style={label}>Fundação pronta</h2>
-        <ul>
-          <li>
-            App Next.js 15 + API (Hono) na rota <code>/api</code>
-          </li>
-          <li>Supabase conectado (URL + chave pública)</li>
-          <li>Banco: RLS, hardening P0/P1, validador de Skill</li>
-        </ul>
+      <section
+        className="container"
+        style={{ textAlign: "center", padding: "72px 1.25rem 40px", maxWidth: 780 }}
+      >
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <Image
+            src="/logo.png"
+            alt={BRAND_NAME}
+            width={360}
+            height={220}
+            priority
+            style={{ height: "auto", maxWidth: "min(360px, 78vw)", filter: "drop-shadow(0 20px 60px rgba(46,141,242,0.25))" }}
+          />
+        </div>
 
-        <h2 style={{ ...label, marginTop: 28 }}>Próximo</h2>
-        <ul>
-          <li>Login e contexto de empresa</li>
-          <li>Tela de DNA — os fatos da empresa</li>
-          <li>Console reativo: colar mensagem → resposta de vendas</li>
-        </ul>
+        <p className="eyebrow mt-24">{MAKER}</p>
+        <h1 style={{ fontSize: "clamp(2rem, 1.4rem + 3.4vw, 3.4rem)", marginTop: 12 }}>
+          A venda no <span className="brand-text">momento certo</span>.
+        </h1>
+        <p className="text-dim" style={{ fontSize: 18, marginTop: 16, maxWidth: 560, marginInline: "auto" }}>
+          Motor de inteligência comercial multi-tenant. Sua biblioteca de vendas
+          e os fatos da sua empresa, trabalhando por você.
+        </p>
+
+        <div className="row" style={{ justifyContent: "center", marginTop: 28, gap: 12 }}>
+          <Link href="/login" className="btn btn-primary">
+            Acessar o painel
+          </Link>
+          <a href="/api/health" className="btn btn-ghost">
+            Status da API
+          </a>
+        </div>
       </section>
 
-      <p style={{ marginTop: 40, fontSize: 13, opacity: 0.6 }}>
-        Verificação da API: <a href="/api/health">/api/health</a>
-      </p>
+      <section className="container" style={{ paddingBottom: 80, maxWidth: 900 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+            gap: 14,
+          }}
+        >
+          {features.map((f) => (
+            <div key={f.t} className="card card-hover">
+              <h3 style={{ fontSize: 16 }}>{f.t}</h3>
+              <p className="text-dim" style={{ marginTop: 8, marginBottom: 0, fontSize: 14 }}>
+                {f.d}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="text-faint" style={{ textAlign: "center", marginTop: 48, fontSize: 13 }}>
+          {BRAND_NAME} · {MAKER} — modelo manual em operação. Versão automática em construção.
+        </p>
+      </section>
     </main>
   );
 }

@@ -98,7 +98,7 @@ export default async function ContatosPage({
             fontSize: 14,
             padding: "8px 14px",
             borderRadius: 8,
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             textDecoration: "none",
           }}

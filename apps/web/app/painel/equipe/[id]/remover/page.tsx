@@ -101,7 +101,7 @@ export default async function RemoverMembroPage({
               padding: "10px 16px",
               borderRadius: 8,
               border: "none",
-              background: "#c0392b",
+              background: "var(--danger)",
               color: "#fff",
               font: "inherit",
               cursor: "pointer",

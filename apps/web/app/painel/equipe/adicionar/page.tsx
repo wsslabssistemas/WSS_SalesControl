@@ -65,7 +65,7 @@ export default async function AdicionarMembroPage({
             padding: "10px 12px",
             borderRadius: 8,
             border: "none",
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             font: "inherit",
             cursor: "pointer",
@@ -73,7 +73,7 @@ export default async function AdicionarMembroPage({
         >
           Gerar convite
         </button>
-        {erro && <p style={{ color: "#c0392b", fontSize: 13 }}>{erro}</p>}
+        {erro && <p style={{ color: "var(--danger)", fontSize: 13 }}>{erro}</p>}
       </form>
     </main>
   );

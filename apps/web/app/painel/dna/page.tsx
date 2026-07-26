@@ -69,7 +69,7 @@ export default async function DnaPage() {
             fontSize: 14,
             padding: "8px 14px",
             borderRadius: 8,
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             textDecoration: "none",
           }}
@@ -104,7 +104,7 @@ export default async function DnaPage() {
                   borderRadius: 999,
                   whiteSpace: "nowrap",
                   background: ok ? "rgba(39,174,96,0.15)" : "rgba(192,57,43,0.12)",
-                  color: ok ? "#1e8449" : "#c0392b",
+                  color: ok ? "var(--success)" : "var(--danger)",
                 }}
               >
                 {ok ? "preenchido" : "falta"}

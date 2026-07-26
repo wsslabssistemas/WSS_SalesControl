@@ -140,7 +140,7 @@ export function ContactForm({
           padding: "10px 12px",
           borderRadius: 8,
           border: "none",
-          background: "#111",
+          background: "var(--brand-blue)",
           color: "#fff",
           font: "inherit",
           cursor: "pointer",
@@ -152,7 +152,7 @@ export function ContactForm({
       {erro && (
         <p
           style={{
-            color: "#c0392b",
+            color: "var(--danger)",
             fontSize: 13,
             padding: "8px 10px",
             border: "1px solid rgba(192,57,43,0.4)",

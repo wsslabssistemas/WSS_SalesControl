@@ -92,7 +92,7 @@ export default async function PagamentosPage({
           type="submit"
           style={{
             ...field,
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             border: "none",
             cursor: "pointer",
@@ -101,8 +101,8 @@ export default async function PagamentosPage({
           Registrar
         </button>
       </form>
-      {sp.ok && <p style={{ color: "#1e8449", fontSize: 13 }}>Pagamento registrado.</p>}
-      {sp.erro && <p style={{ color: "#c0392b", fontSize: 13 }}>{sp.erro}</p>}
+      {sp.ok && <p style={{ color: "var(--success)", fontSize: 13 }}>Pagamento registrado.</p>}
+      {sp.erro && <p style={{ color: "var(--danger)", fontSize: 13 }}>{sp.erro}</p>}
 
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 24, fontSize: 14 }}>
         <thead>
@@ -119,7 +119,7 @@ export default async function PagamentosPage({
               <td style={{ padding: "10px 0" }}>{nome(p.tenant_id)}</td>
               <td>{p.period}</td>
               <td style={{ textAlign: "right" }}>{brl(p.amount_cents)}</td>
-              <td style={{ color: p.status === "paid" ? "#1e8449" : "#b9770e" }}>
+              <td style={{ color: p.status === "paid" ? "var(--success)" : "var(--warn)" }}>
                 {p.status === "paid" ? "pago" : "pendente"}
               </td>
             </tr>

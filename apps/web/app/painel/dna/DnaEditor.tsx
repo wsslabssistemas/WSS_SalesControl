@@ -243,7 +243,7 @@ export function DnaEditor({
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             font: "inherit",
             cursor: pending ? "default" : "pointer",
@@ -252,7 +252,7 @@ export function DnaEditor({
         >
           {pending ? "Salvando…" : "Salvar DNA"}
         </button>
-        {error && <span style={{ color: "#c0392b", fontSize: 13 }}>{error}</span>}
+        {error && <span style={{ color: "var(--danger)", fontSize: 13 }}>{error}</span>}
       </div>
     </div>
   );

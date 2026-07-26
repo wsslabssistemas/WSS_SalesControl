@@ -11,20 +11,6 @@ type Contact = {
   stage_entered_at: string;
 };
 
-const card: React.CSSProperties = {
-  border: "1px solid rgba(128,128,128,0.2)",
-  borderRadius: 12,
-  padding: "16px 18px",
-};
-const cardNum: React.CSSProperties = { fontSize: 28, fontWeight: 700, lineHeight: 1.1 };
-const cardLbl: React.CSSProperties = {
-  fontSize: 12,
-  textTransform: "uppercase",
-  letterSpacing: 1,
-  opacity: 0.55,
-  marginTop: 4,
-};
-
 export default async function PainelHome() {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
@@ -74,55 +60,32 @@ export default async function PainelHome() {
 
   return (
     <main>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-        }}
-      >
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>{tenant.name}</h1>
-        <Link
-          href="/painel/contatos/novo"
-          style={{
-            fontSize: 14,
-            padding: "8px 14px",
-            borderRadius: 8,
-            background: "#111",
-            color: "#fff",
-            textDecoration: "none",
-          }}
-        >
+      <div className="between">
+        <h1>{tenant.name}</h1>
+        <Link href="/painel/contatos/novo" className="btn btn-primary btn-sm">
           + Novo contato
         </Link>
       </div>
 
       {/* Números-chave */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-          gap: 12,
-          marginTop: 16,
-        }}
-      >
-        <div style={card}>
-          <div style={cardNum}>{contacts.length}</div>
-          <div style={cardLbl}>Contatos</div>
+      <div className="stat-grid mt-24">
+        <div className="card">
+          <div className="stat-num">{contacts.length}</div>
+          <div className="stat-label">Contatos</div>
         </div>
-        <div style={card}>
-          <div style={cardNum}>{emAberto}</div>
-          <div style={cardLbl}>Em aberto</div>
+        <div className="card">
+          <div className="stat-num">{emAberto}</div>
+          <div className="stat-label">Em aberto</div>
         </div>
-        <Link href="/painel/agenda" style={{ ...card, textDecoration: "none", color: "inherit", display: "block" }}>
-          <div style={{ ...cardNum, color: hoje.length ? "#b9770e" : "inherit" }}>
+        <Link href="/painel/agenda" className="card card-hover" style={{ display: "block" }}>
+          <div className="stat-num" style={{ color: hoje.length ? "var(--warn)" : undefined }}>
             {hoje.length}
           </div>
-          <div style={cardLbl}>Toques hoje</div>
+          <div className="stat-label">Toques hoje</div>
         </Link>
-        <Link href="/painel/equipe" style={{ ...card, textDecoration: "none", color: "inherit", display: "block" }}>
-          <div style={cardNum}>{membersCount ?? 0}</div>
-          <div style={cardLbl}>Equipe</div>
+        <Link href="/painel/equipe" className="card card-hover" style={{ display: "block" }}>
+          <div className="stat-num">{membersCount ?? 0}</div>
+          <div className="stat-label">Equipe</div>
         </Link>
       </div>
 
@@ -151,13 +114,13 @@ export default async function PainelHome() {
                   fontSize: 14,
                 }}
               >
-                <span style={{ color: a.days < 0 ? "#c0392b" : "#b9770e", whiteSpace: "nowrap" }}>
+                <span className={a.days < 0 ? "badge badge-danger" : "badge badge-warn"}>
                   {a.days < 0 ? "atrasado" : "hoje"}
                 </span>
-                <Link href={`/painel/contatos/${a.contactId}`} style={{ flex: 1 }}>
+                <Link href={`/painel/contatos/${a.contactId}`} className="grow">
                   {a.name}
                 </Link>
-                <span style={{ opacity: 0.6 }}>{a.phaseLabel}</span>
+                <span className="text-faint">{a.phaseLabel}</span>
               </li>
             ))}
           </ul>
@@ -177,16 +140,10 @@ export default async function PainelHome() {
             <Link
               key={s.key}
               href={`/painel/contatos?etapa=${s.key}`}
-              style={{
-                textDecoration: "none",
-                color: "inherit",
-                border: "1px solid rgba(128,128,128,0.2)",
-                borderRadius: 8,
-                padding: "6px 12px",
-                fontSize: 13,
-              }}
+              className="badge"
+              style={{ padding: "7px 12px", fontSize: 13 }}
             >
-              {s.label}: <strong>{s.n}</strong>
+              {s.label}: <strong style={{ color: "var(--text)" }}>{s.n}</strong>
             </Link>
           ))}
         </div>

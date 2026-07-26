@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { requireUser, getActiveTenant } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platform";
 import { BRAND_NAME } from "@/lib/brand";
+import PainelNav from "./PainelNav";
 import { signOut } from "./actions";
 
 export default async function PainelLayout({
@@ -14,49 +16,39 @@ export default async function PainelLayout({
   const tenantName = membership?.tenant?.name ?? "(sem empresa)";
   const showAdmin = isPlatformAdmin(user.email);
 
+  const nav = [
+    { href: "/painel", label: "Início" },
+    { href: "/painel/responder", label: "Responder" },
+    { href: "/painel/contatos", label: "Contatos" },
+    { href: "/painel/funil", label: "Funil" },
+    { href: "/painel/agenda", label: "Agenda" },
+    { href: "/painel/equipe", label: "Equipe" },
+    { href: "/painel/dna", label: "DNA" },
+    ...(showAdmin ? [{ href: "/painel/admin", label: "Fabricante" }] : []),
+  ];
+
   return (
-    <div style={{ maxWidth: 820, margin: "0 auto", padding: "1.5rem" }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          borderBottom: "1px solid rgba(128,128,128,0.25)",
-          paddingBottom: 12,
-          marginBottom: 28,
-        }}
-      >
-        <strong>{BRAND_NAME}</strong>
-        <nav style={{ display: "flex", gap: 14, fontSize: 14 }}>
-          <Link href="/painel">Início</Link>
-          <Link href="/painel/responder">Responder</Link>
-          <Link href="/painel/contatos">Contatos</Link>
-          <Link href="/painel/funil">Funil</Link>
-          <Link href="/painel/agenda">Agenda</Link>
-          <Link href="/painel/equipe">Equipe</Link>
-          <Link href="/painel/dna">DNA</Link>
-          {showAdmin && <Link href="/painel/admin">Fabricante</Link>}
-        </nav>
-        <span style={{ marginLeft: "auto", fontSize: 13, opacity: 0.7 }}>
-          {tenantName}
-        </span>
-        <form action={signOut}>
-          <button
-            type="submit"
-            style={{
-              font: "inherit",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              opacity: 0.7,
-              textDecoration: "underline",
-            }}
-          >
-            Sair
-          </button>
-        </form>
+    <>
+      <header className="appbar">
+        <Link href="/painel" className="brand-lockup">
+          <Image src="/icons/icon-192.png" alt="" width={30} height={30} priority />
+          <span>{BRAND_NAME}</span>
+        </Link>
+        <PainelNav items={nav} />
+        <div className="row" style={{ marginLeft: "auto", gap: 14 }}>
+          <span className="badge" title="Empresa ativa">
+            {tenantName}
+          </span>
+          <form action={signOut}>
+            <button type="submit" className="linklike" style={{ fontSize: 13 }}>
+              Sair
+            </button>
+          </form>
+        </div>
       </header>
-      {children}
-    </div>
+      <div className="container" style={{ padding: "28px 1.25rem 64px" }}>
+        {children}
+      </div>
+    </>
   );
 }

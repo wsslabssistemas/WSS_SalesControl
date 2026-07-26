@@ -1,0 +1,27 @@
+{
+  "name": "WSS Kairós — inteligência comercial",
+  "short_name": "WSS Kairós",
+  "description": "Motor de inteligência comercial. O momento certo para cada contato.",
+  "id": "/",
+  "start_url": "/painel",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#080b14",
+  "theme_color": "#080b14",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Responder", "short_name": "Responder", "url": "/painel/responder" },
+    { "name": "Contatos", "short_name": "Contatos", "url": "/painel/contatos" },
+    { "name": "Agenda", "short_name": "Agenda", "url": "/painel/agenda" }
+  ]
+}

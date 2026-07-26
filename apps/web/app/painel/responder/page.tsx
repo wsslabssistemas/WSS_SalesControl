@@ -77,7 +77,7 @@ export default async function ResponderPage({
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             font: "inherit",
             cursor: "pointer",

@@ -1,17 +1,7 @@
+import Image from "next/image";
+import Link from "next/link";
 import { login, signInWithGoogle } from "./actions";
 import { BRAND_NAME, MAKER } from "@/lib/brand";
-
-const field: React.CSSProperties = {
-  display: "block",
-  width: "100%",
-  padding: "10px 12px",
-  marginTop: 6,
-  border: "1px solid rgba(128,128,128,0.4)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "inherit",
-  font: "inherit",
-};
 
 export default async function LoginPage({
   searchParams,
@@ -21,88 +11,70 @@ export default async function LoginPage({
   const { erro } = await searchParams;
 
   return (
-    <main style={{ maxWidth: 360, margin: "0 auto", padding: "4rem 1.5rem" }}>
-      <p
-        style={{
-          fontSize: 12,
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          opacity: 0.55,
-        }}
-      >
-        {BRAND_NAME} · {MAKER}
-      </p>
-      <h1 style={{ fontSize: 24, margin: "4px 0 24px" }}>Entrar</h1>
+    <main
+      style={{
+        minHeight: "100dvh",
+        display: "grid",
+        placeItems: "center",
+        padding: "2rem 1.25rem",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <Link href="/" className="brand-lockup" style={{ justifyContent: "center", width: "100%", marginBottom: 22 }}>
+          <Image src="/icons/icon-192.png" alt="" width={36} height={36} priority />
+          <span style={{ fontSize: 17 }}>{BRAND_NAME}</span>
+        </Link>
 
-      <form action={signInWithGoogle}>
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid rgba(128,128,128,0.4)",
-            background: "transparent",
-            color: "inherit",
-            font: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          Entrar com Google
-        </button>
-      </form>
+        <div className="card" style={{ padding: "26px 24px" }}>
+          <h1 style={{ fontSize: 20 }}>Entrar</h1>
+          <p className="text-dim" style={{ fontSize: 14, marginTop: 4, marginBottom: 22 }}>
+            Acesse o painel da sua empresa.
+          </p>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          margin: "20px 0",
-          opacity: 0.5,
-          fontSize: 12,
-        }}
-      >
-        <span style={{ flex: 1, height: 1, background: "currentColor" }} />
-        ou
-        <span style={{ flex: 1, height: 1, background: "currentColor" }} />
+          <form action={signInWithGoogle}>
+            <button type="submit" className="btn btn-block">
+              <GoogleGlyph /> Entrar com Google
+            </button>
+          </form>
+
+          <div className="row" style={{ gap: 12, margin: "18px 0", color: "var(--text-faint)", fontSize: 12 }}>
+            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+            ou
+            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+          </div>
+
+          <form action={login}>
+            <label className="label" htmlFor="email">E-mail</label>
+            <input id="email" name="email" type="email" required autoComplete="email" placeholder="voce@empresa.com" />
+            <label className="label" htmlFor="password" style={{ marginTop: 16 }}>Senha</label>
+            <input id="password" name="password" type="password" required autoComplete="current-password" placeholder="••••••••" />
+            <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 22 }}>
+              Entrar
+            </button>
+          </form>
+
+          {erro && (
+            <p className="badge badge-danger" style={{ marginTop: 16, width: "100%", justifyContent: "center" }}>
+              {erro}
+            </p>
+          )}
+        </div>
+
+        <p className="text-faint" style={{ textAlign: "center", fontSize: 12, marginTop: 18 }}>
+          {MAKER}
+        </p>
       </div>
-
-      <form action={login}>
-        <label style={{ fontSize: 13, opacity: 0.8 }}>
-          E-mail
-          <input name="email" type="email" required autoComplete="email" style={field} />
-        </label>
-        <label style={{ fontSize: 13, opacity: 0.8, display: "block", marginTop: 16 }}>
-          Senha
-          <input
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            style={field}
-          />
-        </label>
-        <button
-          type="submit"
-          style={{
-            marginTop: 24,
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "none",
-            background: "#111",
-            color: "#fff",
-            font: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          Entrar
-        </button>
-      </form>
-
-      {erro && (
-        <p style={{ marginTop: 16, color: "#c0392b", fontSize: 13 }}>{erro}</p>
-      )}
     </main>
+  );
+}
+
+function GoogleGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden focusable="false">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
   );
 }

@@ -17,7 +17,7 @@ export function CopyButton({ text }: { text: string }) {
         padding: "8px 14px",
         borderRadius: 8,
         border: "none",
-        background: copied ? "#1e8449" : "#111",
+        background: copied ? "var(--success)" : "var(--brand-blue)",
         color: "#fff",
         font: "inherit",
         fontSize: 14,

@@ -72,7 +72,7 @@ export default async function EquipePage({
               fontSize: 14,
               padding: "8px 14px",
               borderRadius: 8,
-              background: "#111",
+              background: "var(--brand-blue)",
               color: "#fff",
               textDecoration: "none",
             }}
@@ -114,7 +114,7 @@ export default async function EquipePage({
         </div>
       )}
       {sp.ok && (
-        <p style={{ marginTop: 12, color: "#1e8449", fontSize: 13 }}>
+        <p style={{ marginTop: 12, color: "var(--success)", fontSize: 13 }}>
           Membro vinculado.
         </p>
       )}
@@ -192,7 +192,7 @@ export default async function EquipePage({
                   {mem.id !== membership.membershipId ? (
                     <Link
                       href={`/painel/equipe/${mem.id}/remover`}
-                      style={{ color: "#c0392b", fontSize: 13 }}
+                      style={{ color: "var(--danger)", fontSize: 13 }}
                     >
                       Remover
                     </Link>

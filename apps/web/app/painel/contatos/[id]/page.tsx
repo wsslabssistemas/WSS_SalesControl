@@ -111,7 +111,7 @@ export default async function ContatoDetalhe({
                 fontSize: 14,
                 background: "none",
                 border: "none",
-                color: "#c0392b",
+                color: "var(--danger)",
                 cursor: "pointer",
                 opacity: 0.8,
               }}
@@ -189,7 +189,7 @@ export default async function ContatoDetalhe({
             padding: "7px 14px",
             borderRadius: 7,
             border: "none",
-            background: "#111",
+            background: "var(--brand-blue)",
             color: "#fff",
             font: "inherit",
             cursor: "pointer",

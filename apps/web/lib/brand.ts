@@ -2,3 +2,4 @@
 // comercial custa uma linha — ou uma variável de ambiente, sem novo build.
 export const BRAND_NAME = process.env.NEXT_PUBLIC_BRAND_NAME ?? "WSS Kairós";
 export const MAKER = "WSS Labs";
+export const TAGLINE = "Inteligência comercial — o momento certo para cada contato.";

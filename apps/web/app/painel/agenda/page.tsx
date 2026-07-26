@@ -38,8 +38,8 @@ export default async function AgendaPage() {
   );
 
   const badge = (days: number) => {
-    if (days < 0) return { txt: `${-days}d atrás`, bg: "rgba(192,57,43,0.12)", fg: "#c0392b" };
-    if (days === 0) return { txt: "hoje", bg: "rgba(230,126,34,0.15)", fg: "#b9770e" };
+    if (days < 0) return { txt: `${-days}d atrás`, bg: "rgba(192,57,43,0.12)", fg: "var(--danger)" };
+    if (days === 0) return { txt: "hoje", bg: "rgba(230,126,34,0.15)", fg: "var(--warn)" };
     return { txt: `em ${days}d`, bg: "rgba(128,128,128,0.12)", fg: "inherit" };
   };
 
