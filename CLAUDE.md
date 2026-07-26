@@ -139,9 +139,13 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Painel do fabricante (`/painel/admin`) — cross-tenant via service_role, gated por `PLATFORM_ADMIN_EMAILS`; empresas, atividade e custo de IA (`usage_ledger`)
 - [x] Inicio vira painel (números, toques de hoje, funil, atalhos)
 - [x] Equipe com desempenho (cadastros, em aberto, matrículas) + taxa de conversão no funil — etapa "ganha" no manifesto (`0011`, `won`)
-- [x] Responder (console manual, SEM IA) — situação → estratégia da biblioteca (service_role) + fatos do DNA + trava anti-invenção; a pessoa escreve e manda
+- [x] Responder (console manual, SEM IA) — cola a mensagem → casa com a biblioteca por palavra-chave (`lib/match`) → resposta pronta pra copiar
+- [x] Biblioteca WSS importada no banco (86 respostas + 9 réguas de Relacionamento Ativo, `source=tenant`, coluna `answer`) — ativo, não commitado
 - [x] Fabricante financeiro (`0012_tenant_payments`) — registrar pagamentos por empresa; painel mostra recebido, custo de IA e margem (dado só do fabricante)
-- [ ] Geração automática de mensagem (versão paga, precisa de chave de IA); questionário de onboarding; calendário na agenda; configurações; canais automáticos (WhatsApp oficial + Facebook)
+- [ ] **Visual profissional** (redesign, paleta do logo, referências mundiais) + logo em `apps/web/public/logo.png`
+- [ ] **App instalável (PWA)** — PC e celular
+- [ ] Versão automática: IA que adapta ao contexto (paga) + anti-bloqueio + canais (WhatsApp Cloud API, Facebook Pages) + dashboard de tokens — roteiro na memória `roadmap-expandido`
+- [ ] Questionário de onboarding; calendário na agenda; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
 - [ ] Motor de decisão (RF-05)
 
