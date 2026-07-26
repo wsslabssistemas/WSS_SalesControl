@@ -3,6 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts } from "@/lib/agenda";
+import AgendaCalendar, { type CalItem } from "./AgendaCalendar";
+
+function localISO(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
 
 export default async function AgendaPage() {
   const membership = await getActiveTenant();
@@ -10,8 +17,8 @@ export default async function AgendaPage() {
   if (!tenant) {
     return (
       <main>
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>Agenda</h1>
-        <p style={{ opacity: 0.85 }}>Sem empresa vinculada.</p>
+        <h1>Agenda</h1>
+        <p className="text-dim">Sem empresa vinculada.</p>
       </main>
     );
   }
@@ -28,75 +35,58 @@ export default async function AgendaPage() {
     .in("journey_stage", phasedKeys.length ? phasedKeys : ["__none__"]);
 
   const alerts = computeAlerts(
-    (data as {
-      id: string;
-      name: string;
-      journey_stage: string;
-      stage_entered_at: string;
-    }[]) ?? [],
+    (data as { id: string; name: string; journey_stage: string; stage_entered_at: string }[]) ?? [],
     stages,
   );
 
-  const badge = (days: number) => {
-    if (days < 0) return { txt: `${-days}d atrás`, bg: "rgba(192,57,43,0.12)", fg: "var(--danger)" };
-    if (days === 0) return { txt: "hoje", bg: "rgba(230,126,34,0.15)", fg: "var(--warn)" };
-    return { txt: `em ${days}d`, bg: "rgba(128,128,128,0.12)", fg: "inherit" };
-  };
+  const items: CalItem[] = alerts.map((a) => ({
+    contactId: a.contactId,
+    name: a.name,
+    stageLabel: a.stageLabel,
+    phaseLabel: a.phaseLabel,
+    dateISO: localISO(a.date),
+  }));
+
+  const atrasados = alerts.filter((a) => a.days < 0);
+  const hoje = alerts.filter((a) => a.days === 0);
 
   return (
     <main>
-      <h1 style={{ fontSize: 24, marginTop: 0 }}>Agenda</h1>
-      <p style={{ opacity: 0.7 }}>
-        Toques a fazer, calculados da jornada de cada contato.
+      <h1>Agenda</h1>
+      <p className="text-dim" style={{ marginTop: 4 }}>
+        Toques a fazer, calculados das fases da jornada de cada contato.
       </p>
 
-      {alerts.length === 0 ? (
-        <p style={{ opacity: 0.6, marginTop: 16 }}>
-          Nenhum toque pendente. Ao mover um contato para uma etapa com fases
-          (ex.: semana experimental), os lembretes aparecem aqui.
-        </p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0, marginTop: 16 }}>
-          {alerts.map((a, i) => {
-            const b = badge(a.days);
-            return (
-              <li
-                key={`${a.contactId}-${i}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "11px 0",
-                  borderBottom: "1px solid rgba(128,128,128,0.15)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    padding: "2px 9px",
-                    borderRadius: 999,
-                    whiteSpace: "nowrap",
-                    background: b.bg,
-                    color: b.fg,
-                  }}
-                >
-                  {b.txt}
-                </span>
-                <span style={{ flex: 1 }}>
-                  <Link href={`/painel/contatos/${a.contactId}`}>{a.name}</Link>
-                  <span style={{ opacity: 0.6, fontSize: 13 }}>
-                    {" "}
-                    · {a.stageLabel}: {a.phaseLabel}
-                  </span>
-                </span>
-                <span style={{ fontSize: 13, opacity: 0.6, whiteSpace: "nowrap" }}>
-                  {a.date.toLocaleDateString("pt-BR")}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+      {(atrasados.length > 0 || hoje.length > 0) && (
+        <div className="row wrap mt-16" style={{ gap: 10 }}>
+          {atrasados.length > 0 && (
+            <span className="badge badge-danger">{atrasados.length} atrasado{atrasados.length === 1 ? "" : "s"}</span>
+          )}
+          {hoje.length > 0 && (
+            <span className="badge badge-warn">{hoje.length} para hoje</span>
+          )}
+          <span className="row wrap" style={{ gap: 8 }}>
+            {[...atrasados, ...hoje].slice(0, 5).map((a, i) => (
+              <Link key={`${a.contactId}-${i}`} href={`/painel/contatos/${a.contactId}`} className="badge">
+                {a.name} · {a.phaseLabel}
+              </Link>
+            ))}
+          </span>
+        </div>
       )}
+
+      <div className="mt-16">
+        {alerts.length === 0 ? (
+          <div className="card">
+            <p className="text-dim" style={{ margin: 0 }}>
+              Nenhum toque pendente. Ao mover um contato para uma etapa com fases
+              (ex.: semana experimental), os lembretes aparecem no calendário.
+            </p>
+          </div>
+        ) : (
+          <AgendaCalendar items={items} />
+        )}
+      </div>
     </main>
   );
 }

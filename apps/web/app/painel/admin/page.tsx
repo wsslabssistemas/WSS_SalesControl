@@ -78,6 +78,10 @@ export default async function AdminPage() {
     arr.filter((x) => x.tenant_id === id).length;
   const cost = (id: string) =>
     us.filter((u) => u.tenant_id === id).reduce((s, u) => s + (u.cost_cents ?? 0), 0);
+  const tokens = (id: string) =>
+    us
+      .filter((u) => u.tenant_id === id)
+      .reduce((s, u) => s + (u.tokens_in ?? 0) + (u.tokens_out ?? 0), 0);
 
   const recebido = (id: string) =>
     ps
@@ -86,71 +90,68 @@ export default async function AdminPage() {
   const margem = (id: string) => recebido(id) - cost(id);
 
   const totalCost = us.reduce((s, u) => s + (u.cost_cents ?? 0), 0);
+  const totalTokens = us.reduce((s, u) => s + (u.tokens_in ?? 0) + (u.tokens_out ?? 0), 0);
   const totalRecebido = ps
     .filter((p) => p.status === "paid")
     .reduce((s, p) => s + (p.amount_cents ?? 0), 0);
+  const fmt = (n: number) => n.toLocaleString("pt-BR");
 
   return (
     <main>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>Painel do fabricante</h1>
-        <Link href="/painel/admin/pagamentos" style={{ fontSize: 14 }}>
+      <div className="between">
+        <h1>Painel do fabricante</h1>
+        <Link href="/painel/admin/pagamentos" className="btn btn-sm btn-ghost">
           Pagamentos →
         </Link>
       </div>
-      <p style={{ opacity: 0.7 }}>
-        Todas as empresas do WSS Kairós. Receita − custo de IA = sua margem.
-        Cobrança do cliente é por atendimento, nunca por token.
+      <p className="text-dim" style={{ marginTop: 4 }}>
+        Todas as empresas do WSS Kairós. Receita − custo de IA = sua margem. Consumo
+        de IA por empresa em tokens e em R$. Cobrança do cliente é por atendimento.
       </p>
 
-      <div style={{ display: "flex", gap: 24, margin: "16px 0 8px", fontSize: 14, flexWrap: "wrap" }}>
-        <span>
-          <strong>{ts.length}</strong> empresas
-        </span>
-        <span>
-          Recebido: <strong>{brl(totalRecebido)}</strong>
-        </span>
-        <span>
-          Custo de IA: <strong>{brl(totalCost)}</strong>
-        </span>
-        <span>
-          Margem: <strong>{brl(totalRecebido - totalCost)}</strong>
-        </span>
+      <div className="stat-grid mt-24">
+        <div className="card"><div className="stat-num">{ts.length}</div><div className="stat-label">Empresas</div></div>
+        <div className="card"><div className="stat-num">{brl(totalRecebido)}</div><div className="stat-label">Recebido</div></div>
+        <div className="card"><div className="stat-num">{brl(totalCost)}</div><div className="stat-label">Custo de IA</div></div>
+        <div className="card"><div className="stat-num">{fmt(totalTokens)}</div><div className="stat-label">Tokens</div></div>
+        <div className="card"><div className="stat-num" style={{ color: "var(--brand-cyan)" }}>{brl(totalRecebido - totalCost)}</div><div className="stat-label">Margem</div></div>
       </div>
 
-      <table
-        style={{ width: "100%", borderCollapse: "collapse", marginTop: 12, fontSize: 14 }}
-      >
-        <thead>
-          <tr style={{ textAlign: "left", opacity: 0.6, fontSize: 12 }}>
-            <th style={{ padding: "8px 0" }}>Empresa</th>
-            <th>Plano</th>
-            <th>Status</th>
-            <th style={{ textAlign: "right" }}>Membros</th>
-            <th style={{ textAlign: "right" }}>Contatos</th>
-            <th style={{ textAlign: "right" }}>Recebido</th>
-            <th style={{ textAlign: "right" }}>Custo IA</th>
-            <th style={{ textAlign: "right" }}>Margem</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ts.map((t) => (
-            <tr key={t.id} style={{ borderTop: "1px solid rgba(128,128,128,0.15)" }}>
-              <td style={{ padding: "10px 0" }}>
-                {t.name}
-                <span style={{ opacity: 0.5, fontSize: 12 }}> · {t.slug}</span>
-              </td>
-              <td>{t.plan}</td>
-              <td>{t.status}</td>
-              <td style={{ textAlign: "right" }}>{count(ms, t.id)}</td>
-              <td style={{ textAlign: "right" }}>{count(cs, t.id)}</td>
-              <td style={{ textAlign: "right" }}>{brl(recebido(t.id))}</td>
-              <td style={{ textAlign: "right" }}>{brl(cost(t.id))}</td>
-              <td style={{ textAlign: "right", fontWeight: 600 }}>{brl(margem(t.id))}</td>
+      <div className="card mt-24" style={{ padding: 0, overflowX: "auto" }}>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th>Plano</th>
+              <th>Status</th>
+              <th style={{ textAlign: "right" }}>Membros</th>
+              <th style={{ textAlign: "right" }}>Contatos</th>
+              <th style={{ textAlign: "right" }}>Tokens</th>
+              <th style={{ textAlign: "right" }}>Custo IA</th>
+              <th style={{ textAlign: "right" }}>Recebido</th>
+              <th style={{ textAlign: "right" }}>Margem</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ts.map((t) => (
+              <tr key={t.id}>
+                <td>
+                  {t.name}
+                  <span className="text-faint" style={{ fontSize: 12 }}> · {t.slug}</span>
+                </td>
+                <td><span className="badge">{t.plan}</span></td>
+                <td>{t.status}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{count(ms, t.id)}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{count(cs, t.id)}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(tokens(t.id))}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{brl(cost(t.id))}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{brl(recebido(t.id))}</td>
+                <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{brl(margem(t.id))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }
