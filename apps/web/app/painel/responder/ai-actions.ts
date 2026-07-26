@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
-import { aiModel, AI_MODEL, hasAIKey, estimateCostCents, tokensOf } from "@/lib/ai";
+import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { revalidatePath } from "next/cache";
 
 export type GerarResult =
@@ -177,7 +177,7 @@ Analise e gere a melhor resposta agora.`;
   return { ok: true, data: object };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: `Erro no motor de IA: ${msg}` };
+    return { ok: false, error: `Erro no motor de IA: ${msg} — [${keyHint()}]` };
   }
 }
 

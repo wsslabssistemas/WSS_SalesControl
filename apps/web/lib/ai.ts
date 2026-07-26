@@ -14,6 +14,14 @@ export function hasAIKey(): boolean {
   return !!process.env.AI_API_KEY;
 }
 
+// Diagnóstico mascarado: mostra só o prefixo (público) e o tamanho da chave,
+// para descobrir valor torto (linha inteira colada, chave cortada, provedor errado).
+export function keyHint(): string {
+  const k = (process.env.AI_API_KEY ?? "").trim();
+  if (!k) return "AI_API_KEY vazia";
+  return `prefixo="${k.slice(0, 7)}…", ${k.length} caracteres, provider=${PROVIDER}`;
+}
+
 const apiKey = (process.env.AI_API_KEY ?? "").trim(); // trim: evita espaço/quebra colada
 export const aiModel = IS_OPENAI
   ? createOpenAI({ apiKey })(AI_MODEL)
