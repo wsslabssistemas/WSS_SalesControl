@@ -3,6 +3,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
@@ -126,6 +127,19 @@ export async function gerarResposta(input: {
     contactBlock = `Cliente: ${contact?.name ?? "?"}\nEtapa atual: ${stageLabel}\nHISTÓRICO (não repita abordagens já usadas; evolua a conversa):\n${histText}`;
   }
 
+  // Aprendizado por feedback: respostas que JÁ converteram (reuso do que funciona).
+  const { data: winData } = await supabase
+    .from("interactions")
+    .select("content, technique")
+    .eq("tenant_id", tenant.id)
+    .eq("direction", "outbound")
+    .in("outcome", ["matriculou", "marcou_visita"])
+    .order("occurred_at", { ascending: false })
+    .limit(4);
+  const winners = ((winData as { content: string; technique: string | null }[] | null) ?? [])
+    .map((w) => `Técnica: ${w.technique ?? "—"}\nResposta que converteu: ${w.content}`)
+    .join("\n---\n");
+
   const stageList = stages.map((s) => `${s.key} = ${s.label}${s.won ? " (ganho)" : ""}${s.terminal ? " (final)" : ""}`).join("; ");
   const hardRules = Array.isArray(manifest.hard_rules) ? (manifest.hard_rules as string[]).join("; ") : "";
 
@@ -147,6 +161,9 @@ ${fatos(sections)}
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}
 
+RESPOSTAS QUE JÁ CONVERTERAM NESTA EMPRESA (reuse o que funcionou com clientes parecidos, adaptando ao contexto atual):
+${winners || "(ainda sem histórico de conversões registrado)"}
+
 CONTEXTO DO CLIENTE:
 ${contactBlock}
 
@@ -163,16 +180,23 @@ Analise e gere a melhor resposta agora.`;
   const validKeys = new Set(stages.map((s) => s.key));
   if (!validKeys.has(object.status_sugerido)) object.status_sugerido = "";
 
-  // Registra custo/tokens no ledger (por empresa).
+  // Registra custo/tokens no ledger (por empresa). A usage_ledger só aceita
+  // escrita do service_role (RLS) — por isso o admin client. Best-effort: se
+  // faltar a chave de service_role, a geração não quebra.
   const t = tokensOf(usage);
-  await supabase.from("usage_ledger").insert({
-    tenant_id: tenant.id,
-    feature: "responder_ai",
-    model: AI_MODEL,
-    tokens_in: t.in,
-    tokens_out: t.out,
-    cost_cents: estimateCostCents(t.in, t.out),
-  });
+  try {
+    const admin = createAdminClient();
+    await admin.from("usage_ledger").insert({
+      tenant_id: tenant.id,
+      feature: "responder_ai",
+      model: AI_MODEL,
+      tokens_in: t.in,
+      tokens_out: t.out,
+      cost_cents: estimateCostCents(t.in, t.out),
+    });
+  } catch {
+    // medição é best-effort; não interrompe a resposta ao vendedor
+  }
 
   return { ok: true, data: object };
   } catch (e) {
@@ -187,7 +211,8 @@ export async function saveInteraction(
   contactId: string,
   inbound: string,
   outbound: string,
-): Promise<{ ok: boolean }> {
+  technique?: string,
+): Promise<{ ok: boolean; id?: string }> {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant || !contactId) return { ok: false };
@@ -199,18 +224,55 @@ export async function saveInteraction(
     created_by: membership!.membershipId,
     channel: "whatsapp",
   };
-  const rows: Record<string, unknown>[] = [];
-  if (inbound.trim())
-    rows.push({ ...base, direction: "inbound", input_kind: "customer_message", content: inbound.trim() });
-  if (outbound.trim())
-    rows.push({ ...base, direction: "outbound", input_kind: "agent_briefing", content: outbound.trim() });
-  if (!rows.length) return { ok: false };
 
-  const { error } = await supabase.from("interactions").insert(rows);
-  if (error) return { ok: false };
+  if (inbound.trim()) {
+    await supabase.from("interactions").insert({
+      ...base,
+      direction: "inbound",
+      input_kind: "customer_message",
+      content: inbound.trim(),
+    });
+  }
+
+  let id: string | undefined;
+  if (outbound.trim()) {
+    const { data, error } = await supabase
+      .from("interactions")
+      .insert({
+        ...base,
+        direction: "outbound",
+        input_kind: "agent_briefing",
+        content: outbound.trim(),
+        technique: technique?.trim() || null,
+      })
+      .select("id")
+      .single();
+    if (error) return { ok: false };
+    id = (data as { id: string }).id;
+  }
+
   revalidatePath(`/painel/contatos/${contactId}`);
   revalidatePath("/painel/responder");
-  return { ok: true };
+  return { ok: true, id };
+}
+
+// Registra o desfecho de um atendimento (respondeu/marcou/matriculou/sumiu).
+// É o feedback que alimenta o "aprender o que converte".
+export async function setOutcome(
+  interactionId: string,
+  outcome: "respondeu" | "marcou_visita" | "matriculou" | "sumiu",
+): Promise<{ ok: boolean }> {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant || !interactionId) return { ok: false };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("interactions")
+    .update({ outcome })
+    .eq("id", interactionId)
+    .eq("tenant_id", tenant.id);
+  revalidatePath("/painel/responder");
+  return { ok: !error };
 }
 
 // Aplica o avanço de etapa sugerido pela IA (registra no histórico da jornada).

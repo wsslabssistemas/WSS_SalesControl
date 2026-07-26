@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { gerarResposta, applyStage, saveInteraction, type AiAnswer } from "./ai-actions";
+import { gerarResposta, applyStage, saveInteraction, setOutcome, type AiAnswer } from "./ai-actions";
 import { CopyButton } from "./CopyButton";
+
+const OUTCOMES: { key: "respondeu" | "marcou_visita" | "matriculou" | "sumiu"; label: string }[] = [
+  { key: "respondeu", label: "Respondeu" },
+  { key: "marcou_visita", label: "Marcou visita" },
+  { key: "matriculou", label: "Fechou" },
+  { key: "sumiu", label: "Sumiu" },
+];
 
 type StageLite = { key: string; label: string };
 
@@ -21,6 +28,8 @@ export default function GerarIA({
   const [applied, setApplied] = useState(false);
   const [usedMessage, setUsedMessage] = useState("");
   const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [outcome, setOutcomeSel] = useState<string | null>(null);
 
   const run = async () => {
     // Lê a caixa de texto ao vivo (não depende de clicar em "Buscar" antes).
@@ -37,6 +46,8 @@ export default function GerarIA({
     setData(null);
     setApplied(false);
     setSaved(false);
+    setSavedId(null);
+    setOutcomeSel(null);
     setUsedMessage(msg);
     try {
       const res = await gerarResposta({ contactId, message: msg });
@@ -99,8 +110,9 @@ export default function GerarIA({
                       type="button"
                       className="btn btn-sm btn-ghost"
                       onClick={async () => {
-                        const r = await saveInteraction(contactId, usedMessage, data.resposta_sugerida);
+                        const r = await saveInteraction(contactId, usedMessage, data.resposta_sugerida, data.tecnica);
                         setSaved(r.ok);
+                        setSavedId(r.id ?? null);
                       }}
                     >
                       Registrar no cliente
@@ -112,6 +124,32 @@ export default function GerarIA({
                   </span>
                 )}
               </div>
+              {savedId && (
+                <div className="mt-16">
+                  <p className="eyebrow" style={{ marginBottom: 8 }}>
+                    Deu no quê? (ensina o sistema o que converte)
+                  </p>
+                  {outcome ? (
+                    <span className="badge badge-success">Resultado registrado: {OUTCOMES.find((o) => o.key === outcome)?.label}</span>
+                  ) : (
+                    <div className="row wrap" style={{ gap: 8 }}>
+                      {OUTCOMES.map((o) => (
+                        <button
+                          key={o.key}
+                          type="button"
+                          className="btn btn-sm btn-ghost"
+                          onClick={async () => {
+                            const r = await setOutcome(savedId, o.key);
+                            if (r.ok) setOutcomeSel(o.key);
+                          }}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
