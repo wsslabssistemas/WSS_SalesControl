@@ -1,7 +1,9 @@
-// Casamento por palavra-chave (sem IA): pontua a sobreposição de palavras
-// entre a mensagem colada e a pergunta/categoria de cada entrada da biblioteca.
+// Casamento por palavra-chave (sem IA): pontua a sobreposição entre a mensagem
+// colada e VÁRIOS campos de cada entrada da biblioteca (gatilhos, categoria,
+// técnica, estratégia, resposta). Casamento parcial (prefixo/inclusão) para não
+// falhar por plural ou grafia. Objetivo: recall alto — raramente voltar vazio.
 const STOP = new Set(
-  "a o e de da do das dos em no na nos nas um uma uns umas que qual quais quanto quanta quantos custa custam e eh sao para pra por com sem me te se ao aos das isso esse essa este esta vou quero queria gostaria saber ter tem tenho voce voces vcs oi ola bom boa dia tarde noite sobre mais menos meu minha teu tua nossa seu sua the".split(
+  "a o e de da do das dos em no na nos nas um uma uns umas que qual quais quanto quanta quantos custa custam eh sao para pra por com sem me te se ao aos isso esse essa este esta vou quero queria gostaria saber ter tem tenho voce voces vcs oi ola bom boa dia tarde noite sobre mais menos meu minha teu tua nossa seu sua the of".split(
     /\s+/,
   ),
 );
@@ -16,20 +18,65 @@ function toks(s: string): string[] {
     .filter((w) => w.length > 2 && !STOP.has(w));
 }
 
-export function matchEntries<
-  T extends { pergunta: string; category?: string | null },
->(query: string, entries: T[], limit = 4): T[] {
-  const q = new Set(toks(query));
-  if (q.size === 0) return [];
+export type MatchInput = {
+  trigger_questions?: string[] | null;
+  category?: string | null;
+  technique?: string | null;
+  strategy?: string | null;
+  answer?: string | null;
+};
+
+// Campos com pesos: um gatilho vale mais que uma menção solta na resposta.
+function haystack(e: MatchInput): { toks: string[]; weight: number }[] {
+  return [
+    { toks: toks((e.trigger_questions ?? []).join(" ")), weight: 3 },
+    { toks: toks(e.category ?? ""), weight: 2 },
+    { toks: toks(e.technique ?? ""), weight: 1.5 },
+    { toks: toks(e.strategy ?? ""), weight: 1 },
+    { toks: toks(e.answer ?? ""), weight: 0.6 },
+  ];
+}
+
+function fieldScore(qtok: string, field: string[]): number {
+  for (const w of field) {
+    if (w === qtok) return 1; // igual
+  }
+  if (qtok.length >= 4) {
+    for (const w of field) {
+      if (w.startsWith(qtok) || qtok.startsWith(w) || w.includes(qtok))
+        return 0.5; // parcial
+    }
+  }
+  return 0;
+}
+
+export function matchEntries<T extends MatchInput>(
+  query: string,
+  entries: T[],
+  limit = 4,
+): T[] {
+  const q = [...new Set(toks(query))];
+  if (q.length === 0) return [];
   return entries
     .map((e) => {
-      const et = toks(`${e.pergunta} ${e.category ?? ""}`);
+      const fields = haystack(e);
       let score = 0;
-      for (const w of et) if (q.has(w)) score++;
+      for (const qtok of q) {
+        let best = 0;
+        for (const f of fields) best = Math.max(best, fieldScore(qtok, f.toks) * f.weight);
+        score += best;
+      }
       return { e, score };
     })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.e);
+}
+
+// Lista de categorias distintas (para navegação quando o casamento vem vazio).
+export function distinctCategories(entries: MatchInput[]): string[] {
+  return [...new Set(entries.map((e) => (e.category ?? "").trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b, "pt-BR"),
+  );
 }
