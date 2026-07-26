@@ -61,154 +61,84 @@ export default async function EquipePage({
 
   return (
     <main>
-      <div
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-      >
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>Equipe</h1>
+      <div className="between">
+        <h1>Equipe</h1>
         {isAdmin && (
-          <Link
-            href="/painel/equipe/adicionar"
-            style={{
-              fontSize: 14,
-              padding: "8px 14px",
-              borderRadius: 8,
-              background: "var(--brand-blue)",
-              color: "#fff",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/painel/equipe/adicionar" className="btn btn-sm btn-primary">
             + Adicionar
           </Link>
         )}
       </div>
 
       {inviteLink && (
-        <div
-          style={{
-            marginTop: 14,
-            padding: 12,
-            borderRadius: 8,
-            border: "1px solid rgba(39,174,96,0.4)",
-            background: "rgba(39,174,96,0.08)",
-          }}
-        >
-          <p style={{ margin: "0 0 6px", fontSize: 13 }}>
-            Convite gerado. Envie este link para a pessoa (WhatsApp, e-mail) — ela
-            define a própria senha:
+        <div className="card mt-16" style={{ borderColor: "var(--border-brand)" }}>
+          <p style={{ margin: "0 0 8px", fontSize: 13 }}>
+            <span className="badge badge-success" style={{ marginRight: 8 }}>Convite gerado</span>
+            Envie este link para a pessoa (WhatsApp, e-mail) — ela define a própria senha:
           </p>
-          <input
-            readOnly
-            value={inviteLink}
-            onFocus={(e) => e.currentTarget.select()}
-            style={{
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 7,
-              border: "1px solid rgba(128,128,128,0.4)",
-              background: "transparent",
-              color: "inherit",
-              font: "inherit",
-              fontSize: 12,
-            }}
-          />
+          <input readOnly value={inviteLink} style={{ fontSize: 12 }} />
         </div>
       )}
-      {sp.ok && (
-        <p style={{ marginTop: 12, color: "var(--success)", fontSize: 13 }}>
-          Membro vinculado.
-        </p>
-      )}
+      {sp.ok && <p className="badge badge-success mt-16">Membro vinculado.</p>}
 
-      <table
-        style={{ width: "100%", borderCollapse: "collapse", marginTop: 20, fontSize: 14 }}
-      >
-        <thead>
-          <tr style={{ textAlign: "left", opacity: 0.6, fontSize: 12 }}>
-            <th style={{ padding: "8px 0" }}>Pessoa</th>
-            <th>Papel</th>
-            <th style={{ textAlign: "right" }}>Cadastros</th>
-            <th style={{ textAlign: "right" }}>Em aberto</th>
-            <th style={{ textAlign: "right" }}>Matrículas</th>
-            {isAdmin && <th style={{ textAlign: "right" }}>Ações</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {team.map((mem) => (
-            <tr key={mem.id} style={{ borderTop: "1px solid rgba(128,128,128,0.15)" }}>
-              <td style={{ padding: "10px 0" }}>
-                {mem.user?.full_name ?? mem.user?.email ?? "—"}
-                {mem.user?.full_name && (
-                  <span style={{ opacity: 0.5, fontSize: 12 }}> · {mem.user?.email}</span>
-                )}
-              </td>
-              <td>
-                {isAdmin && mem.id !== membership.membershipId ? (
-                  <form action={changeRole.bind(null, mem.id)} style={{ display: "flex", gap: 6 }}>
-                    <select
-                      name="role"
-                      defaultValue={mem.role}
-                      style={{
-                        padding: "4px 8px",
-                        borderRadius: 6,
-                        border: "1px solid rgba(128,128,128,0.4)",
-                        background: "transparent",
-                        color: "inherit",
-                        font: "inherit",
-                        fontSize: 13,
-                      }}
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      style={{
-                        font: "inherit",
-                        fontSize: 12,
-                        background: "none",
-                        border: "1px solid rgba(128,128,128,0.4)",
-                        borderRadius: 6,
-                        padding: "3px 8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Salvar
-                    </button>
-                  </form>
-                ) : (
-                  mem.role
-                )}
-              </td>
-              <td style={{ textAlign: "right" }}>{cadastros(mem.id)}</td>
-              <td style={{ textAlign: "right" }}>{emAberto(mem.id)}</td>
-              <td style={{ textAlign: "right", fontWeight: 600 }}>
-                {matriculas(mem.id)}
-              </td>
-              {isAdmin && (
-                <td style={{ textAlign: "right" }}>
-                  {mem.id !== membership.membershipId ? (
-                    <Link
-                      href={`/painel/equipe/${mem.id}/remover`}
-                      style={{ color: "var(--danger)", fontSize: 13 }}
-                    >
-                      Remover
-                    </Link>
-                  ) : (
-                    <span style={{ opacity: 0.4, fontSize: 13 }}>você</span>
+      <div className="card mt-24" style={{ padding: 0, overflowX: "auto" }}>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Pessoa</th>
+              <th>Papel</th>
+              <th style={{ textAlign: "right" }}>Cadastros</th>
+              <th style={{ textAlign: "right" }}>Em aberto</th>
+              <th style={{ textAlign: "right" }}>Matrículas</th>
+              {isAdmin && <th style={{ textAlign: "right" }}>Ações</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {team.map((mem) => (
+              <tr key={mem.id}>
+                <td>
+                  {mem.user?.full_name ?? mem.user?.email ?? "—"}
+                  {mem.user?.full_name && (
+                    <span className="text-faint" style={{ fontSize: 12 }}> · {mem.user?.email}</span>
                   )}
                 </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <td>
+                  {isAdmin && mem.id !== membership.membershipId ? (
+                    <form action={changeRole.bind(null, mem.id)} className="row" style={{ gap: 6 }}>
+                      <select name="role" defaultValue={mem.role} style={{ width: "auto", padding: "5px 8px", fontSize: 13 }}>
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                      <button type="submit" className="btn btn-sm btn-ghost">Salvar</button>
+                    </form>
+                  ) : (
+                    <span className="badge">{mem.role}</span>
+                  )}
+                </td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{cadastros(mem.id)}</td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{emAberto(mem.id)}</td>
+                <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{matriculas(mem.id)}</td>
+                {isAdmin && (
+                  <td style={{ textAlign: "right" }}>
+                    {mem.id !== membership.membershipId ? (
+                      <Link href={`/painel/equipe/${mem.id}/remover`} style={{ color: "var(--danger)", fontSize: 13 }}>
+                        Remover
+                      </Link>
+                    ) : (
+                      <span className="text-faint" style={{ fontSize: 13 }}>você</span>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <p style={{ marginTop: 24, fontSize: 13, opacity: 0.6 }}>
-        Cadastros e matrículas vêm dos contatos de cada vendedor. Atendimentos e
-        tempo de resposta entram quando o console de mensagens existir.
+      <p className="text-faint" style={{ marginTop: 20, fontSize: 13 }}>
+        Cadastros e matrículas vêm dos contatos de cada vendedor. Tempo de resposta
+        entra com o histórico de atendimentos.
       </p>
     </main>
   );

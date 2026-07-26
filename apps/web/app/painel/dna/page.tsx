@@ -52,72 +52,49 @@ export default async function DnaPage() {
   };
 
   const prontas = sections.filter((s) => isFilled(s.key)).length;
+  const pct = sections.length ? Math.round((prontas / sections.length) * 100) : 0;
 
   return (
-    <main>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>DNA da empresa</h1>
-        <Link
-          href="/painel/dna/editar"
-          style={{
-            fontSize: 14,
-            padding: "8px 14px",
-            borderRadius: 8,
-            background: "var(--brand-blue)",
-            color: "#fff",
-            textDecoration: "none",
-          }}
-        >
+    <main style={{ maxWidth: 640 }}>
+      <div className="between">
+        <h1>DNA da empresa</h1>
+        <Link href="/painel/dna/editar" className="btn btn-sm btn-primary">
           Editar DNA
         </Link>
       </div>
-      <p style={{ opacity: 0.7 }}>
-        Os fatos que a IA pode afirmar. O que não estiver aqui, ela não inventa —
-        escala para um humano. <strong>{prontas}</strong>/{sections.length} seções
-        preenchidas.
+      <p className="text-dim" style={{ marginTop: 4 }}>
+        Os fatos que o sistema pode afirmar. O que não estiver aqui, ele não inventa —
+        escala para um humano.
       </p>
 
-      <ul style={{ listStyle: "none", padding: 0, marginTop: 20 }}>
-        {sections.map((s) => {
+      <div className="card mt-16">
+        <div className="between" style={{ marginBottom: 10 }}>
+          <strong>{prontas}/{sections.length} seções preenchidas</strong>
+          <span className="brand-text" style={{ fontWeight: 700 }}>{pct}%</span>
+        </div>
+        <div className="bar-track">
+          <div className="bar-fill" style={{ width: `${pct}%`, transition: "width .4s ease" }} />
+        </div>
+      </div>
+
+      <div className="card mt-16">
+        {sections.map((s, i) => {
           const ok = isFilled(s.key);
           return (
-            <li
+            <div
               key={s.key}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "11px 0",
-                borderBottom: "1px solid rgba(128,128,128,0.15)",
-              }}
+              className="row"
+              style={{ gap: 10, padding: "11px 0", borderBottom: i < sections.length - 1 ? "1px solid var(--border)" : "none" }}
             >
-              <span
-                style={{
-                  fontSize: 12,
-                  padding: "2px 9px",
-                  borderRadius: 999,
-                  whiteSpace: "nowrap",
-                  background: ok ? "rgba(39,174,96,0.15)" : "rgba(192,57,43,0.12)",
-                  color: ok ? "var(--success)" : "var(--danger)",
-                }}
-              >
+              <span className={ok ? "badge badge-success" : "badge badge-danger"}>
                 {ok ? "preenchido" : "falta"}
               </span>
-              <span>{s.label}</span>
-              {s.required && (
-                <span style={{ fontSize: 11, opacity: 0.5 }}>obrigatória</span>
-              )}
-            </li>
+              <span className="grow">{s.label}</span>
+              {s.required && <span className="text-faint" style={{ fontSize: 11 }}>obrigatória</span>}
+            </div>
           );
         })}
-      </ul>
-
+      </div>
     </main>
   );
 }
