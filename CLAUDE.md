@@ -142,8 +142,14 @@ Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe ap
 - [x] Responder (console manual, SEM IA) — cola a mensagem → casa com a biblioteca por palavra-chave (`lib/match`) → resposta pronta pra copiar
 - [x] Biblioteca WSS importada no banco (86 respostas + 9 réguas de Relacionamento Ativo, `source=tenant`, coluna `answer`) — ativo, não commitado
 - [x] Fabricante financeiro (`0012_tenant_payments`) — registrar pagamentos por empresa; painel mostra recebido, custo de IA e margem (dado só do fabricante)
-- [ ] **Visual profissional** (redesign, paleta do logo, referências mundiais) + logo em `apps/web/public/logo.png`
-- [ ] **App instalável (PWA)** — PC e celular
+- [x] **Visual profissional** — sistema de design (`globals.css`: tokens da
+      paleta do logo azul→ciano→verde em fundo marinho, Inter, classes `card`/
+      `btn`/`stat`/`badge`/`table`/nav; tema escuro). Landing, login, shell do
+      painel e início repaginados; logo em `public/logo.png` no header/login.
+      Demais telas herdam via estilos-base + troca dos botões `#111`. Em revisão do fundador.
+- [x] **App instalável (PWA)** — `manifest.webmanifest`, service worker
+      (network-first + `/offline`), registro só em produção, ícones quadrados
+      gerados do logo (192/512/maskable + apple-touch + favicon). Instala no PC e celular.
 - [ ] Versão automática: IA que adapta ao contexto (paga) + anti-bloqueio + canais (WhatsApp Cloud API, Facebook Pages) + dashboard de tokens — roteiro na memória `roadmap-expandido`
 - [ ] Questionário de onboarding; calendário na agenda; configurações
 - [ ] Instalação de Skill em tenant (RF-03)
