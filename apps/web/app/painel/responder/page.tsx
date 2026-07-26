@@ -156,6 +156,7 @@ export default async function ResponderPage({
 
         <label className="label" style={{ marginTop: 14 }}>Mensagem do cliente</label>
         <textarea
+          id="msg"
           name="q"
           defaultValue={q}
           rows={4}

@@ -21,18 +21,31 @@ export default function GerarIA({
   const [applied, setApplied] = useState(false);
 
   const run = async () => {
+    // Lê a caixa de texto ao vivo (não depende de clicar em "Buscar" antes).
+    const el = typeof document !== "undefined"
+      ? (document.getElementById("msg") as HTMLTextAreaElement | null)
+      : null;
+    const msg = (el?.value ?? message ?? "").trim();
+    if (!msg) {
+      setError("Cole a mensagem do cliente na caixa acima.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setData(null);
     setApplied(false);
-    const res = await gerarResposta({ contactId, message });
-    if (res.ok) setData(res.data);
-    else setError(res.error);
-    setLoading(false);
+    try {
+      const res = await gerarResposta({ contactId, message: msg });
+      if (res.ok) setData(res.data);
+      else setError(res.error);
+    } catch (e) {
+      setError("Falha ao chamar o motor: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
-  const hasMsg = message.trim().length > 0;
 
   return (
     <div className="mt-16">
@@ -40,16 +53,10 @@ export default function GerarIA({
         type="button"
         className="btn btn-primary"
         onClick={run}
-        disabled={loading || !hasMsg}
-        title={hasMsg ? "" : "Cole a mensagem e clique em Buscar primeiro"}
+        disabled={loading}
       >
         {loading ? "Gerando resposta…" : "✨ Gerar com IA"}
       </button>
-      {!hasMsg && (
-        <span className="text-faint" style={{ fontSize: 13, marginLeft: 10 }}>
-          cole a mensagem acima primeiro
-        </span>
-      )}
 
       {error && <p className="badge badge-danger mt-16">{error}</p>}
 

@@ -62,6 +62,7 @@ export async function gerarResposta(input: {
   const tenant = membership?.tenant;
   if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
 
+  try {
   const supabase = await createClient();
   const { stages } = await getSkillFormConfig(tenant.skill_key);
 
@@ -154,16 +155,9 @@ MENSAGEM DO CLIENTE (responda a isto):
 
 Analise e gere a melhor resposta agora.`;
 
-  let object: AiAnswer;
-  let usage: unknown;
-  try {
-    const res = await generateObject({ model: aiModel, schema, system, prompt });
-    object = res.object as AiAnswer;
-    usage = res.usage;
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Falha ao gerar";
-    return { ok: false, error: `Erro no motor de IA: ${msg}` };
-  }
+  const res = await generateObject({ model: aiModel, schema, system, prompt });
+  const object = res.object as AiAnswer;
+  const usage = res.usage;
 
   // Valida o status sugerido contra as etapas reais do manifesto.
   const validKeys = new Set(stages.map((s) => s.key));
@@ -181,6 +175,10 @@ Analise e gere a melhor resposta agora.`;
   });
 
   return { ok: true, data: object };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: `Erro no motor de IA: ${msg}` };
+  }
 }
 
 // Aplica o avanço de etapa sugerido pela IA (registra no histórico da jornada).
