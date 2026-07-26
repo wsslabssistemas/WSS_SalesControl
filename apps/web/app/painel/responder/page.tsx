@@ -5,7 +5,9 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries, distinctCategories } from "@/lib/match";
 import { displayPhone, whatsappNumber } from "@/lib/phone";
 import JourneyBar from "@/components/JourneyBar";
+import { hasAIKey } from "@/lib/ai";
 import { CopyButton } from "./CopyButton";
+import GerarIA from "./GerarIA";
 import { logInteraction } from "./actions";
 
 type Entry = {
@@ -169,7 +171,16 @@ export default async function ResponderPage({
         <p className="badge badge-success mt-16">Atendimento registrado no histórico do cliente.</p>
       )}
 
-      {/* Resultados */}
+      {/* Motor de IA (gera resposta personalizada; usa DNA + biblioteca + histórico) */}
+      {hasAIKey() && (
+        <GerarIA
+          contactId={contact?.id}
+          message={q}
+          stages={stages.map((s) => ({ key: s.key, label: s.label }))}
+        />
+      )}
+
+      {/* Biblioteca (busca manual, sem custo) */}
       {q && matches.length === 0 && (
         <div className="card mt-24">
           <p style={{ marginBottom: 12 }}>
