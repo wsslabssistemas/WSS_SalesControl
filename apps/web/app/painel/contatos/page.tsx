@@ -14,19 +14,10 @@ type Contact = {
   source: string | null;
 };
 
-const control: React.CSSProperties = {
-  padding: "8px 11px",
-  border: "1px solid rgba(128,128,128,0.4)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "inherit",
-  font: "inherit",
-};
-
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; etapa?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; etapa?: string; page?: string; importados?: string; dup?: string; sem?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
@@ -38,8 +29,8 @@ export default async function ContatosPage({
   if (!tenant) {
     return (
       <main>
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>Contatos</h1>
-        <p style={{ opacity: 0.85 }}>Sem empresa vinculada.</p>
+        <h1>Contatos</h1>
+        <p className="text-dim">Sem empresa vinculada.</p>
       </main>
     );
   }
@@ -77,123 +68,86 @@ export default async function ContatosPage({
     return s ? `?${s}` : "?";
   };
 
+  const imported = sp.importados ? parseInt(sp.importados, 10) || 0 : null;
+
   return (
     <main>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>
-          Contatos{" "}
-          <span style={{ fontSize: 14, opacity: 0.5, fontWeight: 400 }}>
-            ({total})
-          </span>
+      <div className="between">
+        <h1>
+          Contatos <span className="text-faint" style={{ fontSize: 15, fontWeight: 400 }}>({total})</span>
         </h1>
-        <Link
-          href="/painel/contatos/novo"
-          style={{
-            fontSize: 14,
-            padding: "8px 14px",
-            borderRadius: 8,
-            background: "var(--brand-blue)",
-            color: "#fff",
-            textDecoration: "none",
-          }}
-        >
-          + Novo contato
-        </Link>
+        <div className="row" style={{ gap: 8 }}>
+          <a href="/painel/contatos/export" className="btn btn-sm btn-ghost">Exportar</a>
+          <Link href="/painel/contatos/importar" className="btn btn-sm btn-ghost">Importar</Link>
+          <Link href="/painel/contatos/novo" className="btn btn-sm btn-primary">+ Novo contato</Link>
+        </div>
       </div>
 
+      {imported !== null && (
+        <p className="badge badge-success mt-16">
+          {imported} importado{imported === 1 ? "" : "s"}
+          {sp.dup && Number(sp.dup) > 0 ? ` · ${sp.dup} duplicado(s) ignorado(s)` : ""}
+          {sp.sem && Number(sp.sem) > 0 ? ` · ${sp.sem} sem nome` : ""}
+        </p>
+      )}
+
       {/* Busca + filtro (GET: server-side, sem JS) */}
-      <form
-        method="get"
-        style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}
-      >
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Buscar por nome ou telefone"
-          style={{ ...control, flex: 1, minWidth: 180 }}
-        />
-        <select name="etapa" defaultValue={etapa} style={control}>
+      <form method="get" className="row wrap mt-16" style={{ gap: 8 }}>
+        <input name="q" defaultValue={q} placeholder="Buscar por nome ou telefone" className="grow" style={{ minWidth: 180 }} />
+        <select name="etapa" defaultValue={etapa} style={{ width: "auto" }}>
           <option value="">Todas as etapas</option>
           {stages.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
+            <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </select>
-        <button type="submit" style={{ ...control, cursor: "pointer" }}>
-          Buscar
-        </button>
+        <button type="submit" className="btn">Buscar</button>
       </form>
 
       {contacts.length === 0 ? (
-        <p style={{ opacity: 0.6, marginTop: 20 }}>
-          {term || etapa
-            ? "Nenhum contato para esse filtro."
-            : "Nenhum contato ainda. Comece adicionando um lead."}
-        </p>
+        <div className="card mt-24">
+          <p className="text-dim" style={{ margin: 0 }}>
+            {term || etapa
+              ? "Nenhum contato para esse filtro."
+              : "Nenhum contato ainda. Adicione um lead ou importe uma planilha."}
+          </p>
+        </div>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: 16,
-            fontSize: 14,
-          }}
-        >
-          <thead>
-            <tr style={{ textAlign: "left", opacity: 0.6, fontSize: 12 }}>
-              <th style={{ padding: "8px 0" }}>Nome</th>
-              <th>Telefone</th>
-              <th>Etapa</th>
-              <th>Origem</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contacts.map((c) => (
-              <tr
-                key={c.id}
-                style={{ borderTop: "1px solid rgba(128,128,128,0.15)" }}
-              >
-                <td style={{ padding: "10px 0" }}>
-                  <Link href={`/painel/contatos/${c.id}`}>{c.name}</Link>
-                </td>
-                <td>{displayPhone(c.phone)}</td>
-                <td>{stageLabel(c.journey_stage)}</td>
-                <td>{c.source ?? "—"}</td>
+        <div className="card mt-16" style={{ padding: 0, overflowX: "auto" }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Etapa</th>
+                <th>Origem</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {contacts.map((c) => (
+                <tr key={c.id}>
+                  <td><Link href={`/painel/contatos/${c.id}`}>{c.name}</Link></td>
+                  <td>{displayPhone(c.phone)}</td>
+                  <td><span className="badge">{stageLabel(c.journey_stage)}</span></td>
+                  <td className="text-dim">{c.source ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {totalPages > 1 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            marginTop: 20,
-            fontSize: 14,
-          }}
-        >
+        <div className="row mt-24" style={{ gap: 14, fontSize: 14 }}>
           {pageNum > 1 ? (
             <Link href={pageHref(pageNum - 1)}>← Anterior</Link>
           ) : (
-            <span style={{ opacity: 0.3 }}>← Anterior</span>
+            <span className="text-faint">← Anterior</span>
           )}
-          <span style={{ opacity: 0.6 }}>
-            Página {pageNum} de {totalPages}
-          </span>
+          <span className="text-dim">Página {pageNum} de {totalPages}</span>
           {pageNum < totalPages ? (
             <Link href={pageHref(pageNum + 1)}>Próxima →</Link>
           ) : (
-            <span style={{ opacity: 0.3 }}>Próxima →</span>
+            <span className="text-faint">Próxima →</span>
           )}
         </div>
       )}
