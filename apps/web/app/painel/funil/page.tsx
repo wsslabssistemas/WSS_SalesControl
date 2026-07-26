@@ -47,71 +47,63 @@ export default async function FunilPage() {
 
   return (
     <main>
-      <h1 style={{ fontSize: 24, marginTop: 0 }}>Funil de vendas</h1>
-      <p style={{ opacity: 0.7 }}>
-        {total} contatos no funil
-        {wonKeys.length > 0 && (
-          <>
-            {" · "}conversão <strong>{conv}%</strong> ({won} de {total})
-          </>
-        )}
+      <h1>Funil de vendas</h1>
+      <p className="text-dim" style={{ marginTop: 4 }}>
+        A jornada de cada contato, da entrada ao fechamento.
       </p>
 
-      {total === 0 && (
-        <p style={{ opacity: 0.6 }}>
-          Nenhum contato ainda. Quando as conversas entrarem, o funil se preenche.
-        </p>
-      )}
+      <div className="stat-grid mt-24">
+        <div className="card"><div className="stat-num">{total}</div><div className="stat-label">No funil</div></div>
+        {wonKeys.length > 0 && (
+          <>
+            <div className="card"><div className="stat-num" style={{ color: "var(--success)" }}>{won}</div><div className="stat-label">Ganhos</div></div>
+            <div className="card"><div className="stat-num brand-text">{conv}%</div><div className="stat-label">Conversão</div></div>
+          </>
+        )}
+      </div>
 
-      <ul style={{ listStyle: "none", padding: 0, marginTop: 16 }}>
-        {stages.map((s) => {
-          const n = countOf(s.key);
-          const pct = Math.round((n / max) * 100);
-          return (
-            <li key={s.key} style={{ margin: "10px 0" }}>
+      {total === 0 ? (
+        <div className="card mt-24">
+          <p className="text-dim" style={{ margin: 0 }}>
+            Nenhum contato ainda. Quando as conversas entrarem, o funil se preenche.
+          </p>
+        </div>
+      ) : (
+        <div className="card mt-24">
+          {stages.map((s) => {
+            const n = countOf(s.key);
+            const pct = Math.round((n / max) * 100);
+            return (
               <Link
+                key={s.key}
                 href={`/painel/contatos?etapa=${s.key}`}
-                style={{ display: "block", textDecoration: "none", color: "inherit" }}
+                style={{ display: "block", padding: "10px 0" }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 14,
-                    marginBottom: 4,
-                  }}
-                >
+                <div className="between" style={{ fontSize: 14, marginBottom: 6 }}>
                   <span>
                     {s.label}
-                    {s.terminal && (
-                      <span style={{ opacity: 0.4, fontSize: 11 }}> · final</span>
-                    )}
+                    {s.won && <span className="badge badge-success" style={{ marginLeft: 8 }}>ganho</span>}
+                    {s.terminal && !s.won && <span className="text-faint" style={{ fontSize: 11 }}> · final</span>}
                   </span>
-                  <strong>{n}</strong>
+                  <strong style={{ fontVariantNumeric: "tabular-nums" }}>{n}</strong>
                 </div>
-                <div
-                  style={{
-                    height: 8,
-                    borderRadius: 4,
-                    background: "rgba(128,128,128,0.15)",
-                  }}
-                >
+                <div className="bar-track">
                   <div
+                    className="bar-fill"
                     style={{
-                      height: 8,
-                      borderRadius: 4,
                       width: `${pct}%`,
-                      background: "rgba(39,120,174,0.6)",
+                      background: s.won ? "var(--success)" : undefined,
+                      transition: "width .4s ease",
                     }}
                   />
                 </div>
               </Link>
-            </li>
-          );
-        })}
-      </ul>
+            );
+          })}
+        </div>
+      )}
 
-      <p style={{ marginTop: 24, fontSize: 13, opacity: 0.6 }}>
+      <p className="text-faint" style={{ marginTop: 20, fontSize: 13 }}>
         Conversão = contatos na etapa ganha ÷ total de leads. Clique numa etapa
         para ver as pessoas.
       </p>
