@@ -181,6 +181,38 @@ Analise e gere a melhor resposta agora.`;
   }
 }
 
+// Salva a interação (pergunta do cliente + resposta) no histórico do contato.
+// Sem redirect — chamada direto pelo componente de IA.
+export async function saveInteraction(
+  contactId: string,
+  inbound: string,
+  outbound: string,
+): Promise<{ ok: boolean }> {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant || !contactId) return { ok: false };
+
+  const supabase = await createClient();
+  const base = {
+    tenant_id: tenant.id,
+    contact_id: contactId,
+    created_by: membership!.membershipId,
+    channel: "whatsapp",
+  };
+  const rows: Record<string, unknown>[] = [];
+  if (inbound.trim())
+    rows.push({ ...base, direction: "inbound", input_kind: "customer_message", content: inbound.trim() });
+  if (outbound.trim())
+    rows.push({ ...base, direction: "outbound", input_kind: "agent_briefing", content: outbound.trim() });
+  if (!rows.length) return { ok: false };
+
+  const { error } = await supabase.from("interactions").insert(rows);
+  if (error) return { ok: false };
+  revalidatePath(`/painel/contatos/${contactId}`);
+  revalidatePath("/painel/responder");
+  return { ok: true };
+}
+
 // Aplica o avanço de etapa sugerido pela IA (registra no histórico da jornada).
 export async function applyStage(
   contactId: string,

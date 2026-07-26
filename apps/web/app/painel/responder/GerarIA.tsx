@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { gerarResposta, applyStage, type AiAnswer } from "./ai-actions";
+import { gerarResposta, applyStage, saveInteraction, type AiAnswer } from "./ai-actions";
 import { CopyButton } from "./CopyButton";
 
 type StageLite = { key: string; label: string };
@@ -19,6 +19,8 @@ export default function GerarIA({
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AiAnswer | null>(null);
   const [applied, setApplied] = useState(false);
+  const [usedMessage, setUsedMessage] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const run = async () => {
     // Lê a caixa de texto ao vivo (não depende de clicar em "Buscar" antes).
@@ -34,6 +36,8 @@ export default function GerarIA({
     setError(null);
     setData(null);
     setApplied(false);
+    setSaved(false);
+    setUsedMessage(msg);
     try {
       const res = await gerarResposta({ contactId, message: msg });
       if (res.ok) setData(res.data);
@@ -85,7 +89,29 @@ export default function GerarIA({
             <div className="card" style={{ borderColor: "var(--border-brand)", background: "var(--brand-gradient-soft)" }}>
               <div className="eyebrow">Resposta sugerida (IA)</div>
               <p style={{ whiteSpace: "pre-line", marginTop: 10, lineHeight: 1.55 }}>{data.resposta_sugerida}</p>
-              <CopyButton text={data.resposta_sugerida} />
+              <div className="row wrap" style={{ gap: 10, marginTop: 8 }}>
+                <CopyButton text={data.resposta_sugerida} />
+                {contactId ? (
+                  saved ? (
+                    <span className="badge badge-success">Salvo no histórico ✓</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-ghost"
+                      onClick={async () => {
+                        const r = await saveInteraction(contactId, usedMessage, data.resposta_sugerida);
+                        setSaved(r.ok);
+                      }}
+                    >
+                      Registrar no cliente
+                    </button>
+                  )
+                ) : (
+                  <span className="text-faint" style={{ fontSize: 13 }}>
+                    selecione um cliente acima para salvar no histórico
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
