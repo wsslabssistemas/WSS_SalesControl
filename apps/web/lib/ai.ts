@@ -1,15 +1,23 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
 
-// Modelo configurável por ambiente. Padrão: Claude Sonnet (qualidade de escrita).
-// Para baratear, defina AI_MODEL=claude-haiku-4-5-20251001 na Vercel.
-export const AI_MODEL = process.env.AI_MODEL ?? "claude-sonnet-5";
+// Provedor por ambiente: "anthropic" (padrão) ou "openai".
+// A chave vai sempre em AI_API_KEY — troca-se só o AI_PROVIDER.
+const PROVIDER = (process.env.AI_PROVIDER ?? "anthropic").toLowerCase();
+const IS_OPENAI = PROVIDER === "openai";
+
+// Modelo configurável; padrão sensato por provedor.
+export const AI_MODEL =
+  process.env.AI_MODEL ?? (IS_OPENAI ? "gpt-4o-mini" : "claude-sonnet-5");
 
 export function hasAIKey(): boolean {
   return !!process.env.AI_API_KEY;
 }
 
-const anthropic = createAnthropic({ apiKey: process.env.AI_API_KEY });
-export const aiModel = anthropic(AI_MODEL);
+const apiKey = (process.env.AI_API_KEY ?? "").trim(); // trim: evita espaço/quebra colada
+export const aiModel = IS_OPENAI
+  ? createOpenAI({ apiKey })(AI_MODEL)
+  : createAnthropic({ apiKey })(AI_MODEL);
 
 // Estimativa de custo em CENTAVOS de R$ (o painel do fabricante mostra em R$).
 // Taxas em USD por 1M de tokens — ajuste aos preços vigentes por ambiente.

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.21",
+    "@ai-sdk/openai": "^4.0.20",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "ai": "^7.0.37",
