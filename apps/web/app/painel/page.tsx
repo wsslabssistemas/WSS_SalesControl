@@ -2,14 +2,24 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { computeAlerts } from "@/lib/agenda";
+import { computeAlerts, computeCooling } from "@/lib/agenda";
+import { whatsappNumber } from "@/lib/phone";
 
 type Contact = {
   id: string;
   name: string;
+  phone: string | null;
   journey_stage: string;
   stage_entered_at: string;
 };
+type Ix = { contact_id: string | null; occurred_at: string; outcome: string | null };
+
+const OUTCOMES: { key: string; label: string; color: string }[] = [
+  { key: "matriculou", label: "Fecharam", color: "var(--success)" },
+  { key: "marcou_visita", label: "Marcaram visita", color: "var(--brand-cyan)" },
+  { key: "respondeu", label: "Responderam", color: "var(--brand-blue)" },
+  { key: "sumiu", label: "Sumiram", color: "var(--danger)" },
+];
 
 export default async function PainelHome() {
   const membership = await getActiveTenant();
@@ -18,10 +28,8 @@ export default async function PainelHome() {
   if (!tenant) {
     return (
       <main>
-        <h1 style={{ fontSize: 24, marginTop: 0 }}>Início</h1>
-        <p style={{ opacity: 0.85 }}>
-          Seu usuário ainda não está vinculado a uma empresa.
-        </p>
+        <h1>Início</h1>
+        <p className="text-dim">Seu usuário ainda não está vinculado a uma empresa.</p>
       </main>
     );
   }
@@ -29,10 +37,11 @@ export default async function PainelHome() {
   const { stages } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
-  const [{ data: contactsData }, { count: membersCount }] = await Promise.all([
+  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+  const [{ data: contactsData }, { count: membersCount }, { data: ixData }] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id, name, journey_stage, stage_entered_at")
+      .select("id, name, phone, journey_stage, stage_entered_at")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
     supabase
@@ -40,23 +49,44 @@ export default async function PainelHome() {
       .select("id", { count: "exact", head: true })
       .eq("tenant_id", tenant.id)
       .eq("status", "active"),
+    supabase
+      .from("interactions")
+      .select("contact_id, occurred_at, outcome")
+      .eq("tenant_id", tenant.id)
+      .order("occurred_at", { ascending: false })
+      .limit(2000),
   ]);
 
   const contacts = (contactsData as Contact[] | null) ?? [];
+  const ix = (ixData as Ix[] | null) ?? [];
+
   const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
   const emAberto = contacts.filter((c) => !terminalKeys.has(c.journey_stage)).length;
 
+  // Última interação por contato (para "esfriando").
+  const lastByContact: Record<string, string> = {};
+  for (const i of ix) {
+    if (!i.contact_id) continue;
+    if (!lastByContact[i.contact_id]) lastByContact[i.contact_id] = i.occurred_at;
+  }
+
   const alerts = computeAlerts(contacts, stages);
   const hoje = alerts.filter((a) => a.days <= 0);
+  const cooling = computeCooling(contacts, lastByContact, stages);
+
+  // Resultados dos últimos 30 dias (do feedback registrado).
+  const recentOutcomes = ix.filter((i) => i.outcome && i.occurred_at >= monthAgo);
+  const outcomeCount = (k: string) => recentOutcomes.filter((i) => i.outcome === k).length;
 
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
   const perStage = stages
     .filter((s) => !s.terminal)
-    .map((s) => ({
-      label: s.label,
-      key: s.key,
-      n: contacts.filter((c) => c.journey_stage === s.key).length,
-    }));
+    .map((s) => ({ label: s.label, key: s.key, n: contacts.filter((c) => c.journey_stage === s.key).length }));
+
+  const waLink = (phone: string | null) => {
+    const wa = whatsappNumber(phone);
+    return wa ? `https://wa.me/${wa}` : null;
+  };
 
   return (
     <main>
@@ -78,48 +108,90 @@ export default async function PainelHome() {
           <div className="stat-label">Em aberto</div>
         </div>
         <Link href="/painel/agenda" className="card card-hover" style={{ display: "block" }}>
-          <div className="stat-num" style={{ color: hoje.length ? "var(--warn)" : undefined }}>
-            {hoje.length}
-          </div>
+          <div className="stat-num" style={{ color: hoje.length ? "var(--warn)" : undefined }}>{hoje.length}</div>
           <div className="stat-label">Toques hoje</div>
         </Link>
-        <Link href="/painel/equipe" className="card card-hover" style={{ display: "block" }}>
-          <div className="stat-num">{membersCount ?? 0}</div>
-          <div className="stat-label">Equipe</div>
-        </Link>
+        <div className="card">
+          <div className="stat-num" style={{ color: cooling.length ? "var(--danger)" : undefined }}>{cooling.length}</div>
+          <div className="stat-label">Esfriando</div>
+        </div>
       </div>
 
-      {/* Toques de hoje */}
+      {/* Resultados dos últimos 30 dias — o feedback do que aconteceu */}
+      {recentOutcomes.length > 0 && (
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Resultados (últimos 30 dias)</h2>
+          <div className="row wrap" style={{ gap: 8 }}>
+            {OUTCOMES.map((o) => (
+              <span key={o.key} className="badge" style={{ padding: "8px 13px", fontSize: 13 }}>
+                {o.label}: <strong style={{ color: o.color }}>{outcomeCount(o.key)}</strong>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Leads esfriando — a fila de ação: quem você está prestes a perder */}
       <section style={{ marginTop: 32 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <h2 style={{ fontSize: 15, margin: 0 }}>Para hoje</h2>
-          <Link href="/painel/agenda" style={{ fontSize: 13, opacity: 0.7 }}>
-            ver agenda
-          </Link>
+        <div className="between" style={{ alignItems: "baseline" }}>
+          <h2 style={{ fontSize: 15, margin: 0 }}>Leads esfriando</h2>
+          <span className="text-faint" style={{ fontSize: 13 }}>sem contato há 3 dias ou mais</span>
         </div>
-        {hoje.length === 0 ? (
-          <p style={{ opacity: 0.6, fontSize: 14, marginTop: 10 }}>
-            Nenhum toque pendente para hoje.
+        {cooling.length === 0 ? (
+          <p className="text-dim" style={{ fontSize: 14, marginTop: 10 }}>
+            Ninguém esfriando. Sua base está aquecida. 🔥
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
+            {cooling.slice(0, 8).map((c) => {
+              const wa = waLink(c.phone);
+              return (
+                <li
+                  key={c.contactId}
+                  className="row"
+                  style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}
+                >
+                  <span className={c.days >= 7 ? "badge badge-danger" : "badge badge-warn"} style={{ minWidth: 44, justifyContent: "center" }}>
+                    {c.days}d
+                  </span>
+                  <Link href={`/painel/contatos/${c.contactId}`} className="grow">{c.name}</Link>
+                  <span className="text-faint" style={{ whiteSpace: "nowrap" }}>{c.stageLabel}</span>
+                  {wa && (
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  <Link href={`/painel/responder?customer=${c.contactId}`} className="btn btn-sm btn-ghost">
+                    Responder
+                  </Link>
+                </li>
+              );
+            })}
+            {cooling.length > 8 && (
+              <li className="text-faint" style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                +{cooling.length - 8} outros esfriando
+              </li>
+            )}
+          </ul>
+        )}
+      </section>
+
+      {/* Toques de hoje */}
+      <section style={{ marginTop: 32 }}>
+        <div className="between" style={{ alignItems: "baseline" }}>
+          <h2 style={{ fontSize: 15, margin: 0 }}>Para hoje</h2>
+          <Link href="/painel/agenda" style={{ fontSize: 13, opacity: 0.7 }}>ver agenda</Link>
+        </div>
+        {hoje.length === 0 ? (
+          <p className="text-dim" style={{ fontSize: 14, marginTop: 10 }}>Nenhum toque pendente para hoje.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
             {hoje.slice(0, 6).map((a, i) => (
-              <li
-                key={`${a.contactId}-${i}`}
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  padding: "8px 0",
-                  borderBottom: "1px solid rgba(128,128,128,0.12)",
-                  fontSize: 14,
-                }}
-              >
+              <li key={`${a.contactId}-${i}`} className="row" style={{ gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
                 <span className={a.days < 0 ? "badge badge-danger" : "badge badge-warn"}>
                   {a.days < 0 ? "atrasado" : "hoje"}
                 </span>
-                <Link href={`/painel/contatos/${a.contactId}`} className="grow">
-                  {a.name}
-                </Link>
+                <Link href={`/painel/contatos/${a.contactId}`} className="grow">{a.name}</Link>
                 <span className="text-faint">{a.phaseLabel}</span>
               </li>
             ))}
@@ -129,20 +201,13 @@ export default async function PainelHome() {
 
       {/* Funil resumido */}
       <section style={{ marginTop: 32 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div className="between" style={{ alignItems: "baseline" }}>
           <h2 style={{ fontSize: 15, margin: 0 }}>Funil</h2>
-          <Link href="/painel/funil" style={{ fontSize: 13, opacity: 0.7 }}>
-            ver funil
-          </Link>
+          <Link href="/painel/funil" style={{ fontSize: 13, opacity: 0.7 }}>ver funil</Link>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+        <div className="row wrap" style={{ gap: 8, marginTop: 10 }}>
           {perStage.map((s) => (
-            <Link
-              key={s.key}
-              href={`/painel/contatos?etapa=${s.key}`}
-              className="badge"
-              style={{ padding: "7px 12px", fontSize: 13 }}
-            >
+            <Link key={s.key} href={`/painel/contatos?etapa=${s.key}`} className="badge" style={{ padding: "7px 12px", fontSize: 13 }}>
               {s.label}: <strong style={{ color: "var(--text)" }}>{s.n}</strong>
             </Link>
           ))}
