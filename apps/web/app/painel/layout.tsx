@@ -15,6 +15,7 @@ export default async function PainelLayout({
   const membership = await getActiveTenant();
   const tenantName = membership?.tenant?.name ?? "(sem empresa)";
   const showAdmin = isPlatformAdmin(user.email);
+  const showManager = ["owner", "admin", "manager"].includes(membership?.role ?? "");
 
   const nav = [
     { href: "/painel", label: "Início" },
@@ -22,6 +23,7 @@ export default async function PainelLayout({
     { href: "/painel/contatos", label: "Contatos" },
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
+    ...(showManager ? [{ href: "/painel/gestao", label: "Gestão" }] : []),
     { href: "/painel/equipe", label: "Equipe" },
     { href: "/painel/dna", label: "DNA" },
     { href: "/painel/automacao", label: "Automação" },
