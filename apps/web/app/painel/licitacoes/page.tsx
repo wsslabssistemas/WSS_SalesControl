@@ -67,7 +67,10 @@ export default async function LicitacoesPage({
 
   return (
     <main style={{ maxWidth: 720 }}>
-      <h1>Licitações</h1>
+      <div className="between">
+        <h1>Licitações</h1>
+        <Link href="/painel/licitacoes/guia" className="btn btn-sm btn-ghost">Guia de vendas ao governo</Link>
+      </div>
       <p className="text-dim" style={{ marginTop: 4 }}>
         Editais públicos abertos do seu ramo e região, via PNCP (Portal Nacional
         de Contratações Públicas). Fonte oficial e gratuita.
@@ -161,6 +164,23 @@ export default async function LicitacoesPage({
                   );
                 })}
               </div>
+
+              {inteligencia.ritmoEstado.some((r) => r.n > 0) && (
+                <div className="card mt-16">
+                  <p className="eyebrow" style={{ marginBottom: 4 }}>Ritmo de editais no estado ({inteligencia.ritmoUf}, 12 meses)</p>
+                  <p className="text-faint" style={{ margin: "0 0 12px", fontSize: 12 }}>Quando o governo abre mais editais (Pregão Eletrônico, todos os ramos).</p>
+                  {inteligencia.ritmoEstado.map((m) => {
+                    const max = Math.max(...inteligencia!.ritmoEstado.map((x) => x.n), 1);
+                    return (
+                      <div key={m.nome} className="row" style={{ gap: 10, padding: "4px 0", fontSize: 12, alignItems: "center" }}>
+                        <span className="text-faint" style={{ width: 44 }}>{m.nome}</span>
+                        <div className="bar-track grow"><div className="bar-fill" style={{ width: `${(m.n / max) * 100}%` }} /></div>
+                        <span style={{ width: 40, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{m.n}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="row wrap mt-16" style={{ gap: 16, alignItems: "flex-start" }}>
                 <div className="card grow" style={{ minWidth: 220 }}>

@@ -3,6 +3,7 @@
 // objeto. Pública, sem login, nada armazenado.
 
 const SEARCH = "https://pncp.gov.br/api/search/";
+const CONSULTA = "https://pncp.gov.br/api/consulta/v1";
 
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -102,7 +103,34 @@ export type Intel = {
   byCidade: Rank[];
   byModalidade: Rank[];
   byMes: Rank[]; // editais abertos por mês de encerramento (calendário à frente)
+  ritmoUf: string;
+  ritmoEstado: Rank[]; // editais publicados por mês no estado (últimos 12 meses)
 };
+
+// Ritmo de publicação de editais no estado (Pregão Eletrônico), últimos 12 meses.
+// Sazonalidade geral do governo — barato: um total por mês.
+export async function seasonality(uf: string): Promise<Rank[]> {
+  const now = new Date();
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+  const tasks = months.map(async ({ y, m }) => {
+    const ini = `${y}${String(m + 1).padStart(2, "0")}01`;
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const fim = `${y}${String(m + 1).padStart(2, "0")}${String(lastDay).padStart(2, "0")}`;
+    const url = `${CONSULTA}/contratacoes/publicacao?dataInicial=${ini}&dataFinal=${fim}&codigoModalidadeContratacao=6&uf=${uf}&pagina=1&tamanhoPagina=10`;
+    try {
+      const r = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (!r.ok) return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: 0 };
+      const j = (await r.json()) as { totalRegistros?: number };
+      return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: j.totalRegistros ?? 0 };
+    } catch {
+      return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: 0 };
+    }
+  });
+  return Promise.all(tasks);
+}
 
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
@@ -120,7 +148,7 @@ function topN(items: string[], n: number): Rank[] {
 // cidade, modalidade e mês de encerramento. Puro consumo da busca do PNCP.
 export async function analyzeEditais(input: { ufs: string[]; keywords: string[] }): Promise<Intel> {
   const ufList = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
-  if (!ufList.length) return { amostra: 0, totalAbertos: null, byOrgao: [], byCidade: [], byModalidade: [], byMes: [] };
+  if (!ufList.length) return { amostra: 0, totalAbertos: null, byOrgao: [], byCidade: [], byModalidade: [], byMes: [], ritmoUf: "", ritmoEstado: [] };
   const ufsParam = ufList.join(",");
   const ufSet = new Set(ufList);
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
@@ -130,7 +158,7 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
   const pagesPer = Math.max(1, Math.min(8, Math.floor(16 / queries.length)));
   const tasks: Promise<Item[]>[] = [];
   for (const q of queries) for (let p = 1; p <= pagesPer; p++) tasks.push(queryOne(q, ufsParam, p).catch(() => [] as Item[]));
-  const results = await Promise.all(tasks);
+  const [results, ritmoEstado] = await Promise.all([Promise.all(tasks), seasonality(ufList[0])]);
 
   const nowMs = Date.now();
   const seen = new Set<string>();
@@ -166,5 +194,7 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
     byCidade: topN(rows.map((r) => r.municipio_nome ?? ""), 6),
     byModalidade: topN(rows.map((r) => r.modalidade_licitacao_nome ?? ""), 5),
     byMes,
+    ritmoUf: ufList[0],
+    ritmoEstado,
   };
 }
