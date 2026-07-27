@@ -38,7 +38,7 @@ export default async function PainelHome() {
   const supabase = await createClient();
 
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-  const [{ data: contactsData }, { count: membersCount }, { data: ixData }] = await Promise.all([
+  const [{ data: contactsData }, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
     supabase
       .from("contacts")
       .select("id, name, phone, journey_stage, stage_entered_at")
@@ -55,7 +55,21 @@ export default async function PainelHome() {
       .eq("tenant_id", tenant.id)
       .order("occurred_at", { ascending: false })
       .limit(2000),
+    supabase.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
+    supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
   ]);
+
+  // Cobertura de DNA (para sugerir o onboarding).
+  const dnaSections = (skill?.manifest as { dna_sections?: { key: string }[] } | null)?.dna_sections ?? [];
+  const dnaFilledObj = (dnaRow?.sections as Record<string, unknown> | null) ?? {};
+  const dnaFilled = dnaSections.filter((s) => {
+    const v = dnaFilledObj[s.key];
+    if (v == null) return false;
+    if (typeof v === "object") return Object.keys(v as object).length > 0;
+    return String(v).length > 0;
+  }).length;
+  const dnaIncompleto = dnaSections.length > 0 && dnaFilled < dnaSections.length;
+  const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   const contacts = (contactsData as Contact[] | null) ?? [];
   const ix = (ixData as Ix[] | null) ?? [];
@@ -96,6 +110,21 @@ export default async function PainelHome() {
           + Novo contato
         </Link>
       </div>
+
+      {/* Onboarding: calibrar o DNA */}
+      {isAdmin && dnaIncompleto && (
+        <Link href="/painel/onboarding" className="card card-hover mt-16" style={{ display: "block", borderColor: "var(--border-brand)", background: "var(--brand-gradient-soft)" }}>
+          <div className="between" style={{ alignItems: "center", gap: 12 }}>
+            <div>
+              <strong>Termine de calibrar seu Kairós</strong>
+              <p className="text-dim" style={{ margin: "4px 0 0", fontSize: 14 }}>
+                {dnaFilled}/{dnaSections.length} seções do DNA preenchidas. Complete o onboarding para o sistema responder com os seus fatos.
+              </p>
+            </div>
+            <span className="btn btn-sm btn-primary" style={{ whiteSpace: "nowrap" }}>Continuar →</span>
+          </div>
+        </Link>
+      )}
 
       {/* Números-chave */}
       <div className="stat-grid mt-24">
