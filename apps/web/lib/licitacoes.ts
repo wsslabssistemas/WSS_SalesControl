@@ -1,14 +1,8 @@
-// Monitor de licitações via PNCP (Portal Nacional de Contratações Públicas).
-// API pública, sem login. Consulta sob demanda — nada armazenado.
+// Monitor de licitações via PNCP. Usa a BUSCA TEXTUAL oficial do portal
+// (api/search) — procura no texto todo do edital (objeto + itens), não só no
+// objeto. Pública, sem login, nada armazenado.
 
-const BASE = "https://pncp.gov.br/api/consulta/v1/contratacoes/proposta";
-
-// Modalidades mais comuns (a API exige uma por consulta).
-const MODALIDADES = [
-  { id: 6, nome: "Pregão Eletrônico" },
-  { id: 8, nome: "Dispensa" },
-  { id: 4, nome: "Concorrência Eletrônica" },
-];
+const SEARCH = "https://pncp.gov.br/api/search/";
 
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -19,95 +13,83 @@ export type Edital = {
   municipio: string;
   uf: string;
   modalidade: string;
-  valor: number | null;
   encerramento: string | null;
+  publicacao: string | null;
   link: string;
-  linkOrigem: string | null;
 };
 
-function buildLink(numeroControle: string): string {
-  // "87849923000109-1-000289/2026" -> app/editais/{cnpj}/{ano}/{seq}
-  const m = numeroControle.match(/^(\d+)-\d+-(\d+)\/(\d+)$/);
-  if (!m) return "https://pncp.gov.br/app/editais";
-  return `https://pncp.gov.br/app/editais/${m[1]}/${m[3]}/${parseInt(m[2], 10)}`;
+type Item = {
+  numero_controle_pncp: string;
+  description: string | null;
+  orgao_nome: string | null;
+  orgao_cnpj: string | null;
+  municipio_nome: string | null;
+  uf: string | null;
+  modalidade_licitacao_nome: string | null;
+  data_fim_vigencia: string | null;
+  data_publicacao_pncp: string | null;
+  ano: number | null;
+  numero_sequencial: number | null;
+};
+
+async function queryOne(q: string, ufs: string): Promise<Item[]> {
+  const params = new URLSearchParams({
+    tipos_documento: "edital",
+    status: "recebendo_proposta",
+    ordenacao: "-data",
+    pagina: "1",
+    tam_pagina: "30",
+  });
+  if (q) params.set("q", q);
+  if (ufs) params.set("ufs", ufs);
+  const res = await fetch(`${SEARCH}?${params.toString()}`, { headers: { Accept: "application/json" }, cache: "no-store" });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { items?: Item[] };
+  return json.items ?? [];
 }
 
-type Raw = {
-  numeroControlePNCP: string;
-  objetoCompra: string;
-  modalidadeNome: string;
-  valorTotalEstimado: number | null;
-  dataEncerramentoProposta: string | null;
-  linkSistemaOrigem: string | null;
-  orgaoEntidade?: { razaoSocial?: string };
-  unidadeOrgao?: { municipioNome?: string; ufSigla?: string };
-};
-
-async function queryOne(uf: string, modalidade: number, dataFinal: string, pagina: number): Promise<Raw[]> {
-  const url = `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=${modalidade}&uf=${uf}&pagina=${pagina}&tamanhoPagina=50`;
-  const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-  if (!res.ok) return [];
-  const json = (await res.json()) as { data?: Raw[] };
-  return json.data ?? [];
+function toEdital(it: Item): Edital {
+  const link =
+    it.orgao_cnpj && it.ano && it.numero_sequencial != null
+      ? `https://pncp.gov.br/app/editais/${it.orgao_cnpj}/${it.ano}/${it.numero_sequencial}`
+      : "https://pncp.gov.br/app/editais";
+  return {
+    id: it.numero_controle_pncp,
+    objeto: it.description ?? "",
+    orgao: it.orgao_nome ?? "—",
+    municipio: it.municipio_nome ?? "",
+    uf: it.uf ?? "",
+    modalidade: it.modalidade_licitacao_nome ?? "",
+    encerramento: it.data_fim_vigencia,
+    publicacao: it.data_publicacao_pncp,
+    link,
+  };
 }
 
 export async function searchEditais(input: { ufs: string[]; keywords: string[] }): Promise<Edital[]> {
-  const ufs = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
-  if (!ufs.length) return [];
+  const ufList = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
+  if (!ufList.length) return [];
+  const ufsParam = ufList.join(",");
+  const ufSet = new Set(ufList);
 
-  // dataFinal = teto da data de encerramento. Horizonte de 90 dias para trazer
-  // os editais que fecham nos próximos meses (não só os que encerram hoje).
-  const horizon = new Date(Date.now() + 90 * 86400000);
-  const dataFinal = `${horizon.getFullYear()}${String(horizon.getMonth() + 1).padStart(2, "0")}${String(horizon.getDate()).padStart(2, "0")}`;
+  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
+  const queries = kws.length ? kws : [""]; // sem palavra-chave = todos os abertos na UF
 
-  const combos: { uf: string; mod: number }[] = [];
-  for (const uf of ufs) for (const m of MODALIDADES) combos.push({ uf, mod: m.id });
-
-  // A API pagina 50/vez e ordena por publicação. Buscamos várias páginas para
-  // ter rede suficiente ao filtrar por palavra-chave — com teto de chamadas.
-  const pagesPer = Math.max(1, Math.min(8, Math.floor(15 / combos.length)));
-  const tasks: Promise<Raw[]>[] = [];
-  for (const c of combos) {
-    for (let p = 1; p <= pagesPer; p++) {
-      tasks.push(queryOne(c.uf, c.mod, dataFinal, p).catch(() => [] as Raw[]));
-    }
-  }
-  const results = await Promise.all(tasks);
+  const results = await Promise.all(queries.map((q) => queryOne(q, ufsParam).catch(() => [] as Item[])));
 
   const nowMs = Date.now();
   const seen = new Set<string>();
   const editais: Edital[] = [];
   for (const list of results) {
-    for (const r of list) {
-      // Esconde os já encerrados.
-      if (r.dataEncerramentoProposta && new Date(r.dataEncerramentoProposta).getTime() < nowMs) continue;
-      if (seen.has(r.numeroControlePNCP)) continue;
-      seen.add(r.numeroControlePNCP);
-      editais.push({
-        id: r.numeroControlePNCP,
-        objeto: r.objetoCompra ?? "",
-        orgao: r.orgaoEntidade?.razaoSocial ?? "—",
-        municipio: r.unidadeOrgao?.municipioNome ?? "",
-        uf: r.unidadeOrgao?.ufSigla ?? "",
-        modalidade: r.modalidadeNome ?? "",
-        valor: r.valorTotalEstimado ?? null,
-        encerramento: r.dataEncerramentoProposta ?? null,
-        link: buildLink(r.numeroControlePNCP),
-        linkOrigem: r.linkSistemaOrigem ?? null,
-      });
+    for (const it of list) {
+      if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
+      if (it.uf && !ufSet.has(it.uf)) continue; // segurança: só as UFs pedidas
+      if (it.data_fim_vigencia && new Date(it.data_fim_vigencia).getTime() < nowMs) continue;
+      seen.add(it.numero_controle_pncp);
+      editais.push(toEdital(it));
     }
   }
 
-  // Filtro por palavras-chave no objeto (qualquer uma).
-  const kws = input.keywords.map(stripAccents).filter(Boolean);
-  const filtered = kws.length
-    ? editais.filter((e) => {
-        const obj = stripAccents(e.objeto);
-        return kws.some((k) => obj.includes(k));
-      })
-    : editais;
-
-  // Fecha primeiro em cima.
-  filtered.sort((a, b) => (a.encerramento ?? "").localeCompare(b.encerramento ?? ""));
-  return filtered.slice(0, 100);
+  editais.sort((a, b) => (a.encerramento ?? "").localeCompare(b.encerramento ?? ""));
+  return editais.slice(0, 100);
 }

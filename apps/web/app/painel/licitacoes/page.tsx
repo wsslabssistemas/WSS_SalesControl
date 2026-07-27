@@ -7,11 +7,6 @@ import { saveGovIcp } from "./actions";
 
 export const metadata = { title: "Licitações" };
 
-function brl(v: number | null): string {
-  if (v == null) return "—";
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-}
-
 function diasAte(iso: string | null): number | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -140,7 +135,9 @@ export default async function LicitacoesPage({
                       )}
                     </div>
                     <div className="between mt-16" style={{ alignItems: "center" }}>
-                      <span className="text-dim" style={{ fontSize: 13 }}>Estimado: <strong style={{ color: "var(--text)" }}>{brl(e.valor)}</strong></span>
+                      <span className="text-faint" style={{ fontSize: 12 }}>
+                        {e.encerramento ? `encerra ${new Date(e.encerramento).toLocaleDateString("pt-BR")}` : ""}
+                      </span>
                       <a href={e.link} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-ghost">Ver no PNCP →</a>
                     </div>
                   </div>
