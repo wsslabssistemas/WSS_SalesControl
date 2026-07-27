@@ -26,8 +26,8 @@ const input: React.CSSProperties = {
   padding: "8px 10px",
   border: "1px solid rgba(128,128,128,0.4)",
   borderRadius: 7,
-  background: "transparent",
-  color: "inherit",
+  background: "var(--bg-elev)",
+  color: "var(--text)",
   font: "inherit",
 };
 const small: React.CSSProperties = {
@@ -36,8 +36,8 @@ const small: React.CSSProperties = {
   padding: "5px 10px",
   borderRadius: 7,
   border: "1px solid rgba(128,128,128,0.4)",
-  background: "transparent",
-  color: "inherit",
+  background: "var(--bg-elev)",
+  color: "var(--text)",
   cursor: "pointer",
 };
 

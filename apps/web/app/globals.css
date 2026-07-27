@@ -287,6 +287,16 @@ textarea:focus,
 select:focus {
   border-color: var(--border-brand);
 }
+/* Popup do <select>: legível no tema escuro (evita texto claro em fundo branco) */
+option {
+  background: var(--surface);
+  color: var(--text);
+}
+/* Ícone do seletor de data visível no escuro */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
 
 /* --- Selo (badge) --- */
 .badge {

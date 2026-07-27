@@ -22,8 +22,8 @@ const field: React.CSSProperties = {
   padding: "8px 10px",
   border: "1px solid rgba(128,128,128,0.4)",
   borderRadius: 8,
-  background: "transparent",
-  color: "inherit",
+  background: "var(--bg-elev)",
+  color: "var(--text)",
   font: "inherit",
 };
 

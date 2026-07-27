@@ -8,8 +8,8 @@ const field: React.CSSProperties = {
   marginTop: 5,
   border: "1px solid rgba(128,128,128,0.4)",
   borderRadius: 8,
-  background: "transparent",
-  color: "inherit",
+  background: "var(--bg-elev)",
+  color: "var(--text)",
   font: "inherit",
 };
 
