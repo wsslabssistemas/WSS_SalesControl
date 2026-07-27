@@ -130,6 +130,27 @@ ancorada na biblioteca curada é o ativo.
 
 ---
 
+## 8b. Permissões por empresa + teste grátis (entitlements)
+
+Cada empresa deve ver **só as abas que fazem sentido para ela** — barbearia não
+vê prospecção; distribuidora vê. Mostrar tudo a todos polui e confunde.
+
+**Mecanismo (implementado):**
+- A Skill/manifesto declara `capabilities` (dado) — quais módulos o segmento
+  oferece. Override por tenant em `tenants.settings.capabilities`.
+- Estado em `tenants.settings`: `trial_ends_at` (teste), `entitlements`
+  (módulos comprados).
+- Regra: um módulo aparece no menu se **oferecido** ∩ (**teste ativo** ∪
+  **comprado**). Núcleo não sabe segmento — tudo é dado (respeita as 3 leis).
+
+**Teste grátis (ideia do fundador, a refinar):** empresa nova não conhece a WSS
+e o produto envolve dinheiro — então oferecer **X dias grátis com tudo liberado**
+para experimentar. Ao fim do teste, bloqueia o que não foi comprado. Como cada
+mensagem de IA / busca / prospecção **gera custo real** para o fundador, o teste
+é **limitado no tempo** (e, a melhorar: teto de uso durante o teste para não
+sangrar). Concessão via painel do fabricante (`/painel/admin/acesso`). É o
+embrião do **módulo de vendas** do próprio sistema.
+
 ## 9. Sequência recomendada
 
 1. **Base grátis primeiro:** ingestão do dataset CNPJ (por CNAE+município) →

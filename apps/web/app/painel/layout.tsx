@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { requireUser, getActiveTenant } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platform";
+import { loadEntitlements, MODULES } from "@/lib/entitlements";
 import { BRAND_NAME } from "@/lib/brand";
 import PainelNav from "./PainelNav";
 import { signOut } from "./actions";
@@ -17,12 +18,20 @@ export default async function PainelLayout({
   const showAdmin = isPlatformAdmin(user.email);
   const showManager = ["owner", "admin", "manager"].includes(membership?.role ?? "");
 
+  // Módulos liberados por empresa/segmento (add-ons). Só aparecem se aplicáveis
+  // ao segmento e (em teste OU comprados) — evita painel poluído.
+  const ent = membership?.tenant
+    ? await loadEntitlements(membership.tenant.id, membership.tenant.skill_key)
+    : null;
+  const moduleNav = (ent?.unlocked ?? []).map((m) => ({ href: MODULES[m].href, label: MODULES[m].label }));
+
   const nav = [
     { href: "/painel", label: "Início" },
     { href: "/painel/responder", label: "Responder" },
     { href: "/painel/contatos", label: "Contatos" },
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
+    ...moduleNav,
     ...(showManager ? [{ href: "/painel/gestao", label: "Gestão" }] : []),
     { href: "/painel/equipe", label: "Equipe" },
     { href: "/painel/dna", label: "DNA" },
@@ -50,6 +59,11 @@ export default async function PainelLayout({
           </form>
         </div>
       </header>
+      {ent?.trialActive && (
+        <div style={{ background: "var(--brand-gradient-soft)", borderBottom: "1px solid var(--border-brand)", textAlign: "center", fontSize: 13, padding: "7px 12px" }}>
+          Teste grátis · <strong>{ent.trialDaysLeft} dia{ent.trialDaysLeft === 1 ? "" : "s"}</strong> restante{ent.trialDaysLeft === 1 ? "" : "s"} — todos os recursos liberados.
+        </div>
+      )}
       <div className="container" style={{ padding: "28px 1.25rem 64px" }}>
         {children}
       </div>

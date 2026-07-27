@@ -100,9 +100,10 @@ export default async function AdminPage() {
     <main>
       <div className="between">
         <h1>Painel do fabricante</h1>
-        <Link href="/painel/admin/pagamentos" className="btn btn-sm btn-ghost">
-          Pagamentos →
-        </Link>
+        <div className="row" style={{ gap: 8 }}>
+          <Link href="/painel/admin/acesso" className="btn btn-sm btn-ghost">Acesso e planos →</Link>
+          <Link href="/painel/admin/pagamentos" className="btn btn-sm btn-ghost">Pagamentos →</Link>
+        </div>
       </div>
       <p className="text-dim" style={{ marginTop: 4 }}>
         Todas as empresas do WSS Kairós. Receita − custo de IA = sua margem. Consumo
