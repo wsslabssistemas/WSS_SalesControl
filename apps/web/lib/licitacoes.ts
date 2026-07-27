@@ -43,8 +43,8 @@ type Raw = {
   unidadeOrgao?: { municipioNome?: string; ufSigla?: string };
 };
 
-async function queryOne(uf: string, modalidade: number, dataFinal: string): Promise<Raw[]> {
-  const url = `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=${modalidade}&uf=${uf}&pagina=1&tamanhoPagina=50`;
+async function queryOne(uf: string, modalidade: number, dataFinal: string, pagina: number): Promise<Raw[]> {
+  const url = `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=${modalidade}&uf=${uf}&pagina=${pagina}&tamanhoPagina=50`;
   const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
   if (!res.ok) return [];
   const json = (await res.json()) as { data?: Raw[] };
@@ -55,20 +55,32 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
   const ufs = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
   if (!ufs.length) return [];
 
-  const now = new Date();
-  const dataFinal = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  // dataFinal = teto da data de encerramento. Horizonte de 90 dias para trazer
+  // os editais que fecham nos próximos meses (não só os que encerram hoje).
+  const horizon = new Date(Date.now() + 90 * 86400000);
+  const dataFinal = `${horizon.getFullYear()}${String(horizon.getMonth() + 1).padStart(2, "0")}${String(horizon.getDate()).padStart(2, "0")}`;
 
   const combos: { uf: string; mod: number }[] = [];
   for (const uf of ufs) for (const m of MODALIDADES) combos.push({ uf, mod: m.id });
 
-  const results = await Promise.all(
-    combos.map((c) => queryOne(c.uf, c.mod, dataFinal).catch(() => [] as Raw[])),
-  );
+  // A API pagina 50/vez e ordena por publicação. Buscamos várias páginas para
+  // ter rede suficiente ao filtrar por palavra-chave — com teto de chamadas.
+  const pagesPer = Math.max(1, Math.min(8, Math.floor(15 / combos.length)));
+  const tasks: Promise<Raw[]>[] = [];
+  for (const c of combos) {
+    for (let p = 1; p <= pagesPer; p++) {
+      tasks.push(queryOne(c.uf, c.mod, dataFinal, p).catch(() => [] as Raw[]));
+    }
+  }
+  const results = await Promise.all(tasks);
 
+  const nowMs = Date.now();
   const seen = new Set<string>();
   const editais: Edital[] = [];
   for (const list of results) {
     for (const r of list) {
+      // Esconde os já encerrados.
+      if (r.dataEncerramentoProposta && new Date(r.dataEncerramentoProposta).getTime() < nowMs) continue;
       if (seen.has(r.numeroControlePNCP)) continue;
       seen.add(r.numeroControlePNCP);
       editais.push({
