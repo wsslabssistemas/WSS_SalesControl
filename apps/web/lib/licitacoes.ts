@@ -4,6 +4,7 @@
 
 const SEARCH = "https://pncp.gov.br/api/search/";
 const CONSULTA = "https://pncp.gov.br/api/consulta/v1";
+const PNCP_API = "https://pncp.gov.br/api/pncp/v1";
 
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -29,6 +30,7 @@ type Item = {
   modalidade_licitacao_nome: string | null;
   data_fim_vigencia: string | null;
   data_publicacao_pncp: string | null;
+  data_assinatura?: string | null;
   ano: number | null;
   numero_sequencial: number | null;
 };
@@ -93,6 +95,96 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
 
   editais.sort((a, b) => (a.encerramento ?? "").localeCompare(b.encerramento ?? ""));
   return editais.slice(0, 100);
+}
+
+// ---- Vencedores de contratos (quem ganhou → cliente potencial) ----
+
+export type Winner = {
+  cnpj: string; // do fornecedor que ganhou
+  razao: string;
+  orgao: string;
+  objeto: string;
+  valor: number | null;
+  municipio: string;
+  uf: string;
+  data: string | null;
+  link: string;
+};
+
+async function queryContracts(q: string, ufs: string, pagina = 1): Promise<Item[]> {
+  const params = new URLSearchParams({
+    tipos_documento: "contrato",
+    ordenacao: "-data",
+    pagina: String(pagina),
+    tam_pagina: "20",
+  });
+  if (q) params.set("q", q);
+  if (ufs) params.set("ufs", ufs);
+  const res = await fetch(`${SEARCH}?${params.toString()}`, { headers: { Accept: "application/json" }, cache: "no-store" });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { items?: Item[] };
+  return json.items ?? [];
+}
+
+async function contractDetail(orgaoCnpj: string, ano: number, seq: number): Promise<{ cnpj: string; razao: string; valor: number | null } | null> {
+  try {
+    const res = await fetch(`${PNCP_API}/orgaos/${orgaoCnpj}/contratos/${ano}/${seq}`, { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!res.ok) return null;
+    const d = (await res.json()) as { niFornecedor?: string; nomeRazaoSocialFornecedor?: string; valorGlobal?: number };
+    if (!d.niFornecedor) return null;
+    return { cnpj: d.niFornecedor, razao: d.nomeRazaoSocialFornecedor ?? "—", valor: d.valorGlobal ?? null };
+  } catch {
+    return null;
+  }
+}
+
+export async function searchWinners(input: { ufs: string[]; keywords: string[] }): Promise<Winner[]> {
+  const ufList = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
+  if (!ufList.length) return [];
+  const ufsParam = ufList.join(",");
+  const ufSet = new Set(ufList);
+  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
+  const queries = kws.length ? kws : [""];
+
+  const lists = await Promise.all(queries.map((q) => queryContracts(q, ufsParam).catch(() => [] as Item[])));
+
+  const seen = new Set<string>();
+  const rows: Item[] = [];
+  for (const list of lists) {
+    for (const it of list) {
+      if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
+      if (it.uf && !ufSet.has(it.uf)) continue;
+      if (it.orgao_cnpj == null || it.ano == null || it.numero_sequencial == null) continue;
+      seen.add(it.numero_controle_pncp);
+      rows.push(it);
+    }
+  }
+  const top = rows.slice(0, 15);
+
+  const details = await Promise.all(
+    top.map((it) => contractDetail(it.orgao_cnpj as string, it.ano as number, it.numero_sequencial as number)),
+  );
+
+  const winners: Winner[] = [];
+  const seenForn = new Set<string>();
+  for (let i = 0; i < top.length; i++) {
+    const det = details[i];
+    if (!det || seenForn.has(det.cnpj)) continue; // um card por fornecedor
+    seenForn.add(det.cnpj);
+    const it = top[i];
+    winners.push({
+      cnpj: det.cnpj,
+      razao: det.razao,
+      orgao: it.orgao_nome ?? "—",
+      objeto: it.description ?? "",
+      valor: det.valor,
+      municipio: it.municipio_nome ?? "",
+      uf: it.uf ?? "",
+      data: it.data_assinatura ?? it.data_publicacao_pncp ?? null,
+      link: `https://pncp.gov.br/app/contratos/${it.orgao_cnpj}/${it.ano}/${it.numero_sequencial}`,
+    });
+  }
+  return winners;
 }
 
 export type Rank = { nome: string; n: number };

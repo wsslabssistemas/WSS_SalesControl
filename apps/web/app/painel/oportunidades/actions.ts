@@ -47,7 +47,8 @@ export async function addOpportunity(formData: FormData) {
 
   const cnpj = String(formData.get("cnpj") ?? "");
   const name = String(formData.get("name") ?? "").trim() || "Empresa";
-  const back = "/painel/oportunidades?buscar=1";
+  const back = String(formData.get("back") ?? "/painel/oportunidades?buscar=1");
+  const source = String(formData.get("source") ?? "").trim() || "Prospecção";
 
   const enriched = await enrichCompany(cnpj);
   const phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
@@ -74,7 +75,7 @@ export async function addOpportunity(formData: FormData) {
     owner_id: membership!.membershipId,
     name,
     phone,
-    source: "Prospecção",
+    source,
     journey_stage: initialStage,
   });
 

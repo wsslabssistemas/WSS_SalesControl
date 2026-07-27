@@ -69,7 +69,10 @@ export default async function LicitacoesPage({
     <main style={{ maxWidth: 720 }}>
       <div className="between">
         <h1>Licitações</h1>
-        <Link href="/painel/licitacoes/guia" className="btn btn-sm btn-ghost">Guia de vendas ao governo</Link>
+        <div className="row" style={{ gap: 8 }}>
+          <Link href="/painel/licitacoes/vencedores" className="btn btn-sm btn-ghost">Quem ganhou</Link>
+          <Link href="/painel/licitacoes/guia" className="btn btn-sm btn-ghost">Guia</Link>
+        </div>
       </div>
       <p className="text-dim" style={{ marginTop: 4 }}>
         Editais públicos abertos do seu ramo e região, via PNCP (Portal Nacional
