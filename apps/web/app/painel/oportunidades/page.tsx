@@ -45,7 +45,7 @@ export default async function OportunidadesPage({
   const hasIcp = (icp.cnaes?.length ?? 0) > 0 && (icp.municipios?.length ?? 0) > 0;
 
   // Busca sob demanda (Passo 2).
-  let result: { total: number; companies: Company[] } | null = null;
+  let result: { total: number; companies: Company[]; capped: boolean } | null = null;
   let searchError: string | null = null;
   if (buscar && hasIcp) {
     try {
@@ -116,8 +116,11 @@ export default async function OportunidadesPage({
 
       {result && (
         <div className="mt-16">
-          <p className="text-dim" style={{ fontSize: 13, marginBottom: 8 }}>
-            <strong style={{ color: "var(--text)" }}>{result.total.toLocaleString("pt-BR")}</strong> empresas no perfil · mostrando {result.companies.length}
+          <p className="text-dim" style={{ fontSize: 13, marginBottom: 4 }}>
+            <strong style={{ color: "var(--text)" }}>{result.total.toLocaleString("pt-BR")}</strong> empresas no seu perfil · mostrando <strong style={{ color: "var(--text)" }}>{result.companies.length}</strong>
+          </p>
+          <p className="text-faint" style={{ fontSize: 12, marginTop: 0, marginBottom: 10 }}>
+            Clique no <strong>nome</strong> para ver telefone, e-mail e endereço. <strong>Adicionar</strong> cria o contato no seu funil.
           </p>
           {result.companies.length === 0 ? (
             <div className="card"><p className="text-dim" style={{ margin: 0 }}>Nada encontrado. Revise os CNAEs (só números) e a cidade (ex.: Porto Alegre/RS).</p></div>
@@ -131,7 +134,7 @@ export default async function OportunidadesPage({
                   {result.companies.map((c) => (
                     <tr key={c.cnpj}>
                       <td>
-                        {c.fantasia || c.razao}
+                        <Link href={`/painel/oportunidades/${c.cnpj}`}>{c.fantasia || c.razao}</Link>
                         {c.fantasia && <span className="text-faint" style={{ fontSize: 12 }}> · {c.razao}</span>}
                       </td>
                       <td className="text-dim" style={{ fontVariantNumeric: "tabular-nums" }}>{c.cnpj}</td>
@@ -139,7 +142,7 @@ export default async function OportunidadesPage({
                         <form action={addOpportunity}>
                           <input type="hidden" name="cnpj" value={c.cnpj} />
                           <input type="hidden" name="name" value={c.fantasia || c.razao} />
-                          <button type="submit" className="btn btn-sm btn-ghost">+ Funil</button>
+                          <button type="submit" className="btn btn-sm btn-ghost">Adicionar</button>
                         </form>
                       </td>
                     </tr>
@@ -147,6 +150,13 @@ export default async function OportunidadesPage({
                 </tbody>
               </table>
             </div>
+          )}
+          {result.capped && (
+            <p className="text-faint mt-16" style={{ fontSize: 12, lineHeight: 1.6 }}>
+              A busca pública gratuita mostra uma <strong>amostra</strong> do total. Acesso à
+              lista completa ({result.total.toLocaleString("pt-BR")} empresas) e exportação em
+              lote entram no plano pago da Prospecção (base completa da Receita).
+            </p>
           )}
         </div>
       )}

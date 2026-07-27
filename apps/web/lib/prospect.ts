@@ -5,8 +5,7 @@
 const SEARCH_URL = "https://api.casadosdados.com.br/v5/public/cnpj/pesquisa";
 const ENRICH_URL = (cnpj: string) => `https://minhareceita.org/${cnpj}`;
 
-const stripAccents = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 // "9313-1/00 academias" -> "9313100"
 export function parseCnae(line: string): string | null {
@@ -30,27 +29,19 @@ export type Company = {
   situacao: string | null;
 };
 
-export type SearchResult = { total: number; companies: Company[] };
+export type SearchResult = { total: number; companies: Company[]; capped: boolean };
 
-export async function searchCompanies(input: {
-  cnaes: string[];
-  cities: string[];
-  page?: number;
-}): Promise<SearchResult> {
-  const cnaes = input.cnaes.map(parseCnae).filter(Boolean) as string[];
-  const parsed = input.cities.map(parseCity);
-  const municipios = parsed.map((p) => p.municipio).filter(Boolean);
-  const ufs = [...new Set(parsed.map((p) => p.uf).filter(Boolean))] as string[];
+type City = { municipio: string; uf?: string };
 
+async function queryOne(cnaes: string[], cities: City[], page = 1): Promise<{ total: number; companies: Company[] }> {
   const body = {
     codigo_atividade_principal: cnaes,
     situacao_cadastral: ["ATIVA"],
-    uf: ufs,
-    municipio: municipios,
+    uf: [...new Set(cities.map((c) => c.uf).filter(Boolean))] as string[],
+    municipio: cities.map((c) => c.municipio).filter(Boolean),
     limite: 20,
-    pagina: input.page ?? 1,
+    pagina: page,
   };
-
   const res = await fetch(SEARCH_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -58,14 +49,13 @@ export async function searchCompanies(input: {
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Busca falhou (HTTP ${res.status})`);
-
   const json = (await res.json()) as {
     total?: number;
     cnpjs?: { cnpj: string; razao_social: string; nome_fantasia: string | null; situacao_cadastral?: { situacao_atual?: string } }[];
   };
   return {
     total: json.total ?? 0,
-    companies: (json.cnpjs ?? []).slice(0, 20).map((c) => ({
+    companies: (json.cnpjs ?? []).map((c) => ({
       cnpj: c.cnpj,
       razao: c.razao_social,
       fantasia: c.nome_fantasia,
@@ -74,25 +64,89 @@ export async function searchCompanies(input: {
   };
 }
 
-// Enriquecimento sob demanda: telefone/e-mail/endereço por CNPJ (grátis).
-export async function enrichCompany(cnpj: string): Promise<{
+// A busca pública devolve ~20 e ignora paginação. Para trazer mais variedade sem
+// custo, disparamos uma consulta por (CNAE × cidade) e juntamos sem repetir.
+const MAX_COMBOS = 8;
+const MAX_RESULTS = 120;
+
+export async function searchCompanies(input: { cnaes: string[]; cities: string[] }): Promise<SearchResult> {
+  const cnaeCodes = input.cnaes.map(parseCnae).filter(Boolean) as string[];
+  const cities = input.cities.map(parseCity).filter((c) => c.municipio);
+  if (!cnaeCodes.length || !cities.length) return { total: 0, companies: [], capped: false };
+
+  const broad = await queryOne(cnaeCodes, cities);
+  const map = new Map<string, Company>();
+  for (const c of broad.companies) map.set(c.cnpj, c);
+
+  const combos: { cnae: string; city: City }[] = [];
+  for (const cn of cnaeCodes) for (const ct of cities) combos.push({ cnae: cn, city: ct });
+
+  if (combos.length > 1) {
+    const slice = combos.slice(0, MAX_COMBOS);
+    const results = await Promise.all(
+      slice.map((c) => queryOne([c.cnae], [c.city]).catch(() => ({ total: 0, companies: [] as Company[] }))),
+    );
+    for (const r of results) for (const c of r.companies) if (!map.has(c.cnpj)) map.set(c.cnpj, c);
+  }
+
+  const companies = [...map.values()].slice(0, MAX_RESULTS);
+  return { total: broad.total, companies, capped: broad.total > companies.length };
+}
+
+export type CompanyDetail = {
+  cnpj: string;
+  razao: string;
+  fantasia: string | null;
   phone: string | null;
+  phone2: string | null;
   email: string | null;
+  endereco: string | null;
   municipio: string | null;
   uf: string | null;
-} | null> {
+  cnae: string | null;
+  porte: string | null;
+  capital: number | null;
+  abertura: string | null;
+  situacao: string | null;
+};
+
+async function fetchReceita(cnpj: string): Promise<Record<string, unknown> | null> {
   try {
     const res = await fetch(ENRICH_URL(cnpj.replace(/\D/g, "")), { cache: "no-store" });
     if (!res.ok) return null;
-    const j = (await res.json()) as Record<string, unknown>;
-    const phone = String(j.ddd_telefone_1 ?? "").replace(/\D/g, "") || null;
-    return {
-      phone,
-      email: (j.email as string) || null,
-      municipio: (j.municipio as string) || null,
-      uf: (j.uf as string) || null,
-    };
+    return (await res.json()) as Record<string, unknown>;
   } catch {
     return null;
   }
+}
+
+// Telefone (só) — usado ao adicionar ao funil.
+export async function enrichCompany(cnpj: string): Promise<{ phone: string | null } | null> {
+  const j = await fetchReceita(cnpj);
+  if (!j) return null;
+  return { phone: String(j.ddd_telefone_1 ?? "").replace(/\D/g, "") || null };
+}
+
+// Detalhe completo — usado na ficha da empresa.
+export async function getCompanyDetail(cnpj: string): Promise<CompanyDetail | null> {
+  const j = await fetchReceita(cnpj);
+  if (!j) return null;
+  const str = (k: string) => (j[k] ? String(j[k]) : null);
+  const endereco = [str("logradouro"), str("numero"), str("bairro")].filter(Boolean).join(", ") || null;
+  return {
+    cnpj: String(j.cnpj ?? cnpj),
+    razao: str("razao_social") ?? "",
+    fantasia: str("nome_fantasia"),
+    phone: String(j.ddd_telefone_1 ?? "").replace(/\D/g, "") || null,
+    phone2: String(j.ddd_telefone_2 ?? "").replace(/\D/g, "") || null,
+    email: str("email"),
+    endereco,
+    municipio: str("municipio"),
+    uf: str("uf"),
+    cnae: str("cnae_fiscal_descricao"),
+    porte: str("porte"),
+    capital: typeof j.capital_social === "number" ? (j.capital_social as number) : null,
+    abertura: str("data_inicio_atividade"),
+    situacao: str("descricao_situacao_cadastral") ?? str("situacao_cadastral"),
+  };
 }
