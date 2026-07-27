@@ -32,13 +32,13 @@ type Item = {
   numero_sequencial: number | null;
 };
 
-async function queryOne(q: string, ufs: string): Promise<Item[]> {
+async function queryOne(q: string, ufs: string, pagina = 1): Promise<Item[]> {
   const params = new URLSearchParams({
     tipos_documento: "edital",
     status: "recebendo_proposta",
     ordenacao: "-data",
-    pagina: "1",
-    tam_pagina: "30",
+    pagina: String(pagina),
+    tam_pagina: "20", // limite da API do PNCP
   });
   if (q) params.set("q", q);
   if (ufs) params.set("ufs", ufs);
@@ -92,4 +92,79 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
 
   editais.sort((a, b) => (a.encerramento ?? "").localeCompare(b.encerramento ?? ""));
   return editais.slice(0, 100);
+}
+
+export type Rank = { nome: string; n: number };
+export type Intel = {
+  amostra: number;
+  totalAbertos: number | null;
+  byOrgao: Rank[];
+  byCidade: Rank[];
+  byModalidade: Rank[];
+  byMes: Rank[]; // editais abertos por mês de encerramento (calendário à frente)
+};
+
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+function topN(items: string[], n: number): Rank[] {
+  const m = new Map<string, number>();
+  for (const it of items) {
+    const k = (it ?? "").trim();
+    if (!k) continue;
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return [...m.entries()].map(([nome, cnt]) => ({ nome, n: cnt })).sort((a, b) => b.n - a.n).slice(0, n);
+}
+
+// Inteligência: amostra maior de editais abertos do perfil, agregada por órgão,
+// cidade, modalidade e mês de encerramento. Puro consumo da busca do PNCP.
+export async function analyzeEditais(input: { ufs: string[]; keywords: string[] }): Promise<Intel> {
+  const ufList = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
+  if (!ufList.length) return { amostra: 0, totalAbertos: null, byOrgao: [], byCidade: [], byModalidade: [], byMes: [] };
+  const ufsParam = ufList.join(",");
+  const ufSet = new Set(ufList);
+  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
+  const queries = kws.length ? kws : [""];
+
+  // Orçamento de chamadas (tam_pagina=20). Mais páginas = amostra melhor.
+  const pagesPer = Math.max(1, Math.min(8, Math.floor(16 / queries.length)));
+  const tasks: Promise<Item[]>[] = [];
+  for (const q of queries) for (let p = 1; p <= pagesPer; p++) tasks.push(queryOne(q, ufsParam, p).catch(() => [] as Item[]));
+  const results = await Promise.all(tasks);
+
+  const nowMs = Date.now();
+  const seen = new Set<string>();
+  const rows: Item[] = [];
+  for (const list of results) {
+    for (const it of list) {
+      if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
+      if (it.uf && !ufSet.has(it.uf)) continue;
+      if (it.data_fim_vigencia && new Date(it.data_fim_vigencia).getTime() < nowMs) continue;
+      seen.add(it.numero_controle_pncp);
+      rows.push(it);
+    }
+  }
+
+  const meses = rows
+    .map((r) => r.data_fim_vigencia)
+    .filter(Boolean)
+    .map((d) => {
+      const dt = new Date(d as string);
+      return `${dt.getFullYear()}-${String(dt.getMonth()).padStart(2, "0")}`;
+    });
+  const byMes = [...new Set(meses)]
+    .sort()
+    .map((ym) => {
+      const [y, m] = ym.split("-");
+      return { nome: `${MESES[Number(m)]}/${y.slice(2)}`, n: meses.filter((x) => x === ym).length };
+    });
+
+  return {
+    amostra: rows.length,
+    totalAbertos: null,
+    byOrgao: topN(rows.map((r) => r.orgao_nome ?? ""), 8),
+    byCidade: topN(rows.map((r) => r.municipio_nome ?? ""), 6),
+    byModalidade: topN(rows.map((r) => r.modalidade_licitacao_nome ?? ""), 5),
+    byMes,
+  };
 }

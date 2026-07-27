@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
-import { searchEditais, type Edital } from "@/lib/licitacoes";
+import { searchEditais, analyzeEditais, type Edital, type Intel } from "@/lib/licitacoes";
 import { saveGovIcp } from "./actions";
 
 export const metadata = { title: "Licitações" };
@@ -18,9 +18,9 @@ function diasAte(iso: string | null): number | null {
 export default async function LicitacoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; erro?: string; buscar?: string }>;
+  searchParams: Promise<{ ok?: string; erro?: string; buscar?: string; intel?: string }>;
 }) {
-  const { ok, erro, buscar } = await searchParams;
+  const { ok, erro, buscar, intel } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) return (<main><h1>Licitações</h1><p className="text-dim">Sem empresa vinculada.</p></main>);
@@ -53,6 +53,15 @@ export default async function LicitacoesPage({
       editais = await searchEditais({ ufs: gov.ufs ?? [], keywords: gov.keywords ?? [] });
     } catch (e) {
       searchError = e instanceof Error ? e.message : "Falha na busca";
+    }
+  }
+
+  let inteligencia: Intel | null = null;
+  if (intel && hasConfig) {
+    try {
+      inteligencia = await analyzeEditais({ ufs: gov.ufs ?? [], keywords: gov.keywords ?? [] });
+    } catch {
+      inteligencia = null;
     }
   }
 
@@ -95,7 +104,12 @@ export default async function LicitacoesPage({
       <div className="card mt-16">
         <div className="between" style={{ alignItems: "baseline" }}>
           <p className="eyebrow" style={{ margin: 0 }}>Passo 2 · Editais abertos</p>
-          {hasConfig && <Link href="/painel/licitacoes?buscar=1" className="btn btn-sm btn-primary">Buscar editais</Link>}
+          {hasConfig && (
+            <div className="row" style={{ gap: 8 }}>
+              <Link href="/painel/licitacoes?intel=1" className="btn btn-sm btn-ghost">Inteligência</Link>
+              <Link href="/painel/licitacoes?buscar=1" className="btn btn-sm btn-primary">Buscar editais</Link>
+            </div>
+          )}
         </div>
         {!hasConfig ? (
           <p className="text-dim" style={{ marginTop: 10, marginBottom: 0, fontSize: 14 }}>Configure o Passo 1 (ao menos um estado) para buscar.</p>
@@ -105,6 +119,75 @@ export default async function LicitacoesPage({
           </p>
         )}
       </div>
+
+      {inteligencia && (
+        <div className="mt-16">
+          {inteligencia.amostra === 0 ? (
+            <div className="card"><p className="text-dim" style={{ margin: 0 }}>Sem editais abertos no perfil para analisar agora.</p></div>
+          ) : (
+            <>
+              <p className="text-dim" style={{ fontSize: 13, marginBottom: 10 }}>
+                Análise de <strong style={{ color: "var(--text)" }}>{inteligencia.amostra}</strong> editais abertos do seu perfil.
+              </p>
+
+              <div className="card">
+                <p className="eyebrow" style={{ marginBottom: 12 }}>Órgãos que mais abrem (seus alvos)</p>
+                {inteligencia.byOrgao.map((o, i) => {
+                  const max = inteligencia!.byOrgao[0]?.n || 1;
+                  return (
+                    <div key={o.nome} style={{ padding: "7px 0", borderBottom: i < inteligencia!.byOrgao.length - 1 ? "1px solid var(--border)" : "none" }}>
+                      <div className="between" style={{ marginBottom: 5, fontSize: 13 }}>
+                        <span className="grow" style={{ paddingRight: 10 }}>{o.nome}</span>
+                        <strong style={{ fontVariantNumeric: "tabular-nums" }}>{o.n}</strong>
+                      </div>
+                      <div className="bar-track"><div className="bar-fill" style={{ width: `${(o.n / max) * 100}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="card mt-16">
+                <p className="eyebrow" style={{ marginBottom: 12 }}>Prazos pela frente (editais que encerram por mês)</p>
+                {inteligencia.byMes.map((m, i) => {
+                  const max = Math.max(...inteligencia!.byMes.map((x) => x.n), 1);
+                  return (
+                    <div key={m.nome} style={{ padding: "6px 0", borderBottom: i < inteligencia!.byMes.length - 1 ? "1px solid var(--border)" : "none" }}>
+                      <div className="between" style={{ marginBottom: 5, fontSize: 13 }}>
+                        <span>{m.nome}</span>
+                        <strong style={{ fontVariantNumeric: "tabular-nums" }}>{m.n}</strong>
+                      </div>
+                      <div className="bar-track"><div className="bar-fill" style={{ width: `${(m.n / max) * 100}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="row wrap mt-16" style={{ gap: 16, alignItems: "flex-start" }}>
+                <div className="card grow" style={{ minWidth: 220 }}>
+                  <p className="eyebrow" style={{ marginBottom: 10 }}>Cidades</p>
+                  <div className="row wrap" style={{ gap: 8 }}>
+                    {inteligencia.byCidade.map((c) => (
+                      <span key={c.nome} className="badge" style={{ padding: "6px 10px", fontSize: 12 }}>{c.nome}: <strong style={{ color: "var(--text)" }}>{c.n}</strong></span>
+                    ))}
+                  </div>
+                </div>
+                <div className="card grow" style={{ minWidth: 220 }}>
+                  <p className="eyebrow" style={{ marginBottom: 10 }}>Modalidades</p>
+                  <div className="row wrap" style={{ gap: 8 }}>
+                    {inteligencia.byModalidade.map((c) => (
+                      <span key={c.nome} className="badge" style={{ padding: "6px 10px", fontSize: 12 }}>{c.nome}: <strong style={{ color: "var(--text)" }}>{c.n}</strong></span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-faint mt-16" style={{ fontSize: 12 }}>
+                Baseado nos editais abertos agora. Sazonalidade histórica (em que meses cada órgão costuma abrir) é o próximo passo.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {searchError && <p className="badge badge-danger mt-16">Busca indisponível: {searchError}</p>}
 
