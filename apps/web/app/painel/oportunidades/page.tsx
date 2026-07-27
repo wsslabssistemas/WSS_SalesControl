@@ -2,16 +2,17 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
-import { saveIcp } from "./actions";
+import { searchCompanies, type Company } from "@/lib/prospect";
+import { saveIcp, addOpportunity } from "./actions";
 
 export const metadata = { title: "Oportunidades" };
 
 export default async function OportunidadesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; erro?: string }>;
+  searchParams: Promise<{ ok?: string; erro?: string; buscar?: string; added?: string; dup?: string }>;
 }) {
-  const { ok, erro } = await searchParams;
+  const { ok, erro, buscar, added, dup } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -41,6 +42,18 @@ export default async function OportunidadesPage({
   const { data: t } = await supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle();
   const icp = ((t?.settings as Record<string, unknown> | null)?.icp as { cnaes?: string[]; municipios?: string[] } | undefined) ?? {};
   const isAdmin = membership!.role === "owner" || membership!.role === "admin";
+  const hasIcp = (icp.cnaes?.length ?? 0) > 0 && (icp.municipios?.length ?? 0) > 0;
+
+  // Busca sob demanda (Passo 2).
+  let result: { total: number; companies: Company[] } | null = null;
+  let searchError: string | null = null;
+  if (buscar && hasIcp) {
+    try {
+      result = await searchCompanies({ cnaes: icp.cnaes ?? [], cities: icp.municipios ?? [] });
+    } catch (e) {
+      searchError = e instanceof Error ? e.message : "Falha na busca";
+    }
+  }
 
   return (
     <main style={{ maxWidth: 640 }}>
@@ -52,6 +65,8 @@ export default async function OportunidadesPage({
 
       {ok && <p className="badge badge-success mt-16">Perfil de cliente ideal salvo.</p>}
       {erro && <p className="badge badge-danger mt-16">{erro}</p>}
+      {added && <p className="badge badge-success mt-16">{added} adicionada ao funil.</p>}
+      {dup && <p className="badge badge-warn mt-16">{dup} já está na sua base.</p>}
 
       {/* Passo 1: Perfil de Cliente Ideal (sem custo) */}
       <div className="card mt-16">
@@ -77,17 +92,64 @@ export default async function OportunidadesPage({
         )}
       </div>
 
-      {/* Passo 2: busca (em construção) */}
+      {/* Passo 2: busca */}
       <div className="card mt-16">
-        <p className="eyebrow" style={{ marginBottom: 4 }}>Passo 2 · Buscar empresas</p>
-        <p className="text-dim" style={{ marginTop: 0, marginBottom: 0, fontSize: 14 }}>
-          Em construção. Vai listar as empresas do seu perfil a partir da base
-          pública de CNPJ (grátis), com opção de enriquecer contatos sob demanda.
-          {(icp.cnaes?.length || icp.municipios?.length) ? (
-            <> Perfil atual: <strong>{(icp.cnaes ?? []).length}</strong> CNAE(s), <strong>{(icp.municipios ?? []).length}</strong> cidade(s).</>
-          ) : null}
-        </p>
+        <div className="between" style={{ alignItems: "baseline" }}>
+          <p className="eyebrow" style={{ margin: 0 }}>Passo 2 · Buscar empresas</p>
+          {hasIcp && (
+            <Link href="/painel/oportunidades?buscar=1" className="btn btn-sm btn-primary">Buscar empresas</Link>
+          )}
+        </div>
+        {!hasIcp ? (
+          <p className="text-dim" style={{ marginTop: 10, marginBottom: 0, fontSize: 14 }}>
+            Configure o Passo 1 (pelo menos um CNAE e uma cidade) para buscar.
+          </p>
+        ) : (
+          <p className="text-dim" style={{ marginTop: 10, marginBottom: 0, fontSize: 14 }}>
+            Base pública de CNPJ (grátis). Perfil: <strong>{(icp.cnaes ?? []).length}</strong> CNAE(s), <strong>{(icp.municipios ?? []).length}</strong> cidade(s).
+            Ao adicionar, o telefone é buscado automaticamente.
+          </p>
+        )}
       </div>
+
+      {searchError && <p className="badge badge-danger mt-16">Busca indisponível: {searchError}</p>}
+
+      {result && (
+        <div className="mt-16">
+          <p className="text-dim" style={{ fontSize: 13, marginBottom: 8 }}>
+            <strong style={{ color: "var(--text)" }}>{result.total.toLocaleString("pt-BR")}</strong> empresas no perfil · mostrando {result.companies.length}
+          </p>
+          {result.companies.length === 0 ? (
+            <div className="card"><p className="text-dim" style={{ margin: 0 }}>Nada encontrado. Revise os CNAEs (só números) e a cidade (ex.: Porto Alegre/RS).</p></div>
+          ) : (
+            <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+              <table className="table">
+                <thead>
+                  <tr><th>Empresa</th><th>CNPJ</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {result.companies.map((c) => (
+                    <tr key={c.cnpj}>
+                      <td>
+                        {c.fantasia || c.razao}
+                        {c.fantasia && <span className="text-faint" style={{ fontSize: 12 }}> · {c.razao}</span>}
+                      </td>
+                      <td className="text-dim" style={{ fontVariantNumeric: "tabular-nums" }}>{c.cnpj}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <form action={addOpportunity}>
+                          <input type="hidden" name="cnpj" value={c.cnpj} />
+                          <input type="hidden" name="name" value={c.fantasia || c.razao} />
+                          <button type="submit" className="btn btn-sm btn-ghost">+ Funil</button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <p className="text-faint mt-16" style={{ fontSize: 12 }}>
         <Link href="/painel">← Início</Link>

@@ -2,7 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
+import { getSkillFormConfig } from "@/lib/skill";
+import { normalizePhone } from "@/lib/phone";
+import { enrichCompany } from "@/lib/prospect";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 // Salva o Perfil de Cliente Ideal (ICP): CNAEs-alvo + municípios. Passo 1 da
 // prospecção — sem custo externo. Owner/admin.
@@ -33,4 +37,47 @@ export async function saveIcp(formData: FormData) {
     .eq("id", tenant.id);
 
   redirect("/painel/oportunidades?ok=1");
+}
+
+// Traz uma empresa da busca para o funil como contato (enriquecendo o telefone).
+export async function addOpportunity(formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+
+  const cnpj = String(formData.get("cnpj") ?? "");
+  const name = String(formData.get("name") ?? "").trim() || "Empresa";
+  const back = "/painel/oportunidades?buscar=1";
+
+  const enriched = await enrichCompany(cnpj);
+  const phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
+
+  const supabase = await createClient();
+
+  // Dedup por telefone já existente.
+  if (phone) {
+    const { data: existing } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("tenant_id", tenant.id)
+      .eq("phone", phone)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (existing) redirect(`${back}&dup=${encodeURIComponent(name)}`);
+  }
+
+  const { stages } = await getSkillFormConfig(tenant.skill_key);
+  const initialStage = stages.find((s) => !s.terminal)?.key ?? stages[0]?.key ?? "contato";
+
+  await supabase.from("contacts").insert({
+    tenant_id: tenant.id,
+    owner_id: membership!.membershipId,
+    name,
+    phone,
+    source: "Prospecção",
+    journey_stage: initialStage,
+  });
+
+  revalidatePath("/painel/contatos");
+  redirect(`${back}&added=${encodeURIComponent(name)}`);
 }
