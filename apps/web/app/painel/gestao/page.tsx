@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics";
+import { hasAIKey } from "@/lib/ai";
+import Analista from "./Analista";
 
 export const metadata = { title: "Gestão" };
 
@@ -125,6 +127,8 @@ export default async function GestaoPage({
         Visão do dono. Números do período selecionado. Conversão conta pessoas
         distintas; tempo de resposta em mediana e p90.
       </p>
+
+      {hasAIKey() && <Analista dias={dias} />}
 
       {/* Números-chave */}
       <div className="stat-grid mt-24">
