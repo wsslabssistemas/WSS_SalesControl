@@ -65,11 +65,11 @@ type Item = {
 
 // tam_pagina=100 funciona (o que falhava antes era a rajada, não o tamanho).
 // Uma chamada por palavra traz tudo: rápido, completo e sem bloqueio.
-async function queryOne(q: string, ufs: string, opts: { abertos?: boolean; tam?: number } = {}): Promise<{ items: Item[]; total: number }> {
+async function queryOne(q: string, ufs: string, opts: { abertos?: boolean; tam?: number; pagina?: number } = {}): Promise<{ items: Item[]; total: number }> {
   const params = new URLSearchParams({
     tipos_documento: "edital",
     ordenacao: "-data",
-    pagina: "1",
+    pagina: String(opts.pagina ?? 1),
     tam_pagina: String(opts.tam ?? 100),
   });
   if (opts.abertos !== false) params.set("status", "recebendo_proposta");
@@ -249,9 +249,12 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 4);
   const queries = kws.length ? kws : [""];
 
-  // Histórico do ramo (sem filtro de status) — base ampla para os padrões.
-  const hist = await mapLimit(queries, 2, (q) =>
-    queryOne(q, ufsParam, { abertos: false, tam: 100 }).catch(() => ({ items: [] as Item[], total: 0 })),
+  // Histórico do ramo (sem filtro de status). Várias páginas: a 1ª traz só os
+  // mais recentes — sem espalhar no tempo, a sazonalidade seria falsa.
+  const jobs: { q: string; p: number }[] = [];
+  for (const q of queries) for (const p of [1, 2, 3]) jobs.push({ q, p });
+  const hist = await mapLimit(jobs, 2, (j) =>
+    queryOne(j.q, ufsParam, { abertos: false, tam: 100, pagina: j.p }).catch(() => ({ items: [] as Item[], total: 0 })),
   );
   // Quantos estão abertos agora (uma chamada leve).
   const abertos = await mapLimit(queries, 2, (q) =>
@@ -260,9 +263,12 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
 
   const seen = new Set<string>();
   const rows: Item[] = [];
-  let totalHistorico = 0;
-  for (const r of hist) {
-    totalHistorico += r.total;
+  // O "total" repete a cada página da mesma palavra — conta uma vez por palavra.
+  const totalPorPalavra = new Map<string, number>();
+  for (let i = 0; i < hist.length; i++) {
+    const r = hist[i];
+    const q = jobs[i].q;
+    if (r.total > (totalPorPalavra.get(q) ?? 0)) totalPorPalavra.set(q, r.total);
     for (const it of r.items) {
       if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
       if (it.uf && !ufSet.has(it.uf)) continue;
@@ -294,7 +300,7 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
 
   return {
     analisados: rows.length,
-    totalHistorico,
+    totalHistorico: [...totalPorPalavra.values()].reduce((s, n) => s + n, 0),
     abertosAgora: abertos.reduce((s, a) => s + a.total, 0),
     byOrgao: topN(rows.map((r) => r.orgao_nome ?? ""), 8),
     byCidade: topN(rows.map((r) => r.municipio_nome ?? ""), 6),
