@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
 import { searchEditais, analyzeEditais, type Edital, type Intel } from "@/lib/licitacoes";
+import { hasAIKey } from "@/lib/ai";
 import { saveGovIcp } from "./actions";
+import SugerirPalavras from "./SugerirPalavras";
 
 export const metadata = { title: "Licitações" };
 
@@ -105,6 +107,8 @@ export default async function LicitacoesPage({
           <p className="text-faint mt-8" style={{ fontSize: 13 }}>Só um administrador configura o perfil.</p>
         )}
       </div>
+
+      {isAdmin && hasAIKey() && <SugerirPalavras atuais={gov.keywords ?? []} />}
 
       {/* Passo 2: busca */}
       <div className="card mt-16">

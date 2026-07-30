@@ -211,6 +211,54 @@ export async function searchWinners(input: { ufs: string[]; keywords: string[] }
   return winners;
 }
 
+// ---- Sugestão de palavras-chave ----
+// Órgãos públicos usam o termo deles ("climatizador"), não o seu ("termostato").
+// Aqui medimos quantos editais cada palavra encontra e sugerimos os termos que
+// realmente aparecem nos editais do seu ramo.
+
+const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+export type Sugestao = { termo: string; n: number; atual: boolean };
+
+// Itens do edital — onde o produto realmente aparece (a descrição é só resumo).
+export type EditalItem = { numero: number; descricao: string; quantidade: number | null; unidade: string | null; bate: boolean };
+
+export async function getEditalItens(
+  orgaoCnpj: string,
+  ano: number,
+  seq: number,
+  termos: string[],
+): Promise<EditalItem[]> {
+  const raw = await getJson<unknown>(
+    `${PNCP_API}/orgaos/${orgaoCnpj}/compras/${ano}/${seq}/itens?pagina=1&tamanhoPagina=100`,
+  );
+  const arr = Array.isArray(raw) ? raw : ((raw as { data?: unknown[] } | null)?.data ?? []);
+  const alvos = termos.map(semAcento).filter(Boolean);
+  return (arr as Record<string, unknown>[]).map((x, i) => {
+    const descricao = String(x.descricao ?? x.descricaoItem ?? "");
+    const d = semAcento(descricao);
+    return {
+      numero: Number(x.numeroItem ?? i + 1),
+      descricao,
+      quantidade: typeof x.quantidade === "number" ? x.quantidade : null,
+      unidade: (x.unidadeMedida as string) ?? null,
+      bate: alvos.some((t) => d.includes(t)),
+    };
+  });
+}
+
+// Mede quantos editais cada termo encontra (para validar sugestões da IA).
+export async function measureTerms(termos: string[], ufs: string[]): Promise<Sugestao[]> {
+  const ufsParam = ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).join(",");
+  if (!ufsParam) return [];
+  const lista = termos.map((t) => t.trim()).filter(Boolean).slice(0, 12);
+  const res = await mapLimit(lista, 2, async (t) => {
+    const r = await queryOne(t, ufsParam, { abertos: false, tam: 1 }).catch(() => ({ items: [] as Item[], total: 0 }));
+    return { termo: t, n: r.total, atual: false };
+  });
+  return res.sort((a, b) => b.n - a.n);
+}
+
 export type Rank = { nome: string; n: number };
 export type Intel = {
   analisados: number; // editais do ramo analisados (histórico)
