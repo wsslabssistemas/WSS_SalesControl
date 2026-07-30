@@ -8,6 +8,34 @@ const PNCP_API = "https://pncp.gov.br/api/pncp/v1";
 
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// O PNCP derruba rajadas: 28 chamadas simultâneas -> 24 falham. Buscamos com
+// concorrência baixa e tentamos de novo antes de desistir.
+async function getJson<T>(url: string, tentativas = 3): Promise<T | null> {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (res.ok) return (await res.json()) as T;
+    } catch {
+      // rede instável; tenta de novo
+    }
+    if (i < tentativas - 1) await sleep(400 * (i + 1));
+  }
+  return null;
+}
+
+// Executa em lotes pequenos, em vez de tudo de uma vez.
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    const batch = items.slice(i, i + limit);
+    out.push(...(await Promise.all(batch.map(fn))));
+    if (i + limit < items.length) await sleep(250);
+  }
+  return out;
+}
+
 export type Edital = {
   id: string;
   objeto: string;
@@ -45,10 +73,8 @@ async function queryOne(q: string, ufs: string, pagina = 1): Promise<Item[]> {
   });
   if (q) params.set("q", q);
   if (ufs) params.set("ufs", ufs);
-  const res = await fetch(`${SEARCH}?${params.toString()}`, { headers: { Accept: "application/json" }, cache: "no-store" });
-  if (!res.ok) return [];
-  const json = (await res.json()) as { items?: Item[] };
-  return json.items ?? [];
+  const json = await getJson<{ items?: Item[] }>(`${SEARCH}?${params.toString()}`);
+  return json?.items ?? [];
 }
 
 function toEdital(it: Item): Edital {
@@ -78,7 +104,7 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
   const queries = kws.length ? kws : [""]; // sem palavra-chave = todos os abertos na UF
 
-  const results = await Promise.all(queries.map((q) => queryOne(q, ufsParam).catch(() => [] as Item[])));
+  const results = await mapLimit(queries, 2, (q) => queryOne(q, ufsParam).catch(() => [] as Item[]));
 
   const nowMs = Date.now();
   const seen = new Set<string>();
@@ -120,22 +146,16 @@ async function queryContracts(q: string, ufs: string, pagina = 1): Promise<Item[
   });
   if (q) params.set("q", q);
   if (ufs) params.set("ufs", ufs);
-  const res = await fetch(`${SEARCH}?${params.toString()}`, { headers: { Accept: "application/json" }, cache: "no-store" });
-  if (!res.ok) return [];
-  const json = (await res.json()) as { items?: Item[] };
-  return json.items ?? [];
+  const json = await getJson<{ items?: Item[] }>(`${SEARCH}?${params.toString()}`);
+  return json?.items ?? [];
 }
 
 async function contractDetail(orgaoCnpj: string, ano: number, seq: number): Promise<{ cnpj: string; razao: string; valor: number | null } | null> {
-  try {
-    const res = await fetch(`${PNCP_API}/orgaos/${orgaoCnpj}/contratos/${ano}/${seq}`, { headers: { Accept: "application/json" }, cache: "no-store" });
-    if (!res.ok) return null;
-    const d = (await res.json()) as { niFornecedor?: string; nomeRazaoSocialFornecedor?: string; valorGlobal?: number };
-    if (!d.niFornecedor) return null;
-    return { cnpj: d.niFornecedor, razao: d.nomeRazaoSocialFornecedor ?? "—", valor: d.valorGlobal ?? null };
-  } catch {
-    return null;
-  }
+  const d = await getJson<{ niFornecedor?: string; nomeRazaoSocialFornecedor?: string; valorGlobal?: number }>(
+    `${PNCP_API}/orgaos/${orgaoCnpj}/contratos/${ano}/${seq}`,
+  );
+  if (!d?.niFornecedor) return null;
+  return { cnpj: d.niFornecedor, razao: d.nomeRazaoSocialFornecedor ?? "—", valor: d.valorGlobal ?? null };
 }
 
 export async function searchWinners(input: { ufs: string[]; keywords: string[] }): Promise<Winner[]> {
@@ -146,7 +166,7 @@ export async function searchWinners(input: { ufs: string[]; keywords: string[] }
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
   const queries = kws.length ? kws : [""];
 
-  const lists = await Promise.all(queries.map((q) => queryContracts(q, ufsParam).catch(() => [] as Item[])));
+  const lists = await mapLimit(queries, 2, (q) => queryContracts(q, ufsParam).catch(() => [] as Item[]));
 
   const seen = new Set<string>();
   const rows: Item[] = [];
@@ -161,8 +181,8 @@ export async function searchWinners(input: { ufs: string[]; keywords: string[] }
   }
   const top = rows.slice(0, 15);
 
-  const details = await Promise.all(
-    top.map((it) => contractDetail(it.orgao_cnpj as string, it.ano as number, it.numero_sequencial as number)),
+  const details = await mapLimit(top, 3, (it) =>
+    contractDetail(it.orgao_cnpj as string, it.ano as number, it.numero_sequencial as number),
   );
 
   const winners: Winner[] = [];
@@ -207,21 +227,14 @@ export async function seasonality(uf: string): Promise<Rank[]> {
     const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
     return { y: d.getFullYear(), m: d.getMonth() };
   });
-  const tasks = months.map(async ({ y, m }) => {
+  return mapLimit(months, 3, async ({ y, m }) => {
     const ini = `${y}${String(m + 1).padStart(2, "0")}01`;
     const lastDay = new Date(y, m + 1, 0).getDate();
     const fim = `${y}${String(m + 1).padStart(2, "0")}${String(lastDay).padStart(2, "0")}`;
     const url = `${CONSULTA}/contratacoes/publicacao?dataInicial=${ini}&dataFinal=${fim}&codigoModalidadeContratacao=6&uf=${uf}&pagina=1&tamanhoPagina=10`;
-    try {
-      const r = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-      if (!r.ok) return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: 0 };
-      const j = (await r.json()) as { totalRegistros?: number };
-      return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: j.totalRegistros ?? 0 };
-    } catch {
-      return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: 0 };
-    }
+    const j = await getJson<{ totalRegistros?: number }>(url);
+    return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: j?.totalRegistros ?? 0 };
   });
-  return Promise.all(tasks);
 }
 
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -246,11 +259,13 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
   const queries = kws.length ? kws : [""];
 
-  // Orçamento de chamadas (tam_pagina=20). Mais páginas = amostra melhor.
-  const pagesPer = Math.max(1, Math.min(8, Math.floor(16 / queries.length)));
-  const tasks: Promise<Item[]>[] = [];
-  for (const q of queries) for (let p = 1; p <= pagesPer; p++) tasks.push(queryOne(q, ufsParam, p).catch(() => [] as Item[]));
-  const [results, ritmoEstado] = await Promise.all([Promise.all(tasks), seasonality(ufList[0])]);
+  // Orçamento de chamadas (tam_pagina=20). O PNCP derruba rajadas: poucas
+  // páginas, em lotes pequenos, e a sazonalidade depois (não junto).
+  const pagesPer = Math.max(1, Math.min(3, Math.floor(6 / queries.length)));
+  const jobs: { q: string; p: number }[] = [];
+  for (const q of queries) for (let p = 1; p <= pagesPer; p++) jobs.push({ q, p });
+  const results = await mapLimit(jobs, 2, (j) => queryOne(j.q, ufsParam, j.p).catch(() => [] as Item[]));
+  const ritmoEstado = await seasonality(ufList[0]);
 
   const nowMs = Date.now();
   const seen = new Set<string>();
