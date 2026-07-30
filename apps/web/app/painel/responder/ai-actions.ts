@@ -205,6 +205,104 @@ Analise e gere a melhor resposta agora.`;
   }
 }
 
+// PRIMEIRA ABORDAGEM (proativo): não existe mensagem do cliente — nós iniciamos.
+// Usado para contatos vindos de prospecção/licitações.
+export async function gerarAbordagem(contactId: string): Promise<GerarResult> {
+  if (!hasAIKey()) return { ok: false, error: "Chave de IA não configurada (AI_API_KEY)." };
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
+  if (!contactId) return { ok: false, error: "Selecione o contato." };
+
+  try {
+    const supabase = await createClient();
+    const { stages } = await getSkillFormConfig(tenant.skill_key);
+
+    const [{ data: skill }, { data: dna }, { data: c }, { data: h }] = await Promise.all([
+      supabase.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
+      supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
+      supabase.from("contacts").select("name, journey_stage, source, custom").eq("id", contactId).eq("tenant_id", tenant.id).maybeSingle(),
+      supabase
+        .from("interactions")
+        .select("direction, content")
+        .eq("tenant_id", tenant.id)
+        .eq("contact_id", contactId)
+        .order("occurred_at", { ascending: false })
+        .limit(6),
+    ]);
+
+    const contact = c as { name: string; journey_stage: string; source: string | null; custom: Record<string, unknown> | null } | null;
+    if (!contact) return { ok: false, error: "Contato não encontrado." };
+
+    const manifest = (skill?.manifest as Record<string, unknown> | null) ?? {};
+    const sections = (dna?.sections as Record<string, unknown> | null) ?? {};
+    const hist = (h as { direction: string; content: string }[] | null) ?? [];
+    const histText = hist.length
+      ? hist.reverse().map((i) => `${i.direction === "inbound" ? "Ele" : "Nós"}: ${i.content}`).join("\n")
+      : "Nenhum contato anterior — esta é a primeira mensagem.";
+
+    const stageList = stages.map((s) => `${s.key} = ${s.label}`).join("; ");
+
+    const system = `Você escreve a PRIMEIRA ABORDAGEM comercial — nós é que estamos iniciando o contato. O destinatário NÃO nos procurou e não nos conhece.
+REGRAS INEGOCIÁVEIS:
+- Use SOMENTE os FATOS fornecidos (DNA) sobre o que a nossa empresa vende. NUNCA invente preço, prazo, condição ou serviço.
+- NUNCA invente informação sobre o destinatário (faturamento, dor, necessidade específica). Você só sabe o segmento e a origem dele.
+- Se faltar um fato essencial da NOSSA empresa (o que vendemos, diferencial), liste em "faltam_fatos", marque "escalar": true e não redija a mensagem.
+
+COMO ESCREVER UMA BOA PRIMEIRA ABORDAGEM (frio, B2B):
+- Curta: 3 a 5 linhas. Ninguém lê texto longo de desconhecido.
+- Abra com o CONTEXTO que justifica o contato (por que ele especificamente) — a razão de você ter chegado até ele.
+- Diga em uma frase o valor concreto que entregamos para empresas como a dele. Sem "somos líderes", sem adjetivo vazio.
+- Não tente vender nem mandar preço na primeira mensagem. O objetivo é abrir conversa.
+- Termine com UM pedido pequeno e fácil de responder (pergunta de permissão ou alternativa de horário). Nada de "aguardo retorno".
+- Tom profissional e humano, português do Brasil, pronto para enviar no WhatsApp. Sem emoji em excesso, sem CAIXA ALTA.`;
+
+    const prompt = `NOSSA EMPRESA (segmento: ${manifest.name ?? tenant.skill_key})
+FATOS — só isto pode ser afirmado sobre nós:
+${fatos(sections)}
+
+DESTINATÁRIO (o que sabemos — não invente além disto):
+Nome/Empresa: ${contact.name}
+Origem: ${contact.source ?? "prospecção"}
+Etapa: ${stages.find((s) => s.key === contact.journey_stage)?.label ?? contact.journey_stage}
+${contact.custom && Object.keys(contact.custom).length ? `Outros dados: ${JSON.stringify(contact.custom)}` : ""}
+
+HISTÓRICO:
+${histText}
+
+ETAPAS DA JORNADA (chave para status_sugerido): ${stageList}
+
+Escreva a primeira mensagem de abordagem para este contato.
+Em "explicacao", explique ao vendedor por que a abordagem foi construída assim.
+Em "proximo_passo", diga o que fazer se ele responder e o que fazer se não responder.
+Deixe "status_sugerido" vazio.`;
+
+    const res = await generateObject({ model: aiModel, schema, system, prompt });
+    const object = res.object as AiAnswer;
+    object.status_sugerido = "";
+
+    const t = tokensOf(res.usage);
+    try {
+      const admin = createAdminClient();
+      await admin.from("usage_ledger").insert({
+        tenant_id: tenant.id,
+        feature: "primeira_abordagem",
+        model: AI_MODEL,
+        tokens_in: t.in,
+        tokens_out: t.out,
+        cost_cents: estimateCostCents(t.in, t.out),
+      });
+    } catch {
+      // medição best-effort
+    }
+
+    return { ok: true, data: object };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: `Erro no motor de IA: ${msg} — [${keyHint()}]` };
+  }
+}
+
 // Salva a interação (pergunta do cliente + resposta) no histórico do contato.
 // Sem redirect — chamada direto pelo componente de IA.
 export async function saveInteraction(

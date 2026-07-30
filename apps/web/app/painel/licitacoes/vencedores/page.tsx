@@ -17,9 +17,9 @@ function brl(v: number | null): string {
 export default async function VencedoresPage({
   searchParams,
 }: {
-  searchParams: Promise<{ buscar?: string; added?: string; dup?: string }>;
+  searchParams: Promise<{ buscar?: string; added?: string; dup?: string; novo?: string }>;
 }) {
-  const { buscar, added, dup } = await searchParams;
+  const { buscar, added, dup, novo } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) return (<main><h1>Quem ganhou</h1><p className="text-dim">Sem empresa vinculada.</p></main>);
@@ -54,7 +54,23 @@ export default async function VencedoresPage({
         entregar. Use o mesmo perfil (UF + palavras) das Licitações.
       </p>
 
-      {added && <p className="badge badge-success mt-16">{added} adicionada ao funil.</p>}
+      {added && (
+        <div className="card mt-16" style={{ borderColor: "var(--border-brand)", background: "var(--brand-gradient-soft)" }}>
+          <div className="between wrap" style={{ gap: 10, alignItems: "center" }}>
+            <div>
+              <strong>{added} está no seu funil.</strong>
+              <p className="text-dim" style={{ margin: "4px 0 0", fontSize: 13 }}>
+                Próximo passo: fazer o primeiro contato. A IA escreve a abordagem pra você.
+              </p>
+            </div>
+            {novo && (
+              <Link href={`/painel/responder?customer=${novo}`} className="btn btn-sm btn-primary" style={{ whiteSpace: "nowrap" }}>
+                Abordar agora →
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
       {dup && <p className="badge badge-warn mt-16">{dup} já está na sua base.</p>}
       {err && <p className="badge badge-danger mt-16">Busca indisponível: {err}</p>}
 

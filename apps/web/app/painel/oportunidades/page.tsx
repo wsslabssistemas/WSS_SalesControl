@@ -10,9 +10,9 @@ export const metadata = { title: "Oportunidades" };
 export default async function OportunidadesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; erro?: string; buscar?: string; added?: string; dup?: string }>;
+  searchParams: Promise<{ ok?: string; erro?: string; buscar?: string; added?: string; dup?: string; novo?: string }>;
 }) {
-  const { ok, erro, buscar, added, dup } = await searchParams;
+  const { ok, erro, buscar, added, dup, novo } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -65,7 +65,23 @@ export default async function OportunidadesPage({
 
       {ok && <p className="badge badge-success mt-16">Perfil de cliente ideal salvo.</p>}
       {erro && <p className="badge badge-danger mt-16">{erro}</p>}
-      {added && <p className="badge badge-success mt-16">{added} adicionada ao funil.</p>}
+      {added && (
+        <div className="card mt-16" style={{ borderColor: "var(--border-brand)", background: "var(--brand-gradient-soft)" }}>
+          <div className="between wrap" style={{ gap: 10, alignItems: "center" }}>
+            <div>
+              <strong>{added} está no seu funil.</strong>
+              <p className="text-dim" style={{ margin: "4px 0 0", fontSize: 13 }}>
+                Próximo passo: fazer o primeiro contato. A IA escreve a abordagem pra você.
+              </p>
+            </div>
+            {novo && (
+              <Link href={`/painel/responder?customer=${novo}`} className="btn btn-sm btn-primary" style={{ whiteSpace: "nowrap" }}>
+                Abordar agora →
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
       {dup && <p className="badge badge-warn mt-16">{dup} já está na sua base.</p>}
 
       {/* Passo 1: Perfil de Cliente Ideal (sem custo) */}

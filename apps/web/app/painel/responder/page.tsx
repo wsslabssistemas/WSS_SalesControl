@@ -8,6 +8,7 @@ import JourneyBar from "@/components/JourneyBar";
 import { hasAIKey } from "@/lib/ai";
 import { CopyButton } from "./CopyButton";
 import GerarIA from "./GerarIA";
+import Abordar from "./Abordar";
 import { logInteraction } from "./actions";
 
 type Entry = {
@@ -79,6 +80,8 @@ export default async function ResponderPage({
 
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
   const wa = contact ? whatsappNumber(contact.phone) : null;
+  // Prospecção: o contato nunca nos escreveu — somos nós que iniciamos.
+  const primeiroContato = !!contact && !history.some((h) => h.direction === "inbound");
 
   return (
     <main style={{ maxWidth: 760 }}>
@@ -101,10 +104,25 @@ export default async function ResponderPage({
               <span className="badge">{stageLabel(contact.journey_stage)}</span>
             </div>
             <div className="row" style={{ gap: 12 }}>
-              {wa && (
+              {wa ? (
                 <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
                   WhatsApp
                 </a>
+              ) : (
+                <>
+                  <a
+                    className="btn btn-sm btn-ghost"
+                    href={`https://www.google.com/search?q=${encodeURIComponent(contact.name + " telefone contato")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Procurar o telefone no Google"
+                  >
+                    Buscar telefone
+                  </a>
+                  <Link href={`/painel/contatos/${contact.id}/editar`} className="btn btn-sm btn-ghost">
+                    Completar cadastro
+                  </Link>
+                </>
               )}
               <Link href={`/painel/contatos/${contact.id}`} className="text-dim" style={{ fontSize: 13 }}>
                 ver ficha →
@@ -142,8 +160,18 @@ export default async function ResponderPage({
         </div>
       )}
 
-      {/* Console */}
+      {/* Modo proativo: nós iniciamos o contato (prospecção) */}
+      {contact && primeiroContato && hasAIKey() && (
+        <Abordar contactId={contact.id} contactName={contact.name} />
+      )}
+
+      {/* Console — responder mensagem recebida */}
       <form method="get" className="mt-16">
+        {contact && primeiroContato && (
+          <p className="text-faint" style={{ fontSize: 12, marginTop: 0, marginBottom: 10 }}>
+            Se ele já tiver te respondido, cole a mensagem abaixo.
+          </p>
+        )}
         <label className="label">Cliente (opcional — traz jornada e histórico)</label>
         <select name="customer" defaultValue={customer}>
           <option value="">— sem vincular —</option>

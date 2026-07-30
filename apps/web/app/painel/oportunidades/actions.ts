@@ -70,15 +70,21 @@ export async function addOpportunity(formData: FormData) {
   const { stages } = await getSkillFormConfig(tenant.skill_key);
   const initialStage = stages.find((s) => !s.terminal)?.key ?? stages[0]?.key ?? "contato";
 
-  await supabase.from("contacts").insert({
-    tenant_id: tenant.id,
-    owner_id: membership!.membershipId,
-    name,
-    phone,
-    source,
-    journey_stage: initialStage,
-  });
+  const { data: created } = await supabase
+    .from("contacts")
+    .insert({
+      tenant_id: tenant.id,
+      owner_id: membership!.membershipId,
+      name,
+      phone,
+      source,
+      journey_stage: initialStage,
+    })
+    .select("id")
+    .single();
 
   revalidatePath("/painel/contatos");
-  redirect(`${back}&added=${encodeURIComponent(name)}`);
+  const novoId = (created as { id: string } | null)?.id ?? "";
+  // Leva direto para a primeira abordagem — é o passo seguinte natural.
+  redirect(`${back}&added=${encodeURIComponent(name)}&novo=${novoId}`);
 }
