@@ -141,8 +141,16 @@ export default async function ResponderPage({
                     <span className={h.direction === "inbound" ? "badge" : "badge badge-brand"} style={{ alignSelf: "flex-start" }}>
                       {h.direction === "inbound" ? "cliente" : "nós"}
                     </span>
-                    <span className="grow" style={{ color: "var(--text-dim)" }}>
-                      {h.content.length > 120 ? h.content.slice(0, 120) + "…" : h.content}
+                    <span
+                      className="grow"
+                      style={{
+                        color: "var(--text-dim)",
+                        whiteSpace: "pre-line",
+                        overflowWrap: "anywhere",
+                        minWidth: 0,
+                      }}
+                    >
+                      {h.content}
                     </span>
                     <span className="text-faint" style={{ whiteSpace: "nowrap" }}>
                       {new Date(h.occurred_at).toLocaleDateString("pt-BR")}

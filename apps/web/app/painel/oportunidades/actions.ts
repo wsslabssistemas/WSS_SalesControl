@@ -50,8 +50,13 @@ export async function addOpportunity(formData: FormData) {
   const back = String(formData.get("back") ?? "/painel/oportunidades?buscar=1");
   const source = String(formData.get("source") ?? "").trim() || "Prospecção";
 
-  const enriched = await enrichCompany(cnpj);
-  const phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
+  // Telefone informado à mão (quando a Receita não tem) tem prioridade.
+  const manual = String(formData.get("phone") ?? "").trim();
+  let phone: string | null = manual ? normalizePhone(manual) : null;
+  if (!phone) {
+    const enriched = await enrichCompany(cnpj);
+    phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
+  }
 
   const supabase = await createClient();
 

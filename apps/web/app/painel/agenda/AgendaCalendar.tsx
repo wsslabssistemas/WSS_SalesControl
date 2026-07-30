@@ -98,7 +98,12 @@ export default function AgendaCalendar({ items }: { items: CalItem[] }) {
             <div
               key={d.getTime()}
               style={{
-                minHeight: 92,
+                // Altura fixa + overflow contido: todas as células ficam iguais
+                // e alinhadas, independentemente de quantos toques têm.
+                height: 92,
+                boxSizing: "border-box",
+                overflow: "hidden",
+                minWidth: 0,
                 borderRadius: 10,
                 border: isToday ? "1px solid var(--border-brand)" : "1px solid var(--border)",
                 background: isToday
@@ -140,6 +145,7 @@ export default function AgendaCalendar({ items }: { items: CalItem[] }) {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
+                    flexShrink: 0,
                   }}
                 >
                   {e.name}

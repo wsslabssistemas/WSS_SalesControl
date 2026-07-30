@@ -63,18 +63,20 @@ type Item = {
   numero_sequencial: number | null;
 };
 
-async function queryOne(q: string, ufs: string, pagina = 1): Promise<Item[]> {
+// tam_pagina=100 funciona (o que falhava antes era a rajada, não o tamanho).
+// Uma chamada por palavra traz tudo: rápido, completo e sem bloqueio.
+async function queryOne(q: string, ufs: string, opts: { abertos?: boolean; tam?: number } = {}): Promise<{ items: Item[]; total: number }> {
   const params = new URLSearchParams({
     tipos_documento: "edital",
-    status: "recebendo_proposta",
     ordenacao: "-data",
-    pagina: String(pagina),
-    tam_pagina: "20", // limite da API do PNCP
+    pagina: "1",
+    tam_pagina: String(opts.tam ?? 100),
   });
+  if (opts.abertos !== false) params.set("status", "recebendo_proposta");
   if (q) params.set("q", q);
   if (ufs) params.set("ufs", ufs);
-  const json = await getJson<{ items?: Item[] }>(`${SEARCH}?${params.toString()}`);
-  return json?.items ?? [];
+  const json = await getJson<{ items?: Item[]; total?: number }>(`${SEARCH}?${params.toString()}`);
+  return { items: json?.items ?? [], total: json?.total ?? 0 };
 }
 
 function toEdital(it: Item): Edital {
@@ -104,12 +106,14 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
   const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
   const queries = kws.length ? kws : [""]; // sem palavra-chave = todos os abertos na UF
 
-  const results = await mapLimit(queries, 2, (q) => queryOne(q, ufsParam).catch(() => [] as Item[]));
+  const results = await mapLimit(queries, 2, (q) =>
+    queryOne(q, ufsParam).catch(() => ({ items: [] as Item[], total: 0 })),
+  );
 
   const nowMs = Date.now();
   const seen = new Set<string>();
   const editais: Edital[] = [];
-  for (const list of results) {
+  for (const { items: list } of results) {
     for (const it of list) {
       if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
       if (it.uf && !ufSet.has(it.uf)) continue; // segurança: só as UFs pedidas
@@ -142,7 +146,7 @@ async function queryContracts(q: string, ufs: string, pagina = 1): Promise<Item[
     tipos_documento: "contrato",
     ordenacao: "-data",
     pagina: String(pagina),
-    tam_pagina: "20",
+    tam_pagina: "50",
   });
   if (q) params.set("q", q);
   if (ufs) params.set("ufs", ufs);
@@ -209,33 +213,15 @@ export async function searchWinners(input: { ufs: string[]; keywords: string[] }
 
 export type Rank = { nome: string; n: number };
 export type Intel = {
-  amostra: number;
-  totalAbertos: number | null;
+  analisados: number; // editais do ramo analisados (histórico)
+  totalHistorico: number; // quantos existem no total (tamanho do mercado)
+  abertosAgora: number;
   byOrgao: Rank[];
   byCidade: Rank[];
   byModalidade: Rank[];
-  byMes: Rank[]; // editais abertos por mês de encerramento (calendário à frente)
-  ritmoUf: string;
-  ritmoEstado: Rank[]; // editais publicados por mês no estado (últimos 12 meses)
+  sazonalidade: Rank[]; // em que MÊS DO ANO o seu ramo costuma abrir edital
+  periodo: string;
 };
-
-// Ritmo de publicação de editais no estado (Pregão Eletrônico), últimos 12 meses.
-// Sazonalidade geral do governo — barato: um total por mês.
-export async function seasonality(uf: string): Promise<Rank[]> {
-  const now = new Date();
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
-    return { y: d.getFullYear(), m: d.getMonth() };
-  });
-  return mapLimit(months, 3, async ({ y, m }) => {
-    const ini = `${y}${String(m + 1).padStart(2, "0")}01`;
-    const lastDay = new Date(y, m + 1, 0).getDate();
-    const fim = `${y}${String(m + 1).padStart(2, "0")}${String(lastDay).padStart(2, "0")}`;
-    const url = `${CONSULTA}/contratacoes/publicacao?dataInicial=${ini}&dataFinal=${fim}&codigoModalidadeContratacao=6&uf=${uf}&pagina=1&tamanhoPagina=10`;
-    const j = await getJson<{ totalRegistros?: number }>(url);
-    return { nome: `${MESES[m]}/${String(y).slice(2)}`, n: j?.totalRegistros ?? 0 };
-  });
-}
 
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
@@ -249,59 +235,71 @@ function topN(items: string[], n: number): Rank[] {
   return [...m.entries()].map(([nome, cnt]) => ({ nome, n: cnt })).sort((a, b) => b.n - a.n).slice(0, n);
 }
 
-// Inteligência: amostra maior de editais abertos do perfil, agregada por órgão,
-// cidade, modalidade e mês de encerramento. Puro consumo da busca do PNCP.
+/**
+ * Inteligência do ramo. Usa o HISTÓRICO (não só os editais abertos agora) —
+ * é o que revela compradores recorrentes e em que época do ano eles compram.
+ * Uma chamada por palavra-chave (tam_pagina=100) + uma para contar os abertos.
+ */
 export async function analyzeEditais(input: { ufs: string[]; keywords: string[] }): Promise<Intel> {
+  const vazio: Intel = { analisados: 0, totalHistorico: 0, abertosAgora: 0, byOrgao: [], byCidade: [], byModalidade: [], sazonalidade: [], periodo: "" };
   const ufList = input.ufs.map((u) => u.trim().toUpperCase().slice(0, 2)).filter(Boolean).slice(0, 4);
-  if (!ufList.length) return { amostra: 0, totalAbertos: null, byOrgao: [], byCidade: [], byModalidade: [], byMes: [], ritmoUf: "", ritmoEstado: [] };
+  if (!ufList.length) return vazio;
   const ufsParam = ufList.join(",");
   const ufSet = new Set(ufList);
-  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 6);
+  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 4);
   const queries = kws.length ? kws : [""];
 
-  // Orçamento de chamadas (tam_pagina=20). O PNCP derruba rajadas: poucas
-  // páginas, em lotes pequenos, e a sazonalidade depois (não junto).
-  const pagesPer = Math.max(1, Math.min(3, Math.floor(6 / queries.length)));
-  const jobs: { q: string; p: number }[] = [];
-  for (const q of queries) for (let p = 1; p <= pagesPer; p++) jobs.push({ q, p });
-  const results = await mapLimit(jobs, 2, (j) => queryOne(j.q, ufsParam, j.p).catch(() => [] as Item[]));
-  const ritmoEstado = await seasonality(ufList[0]);
+  // Histórico do ramo (sem filtro de status) — base ampla para os padrões.
+  const hist = await mapLimit(queries, 2, (q) =>
+    queryOne(q, ufsParam, { abertos: false, tam: 100 }).catch(() => ({ items: [] as Item[], total: 0 })),
+  );
+  // Quantos estão abertos agora (uma chamada leve).
+  const abertos = await mapLimit(queries, 2, (q) =>
+    queryOne(q, ufsParam, { tam: 1 }).catch(() => ({ items: [] as Item[], total: 0 })),
+  );
 
-  const nowMs = Date.now();
   const seen = new Set<string>();
   const rows: Item[] = [];
-  for (const list of results) {
-    for (const it of list) {
+  let totalHistorico = 0;
+  for (const r of hist) {
+    totalHistorico += r.total;
+    for (const it of r.items) {
       if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
       if (it.uf && !ufSet.has(it.uf)) continue;
-      if (it.data_fim_vigencia && new Date(it.data_fim_vigencia).getTime() < nowMs) continue;
       seen.add(it.numero_controle_pncp);
       rows.push(it);
     }
   }
 
-  const meses = rows
-    .map((r) => r.data_fim_vigencia)
-    .filter(Boolean)
-    .map((d) => {
-      const dt = new Date(d as string);
-      return `${dt.getFullYear()}-${String(dt.getMonth()).padStart(2, "0")}`;
-    });
-  const byMes = [...new Set(meses)]
-    .sort()
-    .map((ym) => {
-      const [y, m] = ym.split("-");
-      return { nome: `${MESES[Number(m)]}/${y.slice(2)}`, n: meses.filter((x) => x === ym).length };
-    });
+  // Sazonalidade REAL do ramo: em que mês do ano estes editais foram publicados.
+  const porMes = new Array(12).fill(0) as number[];
+  const datas: number[] = [];
+  for (const r of rows) {
+    const d = r.data_publicacao_pncp;
+    if (!d) continue;
+    const dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) continue;
+    porMes[dt.getMonth()]++;
+    datas.push(dt.getTime());
+  }
+  const sazonalidade = porMes.map((n, m) => ({ nome: MESES[m], n }));
+
+  let periodo = "";
+  if (datas.length) {
+    const min = new Date(Math.min(...datas));
+    const max = new Date(Math.max(...datas));
+    const f = (d: Date) => `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+    periodo = `${f(min)} a ${f(max)}`;
+  }
 
   return {
-    amostra: rows.length,
-    totalAbertos: null,
+    analisados: rows.length,
+    totalHistorico,
+    abertosAgora: abertos.reduce((s, a) => s + a.total, 0),
     byOrgao: topN(rows.map((r) => r.orgao_nome ?? ""), 8),
     byCidade: topN(rows.map((r) => r.municipio_nome ?? ""), 6),
     byModalidade: topN(rows.map((r) => r.modalidade_licitacao_nome ?? ""), 5),
-    byMes,
-    ritmoUf: ufList[0],
-    ritmoEstado,
+    sazonalidade,
+    periodo,
   };
 }

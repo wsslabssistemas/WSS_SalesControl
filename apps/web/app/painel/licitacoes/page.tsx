@@ -128,16 +128,31 @@ export default async function LicitacoesPage({
 
       {inteligencia && (
         <div className="mt-16">
-          {inteligencia.amostra === 0 ? (
-            <div className="card"><p className="text-dim" style={{ margin: 0 }}>Sem editais abertos no perfil para analisar agora.</p></div>
+          {inteligencia.analisados === 0 ? (
+            <div className="card"><p className="text-dim" style={{ margin: 0 }}>Não encontrei histórico para esse perfil. Tente outra palavra-chave.</p></div>
           ) : (
             <>
-              <p className="text-dim" style={{ fontSize: 13, marginBottom: 10 }}>
-                Análise de <strong style={{ color: "var(--text)" }}>{inteligencia.amostra}</strong> editais abertos do seu perfil.
+              <div className="stat-grid" style={{ marginBottom: 16 }}>
+                <div className="card">
+                  <div className="stat-num">{inteligencia.totalHistorico.toLocaleString("pt-BR")}</div>
+                  <div className="stat-label">Editais do seu ramo (histórico)</div>
+                </div>
+                <div className="card">
+                  <div className="stat-num" style={{ color: "var(--brand-cyan)" }}>{inteligencia.abertosAgora.toLocaleString("pt-BR")}</div>
+                  <div className="stat-label">Abertos agora</div>
+                </div>
+                <div className="card">
+                  <div className="stat-num">{inteligencia.byOrgao.length}</div>
+                  <div className="stat-label">Órgãos compradores</div>
+                </div>
+              </div>
+              <p className="text-faint" style={{ fontSize: 12, marginBottom: 10 }}>
+                Padrões apurados sobre {inteligencia.analisados} editais{inteligencia.periodo ? ` (${inteligencia.periodo})` : ""}.
               </p>
 
               <div className="card">
-                <p className="eyebrow" style={{ marginBottom: 12 }}>Órgãos que mais abrem (seus alvos)</p>
+                <p className="eyebrow" style={{ marginBottom: 4 }}>Quem mais compra o que você vende</p>
+                <p className="text-faint" style={{ margin: "0 0 12px", fontSize: 12 }}>Órgãos com histórico recorrente — seus alvos prioritários.</p>
                 {inteligencia.byOrgao.map((o, i) => {
                   const max = inteligencia!.byOrgao[0]?.n || 1;
                   return (
@@ -153,37 +168,33 @@ export default async function LicitacoesPage({
               </div>
 
               <div className="card mt-16">
-                <p className="eyebrow" style={{ marginBottom: 12 }}>Prazos pela frente (editais que encerram por mês)</p>
-                {inteligencia.byMes.map((m, i) => {
-                  const max = Math.max(...inteligencia!.byMes.map((x) => x.n), 1);
-                  return (
-                    <div key={m.nome} style={{ padding: "6px 0", borderBottom: i < inteligencia!.byMes.length - 1 ? "1px solid var(--border)" : "none" }}>
-                      <div className="between" style={{ marginBottom: 5, fontSize: 13 }}>
-                        <span>{m.nome}</span>
-                        <strong style={{ fontVariantNumeric: "tabular-nums" }}>{m.n}</strong>
-                      </div>
-                      <div className="bar-track"><div className="bar-fill" style={{ width: `${(m.n / max) * 100}%` }} /></div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {inteligencia.ritmoEstado.some((r) => r.n > 0) && (
-                <div className="card mt-16">
-                  <p className="eyebrow" style={{ marginBottom: 4 }}>Ritmo de editais no estado ({inteligencia.ritmoUf}, 12 meses)</p>
-                  <p className="text-faint" style={{ margin: "0 0 12px", fontSize: 12 }}>Quando o governo abre mais editais (Pregão Eletrônico, todos os ramos).</p>
-                  {inteligencia.ritmoEstado.map((m) => {
-                    const max = Math.max(...inteligencia!.ritmoEstado.map((x) => x.n), 1);
+                <p className="eyebrow" style={{ marginBottom: 4 }}>Em que época do ano eles compram</p>
+                <p className="text-faint" style={{ margin: "0 0 12px", fontSize: 12 }}>
+                  Mês em que os editais do seu ramo costumam sair — prepare documentação antes do pico.
+                </p>
+                <div className="row" style={{ gap: 4, alignItems: "flex-end", height: 90 }}>
+                  {inteligencia.sazonalidade.map((m) => {
+                    const max = Math.max(...inteligencia!.sazonalidade.map((x) => x.n), 1);
+                    const pico = m.n === max && m.n > 0;
                     return (
-                      <div key={m.nome} className="row" style={{ gap: 10, padding: "4px 0", fontSize: 12, alignItems: "center" }}>
-                        <span className="text-faint" style={{ width: 44 }}>{m.nome}</span>
-                        <div className="bar-track grow"><div className="bar-fill" style={{ width: `${(m.n / max) * 100}%` }} /></div>
-                        <span style={{ width: 40, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{m.n}</span>
+                      <div key={m.nome} className="grow" style={{ textAlign: "center", minWidth: 0 }} title={`${m.n} editais em ${m.nome}`}>
+                        <div style={{ height: 60, display: "flex", alignItems: "flex-end" }}>
+                          <div
+                            style={{
+                              width: "100%",
+                              height: `${Math.max((m.n / max) * 100, 3)}%`,
+                              borderRadius: "4px 4px 0 0",
+                              background: pico ? "var(--brand-cyan)" : "var(--brand-blue)",
+                              opacity: pico ? 1 : 0.65,
+                            }}
+                          />
+                        </div>
+                        <div className="text-faint" style={{ fontSize: 10, marginTop: 4 }}>{m.nome}</div>
                       </div>
                     );
                   })}
                 </div>
-              )}
+              </div>
 
               <div className="row wrap mt-16" style={{ gap: 16, alignItems: "flex-start" }}>
                 <div className="card grow" style={{ minWidth: 220 }}>
@@ -205,7 +216,7 @@ export default async function LicitacoesPage({
               </div>
 
               <p className="text-faint mt-16" style={{ fontSize: 12 }}>
-                Baseado nos editais abertos agora. Sazonalidade histórica (em que meses cada órgão costuma abrir) é o próximo passo.
+                Fonte: histórico de editais do PNCP filtrado pelas suas palavras-chave e estados.
               </p>
             </>
           )}

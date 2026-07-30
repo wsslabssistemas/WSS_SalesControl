@@ -82,17 +82,48 @@ export default async function EmpresaPage({ params }: { params: Promise<{ cnpj: 
         <Row label="Aberta em">{d.abertura ? new Date(d.abertura).toLocaleDateString("pt-BR") : "—"}</Row>
       </div>
 
-      <form action={addOpportunity} className="mt-16">
+      {/* Sem telefone na Receita: caça-contato em vários canais + campo rápido */}
+      {!d.phone && (
+        <div className="card mt-16" style={{ borderColor: "rgba(234,181,77,0.35)", background: "rgba(234,181,77,0.06)" }}>
+          <p className="eyebrow" style={{ marginBottom: 4 }}>Sem telefone na base pública</p>
+          <p className="text-dim" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>
+            A Receita não publica o contato desta empresa. Procure nos canais abaixo
+            (abrem já preenchidos) e cole o número no campo — ele vai junto para o funil.
+          </p>
+          <div className="row wrap" style={{ gap: 8 }}>
+            {[
+              { label: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(`"${nome}" ${d.municipio ?? ""} telefone`)}` },
+              { label: "Google Maps", url: `https://www.google.com/maps/search/${encodeURIComponent(`${nome} ${d.municipio ?? ""} ${d.uf ?? ""}`)}` },
+              { label: "Site oficial", url: `https://www.google.com/search?q=${encodeURIComponent(`"${nome}" site oficial`)}` },
+              { label: "Instagram", url: `https://www.google.com/search?q=${encodeURIComponent(`"${nome}" ${d.municipio ?? ""} instagram`)}` },
+              { label: "LinkedIn", url: `https://www.google.com/search?q=${encodeURIComponent(`"${nome}" linkedin`)}` },
+              { label: "CNPJ na web", url: `https://www.google.com/search?q=${encodeURIComponent(d.cnpj)}` },
+            ].map((l) => (
+              <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-ghost">
+                {l.label} ↗
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <form action={addOpportunity} className="card mt-16">
         <input type="hidden" name="cnpj" value={d.cnpj} />
         <input type="hidden" name="name" value={nome} />
+        {!d.phone && (
+          <>
+            <label className="label" htmlFor="phone">Telefone encontrado (opcional)</label>
+            <input id="phone" name="phone" type="tel" placeholder="(51) 99999-9999" style={{ marginBottom: 14 }} />
+          </>
+        )}
         <button type="submit" className="btn btn-primary">Adicionar ao funil</button>
         <span className="text-faint" style={{ fontSize: 13, marginLeft: 10 }}>
-          cria um contato em Contatos com o telefone acima
+          {d.phone ? "cria o contato com o telefone acima" : "você pode completar depois"}
         </span>
       </form>
 
       <p className="text-faint mt-16" style={{ fontSize: 12 }}>
-        Dados públicos da Receita Federal. Site e avaliações exigem enriquecimento pago (futuro).
+        Dados públicos da Receita Federal. Site e avaliações dependem de enriquecimento pago (futuro).
       </p>
     </main>
   );
