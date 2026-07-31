@@ -1,0 +1,229 @@
+key: clinica
+name: Clínica, Odontologia e Estética
+version: 1.0.0
+
+# =====================================================================
+# O segmento de MAIOR TICKET e MAIOR LACUNA comercial do país.
+#
+# Diagnóstico (pesquisa jul/2026): o profissional de saúde vê "vender" com
+# preconceito, então deixa a comercialização de tratamentos de alto valor
+# na mão da recepção, sem preparo. A recepção age de forma reativa: informa
+# preço por mensagem e agenda, sem qualificar. Resultado: baixa conversão de
+# ORÇAMENTO em TRATAMENTO e ausência de plano de manutenção (LTV).
+#
+# Consequência para este manifesto: a jornada NÃO termina na consulta —
+# termina no tratamento aprovado e depois na manutenção. E a etapa crítica
+# é a AVALIAÇÃO, onde o plano é apresentado.
+#
+# ATENÇÃO ÉTICA: saúde tem limite legal de publicidade e é proibido
+# prometer resultado. Isso está em hard_rules e é inegociável.
+# =====================================================================
+
+capabilities: []   # B2C: prospecção fria de pessoas é proibida (LGPD)
+
+vocabulary:
+  lead: "paciente em potencial"
+  conversion: "tratamento aprovado"
+  churn: "paciente que abandonou o tratamento"
+  catalog_item: "procedimento"
+
+discovery_axis: "queixa principal e o que ela impede na vida da pessoa (dor, estética, função, autoestima)"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Acolher a queixa e qualificar antes de falar preço."
+    - key: qualificacao
+      label: "Qualificação"
+      goal: "Entender a queixa, histórico, urgência e quem decide/paga."
+    - key: avaliacao
+      label: "Avaliação agendada"
+      goal: "Levar a pessoa até a cadeira. É aqui que o tratamento se vende."
+      cadence: pre_consulta
+      phases:
+        - { key: confirmacao, label: "Confirmar presença", offset_days: -1 }
+        - { key: comparecimento, label: "Dia da avaliação", offset_days: 0 }
+    - key: plano_apresentado
+      label: "Plano apresentado"
+      goal: "Plano de tratamento entregue com valor e condições. Não deixar esfriar."
+      cadence: pos_orcamento
+      phases:
+        - { key: envio,   label: "Plano entregue",   offset_days: 0 }
+        - { key: duvidas, label: "Tirar dúvidas",    offset_days: 2 }
+        - { key: decisao, label: "Buscar decisão",   offset_days: 7 }
+    - key: negociacao
+      label: "Negociação"
+      goal: "Tratar a objeção real (valor, medo, tempo) e viabilizar o pagamento."
+    - key: em_tratamento
+      label: "Em tratamento"
+      goal: "Garantir adesão e comparecimento até concluir."
+    - key: concluido
+      label: "Tratamento aprovado"
+      terminal: true
+      won: true
+    - key: perdido
+      label: "Não seguiu"
+      terminal: true
+
+contact_fields:
+  - key: queixa
+    label: "Queixa principal"
+    type: enum
+    options:
+      [dor, estetica, funcional, prevencao, urgencia, reabilitacao,
+       acompanhamento, outro]
+  - key: procedimento_interesse
+    label: "Procedimento de interesse"
+    type: enum
+    options:
+      [avaliacao, limpeza, restauracao, canal, implante, protese, ortodontia,
+       clareamento, harmonizacao, botox, preenchimento, laser, fisioterapia, outro]
+  - key: urgencia
+    label: "Urgência"
+    type: enum
+    options: [imediata, semanas, meses, apenas_pesquisando]
+  - key: quem_decide
+    label: "Quem decide"
+    type: enum
+    options: [o_proprio, conjuge, familiar_responsavel, empresa_convenio]
+  - key: convenio
+    label: "Convênio"
+    type: enum
+    options: [particular, convenio, reembolso, nao_sei]
+  - key: profissional_preferido
+    label: "Profissional preferido"
+    type: enum
+    options: [sem_preferencia, definido]
+
+# Recompra: retorno de manutenção é o LTV que estas clínicas perdem.
+recurrence:
+  frequency_field: retorno_previsto
+  remind_before_days: 7
+  intervals_days:
+    trimestral: 90
+    semestral: 180
+    anual: 365
+  default_days: 180
+
+lead_sources:
+  - instagram
+  - google
+  - whatsapp
+  - indicacao
+  - convenio
+  - site
+  - presencial
+  - campanha
+  - outro
+
+dna_sections:
+  - key: pricing
+    label: "Valores e formas de pagamento"
+    required: true
+    fields:
+      - { key: avaliacao_valor, type: text, required: true }
+      - { key: range, type: money_range }
+      - { key: parcelamento, type: text, required: true }
+      - { key: formas_pagamento, type: list }
+  - key: catalog
+    label: "Procedimentos oferecidos"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [procedimento, profissional, duracao, observacao] }
+  - key: availability
+    label: "Agenda e horários"
+    required: true
+    fields:
+      - { key: weekly_hours, type: schedule, required: true }
+      - { key: prazo_agendamento, type: text }
+  - key: expertise_proof
+    label: "Equipe e credenciais"
+    required: true
+    fields:
+      - { key: profissionais, type: table, columns: [nome, especialidade, registro] }
+      - { key: tempo_de_casa, type: text }
+      - { key: tecnologia, type: list }
+  - key: convenios
+    label: "Convênios e reembolso"
+    required: true
+    fields:
+      - { key: aceita_convenio, type: boolean, required: true }
+      - { key: lista, type: list }
+      - { key: reembolso, type: text }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, required: true }
+      - { key: whatsapp, type: text }
+      - { key: estacionamento, type: text }
+  - key: policies
+    label: "Políticas"
+    fields:
+      - { key: no_show, type: text }
+      - { key: cancelamento, type: text }
+      - { key: garantia, type: text }
+  - key: differentials
+    label: "Diferenciais"
+    fields:
+      - { key: items, type: list }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Valor da avaliação, do tratamento e parcelamento"
+  risk_free_entry:    "Avaliação inicial como porta de entrada"
+  availability:       "Agenda, horários e prazo para atendimento"
+  expertise_proof:    "Formação, registro, tempo de casa e tecnologia"
+  catalog:            "Procedimentos oferecidos"
+  goal_matching:      "Queixa do paciente → procedimento indicado"
+  objections:         "Caro, medo, vou pensar, vou ver com meu marido, convênio"
+  commitment_offer:   "Plano de tratamento completo e parcelamento"
+  reciprocity:        "Avaliação sem compromisso, documentação, retorno incluso"
+  limits_and_ethics:  "Não prometer resultado, não diagnosticar por mensagem"
+  retention:          "Paciente que sumiu no meio do tratamento e manutenção"
+  ecosystem:          "Convênios, parceiros e encaminhamentos"
+
+cadences:
+  # A conversão acontece na cadeira: confirmar presença é dinheiro.
+  - key: pre_consulta
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a avaliação e reduzir a falta" }
+      - { offset_days: 1,  intent: "Reagendar quem não compareceu, sem cobrança" }
+    stop_on: [converted, opted_out]
+
+  # O buraco do segmento: plano entregue e ninguém volta a falar.
+  - key: pos_orcamento
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2,  intent: "Tirar dúvida sobre o plano, sem cobrar decisão" }
+      - { offset_days: 7,  intent: "Apresentar a condição de pagamento que viabiliza" }
+      - { offset_days: 15, intent: "Última retomada, com porta aberta" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: manutencao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0, intent: "Chamar para o retorno de manutenção previsto" }
+    stop_on: [converted, opted_out]
+
+hard_rules:
+  - "NUNCA prometer resultado de tratamento — é vedado e gera responsabilidade."
+  - "NUNCA dar diagnóstico, indicar procedimento ou receitar por mensagem: só o profissional, presencialmente, após avaliação."
+  - "Não afirmar valor de tratamento antes da avaliação quando o preço depende do caso — informe o valor da avaliação."
+  - "Não citar caso, foto ou nome de outro paciente. Sigilo é obrigatório."
+  - "Só afirmar convênio, garantia ou parcelamento que esteja no DNA."
+
+kpis:
+  - taxa_conversao
+  - comparecimento_avaliacao
+  - planos_apresentados
+  - taxa_aprovacao_plano
+  - ticket_medio
+  - tempo_resposta_mediana
