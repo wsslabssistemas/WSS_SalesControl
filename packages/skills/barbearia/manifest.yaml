@@ -38,6 +38,7 @@ journey:
       goal: "Indicar serviço e horário disponível."
     - key: agendado
       label: "Agendado"
+      cadence: appointment_confirm
       goal: "Confirmar presença e reduzir falta."
       phases:
         - { key: confirmado,  label: "Confirmado",   offset_days: 0 }

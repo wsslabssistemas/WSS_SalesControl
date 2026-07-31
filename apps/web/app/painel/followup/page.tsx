@@ -1,0 +1,169 @@
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveTenant } from "@/lib/auth";
+import { getSkillFormConfig } from "@/lib/skill";
+import { computeDueTouches } from "@/lib/cadence";
+import { whatsappNumber } from "@/lib/phone";
+
+export const metadata = { title: "Follow-up" };
+
+type Contact = {
+  id: string;
+  name: string;
+  phone: string | null;
+  owner_id: string | null;
+  journey_stage: string;
+  stage_entered_at: string;
+};
+
+export default async function FollowUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ resp?: string }>;
+}) {
+  const { resp = "" } = await searchParams;
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) {
+    return (<main><h1>Follow-up</h1><p className="text-dim">Sem empresa vinculada.</p></main>);
+  }
+
+  const { stages, cadences } = await getSkillFormConfig(tenant.skill_key);
+  const supabase = await createClient();
+
+  const [{ data: cData }, { data: ixData }, { data: mData }] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id, name, phone, owner_id, journey_stage, stage_entered_at")
+      .eq("tenant_id", tenant.id)
+      .is("deleted_at", null),
+    supabase
+      .from("interactions")
+      .select("contact_id, occurred_at, direction")
+      .eq("tenant_id", tenant.id)
+      .order("occurred_at", { ascending: false })
+      .limit(3000),
+    supabase
+      .from("memberships")
+      .select("id, user:profiles(full_name, email)")
+      .eq("tenant_id", tenant.id)
+      .eq("status", "active"),
+  ]);
+
+  const contacts = (cData as Contact[] | null) ?? [];
+  const ix = (ixData as { contact_id: string | null; occurred_at: string; direction: string }[] | null) ?? [];
+  const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
+  // Último toque NOSSO (outbound) por contato — é o que conta como follow-up feito.
+  const ultimoToque: Record<string, string> = {};
+  for (const i of ix) {
+    if (!i.contact_id || i.direction !== "outbound") continue;
+    if (!ultimoToque[i.contact_id]) ultimoToque[i.contact_id] = i.occurred_at;
+  }
+
+  const alvo = resp ? contacts.filter((c) => c.owner_id === resp) : contacts;
+  const pendentes = computeDueTouches(alvo, ultimoToque, stages, cadences);
+
+  const nomeDe = (id: string | null) => membros.find((m) => m.id === id)?.nome ?? "Sem responsável";
+  const waLink = (phone: string | null) => {
+    const wa = whatsappNumber(phone);
+    return wa ? `https://wa.me/${wa}` : null;
+  };
+
+  const atrasadosGraves = pendentes.filter((p) => p.overdueDays >= 7).length;
+
+  return (
+    <main>
+      <div className="between">
+        <h1>Follow-up</h1>
+        {membros.length > 1 && (
+          <form method="get" className="row" style={{ gap: 8 }}>
+            <select name="resp" defaultValue={resp} style={{ width: "auto", padding: "5px 9px", fontSize: 13 }}>
+              <option value="">Todos</option>
+              {membros.map((m) => (
+                <option key={m.id} value={m.id}>{m.nome}</option>
+              ))}
+            </select>
+            <button type="submit" className="btn btn-sm">Filtrar</button>
+          </form>
+        )}
+      </div>
+      <p className="text-dim" style={{ marginTop: 4 }}>
+        Quem está esperando uma resposta sua. A maior parte das vendas não se
+        perde por preço — se perde por silêncio.
+      </p>
+
+      <div className="stat-grid mt-24">
+        <div className="card">
+          <div className="stat-num" style={{ color: pendentes.length ? "var(--warn)" : undefined }}>{pendentes.length}</div>
+          <div className="stat-label">Toques pendentes</div>
+        </div>
+        <div className="card">
+          <div className="stat-num" style={{ color: atrasadosGraves ? "var(--danger)" : undefined }}>{atrasadosGraves}</div>
+          <div className="stat-label">Atrasados 7 dias ou mais</div>
+        </div>
+        <div className="card">
+          <div className="stat-num">{contacts.length}</div>
+          <div className="stat-label">Contatos na base</div>
+        </div>
+      </div>
+
+      {pendentes.length === 0 ? (
+        <div className="card mt-24">
+          <p style={{ margin: 0 }}>Ninguém esperando resposta. Sua base está em dia. 👏</p>
+          <p className="text-dim" style={{ marginTop: 8, marginBottom: 0, fontSize: 14 }}>
+            Os toques aparecem aqui conforme as cadências do seu segmento vencem.
+          </p>
+        </div>
+      ) : (
+        <div className="stack mt-24" style={{ gap: 12 }}>
+          {pendentes.map((p) => {
+            const wa = waLink(p.phone);
+            const grave = p.overdueDays >= 7;
+            return (
+              <div key={p.contactId} className="card" style={grave ? { borderColor: "rgba(242,99,95,0.35)" } : undefined}>
+                <div className="between wrap" style={{ gap: 10, alignItems: "flex-start" }}>
+                  <div className="grow" style={{ minWidth: 200 }}>
+                    <div className="row wrap" style={{ gap: 8, alignItems: "baseline" }}>
+                      <Link href={`/painel/contatos/${p.contactId}`}><strong>{p.name}</strong></Link>
+                      <span className="badge">{p.stageLabel}</span>
+                      {!p.semCadencia && (
+                        <span className="badge badge-brand">toque {p.stepNumber} de {p.totalSteps}</span>
+                      )}
+                      {membros.length > 1 && (
+                        <span className="text-faint" style={{ fontSize: 12 }}>{nomeDe(p.ownerId)}</span>
+                      )}
+                    </div>
+                    <p className="text-dim" style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.5 }}>
+                      {p.intent}
+                    </p>
+                  </div>
+                  <span className={grave ? "badge badge-danger" : "badge badge-warn"} style={{ whiteSpace: "nowrap" }}>
+                    {p.daysSince}d sem contato
+                  </span>
+                </div>
+                <div className="row wrap mt-16" style={{ gap: 10, alignItems: "center" }}>
+                  <Link href={`/painel/responder?customer=${p.contactId}`} className="btn btn-sm btn-primary">
+                    Responder
+                  </Link>
+                  {wa && (
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  {p.overdueDays > 0 && (
+                    <span className="text-faint" style={{ fontSize: 12 }}>
+                      o toque venceu há {p.overdueDays} dia{p.overdueDays === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </main>
+  );
+}

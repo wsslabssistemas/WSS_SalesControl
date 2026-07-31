@@ -31,6 +31,7 @@ journey:
       goal: "Idade, nível, disponibilidade de horário e quem decide."
     - key: aula_experimental
       label: "Aula experimental"
+      cadence: pos_experimental
       goal: "Agendar, confirmar presença e conduzir a experiência."
       phases:
         - { key: agendada,   label: "Agendada",           offset_days: 0 }

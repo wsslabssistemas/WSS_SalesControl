@@ -32,6 +32,7 @@ journey:
   stages:
     - key: prospeccao
       label: "Prospecção"
+      cadence: prospeccao_fria
       goal: "Identificar a empresa certa e chegar em quem decide. Nunca abrir com preço."
       phases:
         - { key: abordagem,  label: "Primeira abordagem", offset_days: 0 }
@@ -48,6 +49,7 @@ journey:
         - { key: realizacao,  label: "Realizar visita", offset_days: 3 }
     - key: proposta
       label: "Proposta técnica"
+      cadence: pos_proposta
       goal: "Entregar escopo, prazo e investimento. Defender valor, não preço."
       phases:
         - { key: envio,      label: "Enviar proposta",     offset_days: 0 }

@@ -38,6 +38,7 @@ journey:
       goal: "Apresentar a opção adequada e conduzir à experiência."
     - key: experimentacao
       label: "Semana experimental"
+      cadence: trial_followup
       goal: "Conduzir a experiência e preparar o fechamento."
       # Fases dentro do estágio: dia 2 e dia 8 pedem tratamento oposto,
       # mas não são etapas diferentes da jornada.

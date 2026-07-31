@@ -24,6 +24,7 @@ journey:
   stages:
     - key: prospeccao
       label: "Prospecção"
+      cadence: pos_cotacao
       goal: "Achar o comprador e descobrir o que ele já compra."
       phases:
         - { key: abordagem,  label: "Primeira abordagem", offset_days: 0 }
@@ -33,6 +34,7 @@ journey:
       goal: "Volume, frequência e fornecedor atual. Achar a brecha."
     - key: cotacao
       label: "Cotação"
+      cadence: pos_cotacao
       goal: "Enviar tabela/condição e defender margem."
       phases:
         - { key: envio,    label: "Enviar cotação", offset_days: 0 }

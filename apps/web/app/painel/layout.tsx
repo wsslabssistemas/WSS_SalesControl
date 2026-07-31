@@ -29,6 +29,7 @@ export default async function PainelLayout({
     { href: "/painel", label: "Início" },
     { href: "/painel/responder", label: "Responder" },
     { href: "/painel/contatos", label: "Contatos" },
+    { href: "/painel/followup", label: "Follow-up" },
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
     ...moduleNav,

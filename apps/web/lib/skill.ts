@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 import type { RecurrenceConfig } from "./recurrence";
+import type { Cadence } from "./cadence";
 
 export type ContactField = {
   key: string;
@@ -15,6 +16,8 @@ export type Stage = {
   terminal?: boolean;
   won?: boolean;
   phases?: Phase[];
+  /** Cadência de follow-up que governa esta etapa (chave em `cadences`). */
+  cadence?: string;
 };
 
 /** Config de formulário vinda do manifesto da Skill (campos são dado, não código). */
@@ -34,6 +37,7 @@ export async function getSkillFormConfig(skillKey: string) {
       journey?: { stages?: Stage[] };
       recurrence?: RecurrenceConfig;
       vocabulary?: Record<string, string>;
+      cadences?: Cadence[];
     } | null) ?? {};
 
   return {
@@ -43,5 +47,7 @@ export async function getSkillFormConfig(skillKey: string) {
     // Segmentos de recompra (barbearia, distribuidora) declaram o ciclo aqui.
     recurrence: m.recurrence ?? null,
     vocabulary: m.vocabulary ?? {},
+    // Sequência de toques de follow-up por etapa.
+    cadences: m.cadences ?? [],
   };
 }
