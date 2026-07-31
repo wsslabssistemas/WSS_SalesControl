@@ -46,6 +46,14 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       supabase.from("memberships").select("id, role, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
     ]);
 
+    const { data: srData } = await supabase
+      .from("services_rendered")
+      .select("performed_by, service, value_cents, occurred_at")
+      .eq("tenant_id", tenant.id)
+      .gte("occurred_at", startISO)
+      .limit(5000);
+    const servicos = (srData as { performed_by: string | null; service: string; value_cents: number }[] | null) ?? [];
+
     const contacts = (cData as Contact[] | null) ?? [];
     const ix = (ixData as Ix[] | null) ?? [];
     const hist = (hData as Hist[] | null) ?? [];
@@ -105,6 +113,46 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       .map((c) => `- ${c.nome} (${c.etapa}, resp. ${c.resp}): ${c.dias} dias sem contato`);
 
     const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
+    const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    // Faturamento (só existe se a empresa registra atendimento com valor).
+    const receitaTotal = servicos.reduce((s, x) => s + (x.value_cents ?? 0), 0);
+    const porProf = members.map((m) => {
+      const meus = servicos.filter((x) => x.performed_by === m.id);
+      const tot = meus.reduce((s, x) => s + (x.value_cents ?? 0), 0);
+      return `- ${nomeDe(m.id)}: ${meus.length} atendimentos, ${brl(tot)} (${pct(tot, receitaTotal)} do total)`;
+    });
+    const porServico = new Map<string, { n: number; total: number }>();
+    for (const s of servicos) {
+      const k = s.service?.trim() || "—";
+      const cur = porServico.get(k) ?? { n: 0, total: 0 };
+      cur.n++; cur.total += s.value_cents ?? 0;
+      porServico.set(k, cur);
+    }
+    const servicoTxt = [...porServico.entries()]
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 10)
+      .map(([k, v]) => `- ${k}: ${v.n}x, ${brl(v.total)}`);
+
+    const blocoFaturamento = servicos.length
+      ? `
+FATURAMENTO NO PERÍODO
+- Total: ${brl(receitaTotal)}
+- Atendimentos realizados: ${servicos.length}
+- Ticket médio: ${brl(Math.round(receitaTotal / servicos.length))}
+
+FATURAMENTO POR PROFISSIONAL
+${porProf.join("\n")}
+
+O QUE MAIS FATURA
+${servicoTxt.join("\n")}
+`
+      : `
+FATURAMENTO NO PERÍODO
+- Nenhum atendimento com valor registrado. Para responder sobre faturamento,
+  comissão ou ticket, a empresa precisa registrar os atendimentos na ficha do
+  cliente (serviço + valor).
+`;
 
     const dados = `EMPRESA: ${tenant.name} | Período analisado: últimos ${dias} dias
 
@@ -130,7 +178,8 @@ DESFECHOS REGISTRADOS (no período)
 ${desfechos.join("\n")}
 
 CONTATOS EM ABERTO PARADOS HÁ MAIS TEMPO
-${parados.join("\n") || "- nenhum"}`;
+${parados.join("\n") || "- nenhum"}
+${blocoFaturamento}`;
 
     const system = `Você é o analista comercial da empresa. Responde ao dono/gestor em português do Brasil, de forma direta e prática.
 REGRAS:

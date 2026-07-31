@@ -4,6 +4,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics";
 import { hasAIKey } from "@/lib/ai";
+import { brl } from "@/lib/money";
 import Analista from "./Analista";
 
 export const metadata = { title: "Gestão" };
@@ -55,17 +56,44 @@ export default async function GestaoPage({
   const startISO = new Date(Date.now() - dias * 86400000).toISOString();
   const supabase = await createClient();
 
-  const [{ data: cData }, { data: ixData }, { data: hData }, { data: mData }] = await Promise.all([
+  const [{ data: cData }, { data: ixData }, { data: hData }, { data: mData }, { data: srData }] = await Promise.all([
     supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
     supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
     supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
     supabase.from("memberships").select("id, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
+    supabase
+      .from("services_rendered")
+      .select("performed_by, service, value_cents, occurred_at")
+      .eq("tenant_id", tenant.id)
+      .gte("occurred_at", startISO)
+      .limit(5000),
   ]);
 
   const contacts = (cData as Contact[] | null) ?? [];
   const ix = (ixData as Ix[] | null) ?? [];
   const hist = (hData as Hist[] | null) ?? [];
   const members = (mData as Member[] | null) ?? [];
+  const servicos = (srData as { performed_by: string | null; service: string; value_cents: number; occurred_at: string }[] | null) ?? [];
+
+  // Faturamento: total, por profissional e por serviço.
+  const receitaTotal = servicos.reduce((s, x) => s + (x.value_cents ?? 0), 0);
+  const receitaDe = (id: string) =>
+    servicos.filter((x) => x.performed_by === id).reduce((s, x) => s + (x.value_cents ?? 0), 0);
+  const atendidosDe = (id: string) => servicos.filter((x) => x.performed_by === id).length;
+  const ticketMedio = servicos.length ? Math.round(receitaTotal / servicos.length) : 0;
+
+  const porServico = new Map<string, { n: number; total: number }>();
+  for (const s of servicos) {
+    const k = s.service?.trim() || "—";
+    const cur = porServico.get(k) ?? { n: 0, total: 0 };
+    cur.n++;
+    cur.total += s.value_cents ?? 0;
+    porServico.set(k, cur);
+  }
+  const topServicos = [...porServico.entries()]
+    .map(([nome, v]) => ({ nome, ...v }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 8);
 
   const ownerName = (id: string | null) => {
     const m = members.find((x) => x.id === id);
@@ -137,6 +165,77 @@ export default async function GestaoPage({
         <div className="card"><div className="stat-num" style={{ color: "var(--success)" }}>{fechamentos}</div><div className="stat-label">Fechamentos</div></div>
         <div className="card"><div className="stat-num" style={{ color: "var(--brand-cyan)" }}>{pct(fechamentos, leadsPeriodo.length)}</div><div className="stat-label">Conversão</div></div>
       </div>
+
+      {/* Faturamento — só aparece quando há atendimento registrado com valor */}
+      {servicos.length > 0 && (
+        <>
+          <div className="stat-grid mt-24">
+            <div className="card">
+              <div className="stat-num" style={{ color: "var(--success)" }}>{brl(receitaTotal)}</div>
+              <div className="stat-label">Faturamento no período</div>
+            </div>
+            <div className="card">
+              <div className="stat-num">{servicos.length}</div>
+              <div className="stat-label">Atendimentos realizados</div>
+            </div>
+            <div className="card">
+              <div className="stat-num">{brl(ticketMedio)}</div>
+              <div className="stat-label">Ticket médio</div>
+            </div>
+          </div>
+
+          <section style={{ marginTop: 32 }}>
+            <h2 style={{ fontSize: 15, margin: "0 0 12px" }}>Faturamento por profissional</h2>
+            <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Profissional</th>
+                    <th style={{ textAlign: "right" }}>Atendimentos</th>
+                    <th style={{ textAlign: "right" }}>Faturamento</th>
+                    <th style={{ textAlign: "right" }}>Ticket médio</th>
+                    <th style={{ textAlign: "right" }}>Participação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members
+                    .map((m) => ({ id: m.id, nome: ownerName(m.id), n: atendidosDe(m.id), total: receitaDe(m.id) }))
+                    .sort((a, b) => b.total - a.total)
+                    .map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.nome}</td>
+                        <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.n}</td>
+                        <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{brl(r.total)}</td>
+                        <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.n ? brl(Math.round(r.total / r.n)) : "—"}</td>
+                        <td style={{ textAlign: "right", color: "var(--brand-cyan)", fontVariantNumeric: "tabular-nums" }}>
+                          {receitaTotal ? `${Math.round((r.total / receitaTotal) * 100)}%` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section style={{ marginTop: 32 }}>
+            <h2 style={{ fontSize: 15, margin: "0 0 12px" }}>O que mais fatura</h2>
+            <div className="card">
+              {topServicos.map((s, i) => {
+                const max = topServicos[0]?.total || 1;
+                return (
+                  <div key={s.nome} style={{ padding: "8px 0", borderBottom: i < topServicos.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <div className="between" style={{ marginBottom: 5, fontSize: 14 }}>
+                      <span>{s.nome} <span className="text-faint" style={{ fontSize: 12 }}>· {s.n}x</span></span>
+                      <strong style={{ fontVariantNumeric: "tabular-nums" }}>{brl(s.total)}</strong>
+                    </div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(s.total / max) * 100}%` }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* Tempo de resposta */}
       <section style={{ marginTop: 32 }}>
