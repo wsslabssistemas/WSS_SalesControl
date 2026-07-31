@@ -33,6 +33,7 @@ export default async function PainelLayout({
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
     ...moduleNav,
+    { href: "/painel/catalogo", label: "Catálogo" },
     ...(showManager ? [{ href: "/painel/gestao", label: "Gestão" }] : []),
     { href: "/painel/equipe", label: "Equipe" },
     { href: "/painel/dna", label: "DNA" },

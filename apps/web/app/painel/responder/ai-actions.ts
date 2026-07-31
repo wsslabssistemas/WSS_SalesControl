@@ -127,6 +127,36 @@ export async function gerarResposta(input: {
     contactBlock = `Cliente: ${contact?.name ?? "?"}\nEtapa atual: ${stageLabel}\nHISTÓRICO (não repita abordagens já usadas; evolua a conversa):\n${histText}`;
   }
 
+  // Catálogo: itens que casam com o que o cliente pediu. É extensão da trava
+  // anti-invenção — preço e estoque só podem sair daqui.
+  let catalogo = "";
+  const termos = message
+    .toLowerCase()
+    .replace(/[^\wàáâãéêíóôõúç\s-]/gi, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 3)
+    .slice(0, 6);
+  if (termos.length) {
+    const ors = termos.flatMap((t) => [`name.ilike.%${t}%`, `sku.ilike.%${t}%`, `brand.ilike.%${t}%`]).join(",");
+    const { data: itens } = await supabase
+      .from("catalog_items")
+      .select("sku, name, brand, unit, price_cents, stock_qty")
+      .eq("tenant_id", tenant.id)
+      .eq("active", true)
+      .or(ors)
+      .limit(12);
+    const lista = (itens as { sku: string | null; name: string; brand: string | null; unit: string | null; price_cents: number | null; stock_qty: number | null }[] | null) ?? [];
+    if (lista.length) {
+      catalogo = lista
+        .map((i) => {
+          const preco = i.price_cents != null ? `R$ ${(i.price_cents / 100).toFixed(2).replace(".", ",")}` : "preço não cadastrado";
+          const estoque = i.stock_qty != null ? `${i.stock_qty}${i.unit ? " " + i.unit : ""} em estoque` : "estoque não informado";
+          return `- ${i.name}${i.brand ? ` (${i.brand})` : ""}${i.sku ? ` [cód. ${i.sku}]` : ""}: ${preco}, ${estoque}`;
+        })
+        .join("\n");
+    }
+  }
+
   // Aprendizado por feedback: respostas que JÁ converteram (reuso do que funciona).
   const { data: winData } = await supabase
     .from("interactions")
@@ -145,7 +175,8 @@ export async function gerarResposta(input: {
 
   const system = `Você é o assistente comercial do vendedor. Sua missão: sugerir a MELHOR resposta para enviar ao cliente agora e explicar a técnica.
 REGRAS INEGOCIÁVEIS:
-- Use SOMENTE os FATOS fornecidos (DNA). NUNCA invente preço, condição, horário, serviço, promoção ou política que não esteja nos FATOS.
+- Use SOMENTE os FATOS fornecidos (DNA) e o CATÁLOGO. NUNCA invente preço, condição, horário, serviço, promoção ou política que não esteja neles.
+- Preço, disponibilidade e código de produto SÓ podem vir do CATÁLOGO. Se o item pedido não está lá, diga que vai confirmar — nunca estime valor nem afirme que tem em estoque.
 - Se faltar um fato essencial para responder com segurança, liste em "faltam_fatos", marque "escalar": true e NÃO invente — deixe "resposta_sugerida" como uma mensagem breve e segura que encaminha para um humano/verificação.
 - Escreva em português do Brasil, natural, simpático e conciso — pronto para copiar e enviar no WhatsApp. Evite CTA fraca como "o que acha?"; use fechamento por alternativa ou pressuposto.
 - Baseie a técnica e o tom na BIBLIOTECA e no HISTÓRICO do cliente.`;
@@ -160,6 +191,9 @@ ${fatos(sections)}
 
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}
+
+CATÁLOGO — itens da empresa que casam com o pedido (preço e estoque SÓ podem sair daqui):
+${catalogo || "(nenhum item do catálogo casou com a mensagem — não afirme preço nem disponibilidade de produto)"}
 
 RESPOSTAS QUE JÁ CONVERTERAM NESTA EMPRESA (reuse o que funcionou com clientes parecidos, adaptando ao contexto atual):
 ${winners || "(ainda sem histórico de conversões registrado)"}

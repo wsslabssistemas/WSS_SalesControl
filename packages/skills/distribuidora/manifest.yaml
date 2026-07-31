@@ -82,30 +82,30 @@ dna_sections:
     label: "Linhas e catálogo"
     required: true
     fields:
-      - { key: produtos, type: list, required: true }
-      - { key: marcas, type: list }
-      - { key: exclusividades, type: list }
+      - { key: produtos, type: list, required: true, label: "Produtos" }
+      - { key: marcas, type: list, label: "Marcas" }
+      - { key: exclusividades, type: list, label: "Exclusividades" }
   - key: comercial
     label: "Condições comerciais"
     required: true
     fields:
-      - { key: pedido_minimo, type: money_range, required: true }
-      - { key: prazo_pagamento, type: text, required: true }
-      - { key: politica_desconto, type: text }
-      - { key: tabela_por_volume, type: boolean }
+      - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo" }
+      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento" }
+      - { key: politica_desconto, type: text, label: "Política de desconto" }
+      - { key: tabela_por_volume, type: boolean, label: "Tabela por volume?" }
   - key: logistica
     label: "Entrega"
     required: true
     fields:
-      - { key: regiao_atendida, type: text, required: true }
-      - { key: prazo_entrega, type: text, required: true }
-      - { key: frete, type: text }
-      - { key: dias_de_rota, type: text }
+      - { key: regiao_atendida, type: text, required: true, label: "Região atendida" }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega" }
+      - { key: frete, type: text, label: "Frete" }
+      - { key: dias_de_rota, type: text, label: "Dias de rota" }
   - key: diferencial
     label: "Diferencial"
     fields:
-      - { key: motivo_trocar, type: text, required: true }
-      - { key: suporte, type: text }
+      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor" }
+      - { key: suporte, type: text, label: "Suporte" }
 
 categories:
   pricing:            "Tabela, pedido mínimo e desconto por volume"

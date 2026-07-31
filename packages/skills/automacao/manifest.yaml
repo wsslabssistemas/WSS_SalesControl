@@ -102,41 +102,41 @@ dna_sections:
     label: "Soluções e produtos"
     required: true
     fields:
-      - { key: linhas, type: list, required: true }
-      - { key: marcas_representadas, type: list }
-      - { key: diferencial_tecnico, type: text, required: true }
+      - { key: linhas, type: list, required: true, label: "Linhas de produto" }
+      - { key: marcas_representadas, type: list, label: "Marcas representadas" }
+      - { key: diferencial_tecnico, type: text, required: true, label: "Diferencial técnico" }
   - key: atuacao
     label: "Área de atuação"
     required: true
     fields:
-      - { key: regiao, type: text, required: true }
-      - { key: atende_obra_nova, type: boolean }
-      - { key: atende_retrofit, type: boolean }
+      - { key: regiao, type: text, required: true, label: "Região atendida" }
+      - { key: atende_obra_nova, type: boolean, label: "Atende obra nova?" }
+      - { key: atende_retrofit, type: boolean, label: "Atende retrofit?" }
   - key: comercial
     label: "Condições comerciais"
     required: true
     fields:
-      - { key: ticket_medio, type: money_range }
-      - { key: prazo_pagamento, type: text }
-      - { key: prazo_entrega, type: text, required: true }
-      - { key: garantia, type: text, required: true }
+      - { key: ticket_medio, type: money_range, label: "Ticket médio" }
+      - { key: prazo_pagamento, type: text, label: "Prazo de pagamento" }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega" }
+      - { key: garantia, type: text, required: true, label: "Garantia" }
   - key: capacidade
     label: "Capacidade e credenciais"
     fields:
-      - { key: equipe_tecnica, type: text }
-      - { key: certificacoes, type: list }
-      - { key: obras_referencia, type: list }
+      - { key: equipe_tecnica, type: text, label: "Equipe técnica" }
+      - { key: certificacoes, type: list, label: "Certificações" }
+      - { key: obras_referencia, type: list, label: "Obras de referência" }
   - key: pos_venda
     label: "Pós-venda"
     fields:
-      - { key: manutencao_contrato, type: boolean }
-      - { key: suporte, type: text }
+      - { key: manutencao_contrato, type: boolean, label: "Contrato de manutenção" }
+      - { key: suporte, type: text, label: "Suporte" }
   - key: publico
     label: "Venda ao poder público"
     fields:
-      - { key: cadastro_sicaf, type: boolean }
-      - { key: porte_declarado, type: text }
-      - { key: atestados_capacidade, type: list }
+      - { key: cadastro_sicaf, type: boolean, label: "Cadastro no SICAF" }
+      - { key: porte_declarado, type: text, label: "Porte declarado" }
+      - { key: atestados_capacidade, type: list, label: "Atestados de capacidade" }
 
 categories:
   pricing:            "Investimento, condições e prazo de pagamento"

@@ -141,41 +141,41 @@ dna_sections:
     label: "Tabela de serviços"
     required: true
     fields:
-      - { key: range, type: money_range, required: true }
-      - { key: plans, type: table, columns: [servico, valor, duracao] }
-      - { key: payment_methods, type: list }
+      - { key: range, type: money_range, required: true, label: "Faixa de valores" }
+      - { key: plans, type: table, columns: [servico, valor, duracao], label: "Planos e preços" }
+      - { key: payment_methods, type: list, label: "Formas de pagamento" }
   - key: availability
     label: "Horário e agenda"
     required: true
     fields:
-      - { key: weekly_hours,  type: schedule, required: true }
-      - { key: booking_rule,  type: text }
+      - { key: weekly_hours,  type: schedule, required: true, label: "Horário de funcionamento" }
+      - { key: booking_rule,  type: text, label: "Como agendar" }
   - key: catalog
     label: "Serviços oferecidos"
     required: true
     fields:
-      - { key: items, type: table, columns: [nome, duracao, profissional, observacao] }
+      - { key: items, type: table, columns: [nome, duracao, profissional, observacao], label: "Itens" }
   - key: risk_free_entry
     label: "Oferta de entrada"
     fields:
-      - { key: exists, type: boolean, required: true }
-      - { key: offer,  type: text }
+      - { key: exists, type: boolean, required: true, label: "Oferece?" }
+      - { key: offer,  type: text, label: "Qual é a oferta" }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
     fields:
-      - { key: address,   type: text, required: true }
-      - { key: whatsapp,  type: text }
-      - { key: instagram, type: text }
+      - { key: address,   type: text, required: true, label: "Endereço" }
+      - { key: whatsapp,  type: text, label: "WhatsApp" }
+      - { key: instagram, type: text, label: "Instagram" }
   - key: differentials
     label: "Diferenciais"
     fields:
-      - { key: items, type: list }
+      - { key: items, type: list, label: "Itens" }
   - key: policies
     label: "Políticas"
     fields:
-      - { key: no_show,      type: text }
-      - { key: cancellation, type: text }
+      - { key: no_show,      type: text, label: "Política de falta" }
+      - { key: cancellation, type: text, label: "Política de cancelamento" }
   - key: free_notes
     label: "Outras informações importantes"
     type: rich_text

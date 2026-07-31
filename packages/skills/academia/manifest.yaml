@@ -96,41 +96,41 @@ dna_sections:
     label: "Planos e valores"
     required: true
     fields:
-      - { key: range,  type: money_range, required: true }
-      - { key: plans,  type: table, columns: [nome, valor, condicao, fidelidade] }
-      - { key: payment_methods, type: list }
+      - { key: range,  type: money_range, required: true, label: "Faixa de valores" }
+      - { key: plans,  type: table, columns: [nome, valor, condicao, fidelidade], label: "Planos e preços" }
+      - { key: payment_methods, type: list, label: "Formas de pagamento" }
   - key: availability
     label: "Horário de funcionamento"
     required: true
     fields:
-      - { key: weekly_hours, type: schedule, required: true }
+      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento" }
   - key: catalog
     label: "Modalidades e grade de aulas"
     required: true
     fields:
-      - { key: items, type: table, columns: [nome, dia, hora, publico, observacao] }
+      - { key: items, type: table, columns: [nome, dia, hora, publico, observacao], label: "Itens" }
   - key: risk_free_entry
     label: "Oferta de entrada sem risco"
     fields:
-      - { key: exists,   type: boolean, required: true }
-      - { key: duration, type: text }
-      - { key: gift,     type: text }
+      - { key: exists,   type: boolean, required: true, label: "Oferece?" }
+      - { key: duration, type: text, label: "Duração" }
+      - { key: gift,     type: text, label: "Brinde de boas-vindas" }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
     fields:
-      - { key: address,   type: text, required: true }
-      - { key: whatsapp,  type: text }
-      - { key: instagram, type: text }
+      - { key: address,   type: text, required: true, label: "Endereço" }
+      - { key: whatsapp,  type: text, label: "WhatsApp" }
+      - { key: instagram, type: text, label: "Instagram" }
   - key: differentials
     label: "Diferenciais"
     fields:
-      - { key: items, type: list }
+      - { key: items, type: list, label: "Itens" }
   - key: policies
     label: "Políticas"
     fields:
-      - { key: cancellation, type: text }
-      - { key: partnerships, type: table, columns: [servico, profissional, valor] }
+      - { key: cancellation, type: text, label: "Política de cancelamento" }
+      - { key: partnerships, type: table, columns: [servico, profissional, valor], label: "Parcerias" }
   - key: free_notes
     label: "Outras informações importantes"
     type: rich_text
@@ -142,7 +142,7 @@ dna_sections:
     # required_fact reciprocity.gift era caminho órfão e a entrada escalava
     # sempre — mesmo para quem tinha o brinde declarado. O DNA já a assumia.
     fields:
-      - { key: gift, type: text }
+      - { key: gift, type: text, label: "Brinde de boas-vindas" }
 
 # ---------------------------------------------------------------------
 # AS 12 CATEGORIAS CANÔNICAS

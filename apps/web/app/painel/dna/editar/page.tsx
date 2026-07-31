@@ -4,7 +4,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { DnaEditor } from "../DnaEditor";
 
 type FieldDef = {
-  key: string;
+  key: string; label?: string;
   type: string;
   columns?: string[];
   options?: string[];

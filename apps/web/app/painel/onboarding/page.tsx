@@ -7,7 +7,7 @@ import { listSegments, countContacts } from "./segmento-actions";
 
 export const metadata = { title: "Onboarding" };
 
-type FieldDef = { key: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
+type FieldDef = { key: string; label?: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
 type SectionDef = { key: string; label: string; required?: boolean; type?: string; fields?: FieldDef[] };
 
 export default async function OnboardingPage() {

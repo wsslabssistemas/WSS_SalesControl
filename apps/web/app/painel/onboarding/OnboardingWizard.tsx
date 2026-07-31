@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { finishOnboarding } from "./actions";
 
-type FieldDef = { key: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
+type FieldDef = { key: string; label?: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
 type SectionDef = { key: string; label: string; required?: boolean; type?: string; fields?: FieldDef[] };
 type Data = Record<string, unknown>;
 
@@ -173,7 +173,7 @@ export default function OnboardingWizard({
               {section!.fields && section!.fields.length > 0 ? (
                 section!.fields.map((f) => (
                   <label key={f.key} className="text-dim" style={{ fontSize: 13 }}>
-                    <span style={{ display: "block", marginBottom: 5 }}>{f.key}</span>
+                    <span style={{ display: "block", marginBottom: 5 }}>{f.label ?? f.key}</span>
                     {renderField(section!.key, f)}
                   </label>
                 ))

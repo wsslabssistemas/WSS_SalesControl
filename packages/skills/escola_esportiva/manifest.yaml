@@ -87,38 +87,38 @@ dna_sections:
     label: "Modalidades e turmas"
     required: true
     fields:
-      - { key: lista, type: list, required: true }
-      - { key: faixas_etarias, type: text, required: true }
-      - { key: grade_horarios, type: schedule, required: true }
-      - { key: vagas_por_turma, type: text }
+      - { key: lista, type: list, required: true, label: "Lista" }
+      - { key: faixas_etarias, type: text, required: true, label: "Faixas etárias" }
+      - { key: grade_horarios, type: schedule, required: true, label: "Grade de horários" }
+      - { key: vagas_por_turma, type: text, label: "Vagas por turma" }
   - key: pricing
     label: "Planos e valores"
     required: true
     fields:
-      - { key: range, type: money_range, required: true }
-      - { key: matricula, type: text }
-      - { key: desconto_irmaos, type: boolean }
-      - { key: formas_pagamento, type: list }
+      - { key: range, type: money_range, required: true, label: "Faixa de valores" }
+      - { key: matricula, type: text, label: "Taxa de matrícula" }
+      - { key: desconto_irmaos, type: boolean, label: "Desconto para irmãos" }
+      - { key: formas_pagamento, type: list, label: "Formas de pagamento" }
   - key: experimental
     label: "Aula experimental"
     required: true
     fields:
-      - { key: oferece, type: boolean, required: true }
-      - { key: como_funciona, type: text, required: true }
-      - { key: precisa_agendar, type: boolean }
-      - { key: o_que_levar, type: text }
+      - { key: oferece, type: boolean, required: true, label: "Oferece?" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona" }
+      - { key: precisa_agendar, type: boolean, label: "Precisa agendar?" }
+      - { key: o_que_levar, type: text, label: "O que levar" }
   - key: estrutura
     label: "Estrutura"
     fields:
-      - { key: instalacoes, type: list }
-      - { key: professores, type: text }
-      - { key: estacionamento, type: boolean }
+      - { key: instalacoes, type: list, label: "Instalações" }
+      - { key: professores, type: text, label: "Professores" }
+      - { key: estacionamento, type: boolean, label: "Estacionamento" }
   - key: regras
     label: "Regras e exigências"
     fields:
-      - { key: atestado_medico, type: boolean }
-      - { key: uniforme, type: text }
-      - { key: idade_minima, type: text }
+      - { key: atestado_medico, type: boolean, label: "Exige atestado médico?" }
+      - { key: uniforme, type: text, label: "Uniforme" }
+      - { key: idade_minima, type: text, label: "Idade mínima" }
 
 categories:
   pricing:            "Planos, matrícula e desconto para irmãos"

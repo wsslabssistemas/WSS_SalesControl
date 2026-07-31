@@ -124,52 +124,52 @@ dna_sections:
     label: "Valores e formas de pagamento"
     required: true
     fields:
-      - { key: avaliacao_valor, type: text, required: true }
-      - { key: range, type: money_range }
-      - { key: parcelamento, type: text, required: true }
-      - { key: formas_pagamento, type: list }
+      - { key: avaliacao_valor, type: text, required: true, label: "Valor da avaliação" }
+      - { key: range, type: money_range, label: "Faixa de valores" }
+      - { key: parcelamento, type: text, required: true, label: "Parcelamento" }
+      - { key: formas_pagamento, type: list, label: "Formas de pagamento" }
   - key: catalog
     label: "Procedimentos oferecidos"
     required: true
     fields:
-      - { key: items, type: table, columns: [procedimento, profissional, duracao, observacao] }
+      - { key: items, type: table, columns: [procedimento, profissional, duracao, observacao], label: "Itens" }
   - key: availability
     label: "Agenda e horários"
     required: true
     fields:
-      - { key: weekly_hours, type: schedule, required: true }
-      - { key: prazo_agendamento, type: text }
+      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento" }
+      - { key: prazo_agendamento, type: text, label: "Prazo para agendar" }
   - key: expertise_proof
     label: "Equipe e credenciais"
     required: true
     fields:
-      - { key: profissionais, type: table, columns: [nome, especialidade, registro] }
-      - { key: tempo_de_casa, type: text }
-      - { key: tecnologia, type: list }
+      - { key: profissionais, type: table, columns: [nome, especialidade, registro], label: "Profissionais" }
+      - { key: tempo_de_casa, type: text, label: "Tempo de mercado" }
+      - { key: tecnologia, type: list, label: "Tecnologia e equipamentos" }
   - key: convenios
     label: "Convênios e reembolso"
     required: true
     fields:
-      - { key: aceita_convenio, type: boolean, required: true }
-      - { key: lista, type: list }
-      - { key: reembolso, type: text }
+      - { key: aceita_convenio, type: boolean, required: true, label: "Aceita convênio?" }
+      - { key: lista, type: list, label: "Lista" }
+      - { key: reembolso, type: text, label: "Reembolso" }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
     fields:
-      - { key: address, type: text, required: true }
-      - { key: whatsapp, type: text }
-      - { key: estacionamento, type: text }
+      - { key: address, type: text, required: true, label: "Endereço" }
+      - { key: whatsapp, type: text, label: "WhatsApp" }
+      - { key: estacionamento, type: text, label: "Estacionamento" }
   - key: policies
     label: "Políticas"
     fields:
-      - { key: no_show, type: text }
-      - { key: cancelamento, type: text }
-      - { key: garantia, type: text }
+      - { key: no_show, type: text, label: "Política de falta" }
+      - { key: cancelamento, type: text, label: "Política de cancelamento" }
+      - { key: garantia, type: text, label: "Garantia" }
   - key: differentials
     label: "Diferenciais"
     fields:
-      - { key: items, type: list }
+      - { key: items, type: list, label: "Itens" }
   - key: free_notes
     label: "Outras informações importantes"
     type: rich_text

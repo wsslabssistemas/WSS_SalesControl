@@ -75,17 +75,16 @@ export default async function AgendaPage() {
         </div>
       )}
 
+      {/* O calendário aparece sempre — mesmo vazio ele é a visão do mês. */}
+      {alerts.length === 0 && (
+        <p className="text-faint mt-16" style={{ fontSize: 13 }}>
+          Nenhum toque pendente no momento. Ao mover um contato para uma etapa com
+          fases, os lembretes aparecem aqui automaticamente.
+        </p>
+      )}
+
       <div className="mt-16">
-        {alerts.length === 0 ? (
-          <div className="card">
-            <p className="text-dim" style={{ margin: 0 }}>
-              Nenhum toque pendente. Ao mover um contato para uma etapa com fases
-              (ex.: semana experimental), os lembretes aparecem no calendário.
-            </p>
-          </div>
-        ) : (
-          <AgendaCalendar items={items} />
-        )}
+        <AgendaCalendar items={items} />
       </div>
     </main>
   );
