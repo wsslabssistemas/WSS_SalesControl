@@ -267,4 +267,40 @@ mais fideliza nesse ramo.',
  'oferecer_horario', 'skill_seed', 'active');
 
 -- Verificação: quantas entradas ficaram por categoria.
--- Esperado: 16 entradas no total, cobrindo 11 categorias canônicas.
+-- Esperado: 16 entradas no total, cobrindo 11 categorias canônicas.,
+
+-- ------------------------------------------------- CONFIRMACAO (anti-furo)
+-- Pesquisa: a ociosidade e o maior gargalo do ramo; cada furo de 45 min e
+-- receita que nao volta. Lembrete + confirmacao reduzem drasticamente a falta.
+(null, 'barbearia', 'policies', 'proactive',
+ '{"confirmar horario","lembrete","confirmacao de agendamento","vespera","voce vem amanha"}',
+ null,
+ 'Confirmar o horario na vespera e a acao de maior retorno financeiro do ramo:
+cadeira vazia nao se recupera. Mande curto, com dia, hora e profissional, e peca
+uma confirmacao de uma palavra — quanto menor o esforco de responder, maior a
+taxa de confirmacao.
+Se a casa cobra sinal ou tem politica de falta, informe com naturalidade AGORA,
+nunca depois que ele faltou.
+Se ele nao puder, ja ofereca outro horario na mesma mensagem: assim voce troca
+um furo por um remarcado.',
+ '{}', '{"policies.no_show","availability.weekly_hours"}', '{}', 'omit',
+ 'Confirmacao de vespera com resposta de baixo atrito + troca imediata',
+ '{"Confirmar em cima da hora: nao da tempo de preencher a vaga","Mensagem longa que exige leitura","Avisar da politica de falta so depois que faltou"}',
+ 'confirmar_presenca', 'skill_seed', 'active'),
+
+-- ------------------------------------------------------------- INDICACAO
+-- Pesquisa: member-get-member converte mais e traz cliente mais fiel.
+(null, 'barbearia', 'reciprocity', 'proactive',
+ '{"indicacao","indicar amigo","trouxe um amigo","programa de indicacao","quem me indicou"}',
+ null,
+ 'Indicacao e a captacao mais barata e a que traz o cliente mais fiel neste ramo.
+O momento certo de pedir e logo depois de um elogio ou de um corte que ele gostou
+— nunca no meio da negociacao de preco.
+Peca de forma concreta e facil ("manda meu contato pra alguem que voce sabe que
+ta precisando"), nao de forma vaga. Se existe recompensa cadastrada, diga qual e
+e para os DOIS lados. Se nao existe, agradeca de forma concreta assim mesmo.
+Nunca invente premio que a casa nao pratica.',
+ '{}', '{"pricing.range","differentials.items"}', '{}', 'omit',
+ 'Member-get-member no pico de satisfacao + reciprocidade de mao dupla',
+ '{"Pedir indicacao antes de entregar valor","Pedido vago (\"indica ai\")","Prometer recompensa que a casa nao tem"}',
+ 'pedir_indicacao', 'skill_seed', 'active');

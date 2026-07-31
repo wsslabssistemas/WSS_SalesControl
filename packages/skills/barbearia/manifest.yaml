@@ -107,6 +107,25 @@ recurrence:
     bimestral: 60
   default_days: 21
 
+# ---------------------------------------------------------------------
+# REFERÊNCIAS DO SEGMENTO (pesquisa de mercado, jul/2026)
+# Servem de parâmetro para o gestor comparar a própria operação. NÃO são
+# fatos da empresa — o motor nunca afirma isto ao cliente, só o DNA vale.
+# ---------------------------------------------------------------------
+benchmarks:
+  visitas_ano_cliente_fiel: "17 a 24"
+  intervalo_medio_dias: 21
+  ticket_medio_faixa: "R$ 50 a R$ 80"
+  atendimentos_dia_por_cadeira: "10 a 15"
+  duracao_servico_min: "30 a 45"
+  faturamento_mes_por_cadeira: "R$ 13.000 a R$ 20.000"
+  comissao_profissional: "40% a 50%"
+  raio_captacao_km: "3 a 5"
+  observacao_gargalo: >-
+    O maior gargalo é a ociosidade: cada furo de 45 min na agenda é receita que
+    não volta. Lembrete automático (e sinal antecipado) reduz drasticamente a
+    falta.
+
 lead_sources:
   - whatsapp
   - instagram
