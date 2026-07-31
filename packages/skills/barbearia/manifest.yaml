@@ -50,19 +50,62 @@ journey:
       label: "Perdido"
       terminal: true
 
+# ---------------------------------------------------------------------
+# CAMPOS PRÓPRIOS DO SEGMENTO
+# O negócio é RECORRÊNCIA: o cliente fiel volta a cada ~21 dias e rende
+# 17 a 24 visitas por ano. Por isso os campos abaixo existem — eles são o
+# que permite calcular QUANDO chamar de volta, e não esperar o cliente
+# lembrar sozinho. Barbearia com retorno programado retém muito mais.
+# ---------------------------------------------------------------------
 contact_fields:
   - key: servico_preferido
     label: "Serviço preferido"
     type: enum
     options: [corte, barba, corte_e_barba, coloracao, tratamento, infantil]
+  # Define o intervalo do retorno. Degradê curto pede 2 semanas; corte médio
+  # com barba, 3 a 4 semanas.
   - key: frequencia
     label: "Frequência"
     type: enum
-    options: [semanal, quinzenal, mensal, esporadico]
+    options: [semanal, quinzenal, tres_semanas, mensal, bimestral, esporadico]
+  - key: dia_preferido
+    label: "Dia que costuma vir"
+    type: enum
+    options: [segunda, terca, quarta, quinta, sexta, sabado, sem_preferencia]
+  - key: turno_preferido
+    label: "Turno preferido"
+    type: enum
+    options: [manha, tarde, noite, sem_preferencia]
   - key: profissional_preferido
-    label: "Profissional preferido"
+    label: "Barbeiro preferido"
     type: enum
     options: [sem_preferencia, definido]
+  # Por que ele viria mais vezes — a alavanca de frequência de cada cliente.
+  - key: gatilho_retorno
+    label: "O que o traria mais vezes"
+    type: enum
+    options:
+      [horario_facil, preco_pacote, barba_junto, atendimento_rapido,
+       ambiente, produto_domicilio, indefinido]
+
+# ---------------------------------------------------------------------
+# RECORRÊNCIA
+# O núcleo sabe calcular "quando chamar de volta"; QUAIS campos usar e
+# quantos dias cada frequência vale é dado do segmento (Lei 1).
+# Referência de mercado: fiel volta a cada ~21 dias; o lembrete funciona
+# quando sai alguns dias ANTES do ciclo fechar.
+# ---------------------------------------------------------------------
+recurrence:
+  frequency_field: frequencia
+  preferred_day_field: dia_preferido
+  remind_before_days: 3
+  intervals_days:
+    semanal: 7
+    quinzenal: 15
+    tres_semanas: 21
+    mensal: 30
+    bimestral: 60
+  default_days: 21
 
 lead_sources:
   - whatsapp

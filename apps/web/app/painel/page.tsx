@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts, computeCooling } from "@/lib/agenda";
+import { computeDue, labelDia } from "@/lib/recurrence";
 import { whatsappNumber } from "@/lib/phone";
 
 type Contact = {
@@ -11,6 +12,8 @@ type Contact = {
   phone: string | null;
   journey_stage: string;
   stage_entered_at: string;
+  owner_id: string | null;
+  custom: Record<string, unknown> | null;
 };
 type Ix = { contact_id: string | null; occurred_at: string; outcome: string | null };
 
@@ -34,14 +37,14 @@ export default async function PainelHome() {
     );
   }
 
-  const { stages } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, recurrence } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
   const [{ data: contactsData }, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id, name, phone, journey_stage, stage_entered_at")
+      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
     supabase
@@ -87,6 +90,9 @@ export default async function PainelHome() {
   const alerts = computeAlerts(contacts, stages);
   const hoje = alerts.filter((a) => a.days <= 0);
   const cooling = computeCooling(contacts, lastByContact, stages);
+  // Segmentos de recompra: quem já está no ponto de voltar.
+  const terminalSet = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
+  const retornos = computeDue(contacts, lastByContact, recurrence, terminalSet);
 
   // Resultados dos últimos 30 dias (do feedback registrado).
   const recentOutcomes = ix.filter((i) => i.outcome && i.occurred_at >= monthAgo);
@@ -157,6 +163,56 @@ export default async function PainelHome() {
               </span>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Recompra: quem já está no ponto de voltar (segmentos com ciclo) */}
+      {retornos.length > 0 && (
+        <section style={{ marginTop: 32 }}>
+          <div className="between" style={{ alignItems: "baseline" }}>
+            <h2 style={{ fontSize: 15, margin: 0 }}>Hora de chamar de volta</h2>
+            <span className="text-faint" style={{ fontSize: 13 }}>pelo ciclo de cada cliente</span>
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
+            {retornos.slice(0, 8).map((r) => {
+              const wa = waLink(r.phone);
+              const atrasado = r.overdueDays > 0;
+              return (
+                <li
+                  key={r.contactId}
+                  className="row wrap"
+                  style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}
+                >
+                  <span className={atrasado ? "badge badge-danger" : "badge badge-success"} style={{ minWidth: 62, justifyContent: "center" }}>
+                    {atrasado ? `+${r.overdueDays}d` : "no ponto"}
+                  </span>
+                  <Link href={`/painel/contatos/${r.contactId}`} className="grow" style={{ minWidth: 120 }}>
+                    {r.name}
+                  </Link>
+                  <span className="text-faint" style={{ whiteSpace: "nowrap", fontSize: 13 }}>
+                    {r.daysSince}d desde a última · ciclo {r.intervalDays}d
+                  </span>
+                  <span className="badge badge-brand" style={{ whiteSpace: "nowrap" }}>
+                    sugerir {r.suggested.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                    {r.preferredDay ? ` (${labelDia(r.preferredDay)})` : ""}
+                  </span>
+                  {wa && (
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  <Link href={`/painel/responder?customer=${r.contactId}`} className="btn btn-sm btn-ghost">
+                    Chamar
+                  </Link>
+                </li>
+              );
+            })}
+            {retornos.length > 8 && (
+              <li className="text-faint" style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                +{retornos.length - 8} outros no ponto de voltar
+              </li>
+            )}
+          </ul>
         </section>
       )}
 

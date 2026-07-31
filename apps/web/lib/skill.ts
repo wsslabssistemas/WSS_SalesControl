@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
+import type { RecurrenceConfig } from "./recurrence";
+
 export type ContactField = {
   key: string;
   label: string;
@@ -30,11 +32,16 @@ export async function getSkillFormConfig(skillKey: string) {
       contact_fields?: ContactField[];
       lead_sources?: string[];
       journey?: { stages?: Stage[] };
+      recurrence?: RecurrenceConfig;
+      vocabulary?: Record<string, string>;
     } | null) ?? {};
 
   return {
     fields: m.contact_fields ?? [],
     sources: m.lead_sources ?? [],
     stages: m.journey?.stages ?? [],
+    // Segmentos de recompra (barbearia, distribuidora) declaram o ciclo aqui.
+    recurrence: m.recurrence ?? null,
+    vocabulary: m.vocabulary ?? {},
   };
 }

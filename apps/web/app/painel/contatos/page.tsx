@@ -7,6 +7,7 @@ import { displayPhone } from "@/lib/phone";
 const PAGE_SIZE = 20;
 
 type Contact = {
+  owner_id: string | null;
   id: string;
   name: string;
   phone: string | null;
@@ -17,11 +18,12 @@ type Contact = {
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; etapa?: string; page?: string; importados?: string; dup?: string; sem?: string }>;
+  searchParams: Promise<{ q?: string; etapa?: string; resp?: string; page?: string; importados?: string; dup?: string; sem?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
   const etapa = sp.etapa ?? "";
+  const resp = sp.resp ?? "";
   const pageNum = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
   const membership = await getActiveTenant();
@@ -39,15 +41,27 @@ export default async function ContatosPage({
   const from = (pageNum - 1) * PAGE_SIZE;
 
   const supabase = await createClient();
+
+  // Carteira por profissional: cada vendedor/barbeiro tem os seus clientes.
+  const { data: membrosData } = await supabase
+    .from("memberships")
+    .select("id, user:profiles(full_name, email)")
+    .eq("tenant_id", tenant.id)
+    .eq("status", "active");
+  const membros = ((membrosData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
   let query = supabase
     .from("contacts")
-    .select("id, name, phone, journey_stage, source", { count: "exact" })
+    .select("id, name, phone, journey_stage, source, owner_id", { count: "exact" })
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null);
 
   const term = q.replace(/[,()%*]/g, "").trim();
   if (term) query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%`);
   if (etapa) query = query.eq("journey_stage", etapa);
+  if (resp) query = query.eq("owner_id", resp);
 
   const { data, count } = await query
     .order("created_at", { ascending: false })
@@ -63,6 +77,7 @@ export default async function ContatosPage({
     const p = new URLSearchParams();
     if (q) p.set("q", q);
     if (etapa) p.set("etapa", etapa);
+    if (resp) p.set("resp", resp);
     if (n > 1) p.set("page", String(n));
     const s = p.toString();
     return s ? `?${s}` : "?";
@@ -100,6 +115,14 @@ export default async function ContatosPage({
             <option key={s.key} value={s.key}>{s.label}</option>
           ))}
         </select>
+        {membros.length > 1 && (
+          <select name="resp" defaultValue={resp} style={{ width: "auto" }} title="Carteira de cada profissional">
+            <option value="">Todos os profissionais</option>
+            {membros.map((m) => (
+              <option key={m.id} value={m.id}>{m.nome}</option>
+            ))}
+          </select>
+        )}
         <button type="submit" className="btn">Buscar</button>
       </form>
 
@@ -119,6 +142,7 @@ export default async function ContatosPage({
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>Etapa</th>
+                {membros.length > 1 && <th>Responsável</th>}
                 <th>Origem</th>
               </tr>
             </thead>
@@ -128,6 +152,9 @@ export default async function ContatosPage({
                   <td><Link href={`/painel/contatos/${c.id}`}>{c.name}</Link></td>
                   <td>{displayPhone(c.phone)}</td>
                   <td><span className="badge">{stageLabel(c.journey_stage)}</span></td>
+                  {membros.length > 1 && (
+                    <td className="text-dim">{membros.find((m) => m.id === c.owner_id)?.nome ?? "—"}</td>
+                  )}
                   <td className="text-dim">{c.source ?? "—"}</td>
                 </tr>
               ))}
