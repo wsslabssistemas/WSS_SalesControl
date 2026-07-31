@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { requireUser, getActiveTenant } from "@/lib/auth";
+import { requireUser, getActiveTenant, listMemberships } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platform";
 import { loadEntitlements, MODULES } from "@/lib/entitlements";
 import { BRAND_NAME } from "@/lib/brand";
 import PainelNav from "./PainelNav";
+import TenantSwitcher from "./TenantSwitcher";
 import { signOut } from "./actions";
 
 export default async function PainelLayout({
@@ -13,8 +14,7 @@ export default async function PainelLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const membership = await getActiveTenant();
-  const tenantName = membership?.tenant?.name ?? "(sem empresa)";
+  const [membership, empresas] = await Promise.all([getActiveTenant(), listMemberships()]);
   const showAdmin = isPlatformAdmin(user.email);
   const showManager = ["owner", "admin", "manager"].includes(membership?.role ?? "");
 
@@ -49,9 +49,10 @@ export default async function PainelLayout({
         </Link>
         <PainelNav items={nav} />
         <div className="row" style={{ marginLeft: "auto", gap: 14 }}>
-          <span className="badge" title="Empresa ativa">
-            {tenantName}
-          </span>
+          <TenantSwitcher
+            empresas={empresas.map((m) => ({ id: m.tenant!.id, name: m.tenant!.name }))}
+            atual={membership?.tenant?.id ?? ""}
+          />
           <form action={signOut}>
             <button type="submit" className="linklike" style={{ fontSize: 13 }}>
               Sair
