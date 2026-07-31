@@ -50,8 +50,10 @@ export function ContactForm({
   submitLabel: string;
 }) {
   const custom = contact?.custom ?? {};
+  // A etapa inicial vem do manifesto do segmento — o núcleo não conhece
+  // "contato" nem qualquer etapa de mercado (Lei 1).
   const [stage, setStage] = useState<string>(
-    contact?.journey_stage ?? "contato",
+    contact?.journey_stage ?? stages[0]?.key ?? "",
   );
   const stageDef = stages.find((s) => s.key === stage);
   const hasPhases = !!stageDef?.phases && stageDef.phases.length > 0;

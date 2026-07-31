@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
+import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -26,8 +27,9 @@ function parse(formData: FormData): Parsed {
     name: String(formData.get("name") ?? "").trim(),
     phone: normalizePhone(String(formData.get("phone") ?? "")),
     source: String(formData.get("source") ?? "").trim() || null,
-    journey_stage:
-      String(formData.get("journey_stage") ?? "contato").trim() || "contato",
+    // Vazio aqui; quem salva preenche com a 1ª etapa do manifesto. O núcleo
+    // não conhece etapa de mercado (Lei 1).
+    journey_stage: String(formData.get("journey_stage") ?? "").trim(),
     stageStart: String(formData.get("stage_start") ?? "").trim() || null,
     custom,
   };
@@ -85,6 +87,15 @@ export async function createContact(formData: FormData) {
         )}`,
       );
     }
+  }
+
+  // Sem etapa escolhida, entra na primeira não-terminal do manifesto.
+  if (!p.journey_stage) {
+    const { stages } = await getSkillFormConfig(tenant!.skill_key);
+    p.journey_stage = stages.find((s) => !s.terminal)?.key ?? stages[0]?.key ?? "";
+  }
+  if (!p.journey_stage) {
+    redirect("/painel/contatos/novo?erro=Segmento+sem+etapas.+Refaca+o+onboarding.");
   }
 
   const { error } = await supabase.from("contacts").insert({

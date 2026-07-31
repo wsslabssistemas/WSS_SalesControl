@@ -59,7 +59,13 @@ export async function installSkill(skillKey: string): Promise<{ ok: boolean; err
     .maybeSingle();
   if (!skill) return { ok: false, error: "Segmento não disponível." };
 
-  const { error } = await supabase.from("tenants").update({ skill_key: skillKey }).eq("id", tenant.id);
+  // Porta única: grava tenants.skill_key E o vínculo em tenant_skills — a RLS
+  // de `skills` depende do vínculo. Gravar só um dos dois quebra a leitura do
+  // manifesto (formulário sem etapas e sem origens).
+  const { error } = await supabase.rpc("install_skill", {
+    p_tenant: tenant.id,
+    p_skill_key: skillKey,
+  });
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/painel", "layout");
