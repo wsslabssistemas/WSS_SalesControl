@@ -2,6 +2,9 @@ key: academia
 name: Academia
 version: 1.0.0
 
+# Modulos do segmento. B2C local nao faz prospeccao fria de pessoas (LGPD).
+capabilities: []
+
 # =====================================================================
 # Uma Skill é DADO, nunca código. Nenhuma linha do sistema muda
 # entre esta Skill e a de barbearia.

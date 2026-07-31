@@ -2,6 +2,9 @@ key: barbearia
 name: Barbearia
 version: 1.0.0
 
+# Modulos do segmento. B2C local nao faz prospeccao fria de pessoas (LGPD).
+capabilities: []
+
 # =====================================================================
 # A PROVA DA TESE DO COS
 #

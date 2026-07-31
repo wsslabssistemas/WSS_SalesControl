@@ -1,0 +1,187 @@
+key: automacao
+name: Automação e Sistemas Prediais
+version: 1.0.0
+
+# =====================================================================
+# Segmento B2B/B2G: vende para EMPRESAS e para o PODER PÚBLICO.
+# Nenhuma linha do sistema muda entre esta Skill e a de academia — a
+# diferença toda está neste arquivo. É a prova da Lei 1.
+# =====================================================================
+
+# Módulos que este segmento usa. O núcleo mostra a aba só se o segmento
+# oferece E a empresa tem (teste ou compra). B2C não recebe prospecção.
+capabilities:
+  - prospeccao
+  - licitacoes
+
+vocabulary:
+  lead: "empresa prospectada"
+  conversion: "contrato fechado"
+  churn: "perda de contrato"
+  catalog_item: "solução"
+
+discovery_axis: "dor operacional (custo de energia, falha de equipamento, conformidade, obra nova)"
+
+# ---------------------------------------------------------------------
+# JORNADA — venda técnica consultiva. Ciclo longo, com visita técnica e
+# proposta orçada. Nada a ver com a jornada de academia.
+# ---------------------------------------------------------------------
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: prospeccao
+      label: "Prospecção"
+      goal: "Identificar a empresa certa e chegar em quem decide. Nunca abrir com preço."
+      phases:
+        - { key: abordagem,  label: "Primeira abordagem", offset_days: 0 }
+        - { key: followup_1, label: "Retomada",           offset_days: 3 }
+        - { key: followup_2, label: "Última tentativa",   offset_days: 8 }
+    - key: qualificacao
+      label: "Qualificação"
+      goal: "Entender a operação, o problema real e quem assina."
+    - key: levantamento
+      label: "Visita técnica"
+      goal: "Levantar em campo o escopo e as condições da instalação."
+      phases:
+        - { key: agendamento, label: "Agendar visita",  offset_days: 0 }
+        - { key: realizacao,  label: "Realizar visita", offset_days: 3 }
+    - key: proposta
+      label: "Proposta técnica"
+      goal: "Entregar escopo, prazo e investimento. Defender valor, não preço."
+      phases:
+        - { key: envio,      label: "Enviar proposta",     offset_days: 0 }
+        - { key: retorno,    label: "Confirmar recebimento", offset_days: 2 }
+        - { key: cobranca,   label: "Cobrar posição",      offset_days: 7 }
+    - key: negociacao
+      label: "Negociação"
+      goal: "Isolar a objeção real (preço, prazo, concorrente) e fechar."
+    - key: fechado
+      label: "Contrato fechado"
+      terminal: true
+      won: true
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+contact_fields:
+  - key: porte
+    label: "Porte da empresa"
+    type: enum
+    options: [mei, micro, pequena, media, grande, orgao_publico]
+  - key: setor
+    label: "Setor"
+    type: enum
+    options: [industria, comercio, saude, educacao, predial, agro, alimenticio, publico, outro]
+  - key: necessidade
+    label: "Necessidade principal"
+    type: enum
+    options: [climatizacao, refrigeracao, energia, automacao_predial, monitoramento, manutencao, retrofit, outro]
+  - key: decisor
+    label: "Papel do contato"
+    type: enum
+    options: [dono, diretor, gerente, engenharia, compras, manutencao, indefinido]
+
+lead_sources:
+  - prospeccao
+  - licitacao
+  - indicacao
+  - site
+  - feira
+  - representante
+  - cliente_antigo
+  - outro
+
+# ---------------------------------------------------------------------
+# SEÇÕES DE DNA — os fatos que o motor pode afirmar sobre a empresa.
+# ---------------------------------------------------------------------
+dna_sections:
+  - key: solucoes
+    label: "Soluções e produtos"
+    required: true
+    fields:
+      - { key: linhas, type: list, required: true }
+      - { key: marcas_representadas, type: list }
+      - { key: diferencial_tecnico, type: text, required: true }
+  - key: atuacao
+    label: "Área de atuação"
+    required: true
+    fields:
+      - { key: regiao, type: text, required: true }
+      - { key: atende_obra_nova, type: boolean }
+      - { key: atende_retrofit, type: boolean }
+  - key: comercial
+    label: "Condições comerciais"
+    required: true
+    fields:
+      - { key: ticket_medio, type: money_range }
+      - { key: prazo_pagamento, type: text }
+      - { key: prazo_entrega, type: text, required: true }
+      - { key: garantia, type: text, required: true }
+  - key: capacidade
+    label: "Capacidade e credenciais"
+    fields:
+      - { key: equipe_tecnica, type: text }
+      - { key: certificacoes, type: list }
+      - { key: obras_referencia, type: list }
+  - key: pos_venda
+    label: "Pós-venda"
+    fields:
+      - { key: manutencao_contrato, type: boolean }
+      - { key: suporte, type: text }
+  - key: publico
+    label: "Venda ao poder público"
+    fields:
+      - { key: cadastro_sicaf, type: boolean }
+      - { key: porte_declarado, type: text }
+      - { key: atestados_capacidade, type: list }
+
+categories:
+  pricing:            "Investimento, condições e prazo de pagamento"
+  risk_free_entry:    "Visita técnica e diagnóstico sem compromisso"
+  availability:       "Prazo de entrega e agenda de instalação"
+  expertise_proof:    "Certificações, equipe técnica e obras de referência"
+  catalog:            "Linhas, marcas representadas e soluções"
+  goal_matching:      "Dor operacional → solução adequada"
+  objections:         "Caro, concorrente, prazo, orçamento travado"
+  commitment_offer:   "Contrato de manutenção e parceria de longo prazo"
+  reciprocity:        "Diagnóstico ou estudo de economia sem custo"
+  limits_and_ethics:  "O que não prometer sobre prazo, garantia e norma técnica"
+  retention:          "Pós-venda, manutenção preventiva e recompra"
+  ecosystem:          "Integradores, assistência autorizada e parceiros"
+
+cadences:
+  - key: pos_proposta
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2,  intent: "Confirmar que recebeu e tirar dúvida técnica" }
+      - { offset_days: 7,  intent: "Cobrar posição sem pressionar" }
+      - { offset_days: 15, intent: "Última chamada com condição de fechamento" }
+    stop_on: [replied, converted, opted_out, lost]
+
+  - key: prospeccao_fria
+    applies_to: cold_outreach
+    steps:
+      - { offset_days: 3, intent: "Retomada com novo ângulo de valor" }
+      - { offset_days: 8, intent: "Última tentativa, porta aberta" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+  - key: reativacao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,  intent: "Retomar contato com gancho de manutenção" }
+      - { offset_days: 30, intent: "Oferecer revisão preventiva" }
+    stop_on: [replied, converted, opted_out]
+
+hard_rules:
+  - "Nunca prometer prazo de entrega ou garantia que não esteja no DNA."
+  - "Não passar preço fechado antes da visita técnica quando o escopo depende de levantamento."
+  - "Em edital, nunca afirmar atendimento a especificação sem conferir o item."
+
+kpis:
+  - taxa_conversao
+  - ticket_medio
+  - tempo_resposta_mediana
+  - propostas_enviadas
+  - taxa_vitoria_licitacao

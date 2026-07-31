@@ -1,0 +1,152 @@
+key: distribuidora
+name: Distribuidora e Atacado
+version: 1.0.0
+
+# =====================================================================
+# B2B com carteira: vive de RECOMPRA e ao mesmo tempo precisa captar.
+# A jornada não termina na venda — termina na recorrência.
+# =====================================================================
+
+capabilities:
+  - prospeccao
+
+vocabulary:
+  lead: "cliente potencial"
+  conversion: "primeiro pedido"
+  churn: "cliente inativo"
+  catalog_item: "linha de produto"
+
+discovery_axis: "consumo (o que compra, quanto gira, de quem compra hoje)"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: prospeccao
+      label: "Prospecção"
+      goal: "Achar o comprador e descobrir o que ele já compra."
+      phases:
+        - { key: abordagem,  label: "Primeira abordagem", offset_days: 0 }
+        - { key: followup,   label: "Retomada",           offset_days: 4 }
+    - key: qualificacao
+      label: "Qualificação"
+      goal: "Volume, frequência e fornecedor atual. Achar a brecha."
+    - key: cotacao
+      label: "Cotação"
+      goal: "Enviar tabela/condição e defender margem."
+      phases:
+        - { key: envio,    label: "Enviar cotação", offset_days: 0 }
+        - { key: retorno,  label: "Cobrar retorno", offset_days: 2 }
+    - key: primeiro_pedido
+      label: "Primeiro pedido"
+      goal: "Fechar o pedido de entrada, mesmo pequeno."
+    - key: recorrente
+      label: "Cliente recorrente"
+      terminal: true
+      won: true
+    - key: inativo
+      label: "Inativo"
+      terminal: true
+
+contact_fields:
+  - key: segmento_cliente
+    label: "Tipo de estabelecimento"
+    type: enum
+    options: [mercado, padaria, restaurante, bar, hotel, industria, revenda, obra, orgao_publico, outro]
+  - key: volume
+    label: "Volume estimado"
+    type: enum
+    options: [baixo, medio, alto, indefinido]
+  - key: fornecedor_atual
+    label: "Compra hoje de"
+    type: enum
+    options: [concorrente_a, concorrente_b, atacado_local, direto_industria, nao_sei]
+  - key: frequencia
+    label: "Frequência de compra"
+    type: enum
+    options: [semanal, quinzenal, mensal, esporadica, indefinida]
+
+lead_sources:
+  - prospeccao
+  - representante
+  - indicacao
+  - whatsapp
+  - feira
+  - cliente_antigo
+  - outro
+
+dna_sections:
+  - key: linhas
+    label: "Linhas e catálogo"
+    required: true
+    fields:
+      - { key: produtos, type: list, required: true }
+      - { key: marcas, type: list }
+      - { key: exclusividades, type: list }
+  - key: comercial
+    label: "Condições comerciais"
+    required: true
+    fields:
+      - { key: pedido_minimo, type: money_range, required: true }
+      - { key: prazo_pagamento, type: text, required: true }
+      - { key: politica_desconto, type: text }
+      - { key: tabela_por_volume, type: boolean }
+  - key: logistica
+    label: "Entrega"
+    required: true
+    fields:
+      - { key: regiao_atendida, type: text, required: true }
+      - { key: prazo_entrega, type: text, required: true }
+      - { key: frete, type: text }
+      - { key: dias_de_rota, type: text }
+  - key: diferencial
+    label: "Diferencial"
+    fields:
+      - { key: motivo_trocar, type: text, required: true }
+      - { key: suporte, type: text }
+
+categories:
+  pricing:            "Tabela, pedido mínimo e desconto por volume"
+  risk_free_entry:    "Pedido de entrada reduzido para experimentar"
+  availability:       "Estoque, prazo de entrega e dias de rota"
+  expertise_proof:    "Tempo de mercado, marcas e clientes atendidos"
+  catalog:            "Linhas, marcas e exclusividades"
+  goal_matching:      "Perfil do estabelecimento → mix ideal"
+  objections:         "Caro, já tenho fornecedor, pedido mínimo alto"
+  commitment_offer:   "Contrato de fornecimento e condição por volume"
+  reciprocity:        "Amostra, brinde e apoio de ponto de venda"
+  limits_and_ethics:  "O que não prometer sobre preço, prazo e frete"
+  retention:          "Recompra, reposição e cliente inativo"
+  ecosystem:          "Representantes, transportadoras e indústria parceira"
+
+cadences:
+  - key: pos_cotacao
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Confirmar recebimento e tirar dúvida" }
+      - { offset_days: 6, intent: "Oferecer condição de entrada" }
+    stop_on: [replied, converted, opted_out, lost]
+
+  - key: recompra
+    applies_to: repurchase
+    steps:
+      - { offset_days: 25, intent: "Antecipar a reposição antes de acabar o estoque" }
+    stop_on: [converted, opted_out]
+
+  - key: reativacao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 45, intent: "Descobrir por que parou de comprar" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+hard_rules:
+  - "Nunca prometer preço, prazo ou frete fora do que está no DNA."
+  - "Não desqualificar o fornecedor atual do cliente — mostrar a vantagem, não atacar."
+
+kpis:
+  - taxa_conversao
+  - ticket_medio
+  - recompra
+  - clientes_ativos
+  - tempo_resposta_mediana

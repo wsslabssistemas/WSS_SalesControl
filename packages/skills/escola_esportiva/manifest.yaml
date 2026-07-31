@@ -1,0 +1,162 @@
+key: escola_esportiva
+name: Escola Esportiva e Clube
+version: 1.0.0
+
+# =====================================================================
+# Natação, artes marciais, tênis, escolinhas e clubes.
+# Diferença central para academia: quem decide muitas vezes NÃO é quem
+# pratica (mãe/pai matricula o filho), e a aula experimental é agendada
+# em turma com horário fixo — não é "semana livre".
+# =====================================================================
+
+capabilities: []   # B2C local: prospecção fria de pessoas é proibida (LGPD)
+
+vocabulary:
+  lead: "interessado"
+  conversion: "matrícula"
+  churn: "evasão"
+  catalog_item: "turma"
+
+discovery_axis: "quem vai praticar (criança, adolescente, adulto) e o objetivo (saúde, competição, disciplina, lazer)"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir para quem é a aula e o objetivo. Nunca abrir com preço."
+    - key: descoberta
+      label: "Descoberta"
+      goal: "Idade, nível, disponibilidade de horário e quem decide."
+    - key: aula_experimental
+      label: "Aula experimental"
+      goal: "Agendar, confirmar presença e conduzir a experiência."
+      phases:
+        - { key: agendada,   label: "Agendada",           offset_days: 0 }
+        - { key: lembrete,   label: "Lembrete véspera",   offset_days: 1 }
+        - { key: pos_aula,   label: "Retorno pós-aula",   offset_days: 3 }
+    - key: proposta
+      label: "Proposta"
+      goal: "Apresentar a turma e o plano adequados ao horário dele."
+    - key: negociacao
+      label: "Negociação"
+      goal: "Tratar a objeção real (horário, valor, distância) e fechar."
+    - key: matriculado
+      label: "Matriculado"
+      terminal: true
+      won: true
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+contact_fields:
+  - key: praticante
+    label: "Quem vai praticar"
+    type: enum
+    options: [crianca, adolescente, adulto, melhor_idade]
+  - key: modalidade
+    label: "Modalidade de interesse"
+    type: enum
+    options: [natacao, hidroginastica, judo, jiu_jitsu, karate, muay_thai, boxe, futsal, tenis, danca, outra]
+  - key: objetivo
+    label: "Objetivo"
+    type: enum
+    options: [saude, disciplina, competicao, lazer, socializacao, reabilitacao]
+  - key: nivel
+    label: "Nível"
+    type: enum
+    options: [iniciante, intermediario, avancado]
+  - key: turno_preferido
+    label: "Turno preferido"
+    type: enum
+    options: [manha, tarde, noite, sabado]
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - indicacao
+  - presencial
+  - escola_parceira
+  - campanha
+  - outro
+
+dna_sections:
+  - key: modalidades
+    label: "Modalidades e turmas"
+    required: true
+    fields:
+      - { key: lista, type: list, required: true }
+      - { key: faixas_etarias, type: text, required: true }
+      - { key: grade_horarios, type: schedule, required: true }
+      - { key: vagas_por_turma, type: text }
+  - key: pricing
+    label: "Planos e valores"
+    required: true
+    fields:
+      - { key: range, type: money_range, required: true }
+      - { key: matricula, type: text }
+      - { key: desconto_irmaos, type: boolean }
+      - { key: formas_pagamento, type: list }
+  - key: experimental
+    label: "Aula experimental"
+    required: true
+    fields:
+      - { key: oferece, type: boolean, required: true }
+      - { key: como_funciona, type: text, required: true }
+      - { key: precisa_agendar, type: boolean }
+      - { key: o_que_levar, type: text }
+  - key: estrutura
+    label: "Estrutura"
+    fields:
+      - { key: instalacoes, type: list }
+      - { key: professores, type: text }
+      - { key: estacionamento, type: boolean }
+  - key: regras
+    label: "Regras e exigências"
+    fields:
+      - { key: atestado_medico, type: boolean }
+      - { key: uniforme, type: text }
+      - { key: idade_minima, type: text }
+
+categories:
+  pricing:            "Planos, matrícula e desconto para irmãos"
+  risk_free_entry:    "Aula experimental"
+  availability:       "Grade de horários e vagas por turma"
+  expertise_proof:    "Professores, formação e resultados dos alunos"
+  catalog:            "Modalidades oferecidas"
+  goal_matching:      "Idade e objetivo → turma ideal"
+  objections:         "Caro, longe, horário não bate, vergonha"
+  commitment_offer:   "Plano semestral ou anual"
+  reciprocity:        "Kit, uniforme ou matrícula cortesia"
+  limits_and_ethics:  "Saúde, lesões, atestado e o que não prometer"
+  retention:          "Aluno faltando, desmotivado, renovação"
+  ecosystem:          "Escolas parceiras, convênios e eventos"
+
+cadences:
+  - key: pos_experimental
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 1, intent: "Perguntar como foi a experiência" }
+      - { offset_days: 3, intent: "Convidar para fechar a turma" }
+      - { offset_days: 7, intent: "Última chamada com a vaga do horário" }
+    stop_on: [converted, opted_out, lost]
+
+  - key: nao_compareceu
+    applies_to: reactivation
+    steps:
+      - { offset_days: 1, intent: "Reagendar sem cobrança" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 2
+
+hard_rules:
+  - "Nunca afirmar horário, vaga ou valor que não esteja no DNA."
+  - "Quando o praticante é menor, falar com o responsável — ele é quem decide."
+  - "Não prometer vaga em turma cheia."
+
+kpis:
+  - taxa_conversao
+  - experimentais_agendadas
+  - comparecimento_experimental
+  - tempo_resposta_mediana
+  - evasao
