@@ -55,7 +55,7 @@ if (!perfil) {
 
 let { data: tenant } = await db.from("tenants").select("id, name, skill_key").eq("slug", slug).maybeSingle();
 if (tenant) {
-  await db.from("tenants").update({ name: nome, skill_key: skillKey }).eq("id", tenant.id);
+  await db.from("tenants").update({ name: nome }).eq("id", tenant.id);
   console.log(`✓ empresa demo já existia — atualizada: ${nome} (${slug})`);
 } else {
   const { data, error } = await db
@@ -69,6 +69,18 @@ if (tenant) {
   }
   tenant = data;
   console.log(`✓ empresa demo criada: ${nome} (${slug})`);
+}
+
+// Instala a Skill pela porta única: grava tenants.skill_key E o vínculo em
+// tenant_skills. Sem o vínculo a RLS impede LER o manifesto e o painel abre
+// sem etapas e sem origens (bug real já corrigido na migration 0016).
+{
+  const { error } = await db.rpc("install_skill", { p_tenant: tenant.id, p_skill_key: skillKey });
+  if (error) {
+    console.error("Erro ao instalar a Skill:", error.message);
+    process.exit(1);
+  }
+  console.log(`✓ Skill "${skillKey}" instalada (com vínculo)`);
 }
 
 const { data: vinculo } = await db
