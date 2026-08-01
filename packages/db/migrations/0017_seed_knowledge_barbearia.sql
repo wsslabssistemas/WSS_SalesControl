@@ -179,7 +179,10 @@ data do proximo pelo ciclo dele.',
  'agendar_proximo', 'skill_seed', 'active'),
 
 -- ------------------------------------------------------------ FALTAS
-(null, 'barbearia', 'policies', 'reactive',
+-- Era 'policies', categoria que não existe no manifesto (corrigido em ago/2026
+-- pelo library_check). Recuperar quem faltou é retenção — mesmo destino que a
+-- entrada equivalente da escola esportiva.
+(null, 'barbearia', 'retention', 'reactive',
  '{"nao vou poder ir","preciso desmarcar","vou atrasar","remarcar","perdi o horario","faltei"}',
  null,
  'Remarcar bem e retencao. Nao demonstre irritacao — a falta ja aconteceu e o
@@ -272,7 +275,8 @@ mais fideliza nesse ramo.',
 -- ------------------------------------------------- CONFIRMACAO (anti-furo)
 -- Pesquisa: a ociosidade e o maior gargalo do ramo; cada furo de 45 min e
 -- receita que nao volta. Lembrete + confirmacao reduzem drasticamente a falta.
-(null, 'barbearia', 'policies', 'proactive',
+-- Idem: confirmação de véspera é agenda, como já era na clínica.
+(null, 'barbearia', 'availability', 'proactive',
  '{"confirmar horario","lembrete","confirmacao de agendamento","vespera","voce vem amanha"}',
  null,
  'Confirmar o horario na vespera e a acao de maior retorno financeiro do ramo:

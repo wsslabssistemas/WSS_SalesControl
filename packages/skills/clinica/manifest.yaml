@@ -210,6 +210,29 @@ categories:
   retention:          "Paciente que sumiu no meio do tratamento e manutenção"
   ecosystem:          "Convênios, parceiros e encaminhamentos"
 
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA — qual escola de venda governa cada situação
+# NESTE segmento. Não existe "a melhor técnica": existe a técnica certa para
+# o tamanho da decisão. Rackham provou que fechamento por pressão levanta a
+# conversão em ticket baixo e a DERRUBA em ticket alto — por isso barbearia
+# e indústria não podem responder com a mesma escola.
+# A entrada da biblioteca pode sobrescrever (`school`); sem override, vale isto.
+# Escolas válidas: docs/blueprint/COS_Escolas_de_Venda.md
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     relacionamento_carnegie
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       relacionamento_carnegie
+  objections:          negociacao_voss
+  commitment_offer:    cadencia_blount
+  reciprocity:         relacionamento_carnegie
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
 cadences:
   # A conversão acontece na cadeira: confirmar presença é dinheiro.
   - key: pre_consulta

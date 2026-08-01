@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
+import { resolveSchool, loadSchools, schoolsBlock, type StrategyMap } from "@/lib/schools";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { revalidatePath } from "next/cache";
 import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
@@ -71,14 +72,26 @@ export async function gerarResposta(input: {
   const supabase = await createClient();
   const { stages } = await getSkillFormConfig(tenant.skill_key);
 
-  const [{ data: skill }, { data: dna }, { data: entriesData }] = await Promise.all([
+  // A biblioteca CURADA do segmento (tenant_id null) é lida com service_role.
+  // Ela nunca pode chegar ao browser — a policy de `knowledge_entries` só a
+  // libera para service_role justamente por isso (P0 do 0006). Sem esta
+  // busca, os 8 segmentos curados ficavam no banco sem nunca alimentar o
+  // motor: só a biblioteca própria da empresa era usada.
+  const admin = createAdminClient();
+  const [{ data: skill }, { data: dna }, { data: entriesData }, { data: seedData }] = await Promise.all([
     supabase.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
     supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
     supabase
       .from("knowledge_entries")
-      .select("category, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules")
+      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules")
       .eq("tenant_id", tenant.id)
       .eq("source", "tenant")
+      .eq("status", "active"),
+    admin
+      .from("knowledge_entries")
+      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules")
+      .is("tenant_id", null)
+      .eq("skill_key", tenant.skill_key)
       .eq("status", "active"),
   ]);
 
@@ -88,6 +101,7 @@ export async function gerarResposta(input: {
   // Recuperação: as entradas mais relevantes para a mensagem (controla custo).
   type Entry = {
     category: string;
+    school: string | null;
     trigger_questions: string[] | null;
     strategy: string | null;
     technique: string | null;
@@ -97,12 +111,24 @@ export async function gerarResposta(input: {
     required_facts: string[] | null;
     hard_rules: string[] | null;
   };
-  const allEntries = (entriesData as Entry[] | null) ?? [];
+  // A biblioteca da empresa vem primeiro: ela conhece o caso dela melhor que a
+  // curadoria genérica do segmento. A do segmento entra como base.
+  const allEntries = [
+    ...((entriesData as Entry[] | null) ?? []),
+    ...((seedData as Entry[] | null) ?? []),
+  ];
   const picked = matchEntries(message, allEntries, 8);
-  const library = (picked.length ? picked : allEntries.slice(0, 6))
+  const usadas = picked.length ? picked : allEntries.slice(0, 6);
+
+  // Qual escola governa cada situação NESTE segmento (o orquestrador em dado).
+  const strategyMap = (manifest.strategy_map as StrategyMap | undefined) ?? null;
+  const dicionario = await loadSchools();
+  const escolas = usadas.map((e) => resolveSchool(e, strategyMap));
+
+  const library = usadas
     .map(
-      (e) =>
-        `Categoria: ${e.category}\nGatilho: ${(e.trigger_questions ?? []).join(" / ")}\nEstratégia: ${e.strategy ?? ""}\nTécnica: ${e.technique ?? ""}\nResposta modelo: ${e.answer ?? ""}\nErros a evitar: ${(e.common_errors ?? []).join("; ")}\nPróximo passo: ${e.next_objective ?? ""}`,
+      (e, i) =>
+        `Categoria: ${e.category}\nEscola: ${escolas[i] ?? "—"}\nGatilho: ${(e.trigger_questions ?? []).join(" / ")}\nEstratégia: ${e.strategy ?? ""}\nTécnica: ${e.technique ?? ""}\nResposta modelo: ${e.answer ?? ""}\nErros a evitar: ${(e.common_errors ?? []).join("; ")}\nPróximo passo: ${e.next_objective ?? ""}`,
     )
     .join("\n---\n");
 
@@ -201,7 +227,8 @@ REGRAS INEGOCIÁVEIS:
 - Quando o cliente aceitar um horário, preencha "horario_escolhido" com a data e hora exatas (formato AAAA-MM-DDTHH:MM) daquele item da lista. Se ele não escolheu ainda, deixe vazio.
 - Se faltar um fato essencial para responder com segurança, liste em "faltam_fatos", marque "escalar": true e NÃO invente — deixe "resposta_sugerida" como uma mensagem breve e segura que encaminha para um humano/verificação.
 - Escreva em português do Brasil, natural, simpático e conciso — pronto para copiar e enviar no WhatsApp. Evite CTA fraca como "o que acha?"; use fechamento por alternativa ou pressuposto.
-- Baseie a técnica e o tom na BIBLIOTECA e no HISTÓRICO do cliente.`;
+- Baseie a técnica e o tom na BIBLIOTECA e no HISTÓRICO do cliente.
+- Cada situação tem uma ESCOLA DE VENDA declarada para ESTE segmento. Respeite o "NÃO usar quando" dela: fechamento por pressão levanta a conversão em ticket baixo e a DERRUBA em venda de ciclo longo. Em "tecnica", diga a escola aplicada e o movimento concreto.`;
 
   const prompt = `SEGMENTO: ${manifest.name ?? tenant.skill_key}
 VOCABULÁRIO/EIXO: ${JSON.stringify(manifest.vocabulary ?? {})} | descoberta: ${manifest.discovery_axis ?? ""}
@@ -210,6 +237,9 @@ REGRAS PERMANENTES DO SEGMENTO: ${hardRules}
 
 FATOS DA EMPRESA (DNA — a única verdade que você pode afirmar):
 ${fatos(sections)}
+
+ESCOLAS DE VENDA em jogo nesta situação (o "NÃO usar quando" vale como regra):
+${schoolsBlock(escolas, dicionario)}
 
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}

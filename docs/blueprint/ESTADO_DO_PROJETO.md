@@ -42,6 +42,11 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   cliente. Usa o retrato público da empresa (CNAE, porte, ano, cidade).
 - **Trava anti-invenção** — falta fato no DNA → escala, não redige. Preço e
   estoque só saem do **catálogo**; horário só sai da **agenda**.
+- **Escola de venda como dimensão canônica (M1)** — `strategy_map` no manifesto
+  diz qual das 9 escolas governa cada categoria **naquele segmento** (barbearia
+  fecha por alternativa onde indústria monta oferta: Rackham mostrou que
+  pressão derruba conversão em ticket alto). `sales_schools` guarda princípio,
+  quando usar, **quando NÃO usar** e a força da evidência de cada uma.
 - **Aprender o que converte** — desfecho registrado realimenta o motor.
 - **Follow-up** — a tela que cobra o toque, por cadência do manifesto.
 - **Recorrência** — quem está no ponto de voltar, com data no dia preferido.
@@ -90,22 +95,24 @@ trocar no seletor do topo do painel.
    Feltros Bandeirantes). Manifesto e 18 entradas já **no banco**, com
    `Indústria Demo` criada — a curadoria veio de pesquisa, não de vivência, e é
    essa a diferença entre boa e excelente.
-2. **Absorver o estudo das escolas de venda** — `COS_Escolas_de_Venda.md` (feito,
-   ago/2026). O parecer: a biblioteca é ativo real, o motor **não escolhe, não
-   mede e não aprende**. Três movimentos propostos, nesta ordem:
-   **M1** escola como enum canônico (+ validar categoria da biblioteca, hoje
-   ninguém checa — `policies` entrou na barbearia por isso);
-   **M2** ligar desfecho → escola (é o único ativo que melhora com escala);
-   **M3** entradas de **indecisão (JOLT)** nos 8 segmentos — 40 a 60% das perdas
-   e zero entradas nossas — e do **comprador que não quer conversar** (67% do
-   B2B, Gartner 2026). Decisão fechada: **não criar dimensão de gênero.**
-3. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
+2. **M2 — ligar desfecho à escola.** Com o M1 no ar (abaixo), falta gravar
+   `school` em `interactions`/`decisions` e responder *"qual escola converte
+   neste segmento, nesta etapa"*. É o único ativo que melhora com escala.
+   **Bloqueio real:** ainda há **0 desfechos registrados** — sem uso, não há o
+   que medir.
+3. **M3 — as entradas que faltam.** **Indecisão (JOLT)** nos 8 segmentos (40 a
+   60% das perdas, zero entradas nossas) e o **comprador que não quer conversar**
+   (67% do B2B, Gartner 2026 — nossa biblioteca pressupõe conversa em 100% das
+   entradas). Depois, qualificação de compra (MEDDIC-lite).
+   Decisão fechada: **não criar dimensão de gênero** (evidência fraca; viraria
+   estereótipo automatizado). Ver `COS_Escolas_de_Venda.md` §3.
+4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
-4. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
+5. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
    motor proativo agendado e **score de potencial → preço sugerido**.
-5. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
+6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
    (~R$0,01/empresa) ou base própria do dump da Receita.
-6. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
+7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
    eventos. **Restaurante descartado** (operação de fluxo, não de funil).
 
 ---
@@ -120,6 +127,24 @@ trocar no seletor do topo do painel.
 - **PNCP derruba rajadas** — 28 chamadas simultâneas, 24 falham. Use `getJson`
   (retry) + `mapLimit`. `tam_pagina` até 100 funciona; paginação funciona;
   **a busca textual ignora filtro de data**.
+- **A biblioteca curada não chegava ao motor.** Até ago/2026 o Responder lia só
+  `source='tenant'`. Os 134 registros dos 8 segmentos estavam no banco e **nunca
+  alimentavam a IA** — efeito colateral do P0 do `0006`, que fechou a leitura
+  global para `authenticated` e previa "retrieval server-side" que ninguém
+  implementou. Corrigido: `ai-actions` busca a biblioteca do segmento com
+  `service_role` (estratégia não vai ao browser). **Se criar tela nova que use a
+  biblioteca, lembre: com o client do usuário ela volta vazia.**
+- **Correção de dado vai no SEED, nunca em `UPDATE` de migration.**
+  `seed-knowledge.mjs` recarrega com DELETE + INSERT: qualquer conserto feito
+  por `UPDATE` numa migration posterior evapora na primeira recarga, e um
+  ambiente novo nasce com o erro. A primeira versão do `0027` fazia isso com a
+  escola de venda — virou dado explícito na 17ª coluna dos seeds. **O
+  repositório é a verdade; o banco é só onde ela é executada.**
+- **`seed-knowledge.mjs` tinha dois bugs latentes (corrigidos ago/2026).** Lia só
+  o ÚLTIMO `values` do arquivo — na academia, que tem 22 `INSERT` separados,
+  carregaria 1 entrada **depois de apagar as 22**. E parseava o rodapé do
+  arquivo: as queries de verificação viravam tuplas fantasma (28 lidas onde há
+  22). Rode o carregador uma vez em qualquer seed novo antes de confiar nele.
 - **Etapa terminal desliga motor.** `computeDueTouches` (follow-up) e
   `computeDue` (recompra) pulam etapas `terminal`. Efeito descoberto em ago/2026:
   a barbearia tinha "Cliente recorrente" terminal, então **a carteira fiel nunca

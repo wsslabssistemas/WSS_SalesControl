@@ -221,6 +221,29 @@ categories:
   retention:        "Cliente que não volta há X semanas"
   ecosystem:        "Produtos revendidos e parceiros"
 
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA — qual escola de venda governa cada situação
+# NESTE segmento. Não existe "a melhor técnica": existe a técnica certa para
+# o tamanho da decisão. Rackham provou que fechamento por pressão levanta a
+# conversão em ticket baixo e a DERRUBA em ticket alto — por isso barbearia
+# e indústria não podem responder com a mesma escola.
+# A entrada da biblioteca pode sobrescrever (`school`); sem override, vale isto.
+# Escolas válidas: docs/blueprint/COS_Escolas_de_Venda.md
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             oferta_valor
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    fechamento_classico
+  reciprocity:         persuasao_cialdini
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
 cadences:
   # Falta é o maior problema do segmento — cadência própria
   - key: appointment_confirm

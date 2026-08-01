@@ -20,6 +20,30 @@ export const CANONICAL_CATEGORIES = [
   "ecosystem",
 ] as const;
 
+/**
+ * As 9 ESCOLAS DE VENDA canônicas.
+ *
+ * Escola é a dimensão que responde "com que técnica isto foi resolvido" — e
+ * precisa ser enum, não texto livre, porque é ela que vai ser cruzada com o
+ * desfecho ("qual escola converte neste segmento"). Antes desta lista havia
+ * 134 rótulos distintos para 134 entradas: impossível medir, impossível
+ * aprender. Ver `docs/blueprint/COS_Escolas_de_Venda.md`.
+ *
+ * Isto NÃO fere a Lei 1: escola é vocabulário de TÉCNICA (o produto), não de
+ * segmento. O núcleo continua sem saber o que é aluno, matrícula ou corte.
+ */
+export const CANONICAL_SCHOOLS = [
+  "consultiva_spin",         // Rackham — perguntar antes de responder; implicação
+  "persuasao_cialdini",      // Cialdini — reciprocidade, prova social, autoridade
+  "negociacao_voss",         // Voss — rotular a emoção, isolar a objeção real
+  "challenger",              // Dixon — ensinar e desafiar a premissa do cliente
+  "indecisao_jolt",          // Dixon 2022 — o cliente travou; reduzir risco
+  "cadencia_blount",         // Blount — constância, follow-up, o antídoto do silêncio
+  "relacionamento_carnegie", // Carnegie — interesse genuíno, nunca humilhar
+  "fechamento_classico",     // Ziglar/Hopkins/Tracy — conduzir à decisão
+  "oferta_valor",            // Hormozi/Kahneman — montar oferta, aversão à perda
+] as const;
+
 const key = z
   .string()
   .regex(/^[a-z][a-z0-9_]*$/, "chave deve ser snake_case minúsculo");
@@ -101,6 +125,14 @@ export const manifestSchema = z
     lead_sources: z.array(z.string()).min(1),
     dna_sections: z.array(dnaSection).min(1),
     categories: z.record(z.string(), z.string()),
+    /**
+     * O ORQUESTRADOR DE ESTRATÉGIA, em dado: qual escola governa cada situação
+     * neste segmento. É por segmento de propósito — Rackham mostrou que
+     * fechamento por pressão ajuda em ticket baixo e ATRAPALHA em ticket alto,
+     * então barbearia e indústria não podem responder com a mesma escola.
+     * A entrada da biblioteca pode sobrescrever; sem override, vale este mapa.
+     */
+    strategy_map: z.record(z.string(), z.string()).optional(),
     cadences: z.array(cadence).default([]),
     hard_rules: z.array(z.string()).default([]),
     kpis: z.array(z.string()).default([]),
@@ -119,6 +151,29 @@ export const manifestSchema = z
           `categories deve ter exatamente as 12 canônicas. ` +
           `Faltando: [${missing.join(", ")}]. Sobrando: [${extra.join(", ")}]`,
       });
+    }
+
+    // O mapa de estratégia, quando existe, cobre as 12 categorias com escolas
+    // válidas. Meio mapa é pior que mapa nenhum: o motor cairia no silêncio
+    // justamente nas situações não declaradas.
+    if (m.strategy_map) {
+      const escolas = new Set<string>(CANONICAL_SCHOOLS);
+      const semMapa = [...canon].filter((c) => !(c in m.strategy_map!));
+      const invalidas = Object.entries(m.strategy_map)
+        .filter(([, v]) => !escolas.has(v))
+        .map(([c, v]) => `${c}=${v}`);
+      const foraDasCategorias = Object.keys(m.strategy_map).filter((c) => !canon.has(c));
+      if (semMapa.length || invalidas.length || foraDasCategorias.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["strategy_map"],
+          message:
+            `strategy_map deve cobrir as 12 categorias canônicas com escolas válidas. ` +
+            `Sem escola: [${semMapa.join(", ")}]. ` +
+            `Escola inexistente: [${invalidas.join(", ")}]. ` +
+            `Categoria inexistente: [${foraDasCategorias.join(", ")}]`,
+        });
+      }
     }
 
     // Unicidade de chaves onde ela importa.

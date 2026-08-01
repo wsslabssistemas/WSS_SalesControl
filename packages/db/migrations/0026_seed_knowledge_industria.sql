@@ -39,7 +39,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 -- ---------------------------------------------------------------- PRICING
@@ -61,7 +61,7 @@ numero. Em compra industrial, quem resolve fluxo de caixa ganha pedido.',
  '{"comercial.prazo_pagamento","comercial.politica_desconto","comercial.frete"}', '{}', 'escalate',
  'Cotacao por faixa de volume, nunca preco solto',
  '{"Dar um preco unico sem saber volume","Mandar tabela completa para quem nao pediu","Falar preco sem falar prazo de pagamento","Cotar por telefone sem confirmar a especificacao"}',
- 'levantar_volume', 'skill_seed', 'active'),
+ 'levantar_volume', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------------- OBJECTIONS
 (null, 'industria', 'objections', 'reactive',
@@ -82,7 +82,7 @@ comprador fazer a matematica — comprador tecnico gosta de decidir sozinho.',
  '{"producao.lote_minimo","diferencial.assistencia","producao.capacidade","canal.regioes"}', '{}', 'escalate',
  'Custo total contra preco de tabela + risco de reposicao',
  '{"Brigar no preco por quilo","Falar mal do produto importado","Ignorar que o problema real e prazo de reposicao","Prometer prazo que a fabrica nao cumpre so para ganhar a conta"}',
- 'abrir_conta_total', 'skill_seed', 'active'),
+ 'abrir_conta_total', 'skill_seed', 'active', null),
 
 (null, 'industria', 'objections', 'reactive',
  '{"ja tenho fornecedor","compro de outra fabrica","estou atendido","tenho contrato com outro","nao preciso trocar","meu fornecedor atende bem"}',
@@ -102,7 +102,7 @@ dele.',
  '{"producao.prazo_producao","producao.desenvolvimento","producao.lote_minimo"}', '{}', 'escalate',
  'Entrada como segunda fonte, nao como substituto',
  '{"Pedir para substituir o fornecedor atual","Falar mal de quem ele escolheu","Nao investigar onde o atual falha","Insistir em volume grande na primeira conversa"}',
- 'virar_segunda_fonte', 'skill_seed', 'active'),
+ 'virar_segunda_fonte', 'skill_seed', 'active', null),
 
 (null, 'industria', 'objections', 'reactive',
  '{"o lote e muito alto","nao consigo comprar essa quantidade","minha loja e pequena","nao giro tudo isso","preciso de menos","o minimo e alto demais"}',
@@ -121,7 +121,7 @@ vai encalhar na loja dele e matar a recompra. Cliente com estoque parado nao vol
  '{"comercial.pedido_minimo","comercial.prazo_pagamento","produto.linhas"}', '{}', 'escalate',
  'Explicar o setup e fracionar o minimo em mix de entrada',
  '{"Baixar o lote sem calcular o setup","Empurrar volume que nao gira na loja dele","Tratar o minimo como tabu e nao explicar por que existe"}',
- 'montar_mix_de_entrada', 'skill_seed', 'active'),
+ 'montar_mix_de_entrada', 'skill_seed', 'active', null),
 
 (null, 'industria', 'objections', 'reactive',
  '{"esta caro","achei salgado","o outro faz mais barato","da para melhorar o preco","seu preco esta alto"}',
@@ -141,7 +141,7 @@ real, que e caixa.',
  '{"comercial.politica_desconto","comercial.prazo_pagamento","diferencial.motivo_trocar"}', '{}', 'escalate',
  'Custo por peca produzida + ceder condicao antes de preco',
  '{"Dar desconto na primeira pressao","Comparar produtos de especificacao diferente","Nao perguntar com quem ele esta comparando"}',
- 'defender_margem', 'skill_seed', 'active'),
+ 'defender_margem', 'skill_seed', 'active', null),
 
 -- --------------------------------------------------------- RISK_FREE_ENTRY
 (null, 'industria', 'risk_free_entry', 'reactive',
@@ -162,7 +162,7 @@ a acontecer, que e o que traz o segundo pedido.',
  '{"canal.apoio_ao_cliente","comercial.prazo_pagamento","produto.linhas"}', '{}', 'escalate',
  'Pedido de entrada com data de avaliacao combinada',
  '{"Empurrar o mix completo no primeiro pedido","Nao combinar quando avaliar o giro","Prometer recompra de estoque que nao vendeu"}',
- 'fechar_pedido_entrada', 'skill_seed', 'active'),
+ 'fechar_pedido_entrada', 'skill_seed', 'active', null),
 
 -- ----------------------------------------------------------- RECIPROCITY
 (null, 'industria', 'reciprocity', 'reactive',
@@ -182,7 +182,7 @@ e ficha completa poupa uma rodada inteira de perguntas.',
  '{"produto.especificacao","canal.apoio_ao_cliente","produto.certificacoes"}', '{}', 'omit',
  'Amostra com destinatario, teste e data de retorno combinados',
  '{"Enviar amostra sem marcar o retorno","Mandar o mostruario inteiro","Nao descobrir quem vai testar","Enviar sem a ficha tecnica"}',
- 'agendar_parecer', 'skill_seed', 'active'),
+ 'agendar_parecer', 'skill_seed', 'active', null),
 
 -- ---------------------------------------------------------- AVAILABILITY
 (null, 'industria', 'availability', 'reactive',
@@ -203,7 +203,7 @@ honestidade custa infinitamente menos do que parar a linha de um cliente novo.',
  '{"producao.capacidade","canal.regioes","comercial.frete"}', '{}', 'escalate',
  'Prazo a partir do gatilho de producao + negociar escopo, nunca a data',
  '{"Prometer o prazo que o cliente quer ouvir","Nao dizer o que faz o prazo comecar a contar","Assumir volume acima da capacidade para nao perder o pedido"}',
- 'confirmar_prazo_real', 'skill_seed', 'active'),
+ 'confirmar_prazo_real', 'skill_seed', 'active', null),
 
 -- --------------------------------------------------------------- CATALOG
 (null, 'industria', 'catalog', 'reactive',
@@ -224,7 +224,7 @@ autoridade tecnica nesse mercado.',
  '{"produto.aplicacoes","produto.certificacoes"}', '{}', 'escalate',
  'Responder com dado tecnico e confirmar a aplicacao antes',
  '{"Responder com adjetivo em vez de numero","Arredondar especificacao","Vender item que nao serve para a aplicacao dele"}',
- 'confirmar_aplicacao', 'skill_seed', 'active'),
+ 'confirmar_aplicacao', 'skill_seed', 'active', null),
 
 (null, 'industria', 'catalog', 'reactive',
  '{"voces fazem sob medida","da para desenvolver um item","preciso de uma cor especifica","fazem exclusivo para mim","aceita projeto especial","tem como personalizar"}',
@@ -244,7 +244,7 @@ segurar a expectativa por semanas destroi a confianca.',
  '{"producao.lote_minimo","producao.prazo_producao","produto.especificacao"}', '{}', 'escalate',
  'Qualificar volume e recorrencia antes de aceitar desenvolvimento',
  '{"Prometer exclusivo sem confirmar com a producao","Nao perguntar o volume anual","Ignorar o custo de matriz ou ferramental","Aceitar desenvolvimento para pedido unico"}',
- 'qualificar_desenvolvimento', 'skill_seed', 'active'),
+ 'qualificar_desenvolvimento', 'skill_seed', 'active', null),
 
 -- -------------------------------------------------------- EXPERTISE_PROOF
 (null, 'industria', 'expertise_proof', 'reactive',
@@ -265,7 +265,7 @@ certificacao e o unico erro irreversivel dessa conversa.',
  '{"diferencial.tempo_de_fabrica","produto.certificacoes","producao.capacidade","produto.aplicacoes"}', '{}', 'omit',
  'Prova verificavel: tempo, laudo e segmento — nunca nome de cliente',
  '{"Citar cliente sem autorizacao","Afirmar certificacao que nao tem","Responder com adjetivo em vez de numero"}',
- 'enviar_prova_tecnica', 'skill_seed', 'active'),
+ 'enviar_prova_tecnica', 'skill_seed', 'active', null),
 
 -- ---------------------------------------------------------- GOAL_MATCHING
 (null, 'industria', 'goal_matching', 'reactive',
@@ -286,7 +286,7 @@ o que impede o segundo pedido.',
  '{"produto.aplicacoes","producao.lote_minimo","canal.apoio_ao_cliente"}', '{}', 'escalate',
  'Mix pelo tipo de canal e pelo publico dele, nao pelo seu catalogo',
  '{"Recomendar o mesmo mix para todo cliente","Nao perguntar para quem ele vende","Empurrar lancamento para quem precisa de giro"}',
- 'montar_mix_de_entrada', 'skill_seed', 'active'),
+ 'montar_mix_de_entrada', 'skill_seed', 'active', null),
 
 (null, 'industria', 'goal_matching', 'proactive',
  '{"safra","colecao","quando comprar","proxima temporada","planejamento do ano","vou comprar mais para frente","deixa para depois"}',
@@ -308,7 +308,7 @@ Quem chega antes negocia; quem chega na hora disputa preco com quem ja estava la
  '{"producao.prazo_producao","produto.linhas","comercial.prazo_pagamento"}', '{}', 'omit',
  'Marcar a janela e nutrir antes dela abrir',
  '{"Sumir ate o mes da compra","Tratar o adiamento como recusa","Nao registrar qual e o gatilho de compra","Voltar so para cobrar decisao"}',
- 'marcar_janela', 'skill_seed', 'active'),
+ 'marcar_janela', 'skill_seed', 'active', 'challenger'),
 
 -- ------------------------------------------------------- COMMITMENT_OFFER
 (null, 'industria', 'commitment_offer', 'reactive',
@@ -329,7 +329,7 @@ receber em epoca de pico — e prende o cliente sem fechar sua regiao.',
  '{"comercial.politica_desconto","producao.capacidade","canal.regioes"}', '{}', 'escalate',
  'Compromisso se troca por volume mensuravel, nunca se da',
  '{"Prometer exclusividade sem politica da fabrica","Fechar regiao sem meta de volume","Conceder condicao especial no calor da negociacao"}',
- 'formalizar_contrapartida', 'skill_seed', 'active'),
+ 'formalizar_contrapartida', 'skill_seed', 'active', null),
 
 -- -------------------------------------------------------------- RETENTION
 (null, 'industria', 'retention', 'proactive',
@@ -353,7 +353,7 @@ com problema resolvido costuma ficar mais tempo que cliente que nunca reclamou.'
  '{"produto.linhas","canal.apoio_ao_cliente","diferencial.assistencia","comercial.prazo_pagamento"}', '{}', 'omit',
  'Diagnostico pelo giro antes de qualquer oferta',
  '{"Abrir cobrando pedido","Dar desconto antes de descobrir a causa","Empurrar volume para quem esta com estoque parado","Deixar passar de 90 dias sem falar nada"}',
- 'reativar_conta', 'skill_seed', 'active'),
+ 'reativar_conta', 'skill_seed', 'active', null),
 
 (null, 'industria', 'retention', 'proactive',
  '{"reposicao","proximo pedido","ta na hora de repor","acabou o estoque","recompra","quando pedir de novo"}',
@@ -374,7 +374,7 @@ depois que o pedido base esta fechado — e ai ela vira acrescimo, nao risco.',
  '{"produto.linhas","producao.prazo_producao","comercial.prazo_pagamento"}', '{}', 'omit',
  'Antecipar a reposicao antes da ruptura, com preparo de 3 minutos',
  '{"Esperar o cliente pedir","Chegar sem revisar o ultimo pedido","Abrir pelo lancamento em vez do carro-chefe","Ignorar o ciclo declarado do cliente"}',
- 'fechar_reposicao', 'skill_seed', 'active'),
+ 'fechar_reposicao', 'skill_seed', 'active', null),
 
 -- -------------------------------------------------------------- ECOSYSTEM
 (null, 'industria', 'ecosystem', 'reactive',
@@ -395,7 +395,7 @@ cliente. Nada disso e assunto dele, e vira fofoca que volta contra voce.',
  '{"canal.regioes","canal.exclusividade"}', '{}', 'escalate',
  'Respeitar o canal e tratar a reclamacao como informacao, nao como desculpa',
  '{"Vender por cima do representante da conta","Discutir comissao com o cliente","Ignorar reclamacao de falta de atendimento","Prometer atendimento direto sem confirmar a politica"}',
- 'encaminhar_ao_canal', 'skill_seed', 'active'),
+ 'encaminhar_ao_canal', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------- LIMITS_AND_ETHICS
 (null, 'industria', 'limits_and_ethics', 'reactive',
@@ -418,4 +418,4 @@ fornecedor, e cadastro reprovado nao se recupera.',
  '{"produto.certificacoes","producao.capacidade","producao.prazo_producao"}', '{}', 'omit',
  'Confirmar antes de afirmar — o limite protege o cadastro de fornecedor',
  '{"Afirmar norma ou laudo que nao existe","Garantir desempenho em aplicacao nao testada","Prometer prazo acima da capacidade","Improvisar resposta tecnica para nao parecer despreparado"}',
- 'confirmar_com_a_fabrica', 'skill_seed', 'active');
+ 'confirmar_com_a_fabrica', 'skill_seed', 'active', null);

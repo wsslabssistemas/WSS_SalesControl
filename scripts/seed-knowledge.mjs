@@ -17,10 +17,14 @@ import { createClient } from "@supabase/supabase-js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+// `school` é a 17ª e ÚLTIMA de propósito: o mapeamento é posicional, então
+// acrescentar no fim mantém os seeds antigos (16 colunas) lendo certo. Sem
+// escola declarada, vale o strategy_map do manifesto para a categoria.
 const COLUMNS = [
   "tenant_id", "skill_key", "category", "entry_type", "trigger_questions",
   "opportunity_type", "strategy", "required_facts", "optional_facts", "hard_rules",
   "on_missing_facts", "technique", "common_errors", "next_objective", "source", "status",
+  "school",
 ];
 
 function readEnv() {
@@ -63,6 +67,10 @@ function splitTuples(values) {
       continue;
     }
     if (c === "'") { inStr = true; cur += c; continue; }
+    // Fim da instrução: o que vem depois do `;` é outra coisa (as queries de
+    // verificação no rodapé do seed, por exemplo). Sem isto, os parênteses
+    // delas viravam tuplas fantasma — a academia lia 28 onde há 22.
+    if (c === ";" && depth === 0) break;
     if (c === "(") { depth++; if (depth === 1) { cur = ""; continue; } }
     if (c === ")") { depth--; if (depth === 0) { tuples.push(cur); continue; } }
     if (depth > 0) cur += c;
@@ -117,10 +125,22 @@ if (!file) {
 }
 
 const raw = stripComments(fs.readFileSync(path.resolve(ROOT, file), "utf8"));
-const vi = raw.toLowerCase().lastIndexOf("values");
-if (vi < 0) { console.error("Nao encontrei VALUES no arquivo."); process.exit(1); }
 
-const rows = splitTuples(raw.slice(vi + "values".length)).map((t) => {
+// Os seeds têm duas formas: um INSERT com N tuplas (os novos) ou N INSERTs de
+// uma tupla cada (a academia, herdada do Base44). Ler só o último `values`
+// carregaria UMA entrada e apagaria as outras 21 — o DELETE roda antes.
+const blocos = [...raw.matchAll(/\bvalues\b/gi)].map((m) => m.index + m[0].length);
+if (blocos.length === 0) { console.error("Nao encontrei VALUES no arquivo."); process.exit(1); }
+
+const tuplas = [];
+for (let i = 0; i < blocos.length; i++) {
+  // Cada bloco vai até o próximo `insert`, para não invadir a instrução seguinte.
+  const proximoInsert = raw.toLowerCase().indexOf("insert into", blocos[i]);
+  const fim = proximoInsert < 0 ? raw.length : proximoInsert;
+  tuplas.push(...splitTuples(raw.slice(blocos[i], fim)));
+}
+
+const rows = tuplas.map((t) => {
   const f = splitFields(t);
   const row = {};
   COLUMNS.forEach((col, i) => {

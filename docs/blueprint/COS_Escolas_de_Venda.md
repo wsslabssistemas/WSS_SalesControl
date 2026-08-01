@@ -291,7 +291,34 @@ são o mesmo problema, resolvido pela mesma mudança.
 Sua ideia do "Motor de Estratégias" está certa. Ela não precisa de metodologia
 nova: precisa de **uma dimensão que hoje é texto virar dado**.
 
-### M1 — Escola como taxonomia canônica (o destravamento)
+### M1 — Escola como taxonomia canônica ✅ **FEITO (ago/2026)**
+
+Entregue com uma mudança de desenho vinda da segunda pesquisa do fundador: a
+escola é declarada **por situação**, não só por entrada. `strategy_map` no
+manifesto mapeia as 12 categorias → escola, **por segmento** — e a resolução no
+motor é `entrada.school ?? strategy_map[categoria]`, com override só na exceção
+(16 de 134). Prova de que o mapa diferencia: `commitment_offer` resolve para
+`fechamento_classico` na barbearia e `oferta_valor` na indústria.
+
+**Onde mora cada coisa** (a primeira versão errou isto e foi refeita): o padrão
+por categoria fica no `strategy_map` do manifesto; o override de uma entrada fica
+na **17ª coluna do próprio seed**; a migration só cria estrutura e dicionário.
+A tentação era resolver o override com `UPDATE` por texto numa migration — some
+na primeira recarga da biblioteca e faz ambiente novo nascer errado. Dos 16
+overrides inferidos assim, **5 eram redundantes** (repetiam o mapa do segmento);
+sobraram 11 explícitos.
+
+Junto vieram três coisas que o M1 destravou:
+- `sales_schools`: as 9 escolas com princípio, quando usar, **quando NÃO usar** e
+  força da evidência. O motor recebe o "não usar quando" como regra.
+- `library_check.mjs` no CI: valida a **biblioteca** (categoria, escola, fatos,
+  strategy_map). Achou de cara o `commitment_offer.best_value` órfão da academia
+  — mesmo bug do `reciprocity.gift` do `0008`, invisível porque estava em
+  `optional_facts` e a query do banco só olhava `required_facts`.
+- **A biblioteca curada passou a chegar ao motor.** Estava no banco desde sempre
+  e o Responder só lia `source='tenant'`.
+
+O texto abaixo é o desenho original, mantido como registro.
 Um enum fechado no núcleo, gravado em cada entrada da biblioteca:
 
 `consultiva_spin` · `persuasao_cialdini` · `negociacao_voss` · `challenger` ·
