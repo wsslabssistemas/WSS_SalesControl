@@ -72,21 +72,23 @@ Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador
 trocar no seletor do topo do painel.
 
 ### Infra
-- Migrations `0001`–`0025` aplicadas. RLS em tudo com `tenant_id`.
-  **`0026_seed_knowledge_industria.sql` ainda NÃO foi executada no Supabase.**
+- Migrations `0001`–`0026` aplicadas. RLS em tudo com `tenant_id`.
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
   direto daqui). `AI_API_KEY` (Anthropic) na Vercel e local.
+- **Carga de dado do produto é trabalho do assistente, não do fundador.** Os
+  scripts acima e o `mcp__supabase__execute_sql` escrevem no banco direto.
+  Depois de semear, confira com um `select` independente (seção 6).
 
 ---
 
 ## 3. Pendências (em ordem de importância)
 
 1. **Revisão da biblioteca de `industria` pela especialista** (irmã do fundador,
-   Feltros Bandeirantes). O manifesto e as 18 entradas estão no ar (`0026`), mas
-   a curadoria veio de pesquisa, não de vivência — é a diferença entre boa e
-   excelente. **Rodar `0026` no Supabase antes** (ver seção 6).
+   Feltros Bandeirantes). Manifesto e 18 entradas já **no banco**, com
+   `Indústria Demo` criada — a curadoria veio de pesquisa, não de vivência, e é
+   essa a diferença entre boa e excelente.
 2. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
    influências/mentores por trás da biblioteca e um **parecer honesto** sobre se
    já somos excelência ou o que falta. **Não foi feito.**
