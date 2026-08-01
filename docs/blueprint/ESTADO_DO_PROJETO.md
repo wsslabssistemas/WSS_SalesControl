@@ -51,6 +51,8 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 - **Catálogo** — importação de planilha que reconhece as colunas sozinha.
 - **Add-ons**: **Oportunidades** (prospecção B2B por CNAE) e **Licitações**
   (PNCP: editais, inteligência, quem ganhou, guia + assistente de IA).
+  Cada edital diz **por que apareceu** — qual palavra o trouxe e se ela está no
+  objeto ou só na lista de itens, que abre sob demanda com o item destacado.
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
 
@@ -79,28 +81,23 @@ trocar no seletor do topo do painel.
 
 ## 3. Pendências (em ordem de importância)
 
-1. **Itens do edital na tela.** A busca do PNCP casa com o texto completo do
-   edital (inclui a lista de itens) — por isso aparecem editais sem a palavra
-   visível na descrição, e o fundador estranhou com razão. `getEditalItens`
-   (`lib/licitacoes.ts`) já traz os itens marcando quais batem; **falta expor na
-   UI** ("por que este edital apareceu").
-2. **Segmento `industria`** (8º). Pesquisa do fundador (ago/2026) mapeou o parque
+1. **Segmento `industria`** (8º). Pesquisa do fundador (ago/2026) mapeou o parque
    industrial RS/BR e apontou a indústria B2B como o maior oceano azul: vende
    **através de representante** com "pasta fechada", sem prospecção ativa, e o
    alerta mais valioso é **lojista sem reposição há 90 dias**. Cobre têxtil/
    feltro (caso real: irmã do fundador na Feltros Bandeirantes), calçadista,
    moveleira, metal-mecânica, embalagens, autopeças. **Vantagem: especialista
    real disponível para revisar a curadoria.**
-3. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
+2. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
    influências/mentores por trás da biblioteca e um **parecer honesto** sobre se
    já somos excelência ou o que falta. **Não foi feito.**
-4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
+3. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
-5. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
+4. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
    motor proativo agendado e **score de potencial → preço sugerido**.
-6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
+5. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
    (~R$0,01/empresa) ou base própria do dump da Receita.
-7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
+6. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
    eventos. **Restaurante descartado** (operação de fluxo, não de funil).
 
 ---
@@ -115,6 +112,10 @@ trocar no seletor do topo do painel.
 - **PNCP derruba rajadas** — 28 chamadas simultâneas, 24 falham. Use `getJson`
   (retry) + `mapLimit`. `tam_pagina` até 100 funciona; paginação funciona;
   **a busca textual ignora filtro de data**.
+- **Itens do PNCP**: `GET /api/pncp/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens`
+  devolve um **array puro** com `descricao`, `quantidade`, `unidadeMedida`,
+  `valorUnitarioEstimado` (verificado ago/2026). Buscar sob demanda, um edital
+  por vez — puxar os itens de 100 editais de uma vez é a rajada que o PNCP corta.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.

@@ -6,6 +6,7 @@ import { searchEditais, analyzeEditais, type Edital, type Intel } from "@/lib/li
 import { hasAIKey } from "@/lib/ai";
 import { saveGovIcp } from "./actions";
 import SugerirPalavras from "./SugerirPalavras";
+import ItensDoEdital from "./ItensDoEdital";
 
 export const metadata = { title: "Licitações" };
 
@@ -240,6 +241,11 @@ export default async function LicitacoesPage({
             <div className="stack" style={{ gap: 12 }}>
               {editais.map((e) => {
                 const dias = diasAte(e.encerramento);
+                // A busca do PNCP casa com o texto TODO do edital. Se a palavra
+                // não está no objeto, ela veio dos itens — e é isso que o
+                // vendedor precisa ver para não achar que o resultado é lixo.
+                const soNosItens = e.via.length > 0 && e.noObjeto.length === 0;
+                const podeAbrirItens = !!e.orgaoCnpj && e.ano != null && e.seq != null;
                 return (
                   <div key={e.id} className="card">
                     <div className="between" style={{ gap: 10, alignItems: "flex-start" }}>
@@ -255,12 +261,40 @@ export default async function LicitacoesPage({
                         </span>
                       )}
                     </div>
-                    <div className="between mt-16" style={{ alignItems: "center" }}>
+
+                    {e.via.length > 0 && (
+                      <p className="text-faint" style={{ fontSize: 12, margin: "10px 0 0" }}>
+                        {soNosItens ? (
+                          <>
+                            Apareceu por <strong style={{ color: "var(--text)" }}>{e.via.join(", ")}</strong> —
+                            a palavra não está no objeto, está dentro do edital.
+                          </>
+                        ) : (
+                          <>
+                            Apareceu por <strong style={{ color: "var(--text)" }}>{e.noObjeto.join(", ")}</strong>,
+                            no objeto.
+                          </>
+                        )}
+                      </p>
+                    )}
+
+                    <div className="between mt-16" style={{ alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span className="text-faint" style={{ fontSize: 12 }}>
                         {e.encerramento ? `encerra ${new Date(e.encerramento).toLocaleDateString("pt-BR")}` : ""}
                       </span>
                       <a href={e.link} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-ghost">Ver no PNCP →</a>
                     </div>
+
+                    {podeAbrirItens && (
+                      <div className="mt-8">
+                        <ItensDoEdital
+                          orgaoCnpj={e.orgaoCnpj!}
+                          ano={e.ano!}
+                          seq={e.seq!}
+                          destaque={soNosItens}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}

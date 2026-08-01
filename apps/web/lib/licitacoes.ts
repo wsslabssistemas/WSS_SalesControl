@@ -6,7 +6,7 @@ const SEARCH = "https://pncp.gov.br/api/search/";
 const CONSULTA = "https://pncp.gov.br/api/consulta/v1";
 const PNCP_API = "https://pncp.gov.br/api/pncp/v1";
 
-const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -46,6 +46,14 @@ export type Edital = {
   encerramento: string | null;
   publicacao: string | null;
   link: string;
+  // Identificadores da compra no PNCP — necessários para abrir os itens.
+  orgaoCnpj: string | null;
+  ano: number | null;
+  seq: number | null;
+  // Por que este edital apareceu: quais palavras-chave o trouxeram e quais
+  // delas estão visíveis no objeto. `via` sem `noObjeto` = casou nos itens.
+  via: string[];
+  noObjeto: string[];
 };
 
 type Item = {
@@ -79,14 +87,16 @@ async function queryOne(q: string, ufs: string, opts: { abertos?: boolean; tam?:
   return { items: json?.items ?? [], total: json?.total ?? 0 };
 }
 
-function toEdital(it: Item): Edital {
+function toEdital(it: Item, via: string[]): Edital {
   const link =
     it.orgao_cnpj && it.ano && it.numero_sequencial != null
       ? `https://pncp.gov.br/app/editais/${it.orgao_cnpj}/${it.ano}/${it.numero_sequencial}`
       : "https://pncp.gov.br/app/editais";
+  const objeto = it.description ?? "";
+  const alvo = semAcento(objeto);
   return {
     id: it.numero_controle_pncp,
-    objeto: it.description ?? "",
+    objeto,
     orgao: it.orgao_nome ?? "—",
     municipio: it.municipio_nome ?? "",
     uf: it.uf ?? "",
@@ -94,6 +104,11 @@ function toEdital(it: Item): Edital {
     encerramento: it.data_fim_vigencia,
     publicacao: it.data_publicacao_pncp,
     link,
+    orgaoCnpj: it.orgao_cnpj,
+    ano: it.ano,
+    seq: it.numero_sequencial,
+    via,
+    noObjeto: via.filter((k) => k && alvo.includes(semAcento(k))),
   };
 }
 
@@ -111,18 +126,25 @@ export async function searchEditais(input: { ufs: string[]; keywords: string[] }
   );
 
   const nowMs = Date.now();
-  const seen = new Set<string>();
-  const editais: Edital[] = [];
-  for (const { items: list } of results) {
-    for (const it of list) {
-      if (!it.numero_controle_pncp || seen.has(it.numero_controle_pncp)) continue;
+  // Guarda QUAL palavra trouxe cada edital — é a resposta honesta para "por que
+  // este apareceu". O mesmo edital pode vir por mais de uma palavra.
+  const achados = new Map<string, { item: Item; via: string[] }>();
+  for (let i = 0; i < results.length; i++) {
+    const palavra = queries[i];
+    for (const it of results[i].items) {
+      if (!it.numero_controle_pncp) continue;
       if (it.uf && !ufSet.has(it.uf)) continue; // segurança: só as UFs pedidas
       if (it.data_fim_vigencia && new Date(it.data_fim_vigencia).getTime() < nowMs) continue;
-      seen.add(it.numero_controle_pncp);
-      editais.push(toEdital(it));
+      const ja = achados.get(it.numero_controle_pncp);
+      if (ja) {
+        if (palavra && !ja.via.includes(palavra)) ja.via.push(palavra);
+      } else {
+        achados.set(it.numero_controle_pncp, { item: it, via: palavra ? [palavra] : [] });
+      }
     }
   }
 
+  const editais = [...achados.values()].map(({ item, via }) => toEdital(item, via));
   editais.sort((a, b) => (a.encerramento ?? "").localeCompare(b.encerramento ?? ""));
   return editais.slice(0, 100);
 }
@@ -216,12 +238,17 @@ export async function searchWinners(input: { ufs: string[]; keywords: string[] }
 // Aqui medimos quantos editais cada palavra encontra e sugerimos os termos que
 // realmente aparecem nos editais do seu ramo.
 
-const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-
 export type Sugestao = { termo: string; n: number; atual: boolean };
 
 // Itens do edital — onde o produto realmente aparece (a descrição é só resumo).
-export type EditalItem = { numero: number; descricao: string; quantidade: number | null; unidade: string | null; bate: boolean };
+export type EditalItem = {
+  numero: number;
+  descricao: string;
+  quantidade: number | null;
+  unidade: string | null;
+  valorUnitario: number | null;
+  bate: boolean;
+};
 
 export async function getEditalItens(
   orgaoCnpj: string,
@@ -237,11 +264,13 @@ export async function getEditalItens(
   return (arr as Record<string, unknown>[]).map((x, i) => {
     const descricao = String(x.descricao ?? x.descricaoItem ?? "");
     const d = semAcento(descricao);
+    const valor = x.valorUnitarioEstimado ?? x.valorUnitario;
     return {
       numero: Number(x.numeroItem ?? i + 1),
       descricao,
       quantidade: typeof x.quantidade === "number" ? x.quantidade : null,
       unidade: (x.unidadeMedida as string) ?? null,
+      valorUnitario: typeof valor === "number" ? valor : null,
       bate: alvos.some((t) => d.includes(t)),
     };
   });
