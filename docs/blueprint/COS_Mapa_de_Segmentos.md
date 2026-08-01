@@ -5,7 +5,7 @@
 
 ---
 
-## 1. O que já existe (7 manifestos, 7/7 válidos)
+## 1. O que já existe (8 manifestos, 8/8 válidos)
 
 | Segmento | Cobre na prática | Biblioteca |
 |---|---|---|
@@ -14,8 +14,9 @@
 | `clinica` | Clínica médica, odontologia, **estética**, harmonização, fisioterapia | **15** |
 | `sob_medida` | Marcenaria, vidraçaria, serralheria, esquadrias, marmoraria, **energia solar** | **15** |
 | `distribuidora` | Atacado e distribuição (alimentos, autopeças, construção, farma, higiene, embalagens, elétrica, agro…) | **15** |
-| `automacao` | Automação predial, climatização, refrigeração, energia, monitoramento | *manifesto pronto* |
-| `escola_esportiva` | Natação, artes marciais, **crossfit**, **pilates**, tênis, escolinhas, **clubes** | *manifesto pronto* |
+| `automacao` | Automação predial, climatização, refrigeração, energia, monitoramento | **15** |
+| `escola_esportiva` | Natação, artes marciais, **crossfit**, **pilates**, tênis, escolinhas, **clubes** | **16** |
+| `industria` | Têxtil e feltro, calçadista, moveleira (vendendo a lojista), metal-mecânica, embalagens, autopeças, implementos agrícolas | **18** |
 
 **Um segmento sem biblioteca funciona, mas responde genérico.** O manifesto dá a
 estrutura (jornada, campos, DNA, cadências); a **curadoria é o ativo**.
@@ -31,7 +32,7 @@ estrutura (jornada, campos, DNA, cadências); a **curadoria é o ativo**.
 | Estética | ✅ `clinica` |
 | Veterinário | ⚠️ Parcial em `clinica` — mas o decisor é o tutor e há recorrência de vacina/retorno. **Merece manifesto próprio** |
 | Salão de beleza | ⚠️ Parcial em `barbearia` — mas o ciclo é outro: química (coloração, progressiva) tem ticket alto, sessão longa e retorno de manutenção com data quase exata. **Merece próprio** |
-| Fábricas / indústria | ⚠️ Parcial em `automacao` e `distribuidora` |
+| Fábricas / indústria | ✅ `industria` (8º segmento, ago/2026) |
 | Pet shop (banho e tosa) | ❌ **Novo** — recorrência forte, muito parecido com barbearia |
 | Imobiliária | ❌ **Novo** — ciclo longo, ticket altíssimo, visita, financiamento, dois lados (proprietário e comprador) |
 | Curso / escola | ❌ **Novo** — matrícula sazonal, turma, evasão, rematrícula |
@@ -95,6 +96,23 @@ justamente o **canal indireto** e a especificação técnica do produto.
 **Vantagem estratégica:** a irmã do fundador trabalha na Feltros Bandeirantes —
 há **especialista real disponível** para revisar a curadoria, que é o que leva
 uma biblioteca de *boa* para *excelente*.
+
+**Executado (ago/2026):** manifesto `industria` + **18 entradas** curadas
+(`0026_seed_knowledge_industria.sql`), 12/12 categorias. O que o manifesto
+modela e nenhum outro segmento tinha:
+
+- **Amostra é etapa da jornada**, não detalhe — com cadência própria (chegada em
+  3 dias, parecer em 10). Em têxtil, calçado e embalagem nada avança antes do
+  teste na mão de quem decide.
+- **"Sem reposição" não é etapa terminal.** É trabalho em aberto com cadência de
+  reativação — o alerta de +90 dias que a pesquisa apontou como o mais valioso.
+- **`ciclo_reposicao` no contato** alimenta o motor de recompra (trimestral = 90
+  dias), que é de onde sai o aviso antes de o cliente sumir.
+- **Conflito de canal** é entrada da biblioteca: o representante que atende a
+  conta é ativo, não obstáculo. Vender por cima dele destrói a receita.
+
+**Falta a revisão da especialista** — a biblioteca é boa por pesquisa, não
+excelente por vivência. É exatamente a distância descrita na seção 5.
 
 ## 4. Quanto custa um segmento novo (a economia da coisa)
 

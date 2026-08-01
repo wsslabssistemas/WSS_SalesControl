@@ -1,0 +1,311 @@
+key: industria
+name: Indústria e Fábrica
+version: 1.0.0
+
+# =====================================================================
+# O 8º segmento. Pesquisa do fundador (ago/2026): a indústria brasileira
+# tem herança de gestão de CHÃO DE FÁBRICA. Vê tecnologia comercial só
+# como ERP (nota fiscal e estoque) e entrega a venda ao REPRESENTANTE
+# AUTÔNOMO. Produto caro, ciclo longo, aquisição quase primitiva.
+#
+# O que separa este segmento de `distribuidora`:
+#   • CANAL INDIRETO — quem fala com o comprador é o representante. A
+#     fábrica não vê a conversa. A "pasta de clientes" fechada é o padrão:
+#     o representante visita sempre as mesmas lojas e não abre nenhuma.
+#   • ESPECIFICAÇÃO TÉCNICA — não se vende por catálogo; vende-se por
+#     amostra, ficha técnica, gramatura, laudo e aprovação de teste.
+#   • TIMING QUE NÃO ESPERA — safra, coleção e obra têm data. Perdeu a
+#     janela, perdeu o ano inteiro.
+#
+# O argumento de venda para a indústria NÃO é "melhore seu atendimento".
+# É "construa uma aquisição previsível que não dependa do humor do
+# representante". O alerta mais valioso do segmento é o cliente que está
+# há mais de 90 dias sem repor.
+#
+# Cobre: têxtil e feltro, calçadista, moveleira (vendendo a lojista),
+# metal-mecânica, embalagens, alimentos industrializados, autopeças e
+# máquinas/implementos agrícolas.
+#
+# Nenhuma linha do núcleo muda por causa deste arquivo. É a Lei 1.
+# =====================================================================
+
+capabilities:
+  - prospeccao
+  - licitacoes
+
+vocabulary:
+  lead: "comprador potencial"
+  conversion: "primeiro pedido"
+  churn: "cliente sem reposição"
+  catalog_item: "produto da linha"
+
+discovery_axis: "encaixe no mix do comprador (o que ele já revende, para que público, com que giro e de quem compra hoje)"
+
+# ---------------------------------------------------------------------
+# JORNADA — venda B2B para revenda, com prova técnica no meio.
+# A amostra é etapa, não detalhe: em têxtil, calçado e embalagem, nada
+# avança antes de o produto ser testado na mão de quem decide.
+#
+# A carteira ativa é etapa de CONQUISTA (`won`) e continua recebendo
+# recompra — é dela que sai o alerta de quem parou de repor. Quando o
+# ciclo estoura e o cliente de fato sumiu, o vendedor move para "Sem
+# reposição", que NÃO é terminal de propósito: é trabalho em aberto, o
+# mais valioso do segmento.
+# ---------------------------------------------------------------------
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: prospeccao
+      label: "Prospecção de canal"
+      cadence: prospeccao_fria
+      goal: "Achar loja, revenda ou indústria que já atende o mesmo público — e chegar em quem compra."
+      phases:
+        - { key: abordagem,  label: "Primeira abordagem", offset_days: 0 }
+        - { key: followup_1, label: "Retomada",           offset_days: 3 }
+        - { key: followup_2, label: "Última tentativa",   offset_days: 8 }
+    - key: qualificacao
+      label: "Qualificação"
+      goal: "Mix, giro, público e quem assina. Descobrir de quem ele compra hoje e o que falta lá."
+    - key: amostra
+      label: "Amostra e ficha técnica"
+      cadence: pos_amostra
+      goal: "Pôr o produto na mão de quem decide e conseguir o parecer técnico."
+      phases:
+        - { key: envio,      label: "Enviar amostra",     offset_days: 0 }
+        - { key: chegada,    label: "Confirmar chegada",  offset_days: 3 }
+        - { key: parecer,    label: "Buscar o parecer",   offset_days: 10 }
+    - key: proposta
+      label: "Proposta comercial"
+      cadence: pos_proposta
+      goal: "Tabela, lote mínimo, prazo de produção e condição. Defender margem, não dar desconto."
+      phases:
+        - { key: envio,    label: "Enviar proposta",  offset_days: 0 }
+        - { key: retorno,  label: "Confirmar recebimento", offset_days: 2 }
+        - { key: cobranca, label: "Cobrar posição",   offset_days: 7 }
+    - key: primeiro_pedido
+      label: "Primeiro pedido"
+      goal: "Fechar o pedido de entrada, mesmo pequeno — o produto precisa provar giro na loja dele."
+    - key: carteira_ativa
+      label: "Carteira ativa"
+      terminal: true
+      won: true
+      goal: "Comprando com regularidade. Daqui em diante o jogo é reposição, não conquista."
+    - key: sem_reposicao
+      label: "Sem reposição"
+      cadence: reativacao
+      goal: "Passou do ciclo e não repôs. Descobrir se é estoque parado, problema no produto ou concorrente entrando."
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+# ---------------------------------------------------------------------
+# REFERÊNCIAS DO SETOR (pesquisa ago/2026)
+# Vocabulário real de quem vende indústria. NÃO são fatos da empresa —
+# o motor nunca afirma isto ao comprador; só o DNA vale como fato.
+# ---------------------------------------------------------------------
+benchmarks:
+  pasta_fechada: >-
+    O representante autônomo tende a visitar sempre a mesma carteira, onde já
+    tem relação e comissão garantida. Loja nova dá trabalho e demora a pagar.
+    O resultado é uma fábrica que cresce só quando o cliente antigo cresce.
+  sem_reposicao_90: >-
+    Cliente que passou de 90 dias sem repor quase nunca avisa que trocou de
+    fornecedor — ele só para de comprar. É o alerta mais valioso do segmento e
+    o mais barato de agir: a relação ainda existe.
+  sell_out_do_lojista: >-
+    O que importa não é o que ele comprou, é o que ele conseguiu vender. Lojista
+    com estoque encalhado não repõe por mais simpático que seja o representante.
+    Perguntar como girou é o que separa reposição de empurrão.
+  amostra_que_volta: >-
+    Amostra enviada sem data de retorno combinada morre na mesa do comprador.
+    Quem manda amostra marca o dia de buscar o parecer antes de despachar.
+  timing_de_safra_e_colecao: >-
+    Implemento agrícola se decide meses antes da safra; calçado e têxtil se
+    decidem no calendário de coleção. Chegar no mês da compra é chegar tarde —
+    a nutrição começa antes da janela abrir.
+  feira_como_canal: >-
+    Em indústria, a feira do setor concentra o ano inteiro de prospecção em três
+    dias. O contato colhido lá esfria em uma semana se ninguém retomar.
+  conflito_de_canal: >-
+    Falar direto com o cliente por cima do representante que atende a conta
+    destrói a relação que sustenta a receita. O sistema organiza a carteira do
+    representante; não passa por cima dela.
+
+# ---------------------------------------------------------------------
+# CAMPOS PRÓPRIOS DO SEGMENTO
+# O contato aqui é uma EMPRESA que revende ou industrializa o produto —
+# não o consumidor final. Quem atende a conta é um membership com papel
+# de agente (representante), nunca um campo de texto.
+# ---------------------------------------------------------------------
+contact_fields:
+  - key: tipo_canal
+    label: "Tipo de cliente"
+    type: enum
+    options:
+      [lojista, rede_franquia, revenda, distribuidor, industria_cliente,
+       confeccao, especificador, construtora, orgao_publico, outro]
+  - key: porte
+    label: "Porte"
+    type: enum
+    options: [micro, pequeno, medio, grande, indefinido]
+  - key: decisor
+    label: "Papel do contato"
+    type: enum
+    options: [dono, comprador, gerente_loja, engenharia, desenvolvimento_produto, financeiro, indefinido]
+  # O ciclo é o que permite prever a reposição e disparar o alerta de quem
+  # parou de comprar. Sem ele, o núcleo não inventa um prazo.
+  - key: ciclo_reposicao
+    label: "Ciclo de reposição"
+    type: enum
+    options: [quinzenal, mensal, bimestral, trimestral, semestral, por_colecao, esporadico, indefinido]
+  - key: gatilho_de_compra
+    label: "O que dispara a compra"
+    type: enum
+    options: [safra, colecao_verao, colecao_inverno, obra, reposicao_de_estoque, licitacao, sem_sazonalidade, indefinido]
+  - key: fornecedor_atual
+    label: "Compra hoje de"
+    type: enum
+    options: [concorrente_nacional, importado, industria_local, produz_internamente, nao_sei]
+
+# ---------------------------------------------------------------------
+# O ciclo declarado no contato vira previsão de reposição. É daqui que
+# sai "quem está no ponto de voltar" e, principalmente, quem passou do
+# ponto — o cliente há +90 dias sem repor.
+# ---------------------------------------------------------------------
+recurrence:
+  frequency_field: ciclo_reposicao
+  remind_before_days: 7
+  intervals_days:
+    quinzenal: 15
+    mensal: 30
+    bimestral: 60
+    trimestral: 90
+    semestral: 180
+    por_colecao: 120
+  default_days: 60
+
+# ---------------------------------------------------------------------
+# REGISTRO DE ATENDIMENTO COM VALOR
+# Só faz sentido onde a receita vem de serviço executado e repetido.
+# Aqui o dinheiro é acompanhado por proposta e pedido.
+# ---------------------------------------------------------------------
+services:
+  enabled: false
+
+lead_sources:
+  - prospeccao
+  - representante
+  - feira
+  - indicacao
+  - site
+  - licitacao
+  - showroom
+  - cliente_antigo
+  - outro
+
+# ---------------------------------------------------------------------
+# SEÇÕES DE DNA — os fatos que o motor pode afirmar sobre a fábrica.
+# As CHAVES são contrato com `required_facts` da biblioteca. Traduzir
+# label e help é livre; trocar a chave quebra a trava anti-invenção.
+# ---------------------------------------------------------------------
+dna_sections:
+  - key: produto
+    label: "Produto e especificação"
+    required: true
+    fields:
+      - { key: linhas, type: list, required: true, label: "Linhas que você fabrica", help: "As famílias de produto. Ex.: feltro agulhado, manta acústica" }
+      - { key: especificacao, type: text, required: true, label: "Especificação técnica", help: "O que o comprador técnico pergunta: composição, gramatura, medidas, resistência" }
+      - { key: aplicacoes, type: list, label: "Aplicações", help: "Onde o produto é usado. Ex.: estofado, calçado, isolamento industrial" }
+      - { key: certificacoes, type: list, label: "Certificações e laudos", help: "Normas, ensaios e certificados que você tem" }
+  - key: producao
+    label: "Produção e prazo"
+    required: true
+    fields:
+      - { key: lote_minimo, type: text, required: true, label: "Lote mínimo", help: "Quantidade mínima de produção. Ex.: 500 metros por cor" }
+      - { key: prazo_producao, type: text, required: true, label: "Prazo de produção", help: "Da confirmação do pedido até ficar pronto. Ex.: 20 dias úteis" }
+      - { key: capacidade, type: text, label: "Capacidade", help: "Quanto você produz por mês — o que dá para assumir sem atrasar" }
+      - { key: desenvolvimento, type: text, label: "Desenvolvimento sob especificação", help: "Se você desenvolve item exclusivo para o cliente e como funciona" }
+  - key: comercial
+    label: "Condições comerciais"
+    required: true
+    fields:
+      - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo", help: "Valor mínimo do pedido. Ex.: R$ 3.000" }
+      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições. Ex.: 28/42/56 dias para cliente com cadastro aprovado" }
+      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando o preço melhora. Ex.: acima de 1.000 unidades" }
+      - { key: frete, type: text, label: "Frete", help: "Quem paga, e a partir de que valor ou volume" }
+  - key: canal
+    label: "Como você vende"
+    required: true
+    fields:
+      - { key: forma_de_venda, type: text, required: true, label: "Forma de venda", help: "Representante, venda direta ou os dois — e como o cliente é atendido" }
+      - { key: regioes, type: text, required: true, label: "Regiões atendidas", help: "Onde você já entrega hoje" }
+      - { key: exclusividade, type: text, label: "Política de exclusividade", help: "Se protege território ou cliente, e em que condição" }
+      - { key: apoio_ao_cliente, type: text, label: "Apoio a quem revende", help: "Catálogo, mostruário, material de vitrine, treinamento" }
+  - key: diferencial
+    label: "Diferencial"
+    fields:
+      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "O que você resolve que o fornecedor atual dele não resolve" }
+      - { key: tempo_de_fabrica, type: text, label: "Tempo de fábrica", help: "Desde quando produz, e para quem já produziu" }
+      - { key: assistencia, type: text, label: "Pós-venda", help: "Como funciona troca, defeito de lote e assistência" }
+
+categories:
+  pricing:            "Tabela, lote mínimo e faixa de quantidade"
+  risk_free_entry:    "Pedido de entrada e amostra para o produto provar giro"
+  availability:       "Capacidade, prazo de produção e entrega"
+  expertise_proof:    "Tempo de fábrica, laudo, certificação e quem já compra"
+  catalog:            "Linhas, especificação técnica e desenvolvimento exclusivo"
+  goal_matching:      "Perfil do canal → mix de entrada certo"
+  objections:         "Caro, importado é mais barato, já tenho fornecedor, lote alto"
+  commitment_offer:   "Programa de fornecimento, exclusividade e reserva de produção"
+  reciprocity:        "Amostra, mostruário e apoio de ponto de venda"
+  limits_and_ethics:  "O que não prometer sobre prazo, lote e capacidade"
+  retention:          "Reposição, cliente parado e resgate de carteira"
+  ecosystem:          "Representantes, transportadora, feira e especificador"
+
+cadences:
+  - key: prospeccao_fria
+    applies_to: cold_outreach
+    steps:
+      - { offset_days: 3, intent: "Retomar com um ângulo novo — não repetir a primeira mensagem" }
+      - { offset_days: 8, intent: "Última tentativa e encerrar com porta aberta" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: pos_amostra
+    applies_to: sample_followup
+    steps:
+      - { offset_days: 3, intent: "Confirmar que a amostra chegou e em que mão está" }
+      - { offset_days: 10, intent: "Buscar o parecer técnico — o que aprovou e o que não" }
+      - { offset_days: 20, intent: "Último toque: perguntar o que faltou para testar" }
+    stop_on: [replied, converted, opted_out, lost]
+
+  - key: pos_proposta
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Confirmar recebimento e tirar dúvida de especificação" }
+      - { offset_days: 7, intent: "Cobrar posição e oferecer o mix de entrada reduzido" }
+      - { offset_days: 15, intent: "Perguntar o que decidiu — inclusive se foi não" }
+    stop_on: [replied, converted, opted_out, lost]
+
+  - key: reativacao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0, intent: "Perguntar como girou o último pedido — sem cobrar compra" }
+      - { offset_days: 15, intent: "Oferecer o que mudou: linha nova, condição ou prazo" }
+      - { offset_days: 40, intent: "Última tentativa antes de encerrar a conta" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+hard_rules:
+  - "Nunca prometer prazo de produção, lote mínimo, capacidade ou preço fora do que está no DNA."
+  - "Não passar por cima do representante que atende a conta — a carteira dele é o ativo, não o obstáculo."
+  - "Não desqualificar o fornecedor atual nem o produto importado: mostrar a conta completa, não atacar a escolha do cliente."
+  - "Não afirmar certificação, laudo ou ensaio que a empresa não tenha declarado."
+
+kpis:
+  - taxa_conversao
+  - ticket_medio
+  - recompra
+  - clientes_ativos
+  - tempo_resposta_mediana

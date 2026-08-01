@@ -56,11 +56,12 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
 
-### Segmentos — 7 completos, 116 entradas curadas
+### Segmentos — 8 completos, 134 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 22 | — |
 | `barbearia` | 18 | — |
+| `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 18 | prospecção + licitações |
 | `escola_esportiva` (natação, lutas, crossfit, pilates, clubes) | 16 | — |
 | `clinica` (médica, odonto, estética) | 15 | — |
 | `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 15 | prospecção + licitações |
@@ -72,6 +73,7 @@ trocar no seletor do topo do painel.
 
 ### Infra
 - Migrations `0001`–`0025` aplicadas. RLS em tudo com `tenant_id`.
+  **`0026_seed_knowledge_industria.sql` ainda NÃO foi executada no Supabase.**
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
@@ -81,13 +83,10 @@ trocar no seletor do topo do painel.
 
 ## 3. Pendências (em ordem de importância)
 
-1. **Segmento `industria`** (8º). Pesquisa do fundador (ago/2026) mapeou o parque
-   industrial RS/BR e apontou a indústria B2B como o maior oceano azul: vende
-   **através de representante** com "pasta fechada", sem prospecção ativa, e o
-   alerta mais valioso é **lojista sem reposição há 90 dias**. Cobre têxtil/
-   feltro (caso real: irmã do fundador na Feltros Bandeirantes), calçadista,
-   moveleira, metal-mecânica, embalagens, autopeças. **Vantagem: especialista
-   real disponível para revisar a curadoria.**
+1. **Revisão da biblioteca de `industria` pela especialista** (irmã do fundador,
+   Feltros Bandeirantes). O manifesto e as 18 entradas estão no ar (`0026`), mas
+   a curadoria veio de pesquisa, não de vivência — é a diferença entre boa e
+   excelente. **Rodar `0026` no Supabase antes** (ver seção 6).
 2. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
    influências/mentores por trás da biblioteca e um **parecer honesto** sobre se
    já somos excelência ou o que falta. **Não foi feito.**
@@ -112,6 +111,13 @@ trocar no seletor do topo do painel.
 - **PNCP derruba rajadas** — 28 chamadas simultâneas, 24 falham. Use `getJson`
   (retry) + `mapLimit`. `tam_pagina` até 100 funciona; paginação funciona;
   **a busca textual ignora filtro de data**.
+- **Etapa terminal desliga motor.** `computeDueTouches` (follow-up) e
+  `computeDue` (recompra) pulam etapas `terminal`. Efeito descoberto em ago/2026:
+  a barbearia tinha "Cliente recorrente" terminal, então **a carteira fiel nunca
+  aparecia na recompra** — no segmento cuja tese é recompra. Corrigido em
+  `stagesWithoutRecurrence`: etapa `won` continua recebendo recompra. Ao desenhar
+  segmento novo: **cadência declarada em etapa terminal é dado morto.** Por isso
+  `industria` tem "Sem reposição" **não-terminal**.
 - **Itens do PNCP**: `GET /api/pncp/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens`
   devolve um **array puro** com `descricao`, `quantidade`, `unidadeMedida`,
   `valorUnitarioEstimado` (verificado ago/2026). Buscar sob demanda, um edital
@@ -141,8 +147,10 @@ trocar no seletor do topo do painel.
 ## 6. Verificações rápidas de sanidade
 
 ```bash
-npm run -w @cos/skill-loader validate     # manifestos (deve dar 7/7)
+npm run -w @cos/skill-loader validate     # manifestos (deve dar 8/8)
 node scripts/seed-skills.mjs              # recarrega manifestos no banco
+node scripts/seed-knowledge.mjs packages/db/migrations/0026_seed_knowledge_industria.sql
+node packages/db/tests/required_facts_industria.mjs   # 0 órfãos, 12/12 categorias
 cd apps/web && npm run build              # build limpo
 ```
 
