@@ -73,6 +73,16 @@ contact_fields:
     type: enum
     options: [manha, tarde, noite, sabado]
 
+# ---------------------------------------------------------------------
+# AGENDAMENTO
+# A aula experimental tem hora marcada dentro da grade de turmas.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 60
+  slot_step_min: 60
+  min_advance_min: 120
+
 lead_sources:
   - whatsapp
   - instagram

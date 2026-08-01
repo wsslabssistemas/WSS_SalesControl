@@ -7,6 +7,8 @@ import { computeAlerts } from "@/lib/agenda";
 import AgendaCalendar, { type CalItem } from "./AgendaCalendar";
 import AssinarCalendario from "./AssinarCalendario";
 import { gerarEnderecoCalendario, removerEnderecoCalendario } from "./actions";
+import { cancelarCompromisso } from "./horarios-actions";
+import Jornada from "./Jornada";
 
 function localISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -26,7 +28,7 @@ export default async function AgendaPage() {
     );
   }
 
-  const { stages } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, scheduling } = await getSkillFormConfig(tenant.skill_key);
   const phasedKeys = stages.filter((s) => s.phases?.length).map((s) => s.key);
 
   const supabase = await createClient();
@@ -52,6 +54,34 @@ export default async function AgendaPage() {
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (host ? `${proto}://${host}` : "");
+
+  // Jornada de trabalho e compromissos marcados (segmentos com hora marcada).
+  let regras: { weekday: number; starts_at: string; ends_at: string }[] = [];
+  let compromissos: {
+    id: string; starts_at: string; service: string | null; origem: string;
+    contact_id: string | null; contato: { name: string } | null;
+  }[] = [];
+  if (scheduling?.enabled) {
+    const [{ data: r }, { data: ap }] = await Promise.all([
+      supabase
+        .from("availability_rules")
+        .select("weekday, starts_at, ends_at")
+        .eq("tenant_id", tenant.id)
+        .is("membership_id", null)
+        .eq("active", true)
+        .order("weekday"),
+      supabase
+        .from("appointments")
+        .select("id, starts_at, service, origem, contact_id, contato:contacts(name)")
+        .eq("tenant_id", tenant.id)
+        .in("status", ["agendado", "confirmado"])
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at")
+        .limit(20),
+    ]);
+    regras = (r as typeof regras | null) ?? [];
+    compromissos = (ap as unknown as typeof compromissos | null) ?? [];
+  }
 
   const alerts = computeAlerts(
     (data as { id: string; name: string; journey_stage: string; stage_entered_at: string }[]) ?? [],
@@ -92,6 +122,50 @@ export default async function AgendaPage() {
             ))}
           </span>
         </div>
+      )}
+
+      {/* Jornada de trabalho: é o que permite o motor oferecer horário */}
+      {scheduling?.enabled && isAdmin && <Jornada regras={regras} />}
+
+      {/* Compromissos marcados */}
+      {scheduling?.enabled && compromissos.length > 0 && (
+        <section style={{ marginTop: 24 }}>
+          <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Próximos compromissos</h2>
+          <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr><th>Quando</th><th>Cliente</th><th>Serviço</th><th>Origem</th><th></th></tr>
+              </thead>
+              <tbody>
+                {compromissos.map((a) => (
+                  <tr key={a.id}>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {new Date(a.starts_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                    <td>
+                      {a.contact_id ? (
+                        <Link href={`/painel/contatos/${a.contact_id}`}>{a.contato?.name ?? "—"}</Link>
+                      ) : "—"}
+                    </td>
+                    <td className="text-dim">{a.service ?? "—"}</td>
+                    <td>
+                      <span className={a.origem === "motor" ? "badge badge-brand" : "badge"}>
+                        {a.origem === "motor" ? "fechado pela IA" : a.origem}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <form action={cancelarCompromisso}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <input type="hidden" name="back" value="/painel/agenda" />
+                        <button type="submit" className="linklike text-faint" style={{ fontSize: 12 }}>cancelar</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {/* Assinatura no calendário do celular (Google, Apple, Outlook) */}

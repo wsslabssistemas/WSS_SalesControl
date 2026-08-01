@@ -100,6 +100,17 @@ contact_fields:
     type: enum
     options: [ninguem, arquiteto, engenheiro, construtora, cliente_antigo, outro_profissional]
 
+# ---------------------------------------------------------------------
+# AGENDAMENTO
+# A visita técnica é o gargalo: agendar bem evita deslocamento perdido.
+# Bloco maior porque inclui deslocamento e medição.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 90
+  slot_step_min: 60
+  min_advance_min: 240
+
 lead_sources:
   - whatsapp
   - instagram

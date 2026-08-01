@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import type { RecurrenceConfig } from "./recurrence";
 import type { Cadence } from "./cadence";
+import type { SchedulingConfig } from "./scheduling";
 
 export type ContactField = {
   key: string;
@@ -38,6 +39,7 @@ export async function getSkillFormConfig(skillKey: string) {
       recurrence?: RecurrenceConfig;
       vocabulary?: Record<string, string>;
       cadences?: Cadence[];
+      scheduling?: SchedulingConfig;
     } | null) ?? {};
 
   return {
@@ -49,5 +51,7 @@ export async function getSkillFormConfig(skillKey: string) {
     vocabulary: m.vocabulary ?? {},
     // Sequência de toques de follow-up por etapa.
     cadences: m.cadences ?? [],
+    // Segmentos com hora marcada declaram duração e passo aqui.
+    scheduling: m.scheduling ?? null,
   };
 }

@@ -108,6 +108,17 @@ recurrence:
     anual: 365
   default_days: 180
 
+# ---------------------------------------------------------------------
+# AGENDAMENTO
+# A avaliação é onde o tratamento se vende — fechar o horário na conversa
+# é o que traz a pessoa até a cadeira.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 60
+  slot_step_min: 30
+  min_advance_min: 120
+
 lead_sources:
   - instagram
   - google

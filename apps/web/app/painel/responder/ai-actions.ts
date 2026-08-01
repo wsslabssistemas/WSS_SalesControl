@@ -9,6 +9,8 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { revalidatePath } from "next/cache";
+import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
+import { escolherOpcoes, descreverVaga } from "@/lib/scheduling";
 
 export type GerarResult =
   | { ok: true; data: AiAnswer }
@@ -26,6 +28,7 @@ export type AiAnswer = {
   motivo_status: string;
   faltam_fatos: string[];
   escalar: boolean;
+  horario_escolhido: string;
 };
 
 const schema = z.object({
@@ -40,6 +43,7 @@ const schema = z.object({
   motivo_status: z.string().describe("Por que sugeriu esse avanço de etapa, ou string vazia."),
   faltam_fatos: z.array(z.string()).describe("Fatos necessários que NÃO estão no DNA e seriam precisos para responder com segurança."),
   escalar: z.boolean().describe("true se faltam fatos essenciais e a resposta deve ser escalada a um humano em vez de inventada."),
+  horario_escolhido: z.string().describe("Se o cliente ACEITOU um horário da lista de livres, a data e hora exatas em AAAA-MM-DDTHH:MM. Vazio se ele ainda não escolheu."),
 });
 
 function fatos(sections: Record<string, unknown>): string {
@@ -127,6 +131,18 @@ export async function gerarResposta(input: {
     contactBlock = `Cliente: ${contact?.name ?? "?"}\nEtapa atual: ${stageLabel}\nHISTÓRICO (não repita abordagens já usadas; evolua a conversa):\n${histText}`;
   }
 
+  // Horários livres: sem isto o motor escala para um humano toda vez que
+  // alguém quer marcar — e no modo automático a venda não fecha.
+  let horarios = "";
+  try {
+    const vagas = await buscarVagas({ limite: 40 });
+    if (vagas.length) {
+      horarios = escolherOpcoes(vagas, 4).map(descreverVaga).join(" | ");
+    }
+  } catch {
+    // agenda é complemento; se falhar, o motor segue sem oferecer horário
+  }
+
   // Catálogo: itens que casam com o que o cliente pediu. É extensão da trava
   // anti-invenção — preço e estoque só podem sair daqui.
   let catalogo = "";
@@ -177,6 +193,8 @@ export async function gerarResposta(input: {
 REGRAS INEGOCIÁVEIS:
 - Use SOMENTE os FATOS fornecidos (DNA) e o CATÁLOGO. NUNCA invente preço, condição, horário, serviço, promoção ou política que não esteja neles.
 - Preço, disponibilidade e código de produto SÓ podem vir do CATÁLOGO. Se o item pedido não está lá, diga que vai confirmar — nunca estime valor nem afirme que tem em estoque.
+- Horário SÓ pode ser oferecido a partir da lista de HORÁRIOS REALMENTE LIVRES. Nunca invente data nem confirme um horário que não esteja lá. Se o cliente pedir um horário que não está na lista, diga que aquele já está ocupado e ofereça DOIS da lista — nunca deixe a pessoa sem opção concreta.
+- Quando o cliente aceitar um horário, preencha "horario_escolhido" com a data e hora exatas (formato AAAA-MM-DDTHH:MM) daquele item da lista. Se ele não escolheu ainda, deixe vazio.
 - Se faltar um fato essencial para responder com segurança, liste em "faltam_fatos", marque "escalar": true e NÃO invente — deixe "resposta_sugerida" como uma mensagem breve e segura que encaminha para um humano/verificação.
 - Escreva em português do Brasil, natural, simpático e conciso — pronto para copiar e enviar no WhatsApp. Evite CTA fraca como "o que acha?"; use fechamento por alternativa ou pressuposto.
 - Baseie a técnica e o tom na BIBLIOTECA e no HISTÓRICO do cliente.`;
@@ -191,6 +209,9 @@ ${fatos(sections)}
 
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}
+
+HORÁRIOS REALMENTE LIVRES na agenda (ofereça DOIS destes quando o assunto for marcar; nunca invente outro):
+${horarios || "(agenda não configurada — não ofereça horário específico; combine que vai confirmar)"}
 
 CATÁLOGO — itens da empresa que casam com o pedido (preço e estoque SÓ podem sair daqui):
 ${catalogo || "(nenhum item do catálogo casou com a mensagem — não afirme preço nem disponibilidade de produto)"}

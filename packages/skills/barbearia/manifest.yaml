@@ -127,6 +127,18 @@ benchmarks:
     não volta. Lembrete automático (e sinal antecipado) reduz drasticamente a
     falta.
 
+# ---------------------------------------------------------------------
+# AGENDAMENTO
+# O motor só consegue fechar horário se souber o que está livre. Aqui o
+# segmento declara que trabalha com hora marcada e quanto dura o serviço.
+# Pesquisa do ramo: serviço leva 30 a 45 min.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 40
+  slot_step_min: 30
+  min_advance_min: 60
+
 lead_sources:
   - whatsapp
   - instagram

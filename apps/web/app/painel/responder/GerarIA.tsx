@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gerarResposta, applyStage, saveInteraction, setOutcome, type AiAnswer } from "./ai-actions";
+import { marcarCompromisso } from "../agenda/horarios-actions";
 import { CopyButton } from "./CopyButton";
 
 const OUTCOMES: { key: "respondeu" | "marcou_visita" | "matriculou" | "sumiu"; label: string }[] = [
@@ -30,6 +31,7 @@ export default function GerarIA({
   const [saved, setSaved] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [outcome, setOutcomeSel] = useState<string | null>(null);
+  const [marcado, setMarcado] = useState(false);
 
   const run = async () => {
     // Lê a caixa de texto ao vivo (não depende de clicar em "Buscar" antes).
@@ -48,6 +50,7 @@ export default function GerarIA({
     setSaved(false);
     setSavedId(null);
     setOutcomeSel(null);
+    setMarcado(false);
     setUsedMessage(msg);
     try {
       const res = await gerarResposta({ contactId, message: msg });
@@ -166,6 +169,36 @@ export default function GerarIA({
             {data.emocao && <span className="badge">Emoção: {data.emocao}</span>}
             {data.proximo_passo && <span className="badge badge-brand">Próximo: {data.proximo_passo}</span>}
           </div>
+
+          {/* O elo que faltava: a IA fechou o horário — basta confirmar. */}
+          {contactId && data.horario_escolhido && !marcado && (
+            <div className="card" style={{ borderColor: "var(--border-brand)", background: "var(--brand-gradient-soft)" }}>
+              <div className="between wrap" style={{ gap: 10, alignItems: "center" }}>
+                <div>
+                  <div className="badge badge-brand">Horário acertado na conversa</div>
+                  <p style={{ margin: "8px 0 0", fontSize: 14 }}>
+                    <strong>{new Date(data.horario_escolhido).toLocaleString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</strong>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={async () => {
+                    const r = await marcarCompromisso({
+                      contactId,
+                      quandoISO: data.horario_escolhido,
+                      origem: "motor",
+                    });
+                    if (r.ok) setMarcado(true);
+                    else setError(r.error ?? "Não consegui marcar.");
+                  }}
+                >
+                  Confirmar na agenda
+                </button>
+              </div>
+            </div>
+          )}
+          {marcado && <p className="badge badge-success">Compromisso marcado na agenda ✓</p>}
 
           {contactId && data.status_sugerido && !applied && (
             <div className="card" style={{ borderColor: "rgba(123,212,90,0.35)", background: "rgba(123,212,90,0.06)" }}>
