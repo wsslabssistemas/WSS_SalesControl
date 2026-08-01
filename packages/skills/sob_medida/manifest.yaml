@@ -1,0 +1,237 @@
+key: sob_medida
+name: Projetos Sob Medida (marcenaria, vidraçaria, serralheria, solar)
+version: 1.0.0
+
+# =====================================================================
+# O SEGMENTO MAIS ARCAICO DO PAÍS EM TÉCNICA DE VENDAS.
+#
+# Diagnóstico (pesquisa jul/2026): o cliente pede orçamento, o profissional
+# vai ao local, mede e manda um PDF por WhatsApp — e SILENCIA. Estima-se
+# que mais de 70% dos orçamentos deste setor nunca recebem uma segunda
+# mensagem. Não se perde por preço; perde-se por silêncio.
+#
+# Dois gargalos, não um:
+#   1. ANTES: visita técnica gratuita para quem só pesquisava preço é
+#      prejuízo puro (combustível, tempo, conhecimento). Qualificar antes
+#      de pegar o carro é dinheiro.
+#   2. DEPOIS: orçamento é VENDA, não arquivo. Quem apresenta e faz
+#      cadência vence quem manda PDF e espera.
+#
+# Por isso a jornada tem uma etapa de qualificação ANTES da visita, e a
+# etapa do orçamento carrega a cadência mais importante do manifesto.
+# =====================================================================
+
+capabilities:
+  - prospeccao
+  - licitacoes
+
+vocabulary:
+  lead: "cliente em potencial"
+  conversion: "projeto fechado"
+  churn: "orçamento perdido"
+  catalog_item: "serviço"
+
+discovery_axis: "o que a pessoa quer resolver no ambiente (espaço, estética, segurança, economia) e para quando"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Entender o que a pessoa precisa. Nunca dar preço por metro sem ver."
+    - key: qualificacao
+      label: "Qualificação"
+      goal: "Descobrir escopo, prazo, orçamento e se a obra existe de verdade — antes de marcar a visita."
+      cadence: qualificar
+    - key: visita
+      label: "Visita técnica e medição"
+      goal: "Medir certo e usar a visita para vender: é ali que a consultoria acontece."
+      cadence: pre_visita
+      phases:
+        - { key: agendada,   label: "Visita agendada",   offset_days: 0 }
+        - { key: confirmar,  label: "Confirmar véspera", offset_days: -1 }
+        - { key: realizada,  label: "Visita realizada",  offset_days: 1 }
+    - key: orcamento
+      label: "Orçamento apresentado"
+      goal: "Apresentar (não só enviar) e conduzir a decisão. Aqui é onde a maioria some."
+      cadence: pos_orcamento
+      phases:
+        - { key: entrega,   label: "Orçamento entregue", offset_days: 0 }
+        - { key: duvidas,   label: "Tirar dúvidas",      offset_days: 3 }
+        - { key: condicao,  label: "Condição/ajuste",    offset_days: 7 }
+        - { key: decisao,   label: "Buscar decisão",     offset_days: 15 }
+    - key: negociacao
+      label: "Negociação"
+      goal: "Isolar a objeção real (valor, prazo, concorrente, escopo) e viabilizar."
+    - key: fechado
+      label: "Projeto fechado"
+      terminal: true
+      won: true
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+contact_fields:
+  - key: tipo_servico
+    label: "O que ele precisa"
+    type: enum
+    options:
+      [moveis_planejados, esquadrias, vidro_temperado, box_banheiro, guarda_corpo,
+       portao_automatico, marmore_granito, energia_solar, climatizacao, forro_drywall, outro]
+  - key: ambiente
+    label: "Onde"
+    type: enum
+    options: [cozinha, dormitorio, banheiro, sala, escritorio, area_externa, fachada, imovel_todo, outro]
+  - key: fase_da_obra
+    label: "Fase da obra"
+    type: enum
+    options: [ainda_projetando, obra_em_andamento, obra_pronta, reforma, so_pesquisando]
+  - key: prazo
+    label: "Para quando precisa"
+    type: enum
+    options: [urgente, ate_30_dias, 1_a_3_meses, sem_prazo_definido]
+  - key: quem_decide
+    label: "Quem decide"
+    type: enum
+    options: [o_proprio, casal, arquiteto, construtora, sindico_condominio, empresa]
+  - key: origem_indicacao
+    label: "Indicado por"
+    type: enum
+    options: [ninguem, arquiteto, engenheiro, construtora, cliente_antigo, outro_profissional]
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - google
+  - indicacao
+  - arquiteto
+  - construtora
+  - site
+  - prospeccao
+  - licitacao
+  - outro
+
+dna_sections:
+  - key: catalog
+    label: "O que você faz"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [servico, material, observacao], required: true, label: "Serviços e materiais", help: "Liste o que você executa. O sistema só pode falar do que estiver aqui" }
+      - { key: nao_faz, type: list, label: "O que você NÃO faz", help: "Serviços que costumam pedir e você não atende. Evita promessa errada" }
+  - key: pricing
+    label: "Valores e pagamento"
+    required: true
+    fields:
+      - { key: range, type: money_range, label: "Faixa de investimento", help: "A faixa típica dos seus projetos. Ex.: de R$ 3 mil a R$ 40 mil" }
+      - { key: como_cobra, type: text, required: true, label: "Como você cobra", help: "Por metro, por peça, por projeto fechado? Ex.: por metro linear, após medição" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: 30% na assinatura, 40% na produção, 30% na entrega" }
+      - { key: financiamento, type: text, label: "Financiamento", help: "Trabalha com financiamento ou parceiro de crédito? Qual?" }
+  - key: availability
+    label: "Prazos e agenda"
+    required: true
+    fields:
+      - { key: prazo_visita, type: text, required: true, label: "Prazo para a visita", help: "Em quanto tempo você consegue ir medir. Ex.: em até 3 dias úteis" }
+      - { key: prazo_orcamento, type: text, required: true, label: "Prazo do orçamento", help: "Quanto tempo depois da visita você entrega. Ex.: em até 48h" }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de execução", help: "Da aprovação até a entrega. Ex.: 25 dias úteis para móveis" }
+      - { key: weekly_hours, type: schedule, label: "Horário de atendimento", help: "Ex.: Seg a Sex 8h-18h; Sáb 8h-12h" }
+  - key: risk_free_entry
+    label: "Visita técnica"
+    required: true
+    fields:
+      - { key: visita_gratuita, type: boolean, required: true, label: "A visita é gratuita?", help: "Marque se você não cobra pela visita de medição" }
+      - { key: valor_visita, type: text, label: "Valor da visita", help: "Se cobra, quanto e se abate no fechamento. Ex.: R$ 150, abatido no contrato" }
+      - { key: raio_atendimento, type: text, required: true, label: "Onde você atende", help: "Sua região. Ex.: Porto Alegre e até 40 km" }
+      - { key: o_que_leva, type: text, label: "O que acontece na visita", help: "Ex.: medimos, fotografamos e apresentamos materiais na hora" }
+  - key: expertise_proof
+    label: "Experiência e garantia"
+    required: true
+    fields:
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Há quanto tempo você atua. Ex.: 15 anos" }
+      - { key: obras_referencia, type: list, label: "Trabalhos de referência", help: "Projetos que você pode citar ou mostrar" }
+      - { key: garantia, type: text, required: true, label: "Garantia", help: "O que você garante e por quanto tempo. Ex.: 5 anos em ferragens" }
+      - { key: equipe, type: text, label: "Equipe", help: "Quem executa: equipe própria ou terceirizada?" }
+  - key: differentials
+    label: "Diferenciais"
+    fields:
+      - { key: items, type: list, label: "Seus diferenciais", help: "Por que escolher você e não o mais barato. Seja concreto" }
+      - { key: marcas, type: list, label: "Marcas e fornecedores", help: "Materiais e marcas que você usa e que são referência" }
+      - { key: projeto_3d, type: boolean, label: "Faz projeto em 3D?", help: "Marque se você apresenta o projeto em 3D antes de fechar" }
+  - key: policies
+    label: "Regras do serviço"
+    fields:
+      - { key: alteracao_escopo, type: text, label: "Mudança no projeto", help: "O que acontece se o cliente mudar depois de aprovado" }
+      - { key: cancelamento, type: text, label: "Cancelamento", help: "Regra de cancelamento e devolução de sinal" }
+      - { key: assistencia, type: text, label: "Assistência", help: "Como funciona o atendimento pós-entrega" }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, label: "Endereço", help: "Onde fica sua loja/oficina, se recebe cliente" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que o cliente usa para falar com você" }
+      - { key: instagram, type: text, label: "Instagram", help: "Onde o cliente vê seus trabalhos. Ex.: @suaempresa" }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Como você cobra, faixa de investimento e parcelamento"
+  risk_free_entry:    "Visita técnica e medição como porta de entrada"
+  availability:       "Prazo de visita, de orçamento e de execução"
+  expertise_proof:    "Tempo de mercado, obras de referência e garantia"
+  catalog:            "Serviços, materiais e o que você não faz"
+  goal_matching:      "O que a pessoa quer resolver → solução indicada"
+  objections:         "Caro, achei mais barato, vou pensar, vou ver com meu marido"
+  commitment_offer:   "Projeto fechado, condição de pagamento e financiamento"
+  reciprocity:        "Visita, projeto 3D e consultoria de materiais"
+  limits_and_ethics:  "Não prometer preço sem medir nem prazo sem conferir agenda"
+  retention:          "Cliente antigo: manutenção, ampliação e novo ambiente"
+  ecosystem:          "Arquitetos, construtoras e indicação profissional"
+
+cadences:
+  # Antes de pegar o carro: visita para curioso é prejuízo.
+  - key: qualificar
+    applies_to: cold_outreach
+    steps:
+      - { offset_days: 1, intent: "Confirmar escopo e prazo antes de agendar a visita" }
+      - { offset_days: 4, intent: "Retomar quem não respondeu, sem cobrar" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 2
+
+  - key: pre_visita
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a visita na véspera e evitar deslocamento perdido" }
+      - { offset_days: 1,  intent: "Agradecer a visita e informar quando o orçamento chega" }
+    stop_on: [converted, opted_out]
+
+  # A cadência mais importante: 3 toques em 15 dias, ÂNGULO DIFERENTE em cada.
+  - key: pos_orcamento
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 3,  intent: "Tirar dúvida sobre o projeto, sem cobrar decisão" }
+      - { offset_days: 7,  intent: "Apresentar condição de pagamento que viabiliza" }
+      - { offset_days: 15, intent: "Propor ajuste de escopo ou etapa inicial menor" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: reativacao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,   intent: "Retomar cliente antigo com gancho de manutenção ou novo ambiente" }
+      - { offset_days: 180, intent: "Oferecer revisão ou ampliação do que já foi feito" }
+    stop_on: [replied, converted, opted_out]
+
+hard_rules:
+  - "NUNCA dar preço fechado sem medir. Valor por mensagem sem visita gera retrabalho e perda de margem."
+  - "Não prometer prazo de execução sem conferir a agenda de produção."
+  - "Não afirmar material, marca ou garantia que não esteja no DNA."
+  - "Não desqualificar o orçamento do concorrente — mostrar o que está incluso no seu."
+
+kpis:
+  - taxa_conversao
+  - visitas_realizadas
+  - orcamentos_apresentados
+  - taxa_aprovacao_orcamento
+  - ticket_medio
+  - tempo_resposta_mediana
