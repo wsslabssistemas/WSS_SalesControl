@@ -168,6 +168,17 @@ categories:
   retention:          "Recompra, reposição e cliente inativo"
   ecosystem:          "Representantes, transportadoras e indústria parceira"
 
+# O campo `frequencia` do contato vira ciclo previsto de reposição: o núcleo
+# avisa antes do estoque do cliente acabar, em vez de esperar ele ligar.
+recurrence:
+  frequency_field: frequencia
+  remind_before_days: 3
+  intervals_days:
+    semanal: 7
+    quinzenal: 15
+    mensal: 30
+  default_days: 30
+
 cadences:
   - key: pos_cotacao
     applies_to: proposal_followup

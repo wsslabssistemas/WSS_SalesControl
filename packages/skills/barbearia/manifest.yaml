@@ -47,6 +47,9 @@ journey:
     - key: recorrente
       label: "Cliente recorrente"
       terminal: true
+      # Aqui a conquista É a recorrência. Sem `won`, o funil não mostrava
+      # conversão nenhuma e a carteira ficava fora da lista de recompra.
+      won: true
     - key: perdido
       label: "Perdido"
       terminal: true

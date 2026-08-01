@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeAlerts } from "@/lib/agenda";
-import { computeDue } from "@/lib/recurrence";
+import { computeDue, stagesWithoutRecurrence } from "@/lib/recurrence";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import type { Stage } from "@/lib/skill";
 
@@ -88,8 +88,7 @@ export async function GET(
     if (i.contact_id && !ultimaVisita[i.contact_id]) ultimaVisita[i.contact_id] = i.occurred_at;
   }
 
-  const terminais = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
-  for (const r of computeDue(contacts, ultimaVisita, manifest.recurrence ?? null, terminais)) {
+  for (const r of computeDue(contacts, ultimaVisita, manifest.recurrence ?? null, stagesWithoutRecurrence(stages))) {
     eventos.push({
       uid: `retorno-${r.contactId}-${r.suggested.toISOString().slice(0, 10)}@kairos`,
       title: `Chamar ${r.name} de volta`,

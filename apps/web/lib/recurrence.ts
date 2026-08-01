@@ -36,6 +36,21 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
+/**
+ * Quem NÃO recebe recompra: as etapas finais que não são conquista.
+ *
+ * Uma etapa `won` também é final — mas é o cliente conquistado, exatamente
+ * quem deve voltar. Tratar as duas igual apagava da lista justamente a
+ * carteira ativa (era o caso da barbearia, cujo negócio é recompra).
+ * `terminal` e `won` são vocabulário do núcleo, não de mercado — a Lei 1
+ * continua de pé.
+ */
+export function stagesWithoutRecurrence(
+  stages: { key: string; terminal?: boolean; won?: boolean }[],
+): Set<string> {
+  return new Set(stages.filter((s) => s.terminal && !s.won).map((s) => s.key));
+}
+
 /** Próxima data igual ou posterior a `from` que caia no dia da semana pedido. */
 function snapToWeekday(from: Date, weekday: number): Date {
   const d = startOfDay(from);
@@ -46,6 +61,9 @@ function snapToWeekday(from: Date, weekday: number): Date {
 /**
  * Clientes prontos para voltar. `lastVisitByContact` é a última data conhecida
  * de contato/atendimento; sem ela, usa a entrada na etapa atual.
+ *
+ * `excludedStages` vem de `stagesWithoutRecurrence` — etapa de conquista NÃO
+ * entra nessa lista, senão a carteira ativa some da recompra.
  */
 export function computeDue(
   contacts: {
@@ -59,7 +77,7 @@ export function computeDue(
   }[],
   lastVisitByContact: Record<string, string>,
   cfg: RecurrenceConfig | null,
-  terminalStages: Set<string>,
+  excludedStages: Set<string>,
 ): DueContact[] {
   if (!cfg?.frequency_field) return [];
   const intervals = cfg.intervals_days ?? {};
@@ -69,7 +87,7 @@ export function computeDue(
 
   const out: DueContact[] = [];
   for (const c of contacts) {
-    if (terminalStages.has(c.journey_stage)) continue;
+    if (excludedStages.has(c.journey_stage)) continue;
 
     const custom = c.custom ?? {};
     const freq = String(custom[cfg.frequency_field] ?? "");

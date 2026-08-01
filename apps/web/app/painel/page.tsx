@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts, computeCooling } from "@/lib/agenda";
-import { computeDue, labelDia } from "@/lib/recurrence";
+import { computeDue, labelDia, stagesWithoutRecurrence } from "@/lib/recurrence";
 import { whatsappNumber } from "@/lib/phone";
 
 type Contact = {
@@ -90,9 +90,9 @@ export default async function PainelHome() {
   const alerts = computeAlerts(contacts, stages);
   const hoje = alerts.filter((a) => a.days <= 0);
   const cooling = computeCooling(contacts, lastByContact, stages);
-  // Segmentos de recompra: quem já está no ponto de voltar.
-  const terminalSet = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
-  const retornos = computeDue(contacts, lastByContact, recurrence, terminalSet);
+  // Segmentos de recompra: quem já está no ponto de voltar. A etapa de
+  // conquista continua na conta — é a carteira ativa que precisa voltar.
+  const retornos = computeDue(contacts, lastByContact, recurrence, stagesWithoutRecurrence(stages));
 
   // Resultados dos últimos 30 dias (do feedback registrado).
   const recentOutcomes = ix.filter((i) => i.outcome && i.occurred_at >= monthAgo);
