@@ -75,7 +75,14 @@ export async function marcarCompromisso(input: {
   const fim = new Date(inicio.getTime() + duracao * 60000);
 
   const supabase = await createClient();
-  const executor = input.membershipId ?? null;
+  // Sem profissional informado, o compromisso vai para o responsável pelo
+  // contato — é a agenda dele que foi consultada para oferecer o horário.
+  let executor = input.membershipId ?? null;
+  if (!executor && input.contactId) {
+    const { data: dono } = await supabase
+      .from("contacts").select("owner_id").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle();
+    executor = (dono as { owner_id: string | null } | null)?.owner_id ?? null;
+  }
 
   // Confere se ainda está livre — dois atendentes podem marcar ao mesmo tempo.
   const { data: existentes } = await supabase
@@ -113,17 +120,30 @@ export async function marcarCompromisso(input: {
   return { ok: true };
 }
 
-/** Define a jornada de trabalho (substitui a anterior). */
+/**
+ * Define a jornada de trabalho (substitui a anterior).
+ *
+ * `profissional` vazio = jornada da empresa (vale para quem não tem a própria).
+ * Preenchido = jornada daquele profissional, que passa a ter prioridade sobre
+ * a da empresa. É assim que uma barbearia com 5 barbeiros funciona: cada um
+ * com seus dias e horários.
+ */
 export async function salvarJornada(formData: FormData) {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) redirect("/painel");
-  if (membership!.role !== "owner" && membership!.role !== "admin") {
+
+  const alvo = String(formData.get("profissional") ?? "").trim() || null;
+  const ehAdmin = membership!.role === "owner" || membership!.role === "admin";
+  // Cada um pode editar a própria agenda; só o administrador mexe na dos outros
+  // e na da empresa.
+  if (!ehAdmin && alvo !== membership!.membershipId) {
     redirect("/painel/agenda?erro=Sem+permissao");
   }
 
   const supabase = await createClient();
-  await supabase.from("availability_rules").delete().eq("tenant_id", tenant.id).is("membership_id", null);
+  const del = supabase.from("availability_rules").delete().eq("tenant_id", tenant.id);
+  await (alvo ? del.eq("membership_id", alvo) : del.is("membership_id", null));
 
   const linhas: Record<string, unknown>[] = [];
   for (let d = 0; d <= 6; d++) {
@@ -131,13 +151,59 @@ export async function salvarJornada(formData: FormData) {
     const inicio = String(formData.get(`inicio_${d}`) ?? "").trim();
     const fim = String(formData.get(`fim_${d}`) ?? "").trim();
     if (!inicio || !fim || fim <= inicio) continue;
-    linhas.push({ tenant_id: tenant.id, membership_id: null, weekday: d, starts_at: inicio, ends_at: fim, active: true });
+    linhas.push({ tenant_id: tenant.id, membership_id: alvo, weekday: d, starts_at: inicio, ends_at: fim, active: true });
   }
 
   if (linhas.length) await supabase.from("availability_rules").insert(linhas);
 
   revalidatePath("/painel/agenda");
-  redirect("/painel/agenda?ok=jornada");
+  redirect(`/painel/agenda?ok=jornada${alvo ? `&prof=${alvo}` : ""}`);
+}
+
+/** Folga, almoço, feriado — tira o período da agenda de quem for indicado. */
+export async function bloquearHorario(formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+
+  const alvo = String(formData.get("profissional") ?? "").trim() || null;
+  const ehAdmin = membership!.role === "owner" || membership!.role === "admin";
+  if (!ehAdmin && alvo !== membership!.membershipId) {
+    redirect("/painel/agenda?erro=Sem+permissao");
+  }
+
+  const dia = String(formData.get("dia") ?? "").trim();
+  const de = String(formData.get("de") ?? "").trim();
+  const ate = String(formData.get("ate") ?? "").trim();
+  const motivo = String(formData.get("motivo") ?? "").trim() || null;
+  if (!dia || !de || !ate || ate <= de) {
+    redirect("/painel/agenda?erro=Periodo+invalido");
+  }
+
+  const supabase = await createClient();
+  await supabase.from("availability_blocks").insert({
+    tenant_id: tenant.id,
+    membership_id: alvo,
+    starts_at: new Date(`${dia}T${de}`).toISOString(),
+    ends_at: new Date(`${dia}T${ate}`).toISOString(),
+    reason: motivo,
+  });
+
+  revalidatePath("/painel/agenda");
+  redirect("/painel/agenda?ok=bloqueio");
+}
+
+export async function removerBloqueio(formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+  const id = String(formData.get("id") ?? "");
+  if (id) {
+    const supabase = await createClient();
+    await supabase.from("availability_blocks").delete().eq("id", id).eq("tenant_id", tenant.id);
+  }
+  revalidatePath("/painel/agenda");
+  redirect("/painel/agenda");
 }
 
 export async function cancelarCompromisso(formData: FormData) {

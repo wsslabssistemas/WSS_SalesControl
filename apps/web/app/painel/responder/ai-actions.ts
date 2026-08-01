@@ -108,9 +108,12 @@ export async function gerarResposta(input: {
 
   // Contexto do cliente + histórico.
   let contactBlock = "Nenhum cliente selecionado — trate como primeiro contato.";
+  // Cada profissional tem a sua agenda: as vagas oferecidas precisam ser as
+  // DELE, não as da casa. O contato pertence a um responsável.
+  let donoDoContato: string | null = null;
   if (input.contactId) {
     const [{ data: c }, { data: h }] = await Promise.all([
-      supabase.from("contacts").select("name, journey_stage").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
+      supabase.from("contacts").select("name, journey_stage, owner_id").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
       supabase
         .from("interactions")
         .select("direction, content, occurred_at")
@@ -119,7 +122,7 @@ export async function gerarResposta(input: {
         .order("occurred_at", { ascending: false })
         .limit(10),
     ]);
-    const contact = c as { name: string; journey_stage: string } | null;
+    const contact = c as { name: string; journey_stage: string; owner_id: string | null } | null;
     const hist = (h as { direction: string; content: string; occurred_at: string }[] | null) ?? [];
     const stageLabel = stages.find((s) => s.key === contact?.journey_stage)?.label ?? contact?.journey_stage;
     const histText = hist.length
@@ -128,6 +131,7 @@ export async function gerarResposta(input: {
           .map((i) => `${i.direction === "inbound" ? "Cliente" : "Nós"}: ${i.content}`)
           .join("\n")
       : "Sem histórico anterior.";
+    donoDoContato = contact?.owner_id ?? null;
     contactBlock = `Cliente: ${contact?.name ?? "?"}\nEtapa atual: ${stageLabel}\nHISTÓRICO (não repita abordagens já usadas; evolua a conversa):\n${histText}`;
   }
 
@@ -135,7 +139,7 @@ export async function gerarResposta(input: {
   // alguém quer marcar — e no modo automático a venda não fecha.
   let horarios = "";
   try {
-    const vagas = await buscarVagas({ limite: 40 });
+    const vagas = await buscarVagas({ membershipId: donoDoContato, limite: 40 });
     if (vagas.length) {
       horarios = escolherOpcoes(vagas, 4).map(descreverVaga).join(" | ");
     }

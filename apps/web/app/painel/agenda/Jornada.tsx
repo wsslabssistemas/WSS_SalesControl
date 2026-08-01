@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { salvarJornada } from "./horarios-actions";
 
 const DIAS = [
@@ -10,11 +11,36 @@ const DIAS = [
 ];
 
 export type RegraAtual = { weekday: number; starts_at: string; ends_at: string };
+export type Profissional = { id: string; nome: string; temAgenda: boolean };
 
-export default function Jornada({ regras }: { regras: RegraAtual[] }) {
+export default function Jornada({
+  regras,
+  profissionais,
+  selecionado,
+  podeEditar,
+}: {
+  regras: RegraAtual[];
+  profissionais: Profissional[];
+  /** "" = agenda da empresa; id = agenda daquele profissional. */
+  selecionado: string;
+  podeEditar: boolean;
+}) {
+  const router = useRouter();
+  const params = useSearchParams();
   const [aberto, setAberto] = useState(regras.length === 0);
+
   const doDia = (d: number) => regras.find((r) => r.weekday === d);
   const hhmm = (t?: string) => (t ? t.slice(0, 5) : "");
+  const nomeAtual = selecionado
+    ? profissionais.find((p) => p.id === selecionado)?.nome ?? "profissional"
+    : "empresa";
+
+  const trocar = (id: string) => {
+    const p = new URLSearchParams(params.toString());
+    if (id) p.set("prof", id);
+    else p.delete("prof");
+    router.push(`/painel/agenda${p.toString() ? `?${p}` : ""}`);
+  };
 
   return (
     <div className="card mt-16">
@@ -23,14 +49,42 @@ export default function Jornada({ regras }: { regras: RegraAtual[] }) {
           <p className="eyebrow" style={{ margin: 0 }}>Horário de atendimento</p>
           <p className="text-dim" style={{ margin: "4px 0 0", fontSize: 13 }}>
             {regras.length === 0
-              ? "Sem isso o sistema não sabe o que está livre e não consegue marcar."
-              : `${regras.length} dia(s) configurado(s). É daqui que saem os horários oferecidos ao cliente.`}
+              ? `Sem horário definido para ${nomeAtual === "empresa" ? "a empresa" : nomeAtual}, o sistema não consegue oferecer vaga.`
+              : `É daqui que saem os horários oferecidos ao cliente.`}
           </p>
         </div>
-        <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAberto((v) => !v)}>
-          {aberto ? "Fechar" : "Editar horários"}
-        </button>
+        {podeEditar && (
+          <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAberto((v) => !v)}>
+            {aberto ? "Fechar" : "Editar"}
+          </button>
+        )}
       </div>
+
+      {/* Cada profissional tem a sua agenda. Sem agenda própria, vale a da casa. */}
+      {profissionais.length > 1 && (
+        <div className="row wrap mt-16" style={{ gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => trocar("")}
+            className={selecionado === "" ? "badge badge-brand" : "badge"}
+            style={{ cursor: "pointer", padding: "6px 11px" }}
+          >
+            Agenda da casa
+          </button>
+          {profissionais.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => trocar(p.id)}
+              className={selecionado === p.id ? "badge badge-brand" : "badge"}
+              style={{ cursor: "pointer", padding: "6px 11px" }}
+              title={p.temAgenda ? "Tem horário próprio" : "Usa o horário da casa"}
+            >
+              {p.nome}{p.temAgenda ? " ✓" : ""}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!aberto && regras.length > 0 && (
         <div className="row wrap mt-16" style={{ gap: 8 }}>
@@ -42,8 +96,9 @@ export default function Jornada({ regras }: { regras: RegraAtual[] }) {
         </div>
       )}
 
-      {aberto && (
+      {aberto && podeEditar && (
         <form action={salvarJornada} className="mt-16">
+          <input type="hidden" name="profissional" value={selecionado} />
           <div className="stack" style={{ gap: 8 }}>
             {DIAS.map((d) => {
               const r = doDia(d.n);
@@ -60,10 +115,13 @@ export default function Jornada({ regras }: { regras: RegraAtual[] }) {
               );
             })}
           </div>
-          <button type="submit" className="btn btn-primary mt-16">Salvar horários</button>
+          <button type="submit" className="btn btn-primary mt-16">
+            Salvar horário {selecionado ? `de ${nomeAtual}` : "da casa"}
+          </button>
           <p className="text-faint" style={{ marginTop: 10, marginBottom: 0, fontSize: 12 }}>
-            Marque os dias em que atende. O sistema calcula os horários livres
-            descontando o que já está marcado.
+            {selecionado
+              ? "Quem tem horário próprio não usa o da casa. Deixe tudo desmarcado para voltar a seguir a agenda geral."
+              : "Vale para todo profissional que não tiver horário próprio."}
           </p>
         </form>
       )}

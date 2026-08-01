@@ -7,7 +7,7 @@ import { computeAlerts } from "@/lib/agenda";
 import AgendaCalendar, { type CalItem } from "./AgendaCalendar";
 import AssinarCalendario from "./AssinarCalendario";
 import { gerarEnderecoCalendario, removerEnderecoCalendario } from "./actions";
-import { cancelarCompromisso } from "./horarios-actions";
+import { cancelarCompromisso, bloquearHorario, removerBloqueio } from "./horarios-actions";
 import Jornada from "./Jornada";
 
 function localISO(d: Date) {
@@ -16,7 +16,13 @@ function localISO(d: Date) {
   ).padStart(2, "0")}`;
 }
 
-export default async function AgendaPage() {
+export default async function AgendaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ prof?: string; ok?: string; erro?: string }>;
+}) {
+  const sp = await searchParams;
+  const profSel = sp.prof ?? "";
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -57,19 +63,18 @@ export default async function AgendaPage() {
 
   // Jornada de trabalho e compromissos marcados (segmentos com hora marcada).
   let regras: { weekday: number; starts_at: string; ends_at: string }[] = [];
+  let profissionais: { id: string; nome: string; temAgenda: boolean }[] = [];
+  let bloqueios: { id: string; starts_at: string; ends_at: string; reason: string | null; membership_id: string | null }[] = [];
   let compromissos: {
     id: string; starts_at: string; service: string | null; origem: string;
     contact_id: string | null; contato: { name: string } | null;
   }[] = [];
   if (scheduling?.enabled) {
-    const [{ data: r }, { data: ap }] = await Promise.all([
-      supabase
-        .from("availability_rules")
-        .select("weekday, starts_at, ends_at")
-        .eq("tenant_id", tenant.id)
-        .is("membership_id", null)
-        .eq("active", true)
-        .order("weekday"),
+    const [{ data: r }, { data: ap }, { data: mem }, { data: todasRegras }, { data: blk }] = await Promise.all([
+      (profSel
+        ? supabase.from("availability_rules").select("weekday, starts_at, ends_at").eq("tenant_id", tenant.id).eq("membership_id", profSel)
+        : supabase.from("availability_rules").select("weekday, starts_at, ends_at").eq("tenant_id", tenant.id).is("membership_id", null)
+      ).eq("active", true).order("weekday"),
       supabase
         .from("appointments")
         .select("id, starts_at, service, origem, contact_id, contato:contacts(name)")
@@ -78,9 +83,17 @@ export default async function AgendaPage() {
         .gte("starts_at", new Date().toISOString())
         .order("starts_at")
         .limit(20),
+      supabase.from("memberships").select("id, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
+      supabase.from("availability_rules").select("membership_id").eq("tenant_id", tenant.id).eq("active", true).not("membership_id", "is", null),
+      supabase.from("availability_blocks").select("id, starts_at, ends_at, reason, membership_id").eq("tenant_id", tenant.id).gte("ends_at", new Date().toISOString()).order("starts_at").limit(20),
     ]);
     regras = (r as typeof regras | null) ?? [];
     compromissos = (ap as unknown as typeof compromissos | null) ?? [];
+    bloqueios = (blk as typeof bloqueios | null) ?? [];
+    const comAgenda = new Set(((todasRegras as { membership_id: string }[] | null) ?? []).map((x) => x.membership_id));
+    profissionais = ((mem as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+      .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—", temAgenda: comAgenda.has(m.id) }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
   }
 
   const alerts = computeAlerts(
@@ -125,7 +138,61 @@ export default async function AgendaPage() {
       )}
 
       {/* Jornada de trabalho: é o que permite o motor oferecer horário */}
-      {scheduling?.enabled && isAdmin && <Jornada regras={regras} />}
+      {scheduling?.enabled && (
+        <Jornada
+          regras={regras}
+          profissionais={profissionais}
+          selecionado={profSel}
+          podeEditar={isAdmin || profSel === membership.membershipId}
+        />
+      )}
+
+      {/* Folgas e bloqueios: tiram o período da agenda */}
+      {scheduling?.enabled && (isAdmin || profSel === membership.membershipId) && (
+        <div className="card mt-16">
+          <p className="eyebrow" style={{ marginBottom: 4 }}>Folgas e bloqueios</p>
+          <p className="text-dim" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>
+            Almoço, folga, feriado ou compromisso. O sistema deixa de oferecer esses horários.
+          </p>
+          {bloqueios.length > 0 && (
+            <div className="row wrap" style={{ gap: 8, marginBottom: 14 }}>
+              {bloqueios.map((b) => (
+                <span key={b.id} className="badge" style={{ padding: "6px 10px" }}>
+                  {new Date(b.starts_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  {"–"}
+                  {new Date(b.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  {b.reason ? ` · ${b.reason}` : ""}
+                  {b.membership_id ? ` · ${profissionais.find((p) => p.id === b.membership_id)?.nome ?? ""}` : " · casa"}
+                  <form action={removerBloqueio} style={{ display: "inline" }}>
+                    <input type="hidden" name="id" value={b.id} />
+                    <button type="submit" className="linklike text-faint" style={{ fontSize: 11, marginLeft: 6 }}>✕</button>
+                  </form>
+                </span>
+              ))}
+            </div>
+          )}
+          <form action={bloquearHorario} className="row wrap" style={{ gap: 8, alignItems: "flex-end" }}>
+            <input type="hidden" name="profissional" value={profSel} />
+            <label className="text-dim" style={{ fontSize: 12, width: 150 }}>
+              <span style={{ display: "block", marginBottom: 4 }}>Dia</span>
+              <input type="date" name="dia" required />
+            </label>
+            <label className="text-dim" style={{ fontSize: 12, width: 110 }}>
+              <span style={{ display: "block", marginBottom: 4 }}>De</span>
+              <input type="time" name="de" defaultValue="12:00" required />
+            </label>
+            <label className="text-dim" style={{ fontSize: 12, width: 110 }}>
+              <span style={{ display: "block", marginBottom: 4 }}>Até</span>
+              <input type="time" name="ate" defaultValue="13:00" required />
+            </label>
+            <label className="text-dim grow" style={{ fontSize: 12, minWidth: 140 }}>
+              <span style={{ display: "block", marginBottom: 4 }}>Motivo (opcional)</span>
+              <input name="motivo" placeholder="Almoço, folga…" />
+            </label>
+            <button type="submit" className="btn btn-sm">Bloquear</button>
+          </form>
+        </div>
+      )}
 
       {/* Compromissos marcados */}
       {scheduling?.enabled && compromissos.length > 0 && (
