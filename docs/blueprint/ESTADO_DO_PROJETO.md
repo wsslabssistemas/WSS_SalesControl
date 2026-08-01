@@ -6,7 +6,8 @@
 > sem repetir discussões encerradas. **Leia antes de propor qualquer coisa.**
 >
 > Ordem: este arquivo → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
-> `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `../../CLAUDE.md` (as três leis).
+> `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `COS_Escolas_de_Venda.md` (que
+> técnica usamos e o que falta) → `../../CLAUDE.md` (as três leis).
 
 ---
 
@@ -89,9 +90,15 @@ trocar no seletor do topo do painel.
    Feltros Bandeirantes). Manifesto e 18 entradas já **no banco**, com
    `Indústria Demo` criada — a curadoria veio de pesquisa, não de vivência, e é
    essa a diferença entre boa e excelente.
-2. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
-   influências/mentores por trás da biblioteca e um **parecer honesto** sobre se
-   já somos excelência ou o que falta. **Não foi feito.**
+2. **Absorver o estudo das escolas de venda** — `COS_Escolas_de_Venda.md` (feito,
+   ago/2026). O parecer: a biblioteca é ativo real, o motor **não escolhe, não
+   mede e não aprende**. Três movimentos propostos, nesta ordem:
+   **M1** escola como enum canônico (+ validar categoria da biblioteca, hoje
+   ninguém checa — `policies` entrou na barbearia por isso);
+   **M2** ligar desfecho → escola (é o único ativo que melhora com escala);
+   **M3** entradas de **indecisão (JOLT)** nos 8 segmentos — 40 a 60% das perdas
+   e zero entradas nossas — e do **comprador que não quer conversar** (67% do
+   B2B, Gartner 2026). Decisão fechada: **não criar dimensão de gênero.**
 3. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
 4. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
