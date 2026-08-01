@@ -1,190 +1,156 @@
-# ESTADO DO PROJETO — COS
-**Última atualização:** 23 de julho de 2026
+# ESTADO DO PROJETO — COS (WSS Kairós)
+**Última atualização:** 1º de agosto de 2026
 **Fabricante:** WSS Labs · **Fundador:** William
 
-> Este documento existe para que qualquer conversa nova (com Claude ou com
-> outra pessoa) possa retomar o projeto sem repetir discussões já encerradas.
-> Leia este arquivo ANTES de propor qualquer coisa.
+> Este documento existe para que qualquer conversa nova possa retomar o projeto
+> sem repetir discussões encerradas. **Leia antes de propor qualquer coisa.**
+>
+> Ordem: este arquivo → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
+> `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `../../CLAUDE.md` (as três leis).
 
 ---
 
 ## 1. O que estamos construindo
 
-Um **motor de inteligência comercial multi-tenant**. Não é um sistema para
-academias — academia é apenas a primeira Skill instalada sobre o motor.
+Um **motor de inteligência comercial multi-tenant**. O produto vendável é o
+núcleo; os segmentos são **dado** (manifesto YAML), nunca código.
 
-O produto vendável é o núcleo. Os segmentos (academia, barbearia, salão,
-clínica, automação) são especializações declaradas em arquivos de dados.
+**Origem:** protótipo validado no Base44 na academia do fundador (Be Fitness,
+Porto Alegre). A migração existe porque no-code não dá posse, multi-tenancy real
+nem controle de custo de IA.
 
-**Origem:** protótipo validado no Base44 na academia própria do fundador
-(Be Fitness, Porto Alegre). O protótipo funciona e está em uso diário.
-A migração existe porque no-code não dá posse dos arquivos, multi-tenancy
-real nem controle de custo de IA — sem isso não há SaaS vendável.
+**O ativo real não é o código.** É a **biblioteca curada** — hoje 116 entradas
+em 7 segmentos, com técnica de venda aplicada a contexto específico.
 
-**O ativo real não é o código.** É a biblioteca comercial curada
-(Girard, Belfort, Hormozi, Tracy aplicados a contexto específico).
-Código se copia em duas semanas; aquela curadoria, não.
-
----
-
-## 2. Decisões já tomadas (não reabrir sem motivo novo)
-
-| Tema | Decisão |
-|---|---|
-| Stack | Next.js 15 + TypeScript + Supabase (Postgres) + Vercel |
-| API | Hono em rota catch-all `/api/[[...route]]` — resolve o limite de 12 funções |
-| ORM | Drizzle, migrations versionadas em Git |
-| Busca semântica | pgvector |
-| Jobs de fundo | Inngest (motor proativo não roda em serverless) |
-| IA | Vercel AI SDK, para trocar de modelo sem reescrever o motor |
-| Nome | **COS** como plataforma, **WSS Labs** como fabricante. "WSS Sales Control" e "Sales Mentor" ficam com o protótipo. Marca isolada em variável de ambiente — trocar depois é editar uma linha |
-| WhatsApp | Duas versões de produto: **manual** (copia-e-cola) primeiro, **automática** depois. Quando for automático, só API oficial da Meta — provedor não-oficial arrisca banir o número do cliente pagante |
-| Prospecção fria B2C | **Não construir.** Risco de banimento e base legal frágil sob LGPD. Crescimento B2C vem de indicação, reativação e resgate. B2B frio é permitido (dados públicos) |
-| Cobrança | Por **atendimentos/mês**, nunca por tokens. Token é custo interno; atendimento é a moeda do negócio do cliente |
-| Blueprint | Enxuto e versionado no repositório, não documento de 300 páginas |
+**A tese de venda** (pesquisa do fundador, ver `COS_Tese_de_Mercado.md`): o
+mercado não sofre de falta de bom atendimento — sofre da **mistura entre
+"atendimento" e "técnica de vendas"**. +60% das PMEs brasileiras não usam CRM
+estruturado. Não vendemos CRM (caixa vazia que o cliente enche); vendemos **a
+técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
++70% dos orçamentos nunca recebem uma segunda mensagem.
 
 ---
 
-## 3. As três leis de engenharia
+## 2. O que está pronto e funcionando
 
-Devem ser verificáveis automaticamente e falhar o build.
+### Núcleo comercial
+- **Responder** — cockpit manual (busca na biblioteca) **+ motor de IA** que
+  gera resposta ancorada em DNA + biblioteca + histórico + catálogo + agenda,
+  e **explica a técnica** ao vendedor.
+- **Primeira abordagem** — para prospecção, onde *não existe* mensagem do
+  cliente. Usa o retrato público da empresa (CNAE, porte, ano, cidade).
+- **Trava anti-invenção** — falta fato no DNA → escala, não redige. Preço e
+  estoque só saem do **catálogo**; horário só sai da **agenda**.
+- **Aprender o que converte** — desfecho registrado realimenta o motor.
+- **Follow-up** — a tela que cobra o toque, por cadência do manifesto.
+- **Recorrência** — quem está no ponto de voltar, com data no dia preferido.
+- **Agenda com disponibilidade real** — jornada por empresa **e por
+  profissional**, folgas/bloqueios, e o motor **fecha o horário** (`origem=motor`).
+- **Contatos, Funil, Gestão** (com Analista de IA), **Equipe**, **DNA**,
+  **Onboarding** (escolha de ramo + entrevista), **Tutorial**, **Automação**.
+- **Catálogo** — importação de planilha que reconhece as colunas sozinha.
+- **Add-ons**: **Oportunidades** (prospecção B2B por CNAE) e **Licitações**
+  (PNCP: editais, inteligência, quem ganhou, guia + assistente de IA).
+- **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
+  planos** (teste grátis e liberação de módulos por empresa).
 
-1. **O núcleo nunca conhece segmento.** `packages/core/` não importa de
-   `packages/skills/` nem contém vocabulário de mercado.
-2. **Uma Skill é dado, nunca código.** `packages/skills/` só aceita
-   `.yaml`, `.json`, `.md`.
-3. **Nenhum acesso a dados sem contexto de empresa.** RLS no banco é a
-   defesa real.
+### Segmentos — 7 completos, 116 entradas curadas
+| Segmento | Biblioteca | Módulos |
+|---|---|---|
+| `academia` | 22 | — |
+| `barbearia` | 18 | — |
+| `escola_esportiva` (natação, lutas, crossfit, pilates, clubes) | 16 | — |
+| `clinica` (médica, odonto, estética) | 15 | — |
+| `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 15 | prospecção + licitações |
+| `automacao` (predial, climatização, energia) | 15 | prospecção + licitações |
+| `distribuidora` (atacado) | 15 | prospecção |
+
+Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador —
+trocar no seletor do topo do painel.
+
+### Infra
+- Migrations `0001`–`0025` aplicadas. RLS em tudo com `tenant_id`.
+- `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
+  `scripts/criar-tenant-demo.mjs`.
+- `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
+  direto daqui). `AI_API_KEY` (Anthropic) na Vercel e local.
 
 ---
 
-## 4. O que já está construído e funcionando
+## 3. Pendências (em ordem de importância)
 
-Tudo no Supabase, executado pelo SQL Editor. Ainda não existe aplicação.
+1. **Itens do edital na tela.** A busca do PNCP casa com o texto completo do
+   edital (inclui a lista de itens) — por isso aparecem editais sem a palavra
+   visível na descrição, e o fundador estranhou com razão. `getEditalItens`
+   (`lib/licitacoes.ts`) já traz os itens marcando quais batem; **falta expor na
+   UI** ("por que este edital apareceu").
+2. **Segmento `industria`** (8º). Pesquisa do fundador (ago/2026) mapeou o parque
+   industrial RS/BR e apontou a indústria B2B como o maior oceano azul: vende
+   **através de representante** com "pasta fechada", sem prospecção ativa, e o
+   alerta mais valioso é **lojista sem reposição há 90 dias**. Cobre têxtil/
+   feltro (caso real: irmã do fundador na Feltros Bandeirantes), calçadista,
+   moveleira, metal-mecânica, embalagens, autopeças. **Vantagem: especialista
+   real disponível para revisar a curadoria.**
+3. **Levantar as técnicas de venda que usamos** — o fundador pediu um estudo das
+   influências/mentores por trás da biblioteca e um **parecer honesto** sobre se
+   já somos excelência ou o que falta. **Não foi feito.**
+4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
+   fundador. O `.ics` de leitura já existe e funciona.
+5. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
+   motor proativo agendado e **score de potencial → preço sugerido**.
+6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
+   (~R$0,01/empresa) ou base própria do dump da Receita.
+7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
+   eventos. **Restaurante descartado** (operação de fluxo, não de funil).
 
-- [x] `0001_foundation.sql` — 19 tabelas
-- [x] `0002_rls.sql` — RLS em todas as tabelas com `tenant_id`
-- [x] `isolation_test.sql` — **7 de 7 PASSOU**. Empresa A não lê nem escreve na B
-- [x] `0003_seed_skills.sql` — Skills academia e barbearia carregadas
-- [x] `0004_seed_knowledge_academia.sql` — 22 entradas (confirmado no banco)
-- [x] `demo_tenants.sql` + `dna_coverage_check.sql` — 2 empresas demo; trava de DNA validada
-- [x] `0006_hardening.sql` — P0 da auditoria fechados; `hardening_test.sql` 6/6 PASSOU
-- [ ] Validador de Skill (RF-02) — em andamento; `required_facts_check.sql` já achou 1 bug real
+---
 
-**Resolvido (jul/2026):** confirmado no banco — 2 / 22 / 2 / 2. O 0004 rodou.
-A consulta segue útil como health-check:
+## 4. Armadilhas já descobertas (não repetir)
 
-```sql
-select 'skills' as tabela, count(*) from public.skills
-union all select 'knowledge_entries', count(*) from public.knowledge_entries
-union all select 'tenants', count(*) from public.tenants
-union all select 'commercial_dna', count(*) from public.commercial_dna;
+- **`tenant_skills`**: a RLS de `skills` exige o vínculo. Gravar só
+  `tenants.skill_key` faz o painel abrir **sem etapas e sem origens**. Use
+  sempre a RPC `install_skill(tenant, skill_key)`. Já derrubou a Barbearia Demo
+  e as 5 demos criadas depois.
+- **Unicidade de `skills` é `(key, version)`**, não `key`.
+- **PNCP derruba rajadas** — 28 chamadas simultâneas, 24 falham. Use `getJson`
+  (retry) + `mapLimit`. `tam_pagina` até 100 funciona; paginação funciona;
+  **a busca textual ignora filtro de data**.
+- **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
+- **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
+  O label muda por segmento; a chave, não.
+- **Chaves de campo do DNA são contrato** com `required_facts`. Traduza `label`
+  e `help`, **nunca a chave**.
+- **Lei 1 vaza fácil**: já apareceu "Atendimento/Serviço" (vocabulário de
+  barbearia) em automação, e `"contato"` chumbado como etapa inicial. Se é
+  específico de mercado, tem que vir do manifesto.
+
+---
+
+## 5. Como o fundador trabalha
+
+- Merge direto na `main`, sem PR. CI valida os manifestos a cada push.
+- Ele **testa no deploy** (`wss-kairos.vercel.app`) e reporta com precisão —
+  vários bugs reais vieram dele. Leve a sério e **verifique no código**.
+- Quer honestidade sobre limites, não otimismo. Diga o que falta.
+- Peça o que exige ação dele (chaves, contas, OAuth) só quando indispensável.
+- Tudo em português do Brasil, inclusive o texto do produto.
+
+---
+
+## 6. Verificações rápidas de sanidade
+
+```bash
+npm run -w @cos/skill-loader validate     # manifestos (deve dar 7/7)
+node scripts/seed-skills.mjs              # recarrega manifestos no banco
+cd apps/web && npm run build              # build limpo
 ```
-Esperado: 2 / 22 / 2 / 2.
 
----
-
-## 5. Conceitos centrais
-
-**Commercial DNA** — os fatos de cada empresa (preços, horários, catálogo,
-parceiros, políticas). Fonte única de verdade. **O que não está no DNA, a IA
-não pode afirmar.** Quando falta um fato exigido, o motor escala para humano
-em vez de inventar. Isso corrige três bugs reais do protótipo: negar serviço
-existente, oferecer "vaga no horário" numa academia de acesso livre, e afirmar
-condição errada de pagamento.
-
-**Skill** — manifesto YAML por segmento: vocabulário, jornada (com fases),
-campos próprios, seções de DNA, as 12 categorias canônicas, cadências e
-regras permanentes. Instalar um segmento novo não pode exigir uma linha de código.
-
-**As 12 categorias canônicas** — obtidas por engenharia reversa da biblioteca
-real da Be Fitness. Onze das doze são idênticas em qualquer segmento:
-`pricing`, `risk_free_entry`, `availability`, `expertise_proof`, `catalog`,
-`goal_matching`, `objections`, `commitment_offer`, `reciprocity`,
-`limits_and_ethics`, `retention`, `ecosystem`.
-
-**Separação estratégia/fato** — a biblioteca guarda a estratégia com
-`required_facts`; os números vêm do DNA. É isso que faz a segunda academia
-receber as 22 entradas funcionando sem reescrever nada.
-
-**Jornada é grafo, não linha** — pode avançar, pular e retroceder. Por isso
-existe `contact_stage_history` (append-only): sem ela o estágio anterior é
-sobrescrito e a análise se perde.
-
-**Camada proativa** — sinais internos e externos produzem o mesmo objeto
-(`Opportunity`), com `reason` obrigatório. Alocação respeita capacidade diária
-do vendedor. Anti-saturação via `contact_touch_log`. Supressão LGPD consultada
-antes de qualquer envio.
-
----
-
-## 6. Correções de métrica (achadas no painel real, valem para o produto)
-
-O protótipo mede errado. Definições canônicas obrigatórias:
-
-- **Conversão = convertidos distintos ÷ leads do período.** O protótipo usava
-  ÷ atendimentos, o que pune follow-up. Real: 6,5%, não 2,3%.
-- **Resultado conta pessoas distintas**, nunca eventos. "8 matrículas" eram
-  5 pessoas com registros duplicados.
-- **Mediana + p90**, nunca só média. Média de 4,9h escondia 92% respondidos
-  em menos de 1 hora e 7 casos esquecidos.
-- **Toda dimensão é enum**, nunca texto livre (`TotalPass` e `Totalpass`
-  apareciam como origens separadas).
-- **Gargalo real:** só 8,3% dos leads aceitam a oferta de entrada, e quem
-  aceita converte bem. Conteúdo e motor devem priorizar `risk_free_entry`.
-
----
-
-## 7. Custo de IA
-
-O protótipo injeta a biblioteca inteira no prompt a cada análise
-(~15–20 mil tokens de entrada por atendimento). Quanto melhor a biblioteca,
-mais caro fica — o ativo é cobrado como passivo.
-
-Correção: recuperação semântica (4–6 trechos), cache de prefixo,
-modelo pequeno para classificar e modelo forte só em fechamento,
-e `usage_ledger` por tenant desde a primeira migration.
-
----
-
-## 8. Aprendizado: seja honesto sobre o limite
-
-Com 11 matrículas por mês, uma empresa sozinha **não** produz aprendizado
-estatisticamente válido. Aprendizado real só liga com agregação entre dezenas
-de empresas (respeitando privacidade, mínimo de k empresas, opt-out).
-Até lá, a Commercial Memory é escrituração honesta. **Não vender "IA que
-aprende" antes disso.**
-
----
-
-## 9. Próximos passos
-
-1. ✓ 0004 confirmado e P0 fechados (0006). Segue: validador de Skill e P1/P2 (0007)
-2. Biblioteca da Skill Barbearia (mesma estrutura, conteúdo próprio)
-3. Sair do SQL manual: Node + loader e validador de Skill em TypeScript
-4. Motor de decisão (Parte 2 do Blueprint)
-5. Onboarding com extração de DNA por entrevista — **gargalo de escala do
-   produto**, não está em nenhum dos 8 documentos originais
-
----
-
-## 10. Como trabalhar
-
-- **Claude Code** é o caminho para o código: roda na máquina, lê o repositório,
-  executa testes e envia para o GitHub.
-- **Claude in Chrome** permite que o Claude leia páginas (GitHub, Supabase)
-  no navegador do fundador.
-- Neste chat, o Claude **não** consegue ler o GitHub: o site bloqueia acesso
-  automatizado.
-- **Arquivos do Projeto** persistem entre conversas — é ali que este documento
-  e o Blueprint devem ficar.
-
----
-
-## 11. Critério de pronto do motor
-
-> Duas empresas de segmentos diferentes. Cada uma escolhe o segmento no
-> cadastro e recebe sua própria base de conhecimento. Cada uma recebe análise
-> contextual baseada no seu DNA e no histórico daquele cliente. Nenhuma
-> enxerga uma linha da outra. **E não se escreveu código nenhum entre
-> configurar a primeira e a segunda.**
+Fatos órfãos no banco (deve voltar vazio):
+```sql
+with e as (select distinct skill_key, unnest(required_facts) c
+             from knowledge_entries where tenant_id is null and source='skill_seed'),
+     d as (select k.key sk, (s->>'key')||'.'||(f->>'key') c
+             from skills k, jsonb_array_elements(k.manifest->'dna_sections') s,
+                  jsonb_array_elements(coalesce(s->'fields','[]'::jsonb)) f)
+select e.* from e left join d on d.sk=e.skill_key and d.c=e.c where d.c is null;
+```

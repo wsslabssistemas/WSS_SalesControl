@@ -55,6 +55,47 @@ estrutura (jornada, campos, DNA, cadências); a **curadoria é o ativo**.
 
 ---
 
+## 3b. Indústria — pesquisa do fundador (ago/2026)
+
+Levantamento do parque industrial gaúcho e brasileiro, com o diagnóstico de onde
+há mais espaço para inteligência comercial.
+
+**Clusters do RS:** metal-mecânico e automotivo (Serra — Caxias: Randon,
+Marcopolo, Agrale, Tramontina); calçadista e coureiro (Vale do Sinos — Novo
+Hamburgo, Campo Bom, Parobé); mobiliário (Bento Gonçalves, Lagoa Vermelha —
+Todeschini, Florense, Kappesberg); máquinas e implementos agrícolas (Noroeste —
+Santa Rosa, Passo Fundo, Não-Me-Toque: Stara, Kepler Weber, John Deere).
+
+**O diagnóstico central:** a indústria tem herança de gestão focada no chão de
+fábrica. Vê tecnologia comercial apenas como **ERP** (nota fiscal e estoque) e
+**deixa a venda na mão de representantes autônomos**. Produto caro, ciclo longo,
+aquisição de cliente quase primitiva.
+
+**As três dores nomeadas:**
+1. **Máquinas e implementos agrícolas** — equipamento de R$100 mil a R$2 milhões,
+   mas perde-se o timing porque o representante demorou no follow-up ou não
+   nutriu o produtor nos meses que antecedem a safra. O ERP legado guarda o
+   histórico de compras que ninguém usa para prever a próxima.
+2. **Moveleira** — depende de lojista, arquiteto e franquia. A jornada é visual,
+   mas a captação e o acompanhamento do parceiro B2B são reativos.
+3. **Calçadista e têxtil** — representante com **"pasta de clientes" fechada**,
+   visitando sempre as mesmas lojas, sem prospecção de novas boutiques ou redes.
+   O alerta mais valioso seria **lojista há +90 dias sem reposição**.
+
+**Conclusão do fundador (adotada):** o argumento de venda para a indústria não é
+"melhorar seu atendimento", é **"construir uma máquina previsível de aquisição
+que não depende do humor do representante"**.
+
+**Decisão:** criar o manifesto **`industria`** (8º segmento). Cobre têxtil e
+feltro, calçadista, moveleira (vendendo para lojista), metal-mecânica,
+embalagens, alimentos industrializados e autopeças — todos vendem B2B para
+revenda, através de representante. O que os separa de `distribuidora` é
+justamente o **canal indireto** e a especificação técnica do produto.
+
+**Vantagem estratégica:** a irmã do fundador trabalha na Feltros Bandeirantes —
+há **especialista real disponível** para revisar a curadoria, que é o que leva
+uma biblioteca de *boa* para *excelente*.
+
 ## 4. Quanto custa um segmento novo (a economia da coisa)
 
 | Etapa | Esforço | Quem faz |
