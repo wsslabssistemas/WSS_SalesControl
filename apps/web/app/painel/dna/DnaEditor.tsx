@@ -7,6 +7,7 @@ import { saveDna } from "./actions";
 type FieldDef = {
   key: string;
   label?: string;
+  help?: string;
   type: string;
   columns?: string[];
   options?: string[];
@@ -219,6 +220,9 @@ export function DnaEditor({
               {s.fields.map((f) => (
                 <label key={f.key} style={{ fontSize: 13, opacity: 0.85 }}>
                   <span style={{ display: "block", marginBottom: 5 }}>{f.label ?? f.key}</span>
+                  {f.help && (
+                    <span className="text-faint" style={{ display: "block", fontSize: 12, fontWeight: 400, marginBottom: 6, lineHeight: 1.45 }}>{f.help}</span>
+                  )}
                   {renderField(s.key, f)}
                 </label>
               ))}

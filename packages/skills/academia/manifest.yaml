@@ -96,41 +96,41 @@ dna_sections:
     label: "Planos e valores"
     required: true
     fields:
-      - { key: range,  type: money_range, required: true, label: "Faixa de valores" }
-      - { key: plans,  type: table, columns: [nome, valor, condicao, fidelidade], label: "Planos e preços" }
-      - { key: payment_methods, type: list, label: "Formas de pagamento" }
+      - { key: range,  type: money_range, required: true, label: "Faixa de valores", help: "A faixa de preço dos seus serviços. Ex.: de R$ 40 a R$ 90" }
+      - { key: plans,  type: table, columns: [nome, valor, condicao, fidelidade], label: "Planos e preços", help: "Cada serviço com seu valor. Ex.: Corte — R$ 45 — 40 min" }
+      - { key: payment_methods, type: list, label: "Formas de pagamento", help: "Como o cliente pode pagar. Ex.: Pix, débito, crédito em 2x" }
   - key: availability
     label: "Horário de funcionamento"
     required: true
     fields:
-      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento" }
+      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Os dias e horários que você atende. Ex.: Seg a Sex 9h-19h; Sáb 8h-14h" }
   - key: catalog
     label: "Modalidades e grade de aulas"
     required: true
     fields:
-      - { key: items, type: table, columns: [nome, dia, hora, publico, observacao], label: "Itens" }
+      - { key: items, type: table, columns: [nome, dia, hora, publico, observacao], label: "Itens", help: "Liste o que você oferece. O sistema só pode falar do que estiver aqui" }
   - key: risk_free_entry
     label: "Oferta de entrada sem risco"
     fields:
-      - { key: exists,   type: boolean, required: true, label: "Oferece?" }
-      - { key: duration, type: text, label: "Duração" }
-      - { key: gift,     type: text, label: "Brinde de boas-vindas" }
+      - { key: exists,   type: boolean, required: true, label: "Oferece?", help: "Marque se você oferece alguma condição especial para quem vem pela primeira vez" }
+      - { key: duration, type: text, label: "Duração", help: "Quanto tempo leva. Ex.: 40 minutos" }
+      - { key: gift,     type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água" }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
     fields:
-      - { key: address,   type: text, required: true, label: "Endereço" }
-      - { key: whatsapp,  type: text, label: "WhatsApp" }
-      - { key: instagram, type: text, label: "Instagram" }
+      - { key: address,   type: text, required: true, label: "Endereço", help: "Endereço completo com ponto de referência. Ex.: Rua X, 100 - ao lado do mercado" }
+      - { key: whatsapp,  type: text, label: "WhatsApp", help: "O número que o cliente usa para falar com você" }
+      - { key: instagram, type: text, label: "Instagram", help: "Seu perfil. Ex.: @suaempresa" }
   - key: differentials
     label: "Diferenciais"
     fields:
-      - { key: items, type: list, label: "Itens" }
+      - { key: items, type: list, label: "Itens", help: "Liste o que você oferece. O sistema só pode falar do que estiver aqui" }
   - key: policies
     label: "Políticas"
     fields:
-      - { key: cancellation, type: text, label: "Política de cancelamento" }
-      - { key: partnerships, type: table, columns: [servico, profissional, valor], label: "Parcerias" }
+      - { key: cancellation, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança" }
+      - { key: partnerships, type: table, columns: [servico, profissional, valor], label: "Parcerias", help: "Parceiros que atuam no seu espaço ou que você indica" }
   - key: free_notes
     label: "Outras informações importantes"
     type: rich_text
@@ -142,7 +142,7 @@ dna_sections:
     # required_fact reciprocity.gift era caminho órfão e a entrada escalava
     # sempre — mesmo para quem tinha o brinde declarado. O DNA já a assumia.
     fields:
-      - { key: gift, type: text, label: "Brinde de boas-vindas" }
+      - { key: gift, type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água" }
 
 # ---------------------------------------------------------------------
 # AS 12 CATEGORIAS CANÔNICAS

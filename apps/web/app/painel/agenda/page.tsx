@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts } from "@/lib/agenda";
 import AgendaCalendar, { type CalItem } from "./AgendaCalendar";
+import AssinarCalendario from "./AssinarCalendario";
+import { gerarEnderecoCalendario, removerEnderecoCalendario } from "./actions";
 
 function localISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -33,6 +36,22 @@ export default async function AgendaPage() {
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null)
     .in("journey_stage", phasedKeys.length ? phasedKeys : ["__none__"]);
+
+  // Endereço secreto do calendário (assinatura no Google/Apple/Outlook).
+  const { data: tRow } = await supabase
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenant.id)
+    .maybeSingle();
+  const calToken =
+    ((tRow?.settings as { calendar_token?: string } | null)?.calendar_token) ?? "";
+  const isAdmin = membership.role === "owner" || membership.role === "admin";
+  // O endereço do calendário precisa ser absoluto. Deriva do domínio em que o
+  // app está sendo servido — funciona em produção e no desenvolvimento.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (host ? `${proto}://${host}` : "");
 
   const alerts = computeAlerts(
     (data as { id: string; name: string; journey_stage: string; stage_entered_at: string }[]) ?? [],
@@ -72,6 +91,40 @@ export default async function AgendaPage() {
               </Link>
             ))}
           </span>
+        </div>
+      )}
+
+      {/* Assinatura no calendário do celular (Google, Apple, Outlook) */}
+      {isAdmin && (
+        <div className="card mt-24">
+          <div className="between wrap" style={{ gap: 10, alignItems: "baseline" }}>
+            <div>
+              <p className="eyebrow" style={{ margin: 0 }}>Ver no seu Google Agenda</p>
+              <p className="text-dim" style={{ margin: "4px 0 0", fontSize: 13 }}>
+                Os toques e retornos aparecem no calendário que você já usa no
+                celular, atualizando sozinhos.
+              </p>
+            </div>
+            <form action={calToken ? removerEnderecoCalendario : gerarEnderecoCalendario}>
+              <button type="submit" className={calToken ? "linklike" : "btn btn-sm btn-primary"} style={calToken ? { fontSize: 12, color: "var(--danger)" } : undefined}>
+                {calToken ? "desativar" : "Gerar endereço"}
+              </button>
+            </form>
+          </div>
+
+          {calToken ? (
+            <>
+              <AssinarCalendario url={`${siteUrl}/calendario/${calToken}`} />
+              <p className="text-faint" style={{ marginTop: 14, marginBottom: 0, fontSize: 12 }}>
+                Este endereço é secreto — quem tiver o link vê sua agenda. Não
+                publique. Se vazar, clique em <strong>desativar</strong> e gere outro.
+              </p>
+            </>
+          ) : (
+            <p className="text-faint mt-8" style={{ fontSize: 12 }}>
+              Gera um endereço privado que você adiciona uma vez no seu calendário.
+            </p>
+          )}
         </div>
       )}
 

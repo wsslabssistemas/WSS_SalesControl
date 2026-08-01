@@ -82,30 +82,30 @@ dna_sections:
     label: "Linhas e catálogo"
     required: true
     fields:
-      - { key: produtos, type: list, required: true, label: "Produtos" }
-      - { key: marcas, type: list, label: "Marcas" }
-      - { key: exclusividades, type: list, label: "Exclusividades" }
+      - { key: produtos, type: list, required: true, label: "Produtos", help: "Os produtos que você distribui" }
+      - { key: marcas, type: list, label: "Marcas", help: "Marcas que você trabalha" }
+      - { key: exclusividades, type: list, label: "Exclusividades", help: "Produtos que só você tem na região" }
   - key: comercial
     label: "Condições comerciais"
     required: true
     fields:
-      - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo" }
-      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento" }
-      - { key: politica_desconto, type: text, label: "Política de desconto" }
-      - { key: tabela_por_volume, type: boolean, label: "Tabela por volume?" }
+      - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo", help: "Valor mínimo para fazer um pedido. Ex.: R$ 500" }
+      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições de pagamento. Ex.: 30/60 dias para cliente cadastrado" }
+      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando você dá desconto. Ex.: 5% acima de R$ 3 mil" }
+      - { key: tabela_por_volume, type: boolean, label: "Tabela por volume?", help: "Marque se o preço muda conforme a quantidade" }
   - key: logistica
     label: "Entrega"
     required: true
     fields:
-      - { key: regiao_atendida, type: text, required: true, label: "Região atendida" }
-      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega" }
-      - { key: frete, type: text, label: "Frete" }
-      - { key: dias_de_rota, type: text, label: "Dias de rota" }
+      - { key: regiao_atendida, type: text, required: true, label: "Região atendida", help: "Onde você entrega. Ex.: Porto Alegre e região metropolitana" }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega", help: "Quanto tempo até entregar. Ex.: 15 dias úteis após aprovação" }
+      - { key: frete, type: text, label: "Frete", help: "Quem paga o frete e a partir de quanto é grátis" }
+      - { key: dias_de_rota, type: text, label: "Dias de rota", help: "Em que dias você entrega em cada região" }
   - key: diferencial
     label: "Diferencial"
     fields:
-      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor" }
-      - { key: suporte, type: text, label: "Suporte" }
+      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "Por que o cliente deveria trocar o fornecedor atual pelo seu" }
+      - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda" }
 
 categories:
   pricing:            "Tabela, pedido mínimo e desconto por volume"
