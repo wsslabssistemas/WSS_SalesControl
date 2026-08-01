@@ -294,7 +294,8 @@ export async function analyzeEditais(input: { ufs: string[]; keywords: string[] 
   if (!ufList.length) return vazio;
   const ufsParam = ufList.join(",");
   const ufSet = new Set(ufList);
-  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 4);
+  // Antes limitava a 4 palavras: acrescentar a 5a nao mudava nada na tela.
+  const kws = input.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 8);
   const queries = kws.length ? kws : [""];
 
   // Histórico do ramo (sem filtro de status). Várias páginas: a 1ª traz só os

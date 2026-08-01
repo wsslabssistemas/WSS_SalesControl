@@ -120,6 +120,37 @@ async function fetchReceita(cnpj: string): Promise<Record<string, unknown> | nul
   }
 }
 
+/**
+ * Retrato da empresa a partir dos dados públicos, para o motor abordar com
+ * contexto real em vez de mensagem genérica. Ex.: "Comércio varejista de
+ * material de construção · média empresa · desde 2011 · Canoas/RS".
+ * É FATO público — nada aqui é inventado.
+ */
+export async function resumirEmpresa(cnpj: string): Promise<string | null> {
+  const j = await fetchReceita(cnpj);
+  if (!j) return null;
+
+  const partes: string[] = [];
+  const atividade = j.cnae_fiscal_descricao ? String(j.cnae_fiscal_descricao) : null;
+  if (atividade) partes.push(atividade);
+
+  // Atividades secundárias revelam o que mais a empresa faz — ouro para a
+  // abordagem ("vocês também trabalham com X").
+  const sec = Array.isArray(j.cnaes_secundarios) ? (j.cnaes_secundarios as { descricao?: string }[]) : [];
+  const outras = sec.map((c) => c.descricao).filter(Boolean).slice(0, 3);
+  if (outras.length) partes.push(`também atua com: ${outras.join("; ")}`);
+
+  if (j.porte) partes.push(String(j.porte).toLowerCase());
+  if (j.data_inicio_atividade) {
+    const ano = String(j.data_inicio_atividade).slice(0, 4);
+    if (ano) partes.push(`no mercado desde ${ano}`);
+  }
+  const cidade = [j.municipio, j.uf].filter(Boolean).join("/");
+  if (cidade) partes.push(String(cidade));
+
+  return partes.length ? partes.join(" · ") : null;
+}
+
 // Telefone (só) — usado ao adicionar ao funil.
 export async function enrichCompany(cnpj: string): Promise<{ phone: string | null } | null> {
   const j = await fetchReceita(cnpj);

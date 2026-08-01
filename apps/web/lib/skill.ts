@@ -40,6 +40,7 @@ export async function getSkillFormConfig(skillKey: string) {
       vocabulary?: Record<string, string>;
       cadences?: Cadence[];
       scheduling?: SchedulingConfig;
+      services?: { enabled?: boolean; label?: string; item_label?: string };
     } | null) ?? {};
 
   return {
@@ -53,5 +54,7 @@ export async function getSkillFormConfig(skillKey: string) {
     cadences: m.cadences ?? [],
     // Segmentos com hora marcada declaram duração e passo aqui.
     scheduling: m.scheduling ?? null,
+    // Registro de atendimento com valor: só em segmento de serviço repetido.
+    services: m.services ?? null,
   };
 }

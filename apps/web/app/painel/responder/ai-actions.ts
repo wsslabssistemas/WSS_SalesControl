@@ -301,7 +301,8 @@ export async function gerarAbordagem(contactId: string): Promise<GerarResult> {
     const system = `Você escreve a PRIMEIRA ABORDAGEM comercial — nós é que estamos iniciando o contato. O destinatário NÃO nos procurou e não nos conhece.
 REGRAS INEGOCIÁVEIS:
 - Use SOMENTE os FATOS fornecidos (DNA) sobre o que a nossa empresa vende. NUNCA invente preço, prazo, condição ou serviço.
-- NUNCA invente informação sobre o destinatário (faturamento, dor, necessidade específica). Você só sabe o segmento e a origem dele.
+- NUNCA invente informação sobre o destinatário (faturamento, dor, necessidade específica). Use APENAS o que está em "O QUE ELA FAZ" — é dado público real.
+- Quando houver o retrato da empresa, ABRA conectando o ramo dela ao que vendemos ("vi que vocês trabalham com X"). É isso que separa a abordagem dirigida da mensagem genérica.
 - Se faltar um fato essencial da NOSSA empresa (o que vendemos, diferencial), liste em "faltam_fatos", marque "escalar": true e não redija a mensagem.
 
 COMO ESCREVER UMA BOA PRIMEIRA ABORDAGEM (frio, B2B):
@@ -318,6 +319,7 @@ ${fatos(sections)}
 
 DESTINATÁRIO (o que sabemos — não invente além disto):
 Nome/Empresa: ${contact.name}
+${(contact.custom as Record<string, unknown> | null)?.resumo_empresa ? `O QUE ELA FAZ (dado público da Receita — use para conectar com o que vendemos): ${(contact.custom as Record<string, unknown>).resumo_empresa}` : ""}
 Origem: ${contact.source ?? "prospecção"}
 Etapa: ${stages.find((s) => s.key === contact.journey_stage)?.label ?? contact.journey_stage}
 ${contact.custom && Object.keys(contact.custom).length ? `Outros dados: ${JSON.stringify(contact.custom)}` : ""}

@@ -111,6 +111,15 @@ scheduling:
   slot_step_min: 60
   min_advance_min: 240
 
+# ---------------------------------------------------------------------
+# REGISTRO DE ATENDIMENTO COM VALOR
+# Só faz sentido onde a receita vem de serviço executado e repetido.
+# Em venda de contrato/pedido (B2B), o dinheiro é acompanhado por
+# proposta e pedido — não por 'atendimento'. Por isso é dado, não código.
+# ---------------------------------------------------------------------
+services:
+  enabled: false
+
 lead_sources:
   - whatsapp
   - instagram

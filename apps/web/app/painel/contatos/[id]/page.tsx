@@ -60,7 +60,7 @@ export default async function ContatoDetalhe({
   if (!data) notFound();
   const c = data as unknown as ContactRow;
 
-  const { fields, stages } = await getSkillFormConfig(tenant.skill_key);
+  const { fields, stages, services } = await getSkillFormConfig(tenant.skill_key);
 
   // Atendimentos com valor + equipe (para atribuir quem executou).
   const [{ data: atData }, { data: memData }, { data: skillRow }] = await Promise.all([
@@ -201,10 +201,11 @@ export default async function ContatoDetalhe({
         );
       })()}
 
-      {/* Atendimentos com valor — base do faturamento por profissional */}
+      {/* Atendimentos com valor — só nos segmentos que o manifesto habilita */}
+      {services?.enabled && (
       <section style={{ marginTop: 32 }}>
         <div className="between" style={{ alignItems: "baseline" }}>
-          <h2 style={{ fontSize: 15, margin: 0 }}>Atendimentos</h2>
+          <h2 style={{ fontSize: 15, margin: 0 }}>{services?.label ?? "Atendimentos"}</h2>
           {atendimentos.length > 0 && (
             <span className="text-dim" style={{ fontSize: 13 }}>
               {atendimentos.length} · total {brl(totalCliente)}
@@ -249,12 +250,12 @@ export default async function ContatoDetalhe({
         )}
 
         <form action={registrarAtendimento} className="card mt-16">
-          <p className="eyebrow" style={{ marginBottom: 10 }}>Registrar atendimento</p>
+          <p className="eyebrow" style={{ marginBottom: 10 }}>Registrar {(services?.item_label ?? "atendimento").toLowerCase()}</p>
           <input type="hidden" name="contact_id" value={c.id} />
           <input type="hidden" name="back" value={`/painel/contatos/${c.id}`} />
           <div className="row wrap" style={{ gap: 10, alignItems: "flex-end" }}>
             <label className="grow text-dim" style={{ fontSize: 13, minWidth: 160 }}>
-              <span style={{ display: "block", marginBottom: 5 }}>Serviço</span>
+              <span style={{ display: "block", marginBottom: 5 }}>{services?.item_label ?? "Serviço"}</span>
               <input name="service" list="servicos-sugeridos" placeholder="Ex.: corte" required />
             </label>
             <datalist id="servicos-sugeridos">
@@ -280,6 +281,7 @@ export default async function ContatoDetalhe({
           </div>
         </form>
       </section>
+      )}
 
       <p className="text-faint" style={{ marginTop: 20, fontSize: 12 }}>
         Cada mudança de etapa é registrada no histórico da jornada. Os toques aparecem na Agenda.

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
-import { enrichCompany } from "@/lib/prospect";
+import { enrichCompany, resumirEmpresa } from "@/lib/prospect";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -53,10 +53,14 @@ export async function addOpportunity(formData: FormData) {
   // Telefone informado à mão (quando a Receita não tem) tem prioridade.
   const manual = String(formData.get("phone") ?? "").trim();
   let phone: string | null = manual ? normalizePhone(manual) : null;
-  if (!phone) {
-    const enriched = await enrichCompany(cnpj);
-    phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
-  }
+  // Retrato público da empresa: o que ela faz, porte, tempo de mercado e
+  // cidade. É o que permite a primeira abordagem falar do NEGÓCIO dela em vez
+  // de mandar mensagem genérica.
+  const [enriched, resumo] = await Promise.all([
+    phone ? Promise.resolve(null) : enrichCompany(cnpj),
+    resumirEmpresa(cnpj),
+  ]);
+  if (!phone) phone = enriched?.phone ? normalizePhone(enriched.phone) : null;
 
   const supabase = await createClient();
 
@@ -84,6 +88,7 @@ export async function addOpportunity(formData: FormData) {
       phone,
       source,
       journey_stage: initialStage,
+      custom: resumo ? { resumo_empresa: resumo, cnpj } : { cnpj },
     })
     .select("id")
     .single();
