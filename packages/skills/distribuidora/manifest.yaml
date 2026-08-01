@@ -50,7 +50,45 @@ journey:
       label: "Inativo"
       terminal: true
 
+# ---------------------------------------------------------------------
+# REFERÊNCIAS DO SETOR (pesquisa jul/2026)
+# Vocabulário real do trade — o vendedor de distribuidora fala assim.
+# NÃO são fatos da empresa; o motor nunca afirma isto ao cliente.
+# ---------------------------------------------------------------------
+benchmarks:
+  positivacao: >-
+    Em quantos clientes da carteira o vendedor de fato registrou pedido no
+    período. É o KPI que separa "visitou" de "vendeu".
+  ruptura: >-
+    Produto em falta na prateleira do cliente. Ruptura em item de Curva A é
+    perda dupla: ele não vende e ainda compra do concorrente.
+  sell_in_sell_out: >-
+    Sell-in é o que você vendeu ao cliente; sell-out é o que ele conseguiu
+    revender. Cliente com estoque parado não recompra — acompanhar sell-out
+    evita empurrar volume que trava a próxima venda.
+  curva_abc: >-
+    Poucos itens sustentam a maior parte do faturamento. Curva A: nunca deixar
+    faltar. Curva B: ganhar margem. Curva C: girar ou reavaliar.
+  preparo_da_visita: >-
+    Antes de falar com o cliente, revisar em 3 a 5 minutos: último pedido, o que
+    ele mais compra, frequência, títulos em aberto e o que ficou combinado na
+    última conversa. Vendedor que chega sem isso vira tirador de pedido.
+
 contact_fields:
+  # O tipo muda TUDO: alimentos vive de validade e giro; autopeças de urgência
+  # e código de peça; construção de volume e entrega em obra; farma de
+  # rastreabilidade e regulação.
+  - key: tipo_operacao
+    label: "Tipo de distribuição"
+    type: enum
+    options:
+      [alimentos_bebidas, autopecas, material_construcao, farma_saude,
+       higiene_limpeza, embalagens, eletrica_hidraulica, agro_insumos,
+       papelaria_escritorio, equipamentos, outro]
+  - key: curva
+    label: "Importância do cliente"
+    type: enum
+    options: [curva_a, curva_b, curva_c, novo, indefinido]
   - key: segmento_cliente
     label: "Tipo de estabelecimento"
     type: enum
