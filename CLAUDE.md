@@ -182,15 +182,22 @@ contra as `dna_sections` do manifesto, e o validador de manifesto (RF-02,
 `reciprocity.gift` — corrigido no `0008` (a categoria `reciprocity` ganhou
 seção de DNA; o dado da Be Fitness já a assumia).
 
-**Achado (jul/2026) — dado de demonstração sem prefixo `demo-`.** Os tenants
-`be-fitness` e `academia-nova` no banco não têm o prefixo `demo-` exigido pela
-convenção. Efeito colateral: `dna_coverage_check.sql` filtra `slug like 'demo-%'`
-e volta VAZIO — a trava de cobertura é hoje um no-op contra o dado real. Decisão
-do fundador (Be Fitness é empresa real): renomear os slugs para `demo-` ou
-ajustar o filtro do check. Não resolvido por ser decisão de dado do fundador.
+**Achado (jul/2026) — `dna_coverage_check` era no-op. ✅ RESOLVIDO (ago/2026).**
+O check filtrava `slug like 'demo-%'` e fixava `skill_key='academia'`; como as
+empresas reais de academia não têm o prefixo, ele voltava **vazio** — e zero
+linhas parece "nada errado". A decisão: **o prefixo `demo-` protege escrita**
+(seed nunca alcança empresa real); **diagnóstico é leitura e olha todo mundo**,
+cada empresa contra a biblioteca do próprio segmento. Be Fitness e
+`academia-nova` mantêm os slugs. Hoje: Be Fitness 23/23 PRONTA, Academia Nova
+7 PRONTA / 16 ESCALA, demos 0 em escala.
 
-**P1 — A trava verifica presença, não validade nem atualidade.** DNA
-desatualizado passa como PRONTA. Falta `updated_at` por seção.
+**P1 — A trava verificava presença, não atualidade. ✅ RESOLVIDO (0029).**
+DNA de um ano atrás passava como PRONTA e era afirmado com a confiança do dado
+de ontem — mentir sem nunca ter inventado. Agora `commercial_dna.section_updated_at`
+carimba **por seção**, e o carimbo **sobrevive ao versionamento**: salvar sem
+mudar não renova a data (senão abrir-e-salvar viraria "revisão"). A regra é uma
+função pura e testada — `dna_section_stamps` + `dna_freshness_test.sql`, 5/5. A
+tela de DNA mostra a idade por seção e alerta acima de 6 meses.
 
 **P1 — Telefone não normalizado.** O índice único é sobre texto cru;
 `(51) 98251-2270` e `5551982512270` passam os dois. Correção: E.164.
@@ -202,8 +209,14 @@ por tenant. Teste: `dna_single_current_test.sql` 2/2.
 **P2 — Dinheiro como string de exibição** no DNA (`"R$ 169,00"`). Impede
 qualquer análise por faixa de preço. Correção: inteiro em centavos + moeda.
 
-**P2 — Schema se contradiz sobre Skills por tenant.** `tenants.skill_key` é
-uma; `tenant_skills` é tabela de junção. Decidir antes do primeiro cliente externo.
+**P2 — Schema se contradiz sobre Skills por tenant. ✅ RESOLVIDO (decisão,
+ago/2026).** Não era contradição, era papel diferente: `tenant_skills` é o que a
+empresa **tem instalado** (e é a fonte da RLS — sem o vínculo o painel abre sem
+etapas); `tenants.skill_key` é a Skill **ativa**, o ponteiro que evita um join
+em toda página. A regra que precisa valer é uma só — *a ativa tem que estar
+entre as instaladas* — e virou teste: `tenant_skill_coherence.sql`, 9/9 empresas
+coerentes. Quando uma empresa tiver duas Skills, a junção já suporta; muda só o
+seletor de ativa.
 
 **P2 — `embedding vector(1536)` sem índice.** E índice ANN + RLS interagem mal:
 o índice devolve top-k e o RLS filtra depois. Reforça o retrieval server-side.

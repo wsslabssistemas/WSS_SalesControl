@@ -105,20 +105,37 @@ chegava ao motor.
 **Por que agora:** é a lista do `CLAUDE.md` marcada como "corrigir antes de
 qualquer cliente externo". Tudo aqui é código, não depende do fundador.
 
-- [ ] **DNA sem `updated_at` por seção.** A trava verifica presença, não
-      atualidade: DNA de um ano atrás passa como PRONTA. É o furo com maior
-      chance de fazer o motor afirmar preço velho.
+- [x] **DNA sem `updated_at` por seção.** Resolvido no `0029`:
+      `section_updated_at` carimba **por seção**, e o carimbo sobrevive ao
+      versionamento — salvar sem mudar não renova a data, senão abrir-e-salvar
+      viraria "revisão" e o alarme desligaria sozinho. A regra é função pura
+      (`dna_section_stamps`), testada em `dna_freshness_test.sql` (5/5). A tela
+      de DNA mostra a idade por seção e alerta acima de 6 meses.
 - [ ] **Dinheiro como string** no DNA (`"R$ 169,00"`). Inteiro em centavos +
       moeda, como já manda o `lib/money.ts`.
-- [ ] **`tenants.skill_key` × `tenant_skills`.** O schema se contradiz sobre uma
-      ou várias Skills por empresa. Decidir antes do primeiro cliente externo.
-- [ ] **Filtro `demo-` do `dna_coverage_check.sql`.** Hoje volta vazio porque
-      `be-fitness` e `academia-nova` não têm o prefixo — a checagem é um no-op.
-      **É diagnóstico, não a trava de runtime** (essa é `required_facts` +
-      `on_missing_facts`, e funciona). Decisão de dado do fundador: renomear os
-      slugs ou ajustar o filtro.
+      **Adiado com motivo:** mexe no editor de DNA, nos seeds, no prompt e no
+      dado já gravado das empresas reais — e o ganho (análise por faixa de
+      preço) é de um relatório que ainda não existe. Fazer junto com o primeiro
+      relatório que precise disso, não antes.
+- [x] **`tenants.skill_key` × `tenant_skills`.** Não era contradição, era papel
+      diferente: a junção é o que está **instalado** (fonte da RLS), a coluna é a
+      Skill **ativa** (evita join em toda página). A regra única que precisa
+      valer virou teste — *a ativa tem que estar entre as instaladas* —
+      `tenant_skill_coherence.sql`, 9/9 coerentes.
+- [x] **Filtro `demo-` do `dna_coverage_check.sql`.** Resolvido sem mexer nos
+      dados do fundador: **o prefixo protege escrita, diagnóstico é leitura e
+      olha todo mundo**, cada empresa contra a biblioteca do próprio segmento.
+      Ao cruzar com o `facts_lock_test` as duas checagens discordaram e a culpa
+      era do SQL: entradas **sem** fato exigido (as de indecisão) geravam linha
+      nula no `left join` e eram contadas como ESCALA — quem não exige nada
+      aparecia como bloqueado. Hoje: Be Fitness 23/23 PRONTA, Academia Nova
+      7/23, demos 0 em escala.
 - [ ] **Telefone em E.164** (código de país e 9º dígito). Hoje normaliza só
-      dígitos — pega duplicidade, mas não é formato oficial.
+      dígitos — pega duplicidade, que é o que importava.
+      **Adiado com motivo:** E.164 de verdade precisa de biblioteca de
+      telefonia; normalizar no chute corrompe número de cliente, e número
+      corrompido não se recupera. Fazer quando houver envio por WhatsApp (a
+      API exige o formato) — ou seja, junto com a automação, hoje congelada.
 
 ### 3. Skill `energia_solar`
 

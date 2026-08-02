@@ -34,7 +34,7 @@ export default async function DnaPage() {
   // DNA corrente da empresa (RLS: só a própria empresa).
   const { data: dna } = await supabase
     .from("commercial_dna")
-    .select("sections")
+    .select("sections, section_updated_at")
     .eq("tenant_id", tenant.id)
     .eq("is_current", true)
     .maybeSingle();
@@ -43,7 +43,23 @@ export default async function DnaPage() {
     (skill?.manifest as { dna_sections?: DnaSection[] } | null)?.dna_sections ??
     [];
   const filled = (dna?.sections as Record<string, unknown> | null) ?? {};
+  const carimbos = (dna?.section_updated_at as Record<string, string> | null) ?? {};
 
+  // A trava anti-invenção garante que o motor só afirma o que está no DNA —
+  // mas não sabe se o que está lá ainda é verdade. Preço de seis meses atrás
+  // é afirmado com a mesma confiança do de ontem. Daí o alerta.
+  const MESES_PARA_REVISAR = 6;
+  const diasDesde = (iso: string | undefined) => {
+    if (!iso) return null;
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return null;
+    return Math.floor((Date.now() - t) / 86400000);
+  };
+  const idade = (key: string) => diasDesde(carimbos[key]);
+  const velha = (key: string) => {
+    const d = idade(key);
+    return d != null && d > MESES_PARA_REVISAR * 30;
+  };
   const isFilled = (key: string) => {
     const v = filled[key];
     if (v == null) return false;
@@ -51,6 +67,7 @@ export default async function DnaPage() {
     return String(v).length > 0;
   };
 
+  const paraRevisar = sections.filter((s) => isFilled(s.key) && velha(s.key));
   const prontas = sections.filter((s) => isFilled(s.key)).length;
   const pct = sections.length ? Math.round((prontas / sections.length) * 100) : 0;
 
@@ -77,9 +94,24 @@ export default async function DnaPage() {
         </div>
       </div>
 
+      {paraRevisar.length > 0 && (
+        <div className="card mt-16" style={{ borderColor: "rgba(234,181,77,0.35)", background: "rgba(234,181,77,0.06)" }}>
+          <div className="badge badge-warn">Revisar</div>
+          <p style={{ marginTop: 10, marginBottom: 6 }}>
+            {paraRevisar.length === 1 ? "Uma seção está" : `${paraRevisar.length} seções estão`} sem
+            atualização há mais de {MESES_PARA_REVISAR} meses.
+          </p>
+          <p className="text-dim" style={{ margin: 0, fontSize: 14 }}>
+            O sistema não inventa — mas afirma o que está aqui com toda a confiança, mesmo que
+            esteja velho. Preço e horário desatualizados viram promessa errada ao cliente.
+          </p>
+        </div>
+      )}
+
       <div className="card mt-16">
         {sections.map((s, i) => {
           const ok = isFilled(s.key);
+          const dias = idade(s.key);
           return (
             <div
               key={s.key}
@@ -90,6 +122,15 @@ export default async function DnaPage() {
                 {ok ? "preenchido" : "falta"}
               </span>
               <span className="grow">{s.label}</span>
+              {ok && dias != null && (
+                <span
+                  className={velha(s.key) ? "badge badge-warn" : "text-faint"}
+                  style={{ fontSize: 11, whiteSpace: "nowrap" }}
+                  title={`Atualizado em ${new Date(carimbos[s.key]).toLocaleDateString("pt-BR")}`}
+                >
+                  {dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`}
+                </span>
+              )}
               {s.required && <span className="text-faint" style={{ fontSize: 11 }}>obrigatória</span>}
             </div>
           );
