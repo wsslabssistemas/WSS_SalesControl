@@ -189,6 +189,24 @@ trocar no seletor do topo do painel.
   QUESTÃO, não por lição: chave diferente, tabela diferente (`course_review`,
   `0037`). O plano de execução afirmava que "o dado já é guardado desde o
   `0031`" — era meia verdade: o *erro* estava lá, o *quando volta* não.
+- **O DELETE de recarga só pode alcançar o que o próprio arquivo reinsere.**
+  Custou o curso inteiro (ago/2026). `seed-curso.mjs` apagava
+  `course_modules` pelas chaves declaradas no arquivo — e o `0033` declara os
+  **nove** módulos, porque a grade completa é o que o aluno vê desde o primeiro
+  dia. Como `course_lessons.module_key` tem `on delete cascade`, recarregar
+  **só o `0033`** apagava em cascata as 45 lições e as 122 perguntas de todos os
+  módulos e reinseria as 5 do módulo 1. O comando saía **com três ✓ verdes** —
+  os números do que ele inseriu estavam certos — enquanto oito módulos viravam
+  "em breve" na tela. Quem pegou foi o fundador, abrindo o curso.
+  Duas correções: módulo agora é **upsert** (registro de grade é compartilhado
+  entre arquivos, ele se atualiza, não se apaga), e o carregador passou a
+  imprimir **o curso inteiro** ao final, não só o que acabou de escrever.
+  A lição maior é a segunda: **relatório que só mostra o que a operação
+  escreveu não enxerga o que ela derrubou ao lado.** Toda carga destrutiva
+  precisa conferir o conjunto, não a própria saída.
+  Verificado nos vizinhos: `seed-skills.mjs` faz update-or-insert (sem delete);
+  `seed-knowledge.mjs` apaga por `skill_key` e reinsere tudo daquele
+  `skill_key` do mesmo arquivo — dentro da regra.
 - **A posição da alternativa correta não pode ser PREVISÍVEL — e distribuição
   não prova isso.** A trava do `seed-curso.mjs` foi escrita duas vezes, e a
   primeira versão media a coisa errada.

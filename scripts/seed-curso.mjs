@@ -198,16 +198,57 @@ for (const q of perguntas) {
 for (const [m, seq] of porModulo) verificarSequencia(`módulo ${m}`, seq);
 if (porModulo.size > 1) verificarSequencia("arquivo", perguntas.map((q) => q.correct));
 
-// Recarga: as perguntas e lições dos módulos declarados saem primeiro.
+// MÓDULO SE ATUALIZA, NUNCA SE APAGA.
+//
+// Esta linha já existiu como `delete().in("key", chavesModulo)` e destruiu o
+// curso inteiro (ago/2026). O `0033` declara os NOVE módulos, porque a grade
+// completa é o que o aluno vê desde o primeiro dia. E
+// `course_lessons.module_key` tem `on delete cascade`. Resultado: recarregar só
+// o `0033` apagava, em cascata, as 45 lições e as 122 perguntas de todos os
+// módulos, e reinseria as 5 do módulo 1. O arquivo carregava "com sucesso" —
+// três ✓ verdes — enquanto oito módulos viravam "em breve" na tela.
+//
+// A regra que vale para qualquer carregador daqui em diante: **o DELETE de
+// recarga só pode alcançar o que o próprio arquivo reinsere.** Um módulo é
+// registro de grade, compartilhado entre arquivos; ele se atualiza.
 const chavesLicao = licoes.map((l) => l.key);
-const chavesModulo = mods.map((m) => m.key);
+if (mods.length) {
+  const { error } = await db.from("course_modules").upsert(mods, { onConflict: "key" });
+  if (error) { console.error(`✗ course_modules: ${error.message}`); process.exit(1); }
+  console.log(`✓ course_modules: ${mods.length} (atualizados, sem apagar)`);
+}
 if (chavesLicao.length) await db.from("course_questions").delete().in("lesson_key", chavesLicao);
 if (chavesLicao.length) await db.from("course_lessons").delete().in("key", chavesLicao);
-if (chavesModulo.length) await db.from("course_modules").delete().in("key", chavesModulo);
 
-for (const [tabela, linhas] of [["course_modules", mods], ["course_lessons", licoes], ["course_questions", perguntas]]) {
+for (const [tabela, linhas] of [["course_lessons", licoes], ["course_questions", perguntas]]) {
   if (!linhas.length) continue;
   const { error } = await db.from(tabela).insert(linhas);
   if (error) { console.error(`✗ ${tabela}: ${error.message}`); process.exit(1); }
   console.log(`✓ ${tabela}: ${linhas.length}`);
+}
+
+// CONFERÊNCIA DO CURSO INTEIRO, sempre — não só do arquivo que acabou de rodar.
+// O estrago acima passou despercebido porque o carregador só relatava o que
+// tinha acabado de inserir, e esse número estava certo. Quem olha o próprio
+// trabalho não vê o que ele derrubou ao lado.
+{
+  const { data: gm } = await db.from("course_modules").select("key, ord, title").order("ord");
+  const { data: gl } = await db.from("course_lessons").select("key, module_key");
+  const { data: gq } = await db.from("course_questions").select("lesson_key");
+  const porLicao = new Map((gl ?? []).map((l) => [l.key, l.module_key]));
+  const conta = new Map();
+  for (const l of gl ?? []) conta.set(l.module_key, { l: (conta.get(l.module_key)?.l ?? 0) + 1, q: conta.get(l.module_key)?.q ?? 0 });
+  for (const q of gq ?? []) {
+    const m = porLicao.get(q.lesson_key);
+    if (m) conta.set(m, { l: conta.get(m)?.l ?? 0, q: (conta.get(m)?.q ?? 0) + 1 });
+  }
+  console.log("\ncurso inteiro depois desta carga:");
+  let vazios = 0;
+  for (const m of gm ?? []) {
+    const c = conta.get(m.key) ?? { l: 0, q: 0 };
+    if (!c.l) vazios++;
+    console.log(`  ${String(m.ord).padStart(2)}. ${m.title.padEnd(24)} ${String(c.l).padStart(2)} lições · ${String(c.q).padStart(3)} perguntas${c.l ? "" : "   ← VAZIO"}`);
+  }
+  console.log(`  total: ${gl?.length ?? 0} lições · ${gq?.length ?? 0} perguntas`);
+  if (vazios) console.log(`\n⚠ ${vazios} módulo(s) sem lição. Se não era esperado, recarregue os arquivos que faltam.`);
 }
