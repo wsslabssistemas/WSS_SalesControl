@@ -120,6 +120,28 @@ if (ruins.length) {
   process.exit(1);
 }
 
+// A ALTERNATIVA CERTA NÃO PODE VIVER NA MESMA POSIÇÃO.
+//
+// O fundador pegou isto fazendo a primeira lição: as 16 respostas certas
+// estavam todas na 1ª opção. Quem percebe o padrão acerta sem ler — e aí não
+// existe prática de recuperação, que é o método do curso inteiro. É o tipo de
+// erro que passa despercebido de quem escreve (a resposta certa vem primeiro
+// na cabeça) e é óbvio para quem responde.
+if (perguntas.length >= 4) {
+  const porPosicao = new Map();
+  for (const q of perguntas) porPosicao.set(q.correct, (porPosicao.get(q.correct) ?? 0) + 1);
+  const [posicao, quantas] = [...porPosicao.entries()].sort((a, b) => b[1] - a[1])[0];
+  const limite = Math.ceil(perguntas.length * 0.5);
+  if (quantas > limite) {
+    console.error(
+      `✗ ${quantas} de ${perguntas.length} respostas certas estão na posição ${posicao + 1} ` +
+        `(limite: ${limite}). Redistribua antes de carregar.`,
+    );
+    process.exit(1);
+  }
+  console.log(`   distribuição das corretas: ${[...porPosicao.entries()].sort().map(([p, n]) => `${p + 1}ª:${n}`).join("  ")}`);
+}
+
 // Recarga: as perguntas e lições dos módulos declarados saem primeiro.
 const chavesLicao = licoes.map((l) => l.key);
 const chavesModulo = mods.map((m) => m.key);

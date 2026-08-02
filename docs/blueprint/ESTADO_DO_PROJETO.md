@@ -167,6 +167,17 @@ trocar no seletor do topo do painel.
   carregaria 1 entrada **depois de apagar as 22**. E parseava o rodapé do
   arquivo: as queries de verificação viravam tuplas fantasma (28 lidas onde há
   22). Rode o carregador uma vez em qualquer seed novo antes de confiar nele.
+- **`technique` é USER-FACING.** Aparece no Responder e no curso. A biblioteca
+  da academia veio do Base44 com rótulos em inglês ("Hot Button", "Puppy Dog
+  Close") e o fundador leu isso na tela. Traduzidos em ago/2026 mantendo o
+  autor entre parênteses — creditar a escola é o método; o que não pode é o
+  vendedor ler inglês. **Ao criar entrada nova, o rótulo é para ser lido.**
+- **Alternativa correta não pode viver na mesma posição.** As 16 primeiras
+  perguntas do curso saíram todas com a resposta na 1ª opção — quem percebe o
+  padrão acerta sem ler, e aí não existe prática de recuperação, que é o método
+  do curso. Erro invisível para quem escreve (a certa vem primeiro na cabeça) e
+  óbvio para quem responde. `seed-curso.mjs` agora **recusa** carregar quando
+  mais de 50% das corretas estão na mesma posição.
 - **Policy `FOR ALL` roda em toda LEITURA.** Uma policy de escrita marcada como
   `ALL` também é avaliada em cada `SELECT` — então `memberships`,
   `commercial_dna` e `knowledge_entries` pagavam `is_admin_of` **além** de

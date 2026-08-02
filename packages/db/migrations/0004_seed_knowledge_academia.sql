@@ -26,7 +26,7 @@ sobre {{skill.discovery_axis}}, para a conversa nao morrer no preco.
 Se existir oferta de entrada sem risco, mencione ao final como redutor de risco.
 Nunca liste todos os planos nesta primeira resposta: faixa + pergunta.', '{"pricing.range"}',
    '{"risk_free_entry.exists","commitment_offer.best_value"}', '{}', 'escalate',
-   'Transparencia (Hormozi) + Intelligence Gathering (Belfort)', '{"Responder so o valor: a conversa morre","Esconder o preco: gera desconfianca e perde o lead","Despejar a tabela inteira logo de cara"}', 'discover_goal',
+   'Transparencia (Hormozi) + qualificar antes de cotar (Belfort)', '{"Responder so o valor: a conversa morre","Esconder o preco: gera desconfianca e perde o lead","Despejar a tabela inteira logo de cara"}', 'discover_goal',
    'skill_seed', 'active', 'consultiva_spin');
 
 insert into public.knowledge_entries
@@ -53,7 +53,7 @@ values
 empilhe o que ja existe no DNA (brinde, oferta de entrada, condicoes do plano longo).
 Toda concessao pede contrapartida: fechamento agora ou agendamento concreto.', '{"pricing.plans"}',
    '{"reciprocity.gift","commitment_offer.best_value"}', '{}', 'escalate',
-   'No Free Gifts (Jim Thomas) + Grand Slam Offer (Hormozi)', '{"Ceder desconto sem pedir nada em troca","Inventar promocao que nao existe no DNA"}', 'close_commitment',
+   'Nada de graca sem contrapartida (Jim Thomas) + oferta irrecusavel (Hormozi)', '{"Ceder desconto sem pedir nada em troca","Inventar promocao que nao existe no DNA"}', 'close_commitment',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -67,7 +67,7 @@ vai viver, nao o que ela vai receber. Cite o brinde se existir no DNA.
 Encerre SEMPRE com fechamento por alternativa oferecendo dois momentos concretos.
 Nunca termine com pergunta aberta.', '{"risk_free_entry.exists","availability.weekly_hours"}',
    '{"risk_free_entry.duration","risk_free_entry.gift"}', '{}', 'escalate',
-   'Puppy Dog Close + Fechamento por Alternativa', '{"Dizer apenas ''sim, temos'' sem convidar para agendar","Terminar com ''o que acha?''"}', 'schedule_visit',
+   'Deixar experimentar antes de decidir + fechamento por alternativa', '{"Dizer apenas ''sim, temos'' sem convidar para agendar","Terminar com ''o que acha?''"}', 'schedule_visit',
    'skill_seed', 'active', 'fechamento_classico');
 
 insert into public.knowledge_entries
@@ -134,7 +134,7 @@ Justifique a escolha em uma frase. Se o objetivo ainda nao foi declarado,
 pergunte antes de recomendar: recomendacao sem diagnostico e chute.
 Conduza para experimentar na pratica.', '{"catalog.items"}',
    '{"risk_free_entry.exists"}', '{"Nunca prometer resultado, prazo de resultado ou beneficio de saude garantido."}', 'escalate',
-   'Expert recommendation + Hot Button (Tracy)', '{"Recomendar sem saber o objetivo da pessoa","Prometer resultado especifico"}', 'schedule_visit',
+   'Recomendacao de especialista + achar o que move a pessoa (Tracy)', '{"Recomendar sem saber o objetivo da pessoa","Prometer resultado especifico"}', 'schedule_visit',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -147,7 +147,7 @@ values
 unidade de tempo possivel usando os numeros reais do DNA, e reponha o que esta
 incluso. Conduza para a oferta de entrada sem risco em vez de negociar preco agora.', '{"pricing.plans"}',
    '{"differentials.items","risk_free_entry.exists"}', '{}', 'escalate',
-   'Reduction to the Ridiculous (Tracy) + Reframing', '{"Concordar que e caro","Oferecer desconto na primeira objecao"}', 'schedule_visit',
+   'Diluir o valor no dia a dia (Tracy) + reenquadrar', '{"Concordar que e caro","Oferecer desconto na primeira objecao"}', 'schedule_visit',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -161,7 +161,7 @@ Antes de qualquer coisa, pergunte de forma leve o que especificamente ainda falt
 para decidir. So depois de isolar a duvida real, ofereca o proximo passo concreto
 com duas opcoes de horario.', '{}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Krunch (Jim Thomas) + Fechamento por Alternativa', '{"Aceitar o ''vou pensar'' e encerrar: o lead nao volta","Pressionar sem descobrir a objecao real"}', 'isolate_objection',
+   'Devolver a pressao de preco (Jim Thomas) + fechamento por alternativa', '{"Aceitar o ''vou pensar'' e encerrar: o lead nao volta","Pressionar sem descobrir a objecao real"}', 'isolate_objection',
    'skill_seed', 'active', 'fechamento_classico');
 
 insert into public.knowledge_entries
@@ -174,7 +174,7 @@ values
 frequencia viavel e a amplitude de horario que existe no DNA. Depois projete o
 beneficio futuro em uma frase curta. Feche com duas opcoes de horario.', '{"availability.weekly_hours"}',
    '{}', '{}', 'escalate',
-   'Reducao de sacrificio (Hormozi) + Future Pacing (Tracy)', '{"Argumentar que a pessoa tem tempo sim"}', 'schedule_visit',
+   'Reducao de sacrificio (Hormozi) + projetar o depois (Tracy)', '{"Argumentar que a pessoa tem tempo sim"}', 'schedule_visit',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -201,7 +201,7 @@ como categoria propria listando diferenciais reais do DNA, e ofereca a comparaca
 na pratica atraves da oferta de entrada. Se a pessoa nao quiser, mantenha a porta
 aberta sem insistir.', '{"differentials.items"}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Category of One (Hormozi) + Soft Close', '{"Criticar a concorrencia","Competir por preco"}', 'schedule_visit_or_keep_warm',
+   'Sair da comparacao (Hormozi) + fechamento leve', '{"Criticar a concorrencia","Competir por preco"}', 'schedule_visit_or_keep_warm',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -282,7 +282,7 @@ vivida ate aqui, nunca sobre compra. O objetivo e a pessoa verbalizar um ganho.
 Nao mencione plano, preco ou fechamento nesta mensagem.
 Se a resposta for negativa, isso e sinal de risco e deve gerar acompanhamento imediato.', '{"risk_free_entry.exists"}',
    '{}', '{"Uma mensagem, um objetivo. Nunca mais de uma pergunta."}', 'escalate',
-   'Value Realization (Hormozi)', '{"Falar de preco no dia 2","Fazer tres perguntas seguidas","Mensagem generica que nao cita a experiencia"}', 'capture_value_statement',
+   'Fazer o valor aparecer antes da cobranca (Hormozi)', '{"Falar de preco no dia 2","Fazer tres perguntas seguidas","Mensagem generica que nao cita a experiencia"}', 'capture_value_statement',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -295,7 +295,7 @@ values
 continuidade e enquadre a interrupcao como perda do que ja foi construido.
 Apresente a opcao mais adequada ao que foi observado e feche com alternativa concreta.', '{"pricing.plans","risk_free_entry.exists"}',
    '{"commitment_offer.best_value"}', '{}', 'escalate',
-   'Loss Aversion (Kahneman) + Fechamento por Alternativa', '{"Comecar pelo preco","Encerrar com ''o que achou?''"}', 'close',
+   'Aversao a perda (Kahneman) + fechamento por alternativa', '{"Comecar pelo preco","Encerrar com ''o que achou?''"}', 'close',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -309,7 +309,7 @@ especifico que prove que a lembranca nao e disparo em massa. Ofereca retorno sem
 risco. Encerre com fechamento por alternativa.
 Verifique o historico: se a pessoa nunca foi cliente, e primeira oportunidade, nao retorno.', '{"risk_free_entry.exists"}',
    '{"reciprocity.gift"}', '{"Nunca usar ''voltar'', ''retornar'' ou ''novamente'' com quem nunca foi cliente.","Nunca mencionar vaga, reserva ou lotacao sem o fato no DNA."}', 'escalate',
-   'Pattern Interrupt (Robbins) + Takeaway (Tracy)', '{"Cobrar o sumico","Tratar lead nao convertido como ex-cliente","Reenviar a mesma mensagem generica"}', 'schedule_visit',
+   'Quebrar o padrao da mensagem (Robbins) + recuar para atrair (Tracy)', '{"Cobrar o sumico","Tratar lead nao convertido como ex-cliente","Reenviar a mesma mensagem generica"}', 'schedule_visit',
    'skill_seed', 'active', null),
 
 (null, 'academia', 'commitment_offer', 'reactive',
