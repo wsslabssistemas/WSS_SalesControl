@@ -5,7 +5,8 @@
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
 > sem repetir discussões encerradas. **Leia antes de propor qualquer coisa.**
 >
-> Ordem: este arquivo → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
+> Ordem: este arquivo → **`COS_Plano_de_Execucao.md` (a fila de trabalho e o que
+> está congelado)** → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
 > `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `COS_Escolas_de_Venda.md` (que
 > técnica usamos e o que falta) → `../../CLAUDE.md` (as três leis).
 
@@ -94,6 +95,12 @@ trocar no seletor do topo do painel.
 ---
 
 ## 3. Pendências (em ordem de importância)
+
+> **A fila executável, com o que está congelado por decisão do fundador, mora em
+> `COS_Plano_de_Execucao.md`.** Automação (WhatsApp + motor proativo), migração
+> dos dados do Base44 e o M2 estão congelados — não reabrir sem motivo novo.
+> O item 1 de lá: **5 dos 8 tenants demo não têm DNA**, então as 145 entradas
+> curadas nunca foram vistas funcionando.
 
 1. **Revisão da biblioteca de `industria` pela especialista** (irmã do fundador,
    Feltros Bandeirantes). Manifesto e 18 entradas já **no banco**, com
