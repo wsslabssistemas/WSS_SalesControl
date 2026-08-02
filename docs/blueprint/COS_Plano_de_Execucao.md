@@ -222,10 +222,29 @@ pesquisa séria de folclore repetido.
       progresso com RLS por pessoa e empresa.
 - [x] Chave de módulo `curso` no entitlements — serve para vender à parte ou
       embutir na mensalidade: muda a cobrança, não o produto.
-- [ ] As 40 lições, começando pelos módulos 1 a 3 (onde a evasão acontece).
-- [ ] A tela: uma lição por vez, prática ao fim, progresso visível.
-- [ ] O exercício com o DNA da empresa — a parte que ninguém copia.
-- [ ] Repescagem espaçada (perguntas de módulos anteriores voltando).
+- [x] **A tela** (`/painel/curso`): grade dos 9 módulos, progresso, botão
+      "continuar" que tira a pessoa da paralisia de por onde começar; e a lição
+      com prática, quiz e a próxima lição no fim.
+- [x] **O exemplo do ramo, funcionando.** Provado com dado: a mesma lição
+      ("A pergunta de impacto") mostra *"tá caro"* na barbearia e
+      *"o importado é mais barato"* na indústria. Uma lição, nove ramos.
+- [x] **Módulo 1 completo** — 5 lições, 16 perguntas.
+- [ ] Módulos 2 a 9 (35 lições). O 2 (Preço e valor) e o 3 (Objeção) primeiro:
+      é onde a evasão acontece e onde está a pergunta que mais chega.
+- [ ] Repescagem espaçada (perguntas de módulos anteriores voltando). O dado já
+      é guardado por questão desde o `0031` — falta a tela usar.
+
+**Decisões de implementação que valem registro:**
+- **A correção é no servidor, uma pergunta por vez.** O gabarito nunca vai ao
+  browser — senão bastaria abrir o inspetor e a prática de recuperação viraria
+  adivinhação. A explicação aparece logo depois de responder, inclusive quando
+  erra.
+- **Ao errar, a resposta certa não é revelada.** Quem errou lê a explicação e
+  entende o porquê; entregar a alternativa correta de bandeja desliga o
+  esforço de recuperação, que é justamente o que ensina.
+- **Sem dependência de markdown.** `lib/markdown.ts` tem 40 linhas, zero
+  imports e é testável em Node puro (`curso_render_test.mjs`, contra o texto
+  real das lições). Nada de `dangerouslySetInnerHTML`.
 
 ### 6. Depois disso
 
