@@ -217,6 +217,24 @@ trocar no seletor do topo do painel.
   devolve um **array puro** com `descricao`, `quantidade`, `unidadeMedida`,
   `valorUnitarioEstimado` (verificado ago/2026). Buscar sob demanda, um edital
   por vez — puxar os itens de 100 editais de uma vez é a rajada que o PNCP corta.
+- **Dois donos do mesmo gatilho é empate por construção.** Quando duas entradas
+  do mesmo segmento reivindicam a mesma frase, nenhum ajuste de ranking
+  desempata — e o efeito é silencioso, porque a errada vence com aparência de
+  resultado normal. Aconteceu em `academia` ("vou pensar" em `objections` e na
+  de indecisão) e em `clinica` ("vou conversar em casa" literalmente idêntico em
+  duas). Agora o `retrieval_check` varre **todos os gatilhos curados** e exige
+  que cada um traga a própria entrada em 1º (piso 95%; medido 95,5% de 885).
+- **A prosa não pode decidir o 1º lugar.** `strategy` e `answer` são textos
+  longos; somando sem teto, uma entrada que *fala do assunto* passava na frente
+  da que *responde a pergunta*. Em `lib/match.ts` a prosa satura. Zerá-la seria
+  pior: é ela que segura o recall quando ninguém escreveu gatilho para aquela
+  pergunta. **Ao mexer no casamento, meça as duas coisas** — precisão sobre os
+  gatilhos curados e recall sobre mensagens que não são gatilho de ninguém.
+  Melhorar uma às custas da outra parece progresso e não é.
+- **Teste não guarda cópia do algoritmo.** O `retrieval_check` mantinha uma
+  reimplementação "fiel" de `lib/match.ts`, com um comentário admitindo que
+  divergiria. Divergiu na primeira mudança real. O Node lê TypeScript direto:
+  o teste importa o arquivo do app.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.

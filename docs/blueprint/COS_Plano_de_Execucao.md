@@ -107,11 +107,53 @@ chegava ao motor.
   *Opção parada para o futuro, sem urgência:* gerar os campos de ensino só
   quando o vendedor clicar "por quê?" — preserva o discurso e corta o custo.
 
+- ✅ **Ruído no ranking resolvido (ago/2026).** Eram três causas somadas, e a
+  terceira não estava no diagnóstico original:
+  1. **Nenhum termo pesava mais que outro.** "como" valia o mesmo que
+     "importado". Entrou frequência inversa: termo raro decide, termo comum
+     conta e não decide.
+  2. **O gatilho era medido numa direção só.** Contava-se quantas palavras da
+     mensagem encostavam na entrada, não **quanto do gatilho a mensagem
+     continha**. Com isso *"e se o lote nao sair como a amostra"* (2 de 5
+     palavras) empatava com *"o importado e mais barato"* (todas). Agora a nota
+     do gatilho é `massa casada × cobertura` — paráfrase quase literal ganha de
+     coincidência de vocabulário.
+  3. **A prosa decidia.** `strategy` e `answer` somavam sem limite: seis
+     palavras banais espalhadas por seis linhas passavam na frente de três
+     palavras certas num gatilho. Medido: zerando a prosa, todos os casos iam
+     para o 1º lugar. Zerar seria pior (é ela que segura o recall quando
+     ninguém escreveu gatilho), então ela **satura** — cresce, tem teto, e
+     mantém a ordem entre entradas que só casaram por prosa.
+  **Medido, não estimado:** recall **idêntico** (33 gatilhos voltavam vazio
+  antes e depois; toda mensagem solta devolve a mesma quantidade) e precisão
+  melhor — sobre os **885 gatilhos curados**, a entrada dona vem em 1º em
+  **95,5%**, contra 94,1%.
+  E o `retrieval_check` deixou de manter uma **cópia** do algoritmo: importa
+  `lib/match.ts` direto. A cópia existia com um comentário admitindo o risco de
+  divergir, e na primeira vez que o ranking mudou de verdade foi o que quase
+  aconteceu.
+
+- ✅ **A limpeza de gatilhos do M3 estava pela metade.** O diagnóstico do
+  ranking encontrou o resto: em **academia**, `objections` era dona de "vou
+  pensar", "preciso pensar" e "depois eu te falo"; em **clínica**, "vou
+  conversar em casa" estava **literalmente idêntico** em duas entradas, e a de
+  follow-up pós-orçamento também reivindicava "vou pensar". Dois donos da mesma
+  frase é empate por construção — ranking nenhum resolve. Corrigido **no seed
+  de cada segmento**, seguindo o desenho já aplicado em `sob_medida`,
+  `escola_esportiva` e `automacao`.
+  Virou teste: o `retrieval_check` agora varre **todos os gatilhos** e exige que
+  cada um traga a própria entrada em 1º (piso de 95%). Os casos escolhidos a mão
+  não tinham apontado isso; a varredura cega aponta.
+
 **Aberto:**
-- **Ruído no ranking**: em "o importado sai mais barato", a entrada de indecisão
-  ficou em 1º porque a mensagem continha "aprovou". Inofensivo hoje (as 8
-  primeiras entram no contexto), mas piora conforme a biblioteca cresce — e
-  agora importa mais, porque a 1ª entrada é quem veta.
+- **Contradição de doutrina em `academia`** — decisão de curadoria, não de
+  código. A entrada `objections` que hoje isola a dúvida vaga ensina *"devolver
+  a pressão de preço (Jim Thomas) + fechamento por alternativa"*, com escola
+  `fechamento_classico`. A entrada de indecisão que veio no M3 ensina o oposto
+  para o mesmo cliente: **não repetir o argumento, reduzir risco**. O JOLT diz
+  que a primeira é o que piora o desfecho em 84% dos casos. Movi só os gatilhos;
+  **decidir se a entrada antiga é aposentada ou reescrita é do fundador** — e
+  `technique` é user-facing, aparece no Responder e no curso.
 
 ### 2. Fechar a auditoria pendente
 

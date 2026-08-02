@@ -15,48 +15,23 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 // ---------------------------------------------------------------------------
-// Cópia fiel do casamento de `apps/web/lib/match.ts`. Duplicar aqui é
-// deliberado: o teste roda em Node puro, sem o bundler do Next. Se o algoritmo
-// mudar lá e não aqui, este teste começa a mentir — por isso ele compara
-// CATEGORIA e ESCOLA (contrato), não a pontuação.
+// O ALGORITMO VEM DO APP, não de uma cópia.
+//
+// Até ago/2026 este arquivo mantinha uma reimplementação "fiel" do casamento,
+// com um comentário admitindo o risco: se mudasse lá e não aqui, o teste
+// passaria a medir um algoritmo que não está no ar. Na primeira vez que o
+// ranking foi mexido de verdade, foi exatamente o que quase aconteceu.
+// O Node lê TypeScript direto, então a duplicação não tinha mais motivo.
 // ---------------------------------------------------------------------------
-// Espelha `lib/match.ts`: `custa`/`custam` NÃO são ignoradas (são o sinal de
-// uma pergunta de preço); `quanto` continua ignorada por ser ambígua.
-const STOP = new Set(
-  "a o e de da do das dos em no na nos nas um uma uns umas que qual quais quanto quanta quantos eh sao para pra por com sem me te se ao aos isso esse essa este esta vou quero queria gostaria saber ter tem tenho voce voces vcs oi ola bom boa dia tarde noite sobre mais menos meu minha teu tua nossa seu sua the of".split(/\s+/),
+const { rankEntries } = await import(
+  pathToFileURL(path.join(ROOT, "apps/web/lib/match.ts")).href
 );
-const toks = (s) =>
-  (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP.has(w));
-
-function fieldScore(q, campo) {
-  for (const w of campo) if (w === q) return 1;
-  if (q.length >= 4) for (const w of campo) if (w.startsWith(q) || q.startsWith(w) || w.includes(q)) return 0.5;
-  return 0;
-}
-function pontuar(query, e) {
-  const campos = [
-    { toks: toks((e.trigger_questions ?? []).join(" ")), weight: 3 },
-    { toks: toks(e.category ?? ""), weight: 2 },
-    { toks: toks(e.technique ?? ""), weight: 1.5 },
-    { toks: toks(e.strategy ?? ""), weight: 1 },
-    { toks: toks(e.answer ?? ""), weight: 0.6 },
-  ];
-  let total = 0;
-  for (const q of [...new Set(toks(query))]) {
-    let melhor = 0;
-    for (const c of campos) melhor = Math.max(melhor, fieldScore(q, c.toks) * c.weight);
-    total += melhor;
-  }
-  return total;
-}
 
 // ---------------------------------------------------------------------------
 // OS CASOS. Mensagem real → o que o motor DEVE escolher.
@@ -74,9 +49,32 @@ const CASOS = [
   // A objeção nº1 da indústria brasileira.
   { skill: "industria", msg: "o importado sai mais barato que o seu", categoria: "objections", escola: "negociacao_voss" },
 
+  // REGRESSÃO do ruído de ranking (ago/2026). Mensagem real da bateria com
+  // IA: a entrada de INDECISÃO vencia porque a frase tem "amostra",
+  // "desenvolvimento", "aprovou" e "como" — seis palavras banais espalhadas
+  // pelos 7 gatilhos dela, contra as três que definem a mensagem
+  // ("importado", "sai", "barato"). Importa mais do que parecia: a 1ª entrada
+  // é quem VETA o que o motor pode afirmar.
+  {
+    skill: "industria",
+    msg: "Bom dia. Recebi a amostra e o pessoal do desenvolvimento aprovou, mas o importado sai bem mais barato. Como fica?",
+    categoria: "objections",
+    escola: "negociacao_voss",
+    primeiro: true,
+  },
+
   // INDECISÃO — o cliente concordou e travou. Não é objeção.
   { skill: "sob_medida", msg: "vou pensar e depois te falo", categoria: "commitment_offer", escola: "indecisao_jolt" },
-  { skill: "clinica", msg: "preciso pensar, vou conversar em casa", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  // Este caso era "preciso pensar, vou conversar em casa" e cobrava
+  // indecisão. A mensagem carrega DOIS sinais — medo ("preciso pensar") e
+  // outra pessoa na decisão ("vou conversar em casa") — e a segunda metade é,
+  // literalmente, o gatilho inteiro da entrada do decisor. Cobrar um vencedor
+  // ali é declarar como verdade uma escolha que a própria curadoria não faz:
+  // o M3 deu a frase de casa ao decisor e o medo à indecisão, de propósito.
+  // Virou dois casos de sinal único — cobre mais, e cada um tem uma resposta
+  // defensável. Na mensagem misturada as duas continuam chegando ao modelo.
+  { skill: "clinica", msg: "tenho medo de nao dar certo, preciso pensar", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  { skill: "clinica", msg: "vou conversar em casa antes de decidir", categoria: "objections", escola: "negociacao_voss" },
   { skill: "industria", msg: "vou aguardar a proxima colecao", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "academia", msg: "vou pensar com calma", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "escola_esportiva", msg: "vou ver com meu marido", categoria: "commitment_offer", escola: "indecisao_jolt" },
@@ -137,33 +135,76 @@ const POSICOES = 3;
 let falhas = 0;
 console.log(`mensagem → 1º lugar (esperado nas ${POSICOES} primeiras)\n`);
 for (const caso of CASOS) {
-  const lista = porSkill[caso.skill] ?? [];
-  const ranked = lista
-    .map((e) => ({ e, score: pontuar(caso.msg, e) }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score);
+  const ranked = rankEntries(caso.msg, porSkill[caso.skill] ?? []);
 
   const escolaDe = (e) => (e ? e.school ?? mapas[caso.skill]?.[e.category] ?? null : null);
-  const top = ranked[0]?.e;
+  const top = ranked[0]?.entry;
   const topo = ranked.slice(0, POSICOES);
   const achou = topo.findIndex(
-    (x) => x.e.category === caso.categoria && escolaDe(x.e) === caso.escola,
+    (x) => x.entry.category === caso.categoria && escolaDe(x.entry) === caso.escola,
   );
 
-  if (achou < 0) falhas++;
-  const marca = achou < 0 ? "✗" : achou === 0 ? "✓" : "~";
+  // `primeiro: true` exige o 1º lugar, não só o pódio. Reservado para os casos
+  // em que a entrada certa é a que precisa VETAR — a regra do veto só olha a
+  // primeira, então nesses o 2º lugar é uma falha, não um "quase".
+  const reprovado = achou < 0 || (caso.primeiro && achou !== 0);
+  if (reprovado) falhas++;
+  const marca = reprovado ? "✗" : achou === 0 ? "✓" : "~";
   console.log(
-    `${marca} [${caso.skill}] "${caso.msg}"  →  ${top?.category ?? "(nada casou)"} / ${escolaDe(top) ?? "—"}` +
+    `${marca} [${caso.skill}] "${caso.msg.slice(0, 64)}${caso.msg.length > 64 ? "…" : ""}"  →  ` +
+      `${top?.category ?? "(nada casou)"} / ${escolaDe(top) ?? "—"}` +
       (achou > 0 ? `   (o esperado veio em ${achou + 1}º)` : ""),
   );
-  if (achou < 0) {
-    console.log(`     esperado: ${caso.categoria} / ${caso.escola}`);
+  if (reprovado) {
+    console.log(`     esperado: ${caso.categoria} / ${caso.escola}${caso.primeiro ? " EM 1º" : ""}`);
     console.log(
-      `     top ${POSICOES}: ${topo.map((x) => `${x.e.category}/${escolaDe(x.e)} (${x.score.toFixed(1)})`).join(" · ") || "(vazio)"}`,
+      `     top ${POSICOES}: ${topo.map((x) => `${x.entry.category}/${escolaDe(x.entry)} (${x.score.toFixed(1)})`).join(" · ") || "(vazio)"}`,
     );
   }
 }
 
 console.log(`\n${CASOS.length - falhas}/${CASOS.length} casos corretos`);
-console.log(falhas ? "✗ FALHOU" : "✓ PASSOU — a escolha de técnica está coerente");
+
+// ---------------------------------------------------------------------------
+// SEGUNDA MEDIDA: cada gatilho curado deve trazer a PRÓPRIA entrada em 1º.
+//
+// Os casos acima são escolhidos à mão e cobrem o que a gente lembrou de cobrir.
+// Esta parte é cega e cobre a biblioteca inteira: todo gatilho é uma pergunta
+// que alguém escreveu de propósito para uma entrada, então trazer outra entrada
+// na frente é um defeito — quase sempre porque DUAS entradas do mesmo segmento
+// reivindicam a mesma frase.
+//
+// Foi exatamente o que aconteceu: "vou pensar" pertencia à entrada de indecisão
+// E à de objeções em academia, e "vou conversar em casa" estava literalmente
+// nas duas entradas da clínica. Nenhum ranking desempata dois donos. Esta
+// medida teria apontado o dedo; os casos escolhidos a mão não apontaram.
+//
+// PISO: 95%. Medido em 1º/ago/2026 com 885 gatilhos: 95,5% (era 94,1% antes da
+// correção do ranking). Os que sobram são gatilhos curtos demais para casar
+// ("e so isso?"), não conflitos.
+const PISO = 0.95;
+let gatilhos = 0;
+let noTopo = 0;
+const conflitos = [];
+for (const [skill, lista] of Object.entries(porSkill)) {
+  for (const e of lista) {
+    for (const g of e.trigger_questions ?? []) {
+      gatilhos++;
+      const primeiro = rankEntries(g, lista)[0]?.entry;
+      if (primeiro === e) noTopo++;
+      else if (primeiro) conflitos.push(`[${skill}] "${g}" → ${primeiro.category}/${primeiro.technique}`);
+    }
+  }
+}
+const taxa = gatilhos ? noTopo / gatilhos : 0;
+console.log(
+  `\n${noTopo}/${gatilhos} gatilhos trazem a própria entrada em 1º (${(taxa * 100).toFixed(1)}%, piso ${PISO * 100}%)`,
+);
+if (taxa < PISO) {
+  falhas++;
+  console.log("✗ abaixo do piso. Os 10 primeiros conflitos:");
+  for (const c of conflitos.slice(0, 10)) console.log(`     ${c}`);
+}
+
+console.log(falhas ? "\n✗ FALHOU" : "\n✓ PASSOU — a escolha de técnica está coerente");
 process.exit(falhas ? 1 : 0);

@@ -74,7 +74,12 @@ Acolhimento nao e diagnostico. A pessoa quer se sentir ouvida antes de marcar.',
  'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'commitment_offer', 'proactive',
- '{"plano de tratamento","orcamento","mandou o orcamento","recebeu o plano","vou pensar","preciso ver"}',
+ -- "vou pensar"/"preciso ver" sairam daqui (ago/2026, limpeza do M3): sao da
+ -- entrada de indecisao_jolt. Esta e a do FOLLOW-UP pos-orcamento, e os
+ -- gatilhos dela sao os do orcamento entregue — mesmo desenho ja aplicado em
+ -- sob_medida e automacao, onde a entrada de cadencia so tem gatilho de
+ -- proposta enviada.
+ '{"plano de tratamento","orcamento","mandou o orcamento","recebeu o plano"}',
  null,
  'ESTA E A ENTRADA MAIS IMPORTANTE DO SEGMENTO. O tratamento nao se perde na
 apresentacao — se perde no SILENCIO depois dela. A maioria das clinicas entrega
@@ -259,7 +264,10 @@ para desistencia. Nao deixe a pessoa sem proximo passo.',
  'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'commitment_offer', 'reactive',
- '{"preciso pensar","vou conversar em casa","e muita coisa de uma vez","tenho medo","e se nao der certo","vou avaliar","depois eu retorno"}',
+ -- "vou conversar em casa" saiu daqui: estava LITERALMENTE identico na entrada
+ -- de objections do decisor, logo acima. Frase que nomeia outra pessoa na
+ -- decisao e daquela; medo e desta. O precedente e escola_esportiva.
+ '{"preciso pensar","e muita coisa de uma vez","tenho medo","e se nao der certo","vou avaliar","depois eu retorno"}',
  null,
  'Em saude a indecisao quase sempre e MEDO, nao duvida sobre o preco — medo de dor,
 de nao dar certo, de gastar e se arrepender. Quem ja ouviu o plano e mesmo assim

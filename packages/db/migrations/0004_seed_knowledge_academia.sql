@@ -155,13 +155,20 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'objections', 'reactive', '{"vou pensar","depois eu te falo","vou ver e retorno","preciso pensar"}',
-   null, '"Vou pensar" quase nunca e sobre tempo: e uma objecao nao dita.
+  -- GATILHOS DE INDECISAO SAIRAM DAQUI (ago/2026, limpeza do M3).
+  -- "vou pensar" e familia pertencem a entrada de commitment_offer /
+  -- indecisao_jolt, mais abaixo neste arquivo. Enquanto as duas disputavam a
+  -- mesma frase, o casamento nao tinha como acertar: dois donos do mesmo
+  -- gatilho e empate por construcao. O mesmo conserto ja tinha sido feito em
+  -- sob_medida, escola_esportiva e automacao; academia e clinica ficaram para
+  -- tras. Esta entrada continua sendo a do ISOLAMENTO DA DUVIDA VAGA.
+  (null, 'academia', 'objections', 'reactive', '{"nao sei se vale a pena","nao era bem o que eu procurava","fiquei na duvida","tenho uma ressalva","acho que nao e pra mim"}',
+   null, 'Duvida vaga quase nunca e sobre tempo: e uma objecao nao dita.
 Antes de qualquer coisa, pergunte de forma leve o que especificamente ainda falta
 para decidir. So depois de isolar a duvida real, ofereca o proximo passo concreto
 com duas opcoes de horario.', '{}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Devolver a pressao de preco (Jim Thomas) + fechamento por alternativa', '{"Aceitar o ''vou pensar'' e encerrar: o lead nao volta","Pressionar sem descobrir a objecao real"}', 'isolate_objection',
+   'Devolver a pressao de preco (Jim Thomas) + fechamento por alternativa', '{"Aceitar a duvida vaga e encerrar: o lead nao volta","Pressionar sem descobrir a objecao real"}', 'isolate_objection',
    'skill_seed', 'active', 'fechamento_classico');
 
 insert into public.knowledge_entries
