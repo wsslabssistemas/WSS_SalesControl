@@ -62,6 +62,10 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   objeto ou só na lista de itens, que abre sob demanda com o item destacado.
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
+- **Curso completo** — 9 módulos, 45 lições, 122 perguntas, 267 minutos, com
+  **repescagem espaçada** (`course_review`: as perguntas voltam em 2 → 5 → 12 →
+  30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
+  biblioteca do segmento da empresa.
 
 ### Segmentos — 9 completos, 166 entradas curadas
 | Segmento | Biblioteca | Módulos |
@@ -88,7 +92,7 @@ Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador
 trocar no seletor do topo do painel.
 
 ### Infra
-- Migrations `0001`–`0026` aplicadas. RLS em tudo com `tenant_id`.
+- Migrations `0001`–`0037` aplicadas. RLS em tudo com `tenant_id`.
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
@@ -178,6 +182,13 @@ trocar no seletor do topo do painel.
   Close") e o fundador leu isso na tela. Traduzidos em ago/2026 mantendo o
   autor entre parênteses — creditar a escola é o método; o que não pode é o
   vendedor ler inglês. **Ao criar entrada nova, o rótulo é para ser lido.**
+- **Progresso de repescagem não pode morar em `course_progress.answers`.** O
+  campo é reescrito quando a lição é refeita e é a base do cálculo da nota —
+  gravar acerto de revisão ali infla a nota de uma prova que ninguém refez, e o
+  número deixa de significar o que diz significar. O agendamento é por
+  QUESTÃO, não por lição: chave diferente, tabela diferente (`course_review`,
+  `0037`). O plano de execução afirmava que "o dado já é guardado desde o
+  `0031`" — era meia verdade: o *erro* estava lá, o *quando volta* não.
 - **Alternativa correta não pode viver na mesma posição.** As 16 primeiras
   perguntas do curso saíram todas com a resposta na 1ª opção — quem percebe o
   padrão acerta sem ler, e aí não existe prática de recuperação, que é o método
@@ -235,6 +246,9 @@ npm run -w @cos/skill-loader validate     # manifestos (deve dar 8/8)
 node packages/db/tests/library_check.mjs  # bibliotecas: categoria, escola, fatos
 node packages/db/tests/demo_dna_check.mjs # DNA de demonstração × manifestos
 node packages/db/tests/retrieval_check.mjs # escolha de técnica: 22/22 (precisa do banco)
+node packages/db/tests/repescagem_test.mjs # espaçamento do curso: 13/13 (sem banco)
+node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
+node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql
 node scripts/seed-skills.mjs              # recarrega manifestos no banco
 node scripts/seed-demo-dna.mjs            # DNA das empresas demo
 cd apps/web && npm run build              # build limpo

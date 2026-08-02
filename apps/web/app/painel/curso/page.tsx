@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
-import { carregarGrade, carregarProgresso } from "@/lib/curso";
+import { carregarGrade, carregarProgresso, carregarRepescagem } from "@/lib/curso";
 
 export const metadata = { title: "Curso" };
 
@@ -33,7 +33,11 @@ export default async function CursoPage() {
     );
   }
 
-  const [grade, progresso] = await Promise.all([carregarGrade(), carregarProgresso(tenant.id)]);
+  const [grade, progresso, repescagem] = await Promise.all([
+    carregarGrade(),
+    carregarProgresso(tenant.id),
+    carregarRepescagem(tenant.id),
+  ]);
 
   const todas = grade.flatMap((g) => g.licoes);
   const feitas = todas.filter((l) => progresso.get(l.key)?.completed_at).length;
@@ -77,6 +81,29 @@ export default async function CursoPage() {
           </div>
         )}
       </div>
+
+      {/* A repescagem só aparece quando existe: cartão vazio permanente vira
+          ruído, e o vazio aqui é o comportamento certo — o espaçamento está
+          fazendo o trabalho dele. */}
+      {repescagem.length > 0 && (
+        <div className="card mt-16" style={{ borderColor: "var(--border-brand)" }}>
+          <div className="between" style={{ alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div className="grow">
+              <p className="eyebrow" style={{ margin: 0 }}>Repescagem</p>
+              <p style={{ margin: "2px 0 4px", fontSize: 15, fontWeight: 600 }}>
+                {repescagem.length}{" "}
+                {repescagem.length === 1 ? "pergunta pronta" : "perguntas prontas"} para revisar
+              </p>
+              <p className="text-dim" style={{ margin: 0, fontSize: 13 }}>
+                De lições que você já fez. Lembrar dias depois é o que fixa — leva 2 minutos.
+              </p>
+            </div>
+            <Link href="/painel/curso/repescagem" className="btn btn-sm btn-primary">
+              Revisar →
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="stack mt-16" style={{ gap: 12 }}>
         {grade.map(({ modulo, licoes }) => {

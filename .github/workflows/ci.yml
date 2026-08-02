@@ -31,3 +31,8 @@ jobs:
       # a entrada escala para sempre e ninguém entende por quê.
       - name: Validar DNA de demonstração
         run: node packages/db/tests/demo_dna_check.mjs
+      # Espaçamento quebrado se parece com "ainda não chegou a hora": a tela
+      # continua funcionando e a prática distribuída simplesmente não acontece.
+      # Roda no CI porque é lógica pura — sem banco e sem chave.
+      - name: Regra da repescagem espaçada
+        run: node packages/db/tests/repescagem_test.mjs

@@ -14,10 +14,9 @@
   híbrido com bateria/BESS é a onda que se forma, porque o on-grid virou
   commodity e a margem derreteu. Três entradas novas. **É o começo da saída do
   N=1.**
-- **Curso: 6 dos 9 módulos escritos** — 30 lições, ~180 min, 93 perguntas.
-  Faltam os módulos 7 (Confiança e limite), 8 (Fechamento) e 9 (Na sua
-  operação). A tela funciona e o fundador aprovou a régua depois de fazer o
-  Módulo 1.
+- **Curso completo: 9 de 9 módulos** — 45 lições, 267 min, 122 perguntas, com
+  **repescagem espaçada** no ar. A tela funciona e o fundador aprovou a régua
+  depois de fazer o Módulo 1.
 - **O kit de revisão está com o especialista da indústria** e as respostas do
   de solar estão a caminho.
 
@@ -243,10 +242,31 @@ pesquisa séria de folclore repetido.
       ("A pergunta de impacto") mostra *"tá caro"* na barbearia e
       *"o importado é mais barato"* na indústria. Uma lição, nove ramos.
 - [x] **Módulo 1 completo** — 5 lições, 16 perguntas.
-- [ ] Módulos 2 a 9 (35 lições). O 2 (Preço e valor) e o 3 (Objeção) primeiro:
-      é onde a evasão acontece e onde está a pergunta que mais chega.
-- [ ] Repescagem espaçada (perguntas de módulos anteriores voltando). O dado já
-      é guardado por questão desde o `0031` — falta a tela usar.
+- [x] **Módulos 2 a 9** (`0034`, `0035`, `0036`). 45 lições, 122 perguntas,
+      267 minutos. A ordem seguiu o dia do vendedor, não a ordem das escolas:
+      2 (Preço e valor) e 3 (Objeção) primeiro porque é onde a evasão acontece
+      e onde está a pergunta que mais chega; 9 (Na sua operação) por último
+      porque é o único lugar em que o produto é assunto legítimo.
+- [x] **Repescagem espaçada** (`0037`). O segundo achado da meta-análise, que
+      quase nenhum curso faz.
+      **O dado NÃO estava todo lá, ao contrário do que este plano dizia.**
+      `course_progress.answers` responde *o que a pessoa errou naquela lição* —
+      e é por isso que a repescagem sabe por onde começar. O que faltava é o
+      agendamento: quando a questão volta e quantos acertos seguidos ela já
+      teve **fora** do contexto da lição. Forçar isso em `answers` teria dois
+      efeitos ruins: o campo é reescrito a cada vez que a lição é refeita, e a
+      nota da lição é calculada a partir dele — acerto de repescagem gravado
+      ali falsificaria a nota de uma prova que ninguém refez. Daí a tabela
+      `course_review`, com `streak` e `due_at` por questão.
+      Intervalos 2 → 5 → 12 → 30 dias por acerto seguido; errar zera e traz de
+      volta amanhã; carência de 2 dias depois da lição, porque repescar no
+      mesmo dia é repetir, não espaçar; no máximo 2 perguntas da mesma lição
+      por sessão, para não virar reconhecimento de contexto.
+      A regra é **função pura** (`lib/repescagem.ts`), testada com relógio de
+      mentira — `repescagem_test.mjs`, 13/13, **no CI**, porque não precisa de
+      banco. O motivo de existir teste aqui: espaçamento quebrado se parece
+      exatamente com "ainda não chegou a hora" — a tela continua funcionando e
+      metade do método simplesmente não acontece.
 
 **Decisões de implementação que valem registro:**
 - **A correção é no servidor, uma pergunta por vez.** O gabarito nunca vai ao

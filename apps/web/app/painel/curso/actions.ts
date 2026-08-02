@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
+import { agendar } from "@/lib/repescagem";
 import { revalidatePath } from "next/cache";
 
 export type ResultadoQuiz =
@@ -107,4 +108,68 @@ export async function concluirLicao(
 
   revalidatePath("/painel/curso");
   return { ok: true, acertos, total: lista.length, score };
+}
+
+/**
+ * Responde UMA pergunta de repescagem e reagenda a próxima aparição.
+ *
+ * Separada de `responderPergunta` porque faz uma coisa a mais e não pode fazer
+ * uma que aquela faz: não toca em `course_progress`. Gravar acerto de
+ * repescagem junto com a nota da lição inflaria a nota de uma prova que a
+ * pessoa não refez — o número deixaria de significar o que diz significar.
+ */
+export async function responderRepescagem(
+  questionId: string,
+  escolha: number,
+): Promise<ResultadoPergunta> {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
+
+  const ent = await loadEntitlements(tenant.id, tenant.skill_key);
+  if (!ent.has("curso")) return { ok: false, error: "Curso não liberado para esta empresa." };
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth?.user?.id;
+  if (!userId) return { ok: false, error: "Sessão expirada." };
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("course_questions")
+    .select("correct, explanation")
+    .eq("id", questionId)
+    .maybeSingle();
+  if (!data) return { ok: false, error: "Pergunta não encontrada." };
+
+  const q = data as { correct: number; explanation: string };
+  const certa = escolha === q.correct;
+
+  // O streak vem do banco, não do browser: quem controla o intervalo é o
+  // servidor, senão bastaria mandar um número alto para nunca mais rever nada.
+  const { data: atual } = await supabase
+    .from("course_review")
+    .select("streak")
+    .eq("tenant_id", tenant.id)
+    .eq("question_id", questionId)
+    .maybeSingle();
+
+  const agora = new Date();
+  const { streak, due_at } = agendar((atual as { streak: number } | null)?.streak ?? 0, certa, agora);
+
+  const { error } = await supabase.from("course_review").upsert(
+    {
+      tenant_id: tenant.id,
+      user_id: userId,
+      question_id: questionId,
+      streak,
+      due_at,
+      last_seen_at: agora.toISOString(),
+    },
+    { onConflict: "tenant_id,user_id,question_id" },
+  );
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/painel/curso");
+  return { ok: true, certa, explicacao: q.explanation };
 }

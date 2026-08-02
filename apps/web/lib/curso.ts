@@ -11,6 +11,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { escolherRepescagem, type Candidato } from "./repescagem";
 
 export type Modulo = {
   key: string;
@@ -118,6 +119,104 @@ export async function carregarProgresso(tenantId: string): Promise<Map<string, P
     .select("lesson_key, completed_at, score")
     .eq("tenant_id", tenantId);
   return new Map(((data as ProgressoLicao[] | null) ?? []).map((p) => [p.lesson_key, p]));
+}
+
+// ---------------------------------------------------------------------
+// REPESCAGEM ESPAÇADA
+//
+// A segunda metade do método: prática de teste morre no fim da lição se as
+// perguntas não voltarem espaçadas. A REGRA de quando cada uma volta é pura e
+// mora em `lib/repescagem.ts`, testada sem banco; aqui fica só o que ela não
+// pode fazer sozinha — juntar progresso, gabarito e agendamento.
+// ---------------------------------------------------------------------
+
+export type PerguntaRepescagem = {
+  id: string;
+  question: string;
+  options: string[];
+  licao: string;
+  modulo: string;
+};
+
+/**
+ * A sessão de hoje: até 5 perguntas de lições JÁ CONCLUÍDAS.
+ *
+ * Só entra lição concluída de propósito — repescar o que a pessoa ainda não
+ * estudou não é espaçamento, é pegadinha.
+ */
+export async function carregarRepescagem(tenantId: string): Promise<PerguntaRepescagem[]> {
+  // Sem filtro por pessoa nas consultas: a RLS de `course_progress` e de
+  // `course_review` já entrega só as linhas de quem está logado. Repetir o
+  // `user_id` aqui daria a impressão de que o isolamento é da aplicação.
+  const supabase = await createClient();
+
+  const [{ data: progresso }, { data: revisoes }] = await Promise.all([
+    supabase
+      .from("course_progress")
+      .select("lesson_key, completed_at, answers")
+      .eq("tenant_id", tenantId)
+      .not("completed_at", "is", null),
+    supabase.from("course_review").select("question_id, streak, due_at").eq("tenant_id", tenantId),
+  ]);
+
+  const feitas = (progresso as { lesson_key: string; completed_at: string; answers: Record<string, boolean> }[] | null) ?? [];
+  if (!feitas.length) return [];
+
+  const agendado = new Map(
+    ((revisoes as { question_id: string; streak: number; due_at: string }[] | null) ?? []).map((r) => [
+      r.question_id,
+      r,
+    ]),
+  );
+
+  // Gabarito e ordem do curso: conteúdo vendido, então `service_role`.
+  const admin = createAdminClient();
+  const chaves = feitas.map((p) => p.lesson_key);
+  const [{ data: perguntas }, { data: licoes }, { data: modulos }] = await Promise.all([
+    admin.from("course_questions").select("id, lesson_key, question, options").in("lesson_key", chaves),
+    admin.from("course_lessons").select("key, module_key, ord, title").in("key", chaves),
+    admin.from("course_modules").select("key, ord, title"),
+  ]);
+
+  const porLicao = new Map(
+    ((licoes as { key: string; module_key: string; ord: number; title: string }[] | null) ?? []).map((l) => [l.key, l]),
+  );
+  const porModulo = new Map(
+    ((modulos as { key: string; ord: number; title: string }[] | null) ?? []).map((m) => [m.key, m]),
+  );
+  const conclusao = new Map(feitas.map((p) => [p.lesson_key, p]));
+
+  const candidatos: Candidato[] = [];
+  const visiveis = new Map<string, PerguntaRepescagem>();
+
+  for (const q of ((perguntas as { id: string; lesson_key: string; question: string; options: string[] }[] | null) ?? [])) {
+    const licao = porLicao.get(q.lesson_key);
+    const p = conclusao.get(q.lesson_key);
+    if (!licao || !p) continue;
+    const modulo = porModulo.get(licao.module_key);
+    const rev = agendado.get(q.id);
+
+    candidatos.push({
+      question_id: q.id,
+      lesson_key: q.lesson_key,
+      ordem: (modulo?.ord ?? 0) * 100 + licao.ord,
+      errou_na_licao: p.answers?.[q.id] === false,
+      concluida_em: p.completed_at,
+      due_at: rev?.due_at ?? null,
+      streak: rev?.streak ?? 0,
+    });
+    visiveis.set(q.id, {
+      id: q.id,
+      question: q.question,
+      options: q.options,
+      licao: licao.title,
+      modulo: modulo?.title ?? "",
+    });
+  }
+
+  return escolherRepescagem(candidatos, new Date())
+    .map((c) => visiveis.get(c.question_id))
+    .filter((q): q is PerguntaRepescagem => !!q);
 }
 
 // O renderizador de markdown mora em `lib/markdown.ts` — lógica pura, sem
