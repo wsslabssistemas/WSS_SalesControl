@@ -27,7 +27,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 (null, 'sob_medida', 'pricing', 'reactive',
@@ -44,7 +44,7 @@ o fechamento.',
  '{"pricing.como_cobra"}', '{"pricing.range","availability.prazo_visita","risk_free_entry.visita_gratuita"}', '{}', 'escalate',
  'Ancoragem por faixa + conducao a medicao (o valor nasce na visita)',
  '{"Chutar preco por metro: destroi margem e credibilidade","Fugir da pergunta sem explicar o porque: parece enrolacao","Nao oferecer a visita e deixar a conversa morrer"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'risk_free_entry', 'reactive',
  '{"voces vao ate la","cobra a visita","tem taxa de visita","atende minha regiao","voce vem medir","como funciona a medicao"}',
@@ -61,7 +61,7 @@ entende o que vai ganhar, comparece.',
  '{"risk_free_entry.valor_visita","risk_free_entry.o_que_leva","availability.prazo_visita"}', '{}', 'escalate',
  'Qualificacao antes do deslocamento + valor percebido da visita',
  '{"Sair para medir sem qualificar: prejuizo garantido com curioso","Nao dizer que cobra e o cliente descobrir depois","Agendar sem confirmar a regiao"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'commitment_offer', 'proactive',
  '{"mandou o orcamento","recebeu a proposta","enviei o orcamento","cliente nao respondeu o orcamento","segue o orcamento"}',
@@ -79,7 +79,7 @@ Nunca pressione por decisao — pergunte o que ficou em aberto.',
  '{"pricing.parcelamento"}', '{"expertise_proof.garantia","availability.prazo_entrega","differentials.items"}', '{}', 'escalate',
  'Cadencia de 3 toques com angulo diferente (o antidoto do silencio)',
  '{"Enviar o orcamento e esperar o cliente voltar","Repetir a mesma pergunta a cada toque","Sumir depois de uma unica tentativa","Cobrar decisao (\"e ai, fechou?\")"}',
- 'retomar_orcamento', 'skill_seed', 'active'),
+ 'retomar_orcamento', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'objections', 'reactive',
  '{"ta caro","achei caro","muito caro","fora do orcamento","nao esperava esse valor"}',
@@ -96,7 +96,7 @@ recusado.',
  '{"expertise_proof.garantia"}', '{"differentials.items","pricing.parcelamento","policies.assistencia"}', '{}', 'escalate',
  'Abertura de escopo + comparacao por durabilidade + faseamento',
  '{"Dar desconto na primeira objecao","Justificar com o proprio custo: o cliente nao paga o seu custo","Insistir no projeto inteiro quando ele ja disse que nao cabe"}',
- 'defender_valor', 'skill_seed', 'active'),
+ 'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'objections', 'reactive',
  '{"achei mais barato","outro cobrou menos","tenho outro orcamento","o concorrente fez por"}',
@@ -113,7 +113,7 @@ Cliente que volta depois de um servico ruim fecha sem discutir preco.',
  '{"differentials.items"}', '{"expertise_proof.garantia","expertise_proof.tempo_de_casa","differentials.marcas"}', '{}', 'escalate',
  'Comparacao item a item (nunca ataque ao concorrente)',
  '{"Falar mal do concorrente","Baixar para igualar o preco sem tirar escopo","Nao explicar a diferenca tecnica e virar so \"o mais caro\""}',
- 'defender_valor', 'skill_seed', 'active'),
+ 'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'objections', 'reactive',
  '{"vou pensar","preciso pensar","depois te falo","vou ver e te retorno","qualquer coisa eu chamo"}',
@@ -129,7 +129,7 @@ para quem ja esta em duvida.',
  '{}', '{"pricing.parcelamento","availability.prazo_entrega"}', '{}', 'omit',
  'Isolamento da objecao real + retorno com data marcada',
  '{"Aceitar o \"vou pensar\" e sumir","Pressionar por decisao imediata","Encerrar sem combinar o proximo contato"}',
- 'agendar_retorno', 'skill_seed', 'active'),
+ 'agendar_retorno', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'availability', 'reactive',
  '{"quanto tempo demora","qual o prazo","pra quando fica pronto","consegue pra esse mes","tenho pressa"}',
@@ -144,7 +144,7 @@ ofereca a visita mais proxima possivel.',
  '{"availability.prazo_entrega","availability.prazo_visita"}', '{"availability.prazo_orcamento"}', '{}', 'escalate',
  'Separacao dos tres prazos + urgencia como sinal de compra',
  '{"Prometer prazo sem conferir a producao","Dar um prazo unico e generico","Ignorar o sinal de urgencia"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'catalog', 'reactive',
  '{"voces fazem","trabalham com","tem esse modelo","faz em vidro","tem em aluminio","fazem instalacao"}',
@@ -158,7 +158,7 @@ a visita, que e onde o escopo real aparece.',
  '{"catalog.items"}', '{"catalog.nao_faz","differentials.marcas","risk_free_entry.raio_atendimento"}', '{}', 'escalate',
  'Confirmacao factual + honestidade sobre limites + conducao a visita',
  '{"Aceitar servico que nao domina para nao perder o cliente","Prometer material sem confirmar fornecedor","Nao aproveitar para agendar"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'goal_matching', 'reactive',
  '{"nao sei o que fica melhor","o que voce indica","qual material","vale a pena","o que voce faria"}',
@@ -175,7 +175,7 @@ Nunca empurre o mais caro sem justificativa de uso.',
  '{}', '{"catalog.items","differentials.marcas","differentials.items"}', '{}', 'omit',
  'Venda consultiva por uso (o diferencial contra quem so manda preco)',
  '{"Indicar o mais caro por padrao","Indicar sem entender o uso","Responder com catalogo em vez de recomendacao"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'expertise_proof', 'reactive',
  '{"voces sao confiaveis","tem garantia","ja fizeram parecido","tem foto de trabalho","quem instala","quanto tempo de mercado"}',
@@ -192,7 +192,7 @@ Fato tranquiliza; adjetivo ("somos os melhores") aumenta a desconfianca.',
  '{"expertise_proof.obras_referencia","expertise_proof.equipe","differentials.projeto_3d"}', '{}', 'escalate',
  'Reducao de risco por prova concreta (o medo e o obstaculo real)',
  '{"Responder com adjetivo em vez de prova","Prometer garantia diferente da real","Nao oferecer referencia parecida com o caso dele"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'reciprocity', 'proactive',
  '{"confirmar visita","lembrete de visita","vespera da medicao","voce vai estar em casa","posso ir amanha"}',
@@ -208,7 +208,7 @@ Se ele nao puder, ja ofereca outra data na mesma mensagem.',
  '{}', '{"risk_free_entry.o_que_leva","availability.prazo_visita"}', '{}', 'omit',
  'Confirmacao de vespera + garantir a presenca do decisor',
  '{"Nao confirmar e perder a viagem","Ir sem saber se o decisor estara presente","Confirmar em cima da hora"}',
- 'confirmar_visita', 'skill_seed', 'active'),
+ 'confirmar_visita', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'ecosystem', 'reactive',
  '{"meu arquiteto","a arquiteta pediu","o engenheiro indicou","trabalham com arquiteto","tem comissao para indicacao"}',
@@ -224,7 +224,7 @@ que ele mais valoriza: cumprir prazo e nao dar problema na obra dele.',
  '{}', '{"expertise_proof.obras_referencia","differentials.items"}', '{}', 'omit',
  'Canal profissional como fonte recorrente (respeitar o projeto e a relacao)',
  '{"Passar por cima do arquiteto para falar direto com o cliente","Alterar o projeto sem avisar","Tratar o profissional como obstaculo"}',
- 'cultivar_parceria', 'skill_seed', 'active'),
+ 'cultivar_parceria', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'retention', 'proactive',
  '{"cliente antigo","ja fiz servico para ele","faz tempo que instalei","ampliar o projeto","outro ambiente"}',
@@ -240,7 +240,7 @@ Peca indicacao no momento certo — logo apos um elogio, nunca durante negociaca
  '{}', '{"catalog.items","policies.assistencia"}', '{}', 'omit',
  'Reativacao por memoria do projeto (o lead mais barato que existe)',
  '{"Nunca mais falar com quem ja comprou","Mandar promocao generica","Pedir indicacao antes de entregar valor"}',
- 'reativar_cliente', 'skill_seed', 'active'),
+ 'reativar_cliente', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'limits_and_ethics', 'reactive',
  '{"da pra fazer mais barato","tira uma parte","faz sem nota","consegue um jeitinho","material mais simples"}',
@@ -255,7 +255,7 @@ Nunca prometa nota fiscal, garantia ou condicao que a empresa nao pratica.',
  '{}', '{"pricing.como_cobra","expertise_proof.garantia","policies.alteracao_escopo"}', '{}', 'omit',
  'Transparencia sobre trade-off (reduzir escopo, nunca qualidade escondida)',
  '{"Baixar o material sem avisar para fechar o preco","Prometer condicao fiscal que nao existe","Aceitar prazo impossivel para nao perder"}',
- 'ajustar_escopo', 'skill_seed', 'active'),
+ 'ajustar_escopo', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'availability', 'reactive',
  '{"oi","ola","bom dia","boa tarde","boa noite","gostaria de um orcamento","preciso de um orcamento"}',
@@ -270,4 +270,28 @@ o cliente pediu orcamento para tres empresas no mesmo dia.',
  '{}', '{"availability.prazo_visita","risk_free_entry.raio_atendimento"}', '{}', 'omit',
  'Abertura com qualificacao + velocidade de resposta como vantagem',
  '{"Pedir que o cliente mande as medidas: e seu trabalho, nao dele","Responder horas depois","Comecar pelo preco antes de saber o que ele quer"}',
- 'qualificar', 'skill_seed', 'active');
+ 'qualificar', 'skill_seed', 'active', null),
+
+(null, 'sob_medida', 'commitment_offer', 'reactive',
+ '{"vou pensar","preciso decidir com minha esposa","vou analisar o orcamento","me manda mais opcoes","ainda estou vendo","vou esperar um pouco","depois eu falo"}',
+ null,
+ 'Este e o cliente que mais aparece e o mais mal tratado do ramo. Ele nao sumiu
+por preco: travou porque a compra e cara, demorada e IRREVERSIVEL — se ficar
+ruim, ele vai conviver com aquilo por dez anos. Medo de errar, nao falta de
+dinheiro.
+O erro que quase todo mundo comete e mandar mais opcoes e mais referencias. Cada
+opcao nova adia a decisao: quem esta travado nao consegue comparar mais coisa.
+Pare de ampliar e comece a estreitar.
+RECOMENDE. Diga qual solucao voce faria na casa dele e por que, com a sua
+experiencia de quem ja fez isso muitas vezes. Cliente travado quer um especialista
+que assuma posicao, nao um catalogo.
+Tire o risco com o que for verdade: projeto antes de produzir, medida conferida
+no local, garantia, pagamento diluido, comecar por um ambiente em vez da casa
+toda. Reduzir o TAMANHO da decisao funciona melhor que reduzir o preco.
+E combine o proximo passo com data. Sem data, este cliente some — e some sem dizer
+nao, que e o que faz o vendedor achar que ainda esta vivo.',
+ '{"pricing.range"}',
+ '{"expertise_proof.garantia","policies.alteracao_escopo","pricing.parcelamento","availability.prazo_entrega","differentials.projeto_3d","expertise_proof.obras_referencia"}', '{}', 'escalate',
+ 'Estreitar em vez de ampliar: recomendar uma solucao e diminuir o tamanho da decisao',
+ '{"Mandar mais opcoes para quem esta em duvida","Dar desconto antes de descobrir o medo real","Reexplicar o valor do sob medida","Deixar o retorno sem data"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');

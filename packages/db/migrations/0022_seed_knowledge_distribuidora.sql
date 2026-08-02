@@ -31,7 +31,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 (null, 'distribuidora', 'pricing', 'reactive',
@@ -49,7 +49,7 @@ para tal preco") — isso aumenta o pedido sem parecer empurro.',
  '{"comercial.politica_desconto","comercial.tabela_por_volume","linhas.produtos"}', '{}', 'escalate',
  'Cotacao por mix + ancoragem na proxima faixa de volume',
  '{"Mandar a tabela inteira sem saber o que ele vende","Falar preco sem falar condicao de pagamento","Perder a chance de subir o pedido com a faixa de volume"}',
- 'montar_pedido', 'skill_seed', 'active'),
+ 'montar_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'objections', 'reactive',
  '{"ja tenho fornecedor","compro de outro","tenho representante","estou bem atendido","nao preciso trocar"}',
@@ -66,7 +66,7 @@ esta sempre ai, e o cliente conta se voce nao atacar.',
  '{"diferencial.motivo_trocar"}', '{"linhas.exclusividades","logistica.prazo_entrega","comercial.pedido_minimo"}', '{}', 'escalate',
  'Entrada por complemento (a fresta, nao a substituicao)',
  '{"Falar mal do fornecedor atual","Pedir para substituir tudo de uma vez","Nao investigar o que o atual deixa a desejar"}',
- 'primeiro_pedido', 'skill_seed', 'active'),
+ 'primeiro_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'objections', 'reactive',
  '{"ta caro","o outro faz mais barato","seu preco ta alto","consigo por menos"}',
@@ -84,7 +84,7 @@ fluxo de caixa.',
  '{"comercial.prazo_pagamento","logistica.frete","comercial.politica_desconto","diferencial.motivo_trocar"}', '{}', 'escalate',
  'Custo total contra preco unitario + ceder condicao antes de preco',
  '{"Dar desconto direto na primeira pressao","Comparar so o preco do item","Ignorar que o problema real costuma ser prazo de pagamento"}',
- 'defender_margem', 'skill_seed', 'active'),
+ 'defender_margem', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'objections', 'reactive',
  '{"pedido minimo alto","nao consigo esse valor","e muito produto","nao tenho espaco","nao vou girar tudo isso"}',
@@ -101,7 +101,7 @@ primeiro pedido nao e faturar, e comecar a relacao.',
  '{"comercial.pedido_minimo"}', '{"logistica.dias_de_rota","linhas.produtos","logistica.frete"}', '{}', 'escalate',
  'Montar pelo giro do cliente (sell-out) em vez de empurrar volume',
  '{"Empurrar volume para bater o minimo: trava a recompra","Recusar o cliente pequeno sem tentar montar o mix","Nao usar a rota para viabilizar o pedido"}',
- 'primeiro_pedido', 'skill_seed', 'active'),
+ 'primeiro_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'catalog', 'reactive',
  '{"voces tem","trabalham com","tem essa marca","tem esse item","qual o codigo","tem em estoque"}',
@@ -118,7 +118,7 @@ mais legitimo de cross-sell.',
  '{"linhas.produtos"}', '{"linhas.marcas","linhas.exclusividades","logistica.prazo_entrega"}', '{}', 'escalate',
  'Exatidao de catalogo + substituto transparente + complemento natural',
  '{"Dizer que tem sem confirmar estoque","Mandar similar como se fosse o mesmo item","Nao confirmar codigo em peca tecnica"}',
- 'montar_pedido', 'skill_seed', 'active'),
+ 'montar_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'goal_matching', 'reactive',
  '{"o que voce indica","o que vende mais","o que devo levar","primeira compra","monta um mix pra mim"}',
@@ -135,7 +135,7 @@ voce perde a recompra.',
  '{"linhas.produtos"}', '{"linhas.marcas","comercial.pedido_minimo"}', '{}', 'escalate',
  'Mix por perfil do PDV, comecando por giro (Curva A)',
  '{"Empurrar o que esta encalhado no seu estoque","Indicar o mesmo mix para todo tipo de cliente","Nao explicar por que aquele mix"}',
- 'montar_pedido', 'skill_seed', 'active'),
+ 'montar_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'availability', 'reactive',
  '{"quando entrega","qual o prazo","entrega na minha regiao","que dia passa","tem entrega hoje","frete"}',
@@ -152,7 +152,7 @@ quarta?" cria prazo natural sem pressao.',
  '{"logistica.prazo_entrega","logistica.regiao_atendida"}', '{"logistica.dias_de_rota","logistica.frete"}', '{}', 'escalate',
  'Rota como gatilho de fechamento (prazo natural, sem pressao)',
  '{"Prometer entrega fora da rota","Nao avisar sobre frete e o cliente descobrir na nota","Dar prazo generico sem olhar a regiao"}',
- 'fechar_pedido', 'skill_seed', 'active'),
+ 'fechar_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'retention', 'proactive',
  '{"faz tempo que nao compra","cliente parou","nao pede ha semanas","sumiu","reduziu o pedido"}',
@@ -169,7 +169,7 @@ condicao para o retorno, ou a rota da semana. Nunca so "e ai, vai querer?".',
  '{}', '{"linhas.produtos","comercial.prazo_pagamento","logistica.dias_de_rota"}', '{}', 'omit',
  'Churn preventivo: agir na QUEDA do pedido, nao na perda consumada',
  '{"Esperar o cliente sumir de vez para agir","Cobrar a ausencia","Mandar so \"vai querer alguma coisa?\" sem gancho"}',
- 'reativar_cliente', 'skill_seed', 'active'),
+ 'reativar_cliente', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'commitment_offer', 'proactive',
  '{"recompra","reposicao","proximo pedido","ta na hora de repor","acabou o estoque"}',
@@ -186,7 +186,7 @@ testa pouco por vez, e item novo empurrado em excesso vira estoque parado.',
  '{}', '{"logistica.dias_de_rota","linhas.produtos","comercial.tabela_por_volume"}', '{}', 'omit',
  'Antecipacao da reposicao + introducao de UM item novo por vez',
  '{"Esperar o cliente ligar quando faltar","Chamar sem olhar o que ele levou antes","Empurrar varios itens novos de uma vez"}',
- 'recompra', 'skill_seed', 'active'),
+ 'recompra', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'expertise_proof', 'reactive',
  '{"quem e voces","ha quanto tempo","atende quem","voces sao confiaveis","quem mais compra de voces"}',
@@ -203,7 +203,7 @@ isso que o lojista teme na hora de mudar de fornecedor.',
  '{}', '{"linhas.exclusividades","diferencial.suporte","logistica.dias_de_rota"}', '{}', 'omit',
  'Prova por regularidade e semelhanca (nao por adjetivo)',
  '{"Responder com adjetivo (\"somos os melhores\")","Expor nome de cliente sem autorizacao","Nao falar do pos-venda, que e o medo real"}',
- 'primeiro_pedido', 'skill_seed', 'active'),
+ 'primeiro_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'commitment_offer', 'reactive',
  '{"tem contrato","fecho tudo com voces","se eu comprar mais","desconto por volume","quero ser exclusivo"}',
@@ -220,7 +220,7 @@ distribuicao gera atrito no primeiro pedido diferente.',
  '{"comercial.politica_desconto"}', '{"comercial.tabela_por_volume","comercial.prazo_pagamento"}', '{}', 'escalate',
  'Condicao vinculada a compromisso (nunca desconto solto)',
  '{"Dar desconto sem contrapartida de frequencia ou mix","Nao registrar o combinado","Prometer exclusividade sem poder cumprir"}',
- 'fechar_acordo', 'skill_seed', 'active'),
+ 'fechar_acordo', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'limits_and_ethics', 'reactive',
  '{"tem validade curta","produto vencendo","garantia","veio errado","produto avariado","troca"}',
@@ -238,7 +238,7 @@ Em alimentos e farma, respeite integralmente as exigencias de rastreabilidade.',
  '{"Nunca empurrar produto proximo do vencimento sem informar"}', 'omit',
  'Transparencia de validade e resolucao rapida de avaria',
  '{"Empurrar item vencendo para girar estoque","Discutir culpa em vez de resolver","Prometer troca que a empresa nao faz"}',
- 'resolver_problema', 'skill_seed', 'active'),
+ 'resolver_problema', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'reciprocity', 'reactive',
  '{"oi","ola","bom dia","boa tarde","boa noite","tudo bem","voce e o representante"}',
@@ -254,7 +254,7 @@ dele".',
  '{}', '{"linhas.produtos","logistica.dias_de_rota"}', '{}', 'omit',
  'Preparo da visita (3 a 5 min de historico antes de falar)',
  '{"Abrir com \"vai querer alguma coisa?\"","Falar sem olhar o historico do cliente","Ignorar titulo em aberto e criar constrangimento depois"}',
- 'montar_pedido', 'skill_seed', 'active'),
+ 'montar_pedido', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'ecosystem', 'reactive',
  '{"tem material de divulgacao","expositor","ajuda na loja","como expor","promocao pro meu cliente"}',
@@ -270,7 +270,7 @@ Nunca prometa material ou verba que a empresa nao tem.',
  '{}', '{"diferencial.suporte","linhas.marcas"}', '{}', 'omit',
  'Apoio ao sell-out (quem ajuda o cliente a vender, recompra sempre)',
  '{"Focar so no proprio pedido e ignorar o giro do cliente","Prometer material que a empresa nao fornece","Nao orientar sobre exposicao e margem"}',
- 'apoiar_giro', 'skill_seed', 'active'),
+ 'apoiar_giro', 'skill_seed', 'active', null),
 
 (null, 'distribuidora', 'risk_free_entry', 'reactive',
  '{"nunca comprei de voces","quero testar","como faco pra comprar","primeira compra","preciso me cadastrar"}',
@@ -287,4 +287,47 @@ girou. E isso que transforma teste em carteira.',
  '{"comercial.pedido_minimo"}', '{"logistica.dias_de_rota","logistica.prazo_entrega","comercial.prazo_pagamento"}', '{}', 'escalate',
  'Pedido de entrada por giro + acompanhamento pos-primeira-entrega',
  '{"Explicar cadastro de forma burocratica e perder o cliente","Fazer primeira venda grande que nao gira","Nao voltar depois da primeira entrega"}',
- 'primeiro_pedido', 'skill_seed', 'active');
+ 'primeiro_pedido', 'skill_seed', 'active', null),
+
+(null, 'distribuidora', 'commitment_offer', 'reactive',
+ '{"vou pensar","depois eu peco","preciso ver com o socio","nao sei se vai girar","vou aguardar","deixa eu ver o estoque","semana que vem eu falo"}',
+ null,
+ 'O lojista que ja gostou do mix e mesmo assim adia nao esta duvidando de voce:
+esta com medo de comprar o que nao gira. Capital parado na prateleira e o pesadelo
+dele, e ninguem quer explicar ao socio uma compra encalhada.
+Nao insista no argumento do produto. Ele ja concordou — repetir soa como empurro
+e confirma o medo de estar sendo empurrado.
+RECOMENDE um pedido, nao um catalogo. "Comeca so com estes tres itens" resolve o
+travamento; "escolhe o que quiser" o mantem.
+Tire o risco com o que for verdade na casa: pedido de entrada menor que o normal,
+prazo de pagamento maior que o primeiro giro, reposicao rapida porque voce passa
+toda semana na rota. O argumento que destrava e simples: ele nao precisa acertar
+o volume de primeira, porque voce volta.
+Combine quando voces conversam de novo, de preferencia amarrado na sua rota. Data
+vaga em distribuicao vira cliente esquecido.',
+ '{"comercial.pedido_minimo"}',
+ '{"comercial.prazo_pagamento","logistica.prazo_entrega","logistica.dias_de_rota","linhas.produtos"}', '{}', 'escalate',
+ 'Recomendar um pedido minimo real e apoiar no giro, nao no argumento',
+ '{"Repetir as qualidades do produto","Mandar a tabela inteira de novo","Dar desconto sem descobrir o medo de encalhe","Deixar o retorno sem data e sem rota"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt'),
+
+(null, 'distribuidora', 'catalog', 'reactive',
+ '{"so me manda a tabela","nao precisa ligar","prefiro por escrito","manda no whatsapp","sem visita por enquanto","nao quero reuniao","depois eu vejo sozinho"}',
+ null,
+ 'Uma parte grande dos compradores hoje prefere resolver sozinho, sem vendedor no
+meio — e isso NAO e desinteresse. Insistir em visita ou ligacao com quem pediu
+material por escrito e a forma mais rapida de perder a conta.
+Entregue o que ele pediu, completo e organizado: os itens que interessam, com
+pedido minimo, prazo de pagamento e dia de rota. Material incompleto obriga a
+conversar, e obrigar a conversar e exatamente o que ele nao quer.
+Faca no maximo DUAS perguntas junto, por escrito, e so as que mudam a cotacao (o
+que ele ja vende, que volume). Perguntar por escrito respeita o tempo dele e ainda
+te da a qualificacao.
+Deixe a porta aberta sem cobrar: diga que fica a disposicao e combine um retorno
+leve. Quem compra sozinho volta quando precisa — desde que voce nao tenha enchido
+o saco antes.',
+ '{"linhas.produtos"}',
+ '{"comercial.pedido_minimo","comercial.prazo_pagamento","logistica.dias_de_rota","logistica.prazo_entrega"}', '{}', 'escalate',
+ 'Servir quem quer decidir sozinho: material completo + duas perguntas por escrito',
+ '{"Insistir em visita para quem pediu material","Mandar material incompleto para forcar conversa","Ligar depois de ele pedir por escrito","Sumir por achar que nao ha interesse"}',
+ 'entregar_material', 'skill_seed', 'active', null);

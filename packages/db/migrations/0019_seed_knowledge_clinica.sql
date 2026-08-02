@@ -22,7 +22,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 (null, 'clinica', 'pricing', 'reactive',
@@ -39,7 +39,7 @@ o fechamento.',
  '{"pricing.avaliacao_valor"}', '{"pricing.parcelamento","availability.weekly_hours"}', '{}', 'escalate',
  'Separacao avaliacao x tratamento + fechamento por alternativa',
  '{"Chutar valor de tratamento por mensagem: perde credibilidade e o paciente some","Esconder tambem o valor da avaliacao","Responder o preco e nao oferecer horario"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'objections', 'reactive',
  '{"ta caro","muito caro","nao tenho esse dinheiro","fora do meu orcamento","achei salgado"}',
@@ -55,7 +55,7 @@ queixa principal. Tratamento comecado vale mais que orcamento perfeito recusado.
  '{"pricing.parcelamento"}', '{"pricing.range","differentials.items"}', '{}', 'escalate',
  'Reconexao a queixa + diluicao em parcela + faseamento do plano',
  '{"Dar desconto na primeira objecao","Repetir o valor total sem mostrar a parcela","Insistir no plano completo quando o paciente ja disse que nao cabe"}',
- 'viabilizar_pagamento', 'skill_seed', 'active'),
+ 'viabilizar_pagamento', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'goal_matching', 'reactive',
  '{"tenho dor","meu dente","minha pele","queria fazer","o que voce indica","serve pro meu caso","tenho uma mancha"}',
@@ -71,7 +71,7 @@ Acolhimento nao e diagnostico. A pessoa quer se sentir ouvida antes de marcar.',
  '{"Nunca dar diagnostico ou indicar procedimento por mensagem"}', 'omit',
  'Acolhimento + qualificacao por perguntas + conducao a avaliacao',
  '{"Dizer o que a pessoa provavelmente tem","Indicar procedimento sem avaliacao","Responder so \"precisa avaliar\" sem acolher: soa frio e ela nao marca"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'commitment_offer', 'proactive',
  '{"plano de tratamento","orcamento","mandou o orcamento","recebeu o plano","vou pensar","preciso ver"}',
@@ -88,7 +88,7 @@ insistencia diaria.',
  '{"pricing.parcelamento"}', '{"policies.garantia","expertise_proof.profissionais"}', '{}', 'escalate',
  'Follow-up estruturado pos-orcamento (o que quase ninguem faz)',
  '{"Entregar o plano e esperar o paciente voltar","Cobrar decisao (\"e ai, vai fechar?\")","Sumir apos um unico follow-up"}',
- 'retomar_plano', 'skill_seed', 'active'),
+ 'retomar_plano', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'risk_free_entry', 'reactive',
  '{"nunca fui ai","primeira vez","como funciona","preciso marcar avaliacao","quero conhecer"}',
@@ -104,7 +104,7 @@ Ofereca dois horarios concretos.',
  '{"pricing.avaliacao_valor","availability.weekly_hours"}', '{"location_contact.address","differentials.items"}', '{}', 'escalate',
  'Reducao de medo + clareza de processo + fechamento por alternativa',
  '{"Marcar sem explicar como funciona: aumenta a falta","Ignorar o medo, que e a objecao real em saude","Nao dizer o que levar"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'availability', 'proactive',
  '{"confirmar consulta","lembrete","vespera","confirma sua avaliacao","voce vem"}',
@@ -119,7 +119,7 @@ um remarcado antes que ele desista de vez.',
  '{"availability.weekly_hours"}', '{"policies.no_show","location_contact.address"}', '{}', 'escalate',
  'Confirmacao de vespera com resposta de baixo atrito',
  '{"Confirmar em cima da hora","Mensagem longa","Nao oferecer alternativa a quem avisou que nao pode"}',
- 'confirmar_presenca', 'skill_seed', 'active'),
+ 'confirmar_presenca', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'ecosystem', 'reactive',
  '{"aceita convenio","atende plano","meu plano cobre","tem reembolso","unimed","ipe"}',
@@ -134,7 +134,7 @@ de escolha do profissional. Nao ataque o convenio; mostre a alternativa.',
  '{"convenios.aceita_convenio"}', '{"convenios.lista","convenios.reembolso","pricing.parcelamento"}', '{}', 'escalate',
  'Exatidao factual + reconducao ao particular sem atacar o convenio',
  '{"Dizer que aceita sem ter certeza","Encerrar a conversa quando nao atende o convenio","Falar mal do plano de saude do paciente"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'expertise_proof', 'reactive',
  '{"quem atende","qual dentista","o doutor e formado","tem especializacao","quantos anos de experiencia","voce ja fez isso"}',
@@ -149,7 +149,7 @@ Feche convidando para conhecer a estrutura na avaliacao.',
  '{"expertise_proof.profissionais"}', '{"expertise_proof.tecnologia","expertise_proof.tempo_de_casa"}', '{}', 'escalate',
  'Prova por fato verificavel (nunca por adjetivo, nunca por caso de terceiro)',
  '{"Responder com adjetivo em vez de credencial","Citar caso ou foto de outro paciente","Inventar especializacao"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'limits_and_ethics', 'reactive',
  '{"vai ficar bom","tem garantia","funciona mesmo","da certo","fica igual da foto","quanto tempo dura"}',
@@ -166,7 +166,7 @@ Ser honesto aqui converte mais do que prometer: o paciente percebe seriedade.',
  '{"Nunca prometer ou garantir resultado","Nunca dizer que ficara igual a uma foto de referencia"}', 'omit',
  'Honestidade tecnica como diferencial de confianca',
  '{"Prometer resultado para nao perder a venda","Dizer que \"sempre da certo\"","Confundir garantia de servico com garantia de resultado"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'retention', 'proactive',
  '{"parou o tratamento","nao voltou","abandonou","faltou nas ultimas","sumiu no meio"}',
@@ -183,7 +183,7 @@ exponha o procedimento dele em mensagem que outra pessoa possa ler.',
  '{"Preservar sigilo: nao detalhar procedimento em mensagem"}', 'omit',
  'Retomada sem culpa + remocao do obstaculo real',
  '{"Cobrar a ausencia","Mandar aviso automatico frio","Detalhar o tratamento em mensagem sem cuidado com sigilo"}',
- 'retomar_tratamento', 'skill_seed', 'active'),
+ 'retomar_tratamento', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'reciprocity', 'reactive',
  '{"oi","ola","bom dia","boa tarde","boa noite","informacoes","gostaria de saber"}',
@@ -199,7 +199,7 @@ e e o caso real que faz ela marcar.',
  '{}', '{"availability.weekly_hours","location_contact.address"}', '{}', 'omit',
  'Acolhimento antes de processo (a queixa vem depois da confianca)',
  '{"Responder com tabela de precos de imediato","\"Como posso ajudar?\" e esperar","Tom burocratico com quem esta com dor"}',
- 'qualificar', 'skill_seed', 'active'),
+ 'qualificar', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'catalog', 'reactive',
  '{"voces fazem","tem esse procedimento","atende crianca","fazem clareamento","tem harmonizacao","fazem implante"}',
@@ -214,7 +214,7 @@ Nunca prometa prazo de tratamento sem avaliacao.',
  '{"catalog.items"}', '{"pricing.avaliacao_valor","expertise_proof.profissionais"}', '{}', 'escalate',
  'Confirmacao factual + conducao a avaliacao',
  '{"Dizer que faz o que a clinica nao faz","Dar preco de procedimento por mensagem","Prometer prazo sem ver o caso"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'objections', 'reactive',
  '{"vou ver com meu marido","preciso falar com minha esposa","vou conversar em casa","depende do meu filho"}',
@@ -230,7 +230,7 @@ Combine um retorno com data, nunca deixe em aberto.',
  '{}', '{"pricing.parcelamento"}', '{}', 'omit',
  'Municiar o defensor interno + convite ao decisor + retorno com data',
  '{"Tratar como enrolacao","Deixar sem data de retorno","Pressionar quem nao decide"}',
- 'agendar_retorno_decisao', 'skill_seed', 'active'),
+ 'agendar_retorno_decisao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'goal_matching', 'reactive',
  '{"onde fica","endereco","como chego","tem estacionamento","e perto"}',
@@ -242,7 +242,7 @@ Emende com dois horarios de avaliacao: quem pergunta onde fica ja decidiu ir.',
  '{"location_contact.address"}', '{"location_contact.estacionamento","availability.weekly_hours"}', '{}', 'escalate',
  'Reducao de atrito fisico + agendamento imediato',
  '{"Mandar so o endereco","Nao aproveitar o sinal de intencao"}',
- 'agendar_avaliacao', 'skill_seed', 'active'),
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
 
 (null, 'clinica', 'availability', 'reactive',
  '{"que horas atende","tem vaga","qual o horario","atende sabado","demora pra marcar","tem fila de espera"}',
@@ -256,4 +256,27 @@ para desistencia. Nao deixe a pessoa sem proximo passo.',
  '{"availability.weekly_hours"}', '{"availability.prazo_agendamento"}', '{}', 'escalate',
  'Fechamento por alternativa + honestidade de agenda',
  '{"Prometer encaixe que nao existe","Perguntar quando ele pode","Dizer que esta cheio e encerrar"}',
- 'agendar_avaliacao', 'skill_seed', 'active');
+ 'agendar_avaliacao', 'skill_seed', 'active', null),
+
+(null, 'clinica', 'commitment_offer', 'reactive',
+ '{"preciso pensar","vou conversar em casa","e muita coisa de uma vez","tenho medo","e se nao der certo","vou avaliar","depois eu retorno"}',
+ null,
+ 'Em saude a indecisao quase sempre e MEDO, nao duvida sobre o preco — medo de dor,
+de nao dar certo, de gastar e se arrepender. Quem ja ouviu o plano e mesmo assim
+adiou nao precisa de mais explicacao tecnica: precisa de menos risco.
+O erro mais comum e reexplicar o tratamento. Para quem ja entendeu, mais detalhe
+aumenta a sensacao de complexidade e trava mais.
+Nomeie o receio antes de responder ("é normal ficar em duvida quando o plano é
+longo"), e pergunte o que especificamente preocupa. A resposta muda tudo: medo do
+resultado se resolve com prova; medo do valor, com faseamento; medo do processo,
+com clareza do passo a passo.
+Depois RECOMENDE UM caminho, comecando pelo menor passo real que resolve algo —
+a avaliacao, a primeira etapa, o que for reversivel. Ninguem precisa decidir o
+tratamento inteiro hoje.
+Nunca pressione decisao de saude e nunca opine sobre gravidade para acelerar. Isso
+e limite etico, e tambem funciona melhor.',
+ '{"catalog.items"}',
+ '{"pricing.parcelamento","policies.garantia","pricing.avaliacao_valor","policies.cancelamento","expertise_proof.profissionais"}', '{}', 'escalate',
+ 'Nomear o medo, fatiar o compromisso e recomendar o menor passo reversivel',
+ '{"Reexplicar o tratamento para quem ja entendeu","Criar urgencia com risco de saude","Oferecer mais opcoes de tratamento","Cobrar decisao no mesmo dia"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');

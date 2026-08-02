@@ -20,7 +20,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 (null, 'automacao', 'pricing', 'reactive',
@@ -38,7 +38,7 @@ aparece e a venda comeca.',
  '{"comercial.ticket_medio"}', '{"comercial.prazo_entrega","atuacao.regiao"}', '{}', 'escalate',
  'Ancoragem por faixa + conducao ao levantamento tecnico',
  '{"Dar numero fechado sem levantamento","Fugir da pergunta sem explicar o porque","Nao oferecer a visita e deixar esfriar"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'objections', 'reactive',
  '{"ta caro","achei caro","fora do orcamento","o concorrente fez por menos","recebi proposta menor"}',
@@ -57,7 +57,7 @@ expandir depois. Projeto iniciado vale mais que proposta perfeita recusada.',
  '{"comercial.garantia","pos_venda.manutencao_contrato","comercial.prazo_pagamento"}', '{}', 'escalate',
  'Custo total de propriedade + comparacao item a item + faseamento',
  '{"Baixar preco sem tirar escopo","Falar mal do concorrente","Comparar so o valor de compra"}',
- 'defender_valor', 'skill_seed', 'active'),
+ 'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'commitment_offer', 'proactive',
  '{"enviei a proposta","mandou o orcamento","ficou de responder","nao respondeu a proposta","segue a proposta tecnica"}',
@@ -75,7 +75,7 @@ Combine sempre a proxima data. Deixar em aberto e perder.',
  '{"comercial.prazo_entrega","comercial.garantia","capacidade.obras_referencia"}', '{}', 'escalate',
  'Cadencia com angulo novo + descobrir o travamento interno',
  '{"Enviar e esperar","Repetir a mesma pergunta a cada toque","Assumir que silencio e recusa","Sumir apos um follow-up"}',
- 'retomar_proposta', 'skill_seed', 'active'),
+ 'retomar_proposta', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'risk_free_entry', 'reactive',
  '{"voces fazem visita","vem ver aqui","precisa ir no local","fazem levantamento","cobra a visita"}',
@@ -91,7 +91,7 @@ proposta que espera meses por uma aprovacao que ninguem defende.',
  '{"atuacao.regiao"}', '{"comercial.prazo_entrega","capacidade.equipe_tecnica"}', '{}', 'escalate',
  'Qualificacao antes do deslocamento + garantir o decisor na visita',
  '{"Ir ao local sem qualificar","Fazer levantamento so com quem nao decide","Nao explicar o que o cliente ganha na visita"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'goal_matching', 'reactive',
  '{"o que voces indicam","qual sistema serve","o que e melhor pro meu caso","preciso resolver","tenho problema com"}',
@@ -108,7 +108,7 @@ Nunca empurre a solucao mais cara sem justificativa de uso.',
  '{"solucoes.linhas"}', '{"solucoes.diferencial_tecnico","capacidade.certificacoes"}', '{}', 'escalate',
  'Venda consultiva por operacao + traducao de tecnica em consequencia',
  '{"Indicar pelo catalogo sem entender a operacao","Responder em jargao tecnico para quem decide por numero","Empurrar o mais caro"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'expertise_proof', 'reactive',
  '{"voces ja fizeram","tem referencia","quem instala","tem certificacao","ha quanto tempo atuam","quem e a equipe"}',
@@ -125,7 +125,7 @@ adjetivo aumenta a desconfianca.',
  '{"capacidade.certificacoes","capacidade.obras_referencia","pos_venda.suporte"}', '{}', 'escalate',
  'Prova por semelhanca (caso parecido vale mais que volume)',
  '{"Responder com adjetivo","Citar obra sem relacao com o caso dele","Omitir que a execucao e terceirizada"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'availability', 'reactive',
  '{"qual o prazo","quanto tempo pra instalar","consegue pra esse mes","tenho urgencia","quando fica pronto"}',
@@ -141,7 +141,7 @@ proxima. Mas nao comprometa prazo sem conferir agenda e estoque.',
  '{"comercial.prazo_entrega"}', '{"comercial.prazo_pagamento","atuacao.regiao"}', '{}', 'escalate',
  'Separacao de prazos + urgencia como sinal de prioridade',
  '{"Prometer prazo sem conferir producao e estoque","Nao avisar o que depende de terceiro","Dar prazo unico e generico"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'catalog', 'reactive',
  '{"voces trabalham com","tem essa marca","fazem manutencao","atendem esse tipo","instalam de outra marca"}',
@@ -158,7 +158,7 @@ nao pode oferecer.',
  '{"solucoes.marcas_representadas","pos_venda.manutencao_contrato","atuacao.atende_retrofit"}', '{}', 'escalate',
  'Confirmacao factual + exclusividade como diferencial',
  '{"Aceitar servico que nao domina","Prometer marca sem confirmar representacao","Nao aproveitar para agendar"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'commitment_offer', 'reactive',
  '{"tem contrato de manutencao","voces dao assistencia","e so instalar e pronto","tem suporte depois","garantia como funciona"}',
@@ -175,7 +175,7 @@ enxerga valor; meses depois, so enxerga custo.',
  '{"pos_venda.manutencao_contrato"}', '{"comercial.garantia","pos_venda.suporte"}', '{}', 'escalate',
  'Recorrencia oferecida no fechamento (nao depois)',
  '{"Deixar o contrato para depois da instalacao","Prometer cobertura que o contrato nao tem","Usar a garantia como ameaca em vez de argumento"}',
- 'fechar_contrato', 'skill_seed', 'active'),
+ 'fechar_contrato', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'objections', 'reactive',
  '{"preciso ver com a diretoria","depende da aprovacao","vou levar pro engenheiro","o financeiro decide","preciso de tres orcamentos"}',
@@ -192,7 +192,7 @@ quando fecha o orcamento). Adaptar-se ao calendario dele encurta o ciclo.',
  '{}', '{"comercial.prazo_pagamento","capacidade.obras_referencia"}', '{}', 'omit',
  'Municiar o defensor interno + acesso ao decisor + calendario da empresa',
  '{"Tratar como enrolacao","Entregar proposta que so voce entende","Nao descobrir quando a verba e definida"}',
- 'acessar_decisor', 'skill_seed', 'active'),
+ 'acessar_decisor', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'retention', 'proactive',
  '{"cliente antigo","ja instalamos para ele","faz tempo que atendemos","equipamento antigo","hora de trocar"}',
@@ -209,7 +209,7 @@ frequencia de chamado.',
  '{}', '{"pos_venda.manutencao_contrato","solucoes.linhas","atuacao.atende_retrofit"}', '{}', 'omit',
  'Base instalada como pipeline previsivel (vida util e o gatilho)',
  '{"Nunca mais falar com quem ja comprou","Usar medo em vez de dado","Esperar o equipamento quebrar para reaparecer"}',
- 'reativar_base', 'skill_seed', 'active'),
+ 'reativar_base', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'reciprocity', 'reactive',
  '{"oi","ola","bom dia","boa tarde","preciso de informacoes","gostaria de um contato"}',
@@ -224,7 +224,7 @@ Nao comece por catalogo nem por preco.',
  '{}', '{"atuacao.regiao","solucoes.linhas"}', '{}', 'omit',
  'Abertura por problema (nao por produto) + velocidade de resposta',
  '{"Mandar catalogo de imediato","Perguntar so o que ele quer comprar","Demorar horas para responder"}',
- 'qualificar', 'skill_seed', 'active'),
+ 'qualificar', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'ecosystem', 'reactive',
  '{"o engenheiro pediu","meu arquiteto","a construtora","trabalham com projetista","tem parceria"}',
@@ -241,7 +241,7 @@ Se ha politica de parceria, seja transparente.',
  '{}', '{"capacidade.obras_referencia","capacidade.certificacoes"}', '{}', 'omit',
  'Canal de especificacao como pipeline recorrente',
  '{"Passar por cima do projetista","Alterar o projeto sem avisar","Nao apoiar tecnicamente a especificacao"}',
- 'cultivar_parceria', 'skill_seed', 'active'),
+ 'cultivar_parceria', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'limits_and_ethics', 'reactive',
  '{"da pra fazer mais simples","tira uma parte","consegue sem projeto","faz mais barato","precisa de art"}',
@@ -259,7 +259,7 @@ Nunca prometa desempenho, economia ou conformidade que nao pode comprovar.',
  '{"Nunca abrir mao de norma tecnica e responsabilidade tecnica"}', 'omit',
  'Transparencia no trade-off + limite inegociavel de seguranca',
  '{"Subdimensionar para fechar o preco","Prometer economia sem calculo","Executar sem responsavel tecnico quando exigido"}',
- 'ajustar_escopo', 'skill_seed', 'active'),
+ 'ajustar_escopo', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'ecosystem', 'reactive',
  '{"licitacao","edital","pregao","voces vendem pro governo","tem sicaf","atendem prefeitura"}',
@@ -279,4 +279,48 @@ os seus organizados.',
  '{"Nunca afirmar atendimento a especificacao sem conferir item a item"}', 'escalate',
  'Habilitacao e conformidade como vantagem competitiva',
  '{"Disputar sem conferir a especificacao","Esquecer a vantagem de ME/EPP","Deixar certidao vencer"}',
- 'avaliar_edital', 'skill_seed', 'active');
+ 'avaliar_edital', 'skill_seed', 'active', null),
+
+(null, 'automacao', 'commitment_offer', 'reactive',
+ '{"vou levar para a diretoria","preciso aprovar internamente","vamos avaliar","e um investimento alto","vou ver com o financeiro","ficou para o proximo orcamento","estamos analisando"}',
+ null,
+ 'Proposta tecnica aprovada tecnicamente e mesmo assim parada quase nunca morre
+por preco: morre porque ninguem quer assinar. Quem aprova sabe que se der errado a
+conta e dele — parar a operacao, errar o fornecedor, gastar mal o orcamento do ano.
+Medo de errar pesa mais que vontade de melhorar.
+O erro que piora tudo e mandar mais material tecnico. Para quem ja entendeu, mais
+detalhe vira mais risco percebido e mais gente para consultar.
+Descubra o que trava de verdade, e pergunte direto: falta verba deste ano, falta
+alguem aprovar, ou e receio de a obra parar? Cada uma tem saida diferente, e o
+travamento raramente e o que a primeira frase diz.
+Depois diminua a decisao. Faseamento resolve mais que desconto: comecar por um
+setor, um piloto medido, a etapa critica primeiro. Aprovar um pedaco e infinitamente
+mais facil do que aprovar tudo — e o pedaco que funciona aprova o resto sozinho.
+Municie o seu defensor interno com o material que ELE precisa para defender la
+dentro, nao o que voce gostaria de apresentar.',
+ '{"comercial.garantia"}',
+ '{"comercial.prazo_entrega","pos_venda.manutencao_contrato","capacidade.obras_referencia","comercial.prazo_pagamento","comercial.ticket_medio"}', '{}', 'escalate',
+ 'Faseamento e piloto em vez de desconto + municiar quem defende internamente',
+ '{"Mandar mais material tecnico para quem ja aprovou tecnicamente","Dar desconto para destravar aprovacao","Aceitar estamos analisando sem descobrir o que trava","Falar so com quem nao assina"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt'),
+
+(null, 'automacao', 'catalog', 'reactive',
+ '{"so me manda a proposta","nao precisa de visita agora","prefiro por email","manda o material tecnico","sem reuniao","depois a gente conversa","me passa so o escopo"}',
+ null,
+ 'Boa parte do comprador tecnico prefere estudar sozinho antes de falar com
+qualquer fornecedor — e ele compara em silencio. Forcar reuniao com quem pediu
+material e o jeito mais rapido de ser descartado sem nem saber por que.
+Mande o material que permite ele avancar sem voce: escopo do que voce faz, linhas
+atendidas, certificacoes e habilitacoes, prazo tipico e faixa de investimento
+quando existir no seu DNA. Preco fechado sem levantamento nao se manda; faixa e
+premissas, sim.
+Diga com clareza o que MUDA depois do levantamento tecnico. Isso protege voce de
+ser comparado por um numero que nao existe e ainda mostra competencia.
+Faca no maximo duas perguntas por escrito — as que mudam o escopo (tamanho da
+area, situacao do equipamento atual). E deixe a porta aberta com um retorno
+combinado, sem cobranca.',
+ '{"solucoes.linhas"}',
+ '{"capacidade.certificacoes","comercial.ticket_medio","comercial.prazo_entrega","atuacao.regiao","capacidade.obras_referencia"}', '{}', 'escalate',
+ 'Material que permite avancar sozinho + o que muda depois do levantamento',
+ '{"Forcar reuniao para quem pediu material","Mandar preco fechado sem levantamento","Enviar material generico de marketing","Sumir quando ele nao responde de imediato"}',
+ 'entregar_material', 'skill_seed', 'active', null);

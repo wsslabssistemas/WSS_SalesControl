@@ -62,17 +62,21 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
 
-### Segmentos — 8 completos, 134 entradas curadas
+### Segmentos — 8 completos, 145 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
-| `academia` | 22 | — |
-| `barbearia` | 18 | — |
-| `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 18 | prospecção + licitações |
-| `escola_esportiva` (natação, lutas, crossfit, pilates, clubes) | 16 | — |
-| `clinica` (médica, odonto, estética) | 15 | — |
-| `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 15 | prospecção + licitações |
-| `automacao` (predial, climatização, energia) | 15 | prospecção + licitações |
-| `distribuidora` (atacado) | 15 | prospecção |
+| `academia` | 23 | — |
+| `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 20 | prospecção + licitações |
+| `barbearia` | 19 | — |
+| `distribuidora` (atacado) | 17 | prospecção |
+| `automacao` (predial, climatização, energia) | 17 | prospecção + licitações |
+| `escola_esportiva` (natação, lutas, crossfit, pilates, clubes) | 17 | — |
+| `clinica` (médica, odonto, estética) | 16 | — |
+| `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 16 | prospecção + licitações |
+
+**Todo segmento tem uma entrada de INDECISÃO** (o cliente que concordou e mesmo
+assim travou — 40 a 60% das perdas, segundo o JOLT) e os três B2B têm a do
+**comprador que não quer conversar** (67% do B2B prefere se servir sozinho).
 
 Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador —
 trocar no seletor do topo do painel.
@@ -100,10 +104,10 @@ trocar no seletor do topo do painel.
    neste segmento, nesta etapa"*. É o único ativo que melhora com escala.
    **Bloqueio real:** ainda há **0 desfechos registrados** — sem uso, não há o
    que medir.
-3. **M3 — as entradas que faltam.** **Indecisão (JOLT)** nos 8 segmentos (40 a
-   60% das perdas, zero entradas nossas) e o **comprador que não quer conversar**
-   (67% do B2B, Gartner 2026 — nossa biblioteca pressupõe conversa em 100% das
-   entradas). Depois, qualificação de compra (MEDDIC-lite).
+3. **M3 — qualificação de compra (MEDDIC-lite).** O que sobrou do M3: orçamento,
+   processo de aprovação, critério de decisão e defensor interno. Já temos o
+   campo `decisor`; falta o resto. As entradas de **indecisão** e de
+   **autosserviço** já estão no ar (ago/2026).
    Decisão fechada: **não criar dimensão de gênero** (evidência fraca; viraria
    estereótipo automatizado). Ver `COS_Escolas_de_Venda.md` §3.
 4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
@@ -140,6 +144,12 @@ trocar no seletor do topo do painel.
   ambiente novo nasce com o erro. A primeira versão do `0027` fazia isso com a
   escola de venda — virou dado explícito na 17ª coluna dos seeds. **O
   repositório é a verdade; o banco é só onde ela é executada.**
+- **Um `;` perdido no meio do seed some com entradas, em silêncio.** O `0017` da
+  barbearia tinha um: encerrava o INSERT na 16ª tupla e deixava 3 órfãs. SQL
+  inválido que ninguém percebeu, porque o carregador só lê menos e não reclama.
+  O `library_check` agora reproduz o corte do carregador e falha quando o número
+  lido difere do número de entradas do arquivo (trava testada com o arquivo
+  quebrado de propósito).
 - **`seed-knowledge.mjs` tinha dois bugs latentes (corrigidos ago/2026).** Lia só
   o ÚLTIMO `values` do arquivo — na academia, que tem 22 `INSERT` separados,
   carregaria 1 entrada **depois de apagar as 22**. E parseava o rodapé do

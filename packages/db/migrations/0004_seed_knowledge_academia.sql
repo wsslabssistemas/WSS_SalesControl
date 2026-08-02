@@ -310,7 +310,30 @@ risco. Encerre com fechamento por alternativa.
 Verifique o historico: se a pessoa nunca foi cliente, e primeira oportunidade, nao retorno.', '{"risk_free_entry.exists"}',
    '{"reciprocity.gift"}', '{"Nunca usar ''voltar'', ''retornar'' ou ''novamente'' com quem nunca foi cliente.","Nunca mencionar vaga, reserva ou lotacao sem o fato no DNA."}', 'escalate',
    'Pattern Interrupt (Robbins) + Takeaway (Tracy)', '{"Cobrar o sumico","Tratar lead nao convertido como ex-cliente","Reenviar a mesma mensagem generica"}', 'schedule_visit',
-   'skill_seed', 'active', null);
+   'skill_seed', 'active', null),
+
+(null, 'academia', 'commitment_offer', 'reactive',
+ '{"vou pensar","depois eu vejo","preciso ver com calma","vou dar uma pensada","estou em duvida entre os planos","me manda mais informacao","qual plano voce acha melhor"}',
+ null,
+ 'ATENCAO: isto quase nunca e preco. A pessoa ja entendeu que precisa treinar —
+ela travou com medo de errar de novo. Muita gente ja pagou academia que nao usou,
+e o medo real e repetir isso.
+Primeiro julgue: se ela ainda nao vê o problema, e falta de valor e voce volta
+para a descoberta. Mas se ela concordou com tudo e mesmo assim adiou, e INDECISAO
+— e ai o erro classico e reforcar o argumento de novo. Repetir por que treinar e
+importante para quem ja concordou empurra a pessoa para longe.
+Faca o contrario de mais opcoes: RECOMENDE UMA. "Pelo que voce me contou, eu
+comecaria pelo plano X" vale mais que uma tabela com cinco. Quem esta travado nao
+quer escolher, quer ser orientado por alguem que entende.
+Depois tire o risco da mesa com o que existir de verdade: comecar pelo periodo
+mais curto, experimentar antes, saber que da para cancelar. E combine UMA data
+concreta ("terça as 19h eu te espero"), porque decisao sem data marcada volta a
+adiar.',
+ '{"pricing.plans"}',
+ '{"policies.cancellation","risk_free_entry.exists","commitment_offer.best_value","availability.weekly_hours"}', '{}', 'escalate',
+ 'Recomendar UM caminho e tirar risco da mesa (nunca repetir o argumento)',
+ '{"Repetir por que treinar e importante para quem ja concordou","Oferecer mais planos para quem esta em duvida","Dar desconto achando que o problema e preco","Deixar sem data marcada"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');
 
 
 -- =====================================================================

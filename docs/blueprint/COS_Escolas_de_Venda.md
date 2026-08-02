@@ -346,6 +346,24 @@ consultor e escreve em seis meses. **Um acervo de qual escola converte, por
 segmento, com desfecho medido, ninguém copia sem ter os dados** — e ele cresce
 sozinho a cada empresa nova. É o único ativo do COS que fica melhor com escala.
 
+### M3 — As entradas que faltam ✅ **1 e 2 FEITOS (ago/2026)**
+
+**11 entradas novas, biblioteca em 145.** Uma de **indecisão** em cada um dos 8
+segmentos (categoria `commitment_offer`, escola `indecisao_jolt`) e três de
+**autosserviço** nos B2B (`catalog`). O método, escrito com as nossas palavras:
+julgar se é indecisão ou falta de valor; **recomendar um caminho** em vez de
+oferecer mais opções; parar de mandar material; e **diminuir o tamanho da
+decisão** (lote menor, um ambiente, um piloto, segunda fonte) em vez de baixar
+o preço. A regra dura em todas: **não repetir o argumento do começo** — foi o
+que piorou o desfecho em 84% dos casos na pesquisa.
+
+Cada uma é específica do segmento, porque o medo é outro: na clínica é medo de
+dor e de arrependimento; em sob medida, de conviver dez anos com o erro; na
+indústria, de o lote sair diferente da amostra e parar a linha de quem aprovou
+o cadastro. Falta o item 3 (qualificação de compra).
+
+O texto abaixo é o desenho original, mantido como registro.
+
 ### M3 — As entradas que faltam (conteúdo novo, em ordem de retorno)
 1. **Indecisão (JOLT)** — em todos os 8 segmentos. O cliente que quer, mas trava:
    não repetir o argumento (piora em 84% dos casos), e sim **reduzir o risco

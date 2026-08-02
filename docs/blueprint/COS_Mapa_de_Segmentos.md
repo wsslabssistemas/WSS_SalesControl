@@ -9,14 +9,18 @@
 
 | Segmento | Cobre na prática | Biblioteca |
 |---|---|---|
-| `academia` | Academia, musculação, ginástica | **22 entradas** |
-| `barbearia` | Barbearia, barbeiro | **18** |
-| `clinica` | Clínica médica, odontologia, **estética**, harmonização, fisioterapia | **15** |
-| `sob_medida` | Marcenaria, vidraçaria, serralheria, esquadrias, marmoraria, **energia solar** | **15** |
-| `distribuidora` | Atacado e distribuição (alimentos, autopeças, construção, farma, higiene, embalagens, elétrica, agro…) | **15** |
-| `automacao` | Automação predial, climatização, refrigeração, energia, monitoramento | **15** |
-| `escola_esportiva` | Natação, artes marciais, **crossfit**, **pilates**, tênis, escolinhas, **clubes** | **16** |
-| `industria` | Têxtil e feltro, calçadista, moveleira (vendendo a lojista), metal-mecânica, embalagens, autopeças, implementos agrícolas | **18** |
+| `academia` | Academia, musculação, ginástica | **23 entradas** |
+| `barbearia` | Barbearia, barbeiro | **19** |
+| `clinica` | Clínica médica, odontologia, **estética**, harmonização, fisioterapia | **16** |
+| `sob_medida` | Marcenaria, vidraçaria, serralheria, esquadrias, marmoraria, **energia solar** | **16** |
+| `distribuidora` | Atacado e distribuição (alimentos, autopeças, construção, farma, higiene, embalagens, elétrica, agro…) | **17** |
+| `automacao` | Automação predial, climatização, refrigeração, energia, monitoramento | **17** |
+| `escola_esportiva` | Natação, artes marciais, **crossfit**, **pilates**, tênis, escolinhas, **clubes** | **17** |
+| `industria` | Têxtil e feltro, calçadista, moveleira (vendendo a lojista), metal-mecânica, embalagens, autopeças, implementos agrícolas | **20** |
+
+**145 entradas.** Todo segmento tem a entrada de **indecisão** (o cliente que
+concordou e travou) e os três B2B têm a do **comprador que quer se servir
+sozinho**. Ver `COS_Escolas_de_Venda.md`.
 
 **Um segmento sem biblioteca funciona, mas responde genérico.** O manifesto dá a
 estrutura (jornada, campos, DNA, cadências); a **curadoria é o ativo**.

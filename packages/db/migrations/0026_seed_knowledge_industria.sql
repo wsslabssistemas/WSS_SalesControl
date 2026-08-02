@@ -418,4 +418,51 @@ fornecedor, e cadastro reprovado nao se recupera.',
  '{"produto.certificacoes","producao.capacidade","producao.prazo_producao"}', '{}', 'omit',
  'Confirmar antes de afirmar — o limite protege o cadastro de fornecedor',
  '{"Afirmar norma ou laudo que nao existe","Garantir desempenho em aplicacao nao testada","Prometer prazo acima da capacidade","Improvisar resposta tecnica para nao parecer despreparado"}',
- 'confirmar_com_a_fabrica', 'skill_seed', 'active', null);
+ 'confirmar_com_a_fabrica', 'skill_seed', 'active', null),
+
+(null, 'industria', 'commitment_offer', 'reactive',
+ '{"vou pensar","preciso aprovar o cadastro","vou ver com desenvolvimento","e se o lote nao sair como a amostra","vou aguardar a proxima colecao","depois eu falo","ainda estamos avaliando"}',
+ null,
+ 'Comprador que aprovou a amostra e mesmo assim nao fecha nao esta em duvida sobre
+o produto: esta com medo de trocar de fornecedor. Se o lote sair diferente da
+amostra, quem aprovou o cadastro responde pela linha parada. O risco pessoal dele
+e maior que a economia que voce oferece.
+Nao mande mais amostra nem mais argumento. Para quem ja aprovou tecnicamente,
+insistir na qualidade e ruido — e sinal de que voce nao entendeu o que trava.
+Pergunte o que precisa acontecer para o cadastro andar. Quase sempre a resposta e
+concreta e resolvivel: um documento, um laudo, uma visita de auditoria, um prazo
+de teste industrial. Isso nao e enrolacao, e processo.
+Diminua o compromisso: primeiro lote pequeno, uma cor ou uma medida so, entrar como
+SEGUNDA FONTE ao lado do fornecedor atual em vez de substituir. Ninguem precisa
+apostar a producao inteira em voce agora — e essa frase, dita em voz alta, destrava
+mais que qualquer desconto.
+Tire risco com o que for verdade: como funciona a troca se o lote vier fora da
+especificacao, quem responde, em quanto tempo. Garantia de lote vale mais que
+preco melhor para quem tem medo de parar a linha.',
+ '{"producao.lote_minimo"}',
+ '{"diferencial.assistencia","comercial.prazo_pagamento","producao.prazo_producao","produto.certificacoes"}', '{}', 'escalate',
+ 'Diminuir o compromisso (lote menor, segunda fonte) e resolver o processo de cadastro',
+ '{"Mandar mais amostra para quem ja aprovou","Insistir na qualidade do produto","Dar desconto para acelerar cadastro","Tratar o processo interno dele como desculpa"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt'),
+
+(null, 'industria', 'catalog', 'reactive',
+ '{"so me manda a ficha tecnica","nao precisa ligar","prefiro por escrito","manda o material","nao quero reuniao","me passa os dados","depois eu vejo sozinho"}',
+ null,
+ 'O comprador industrial costuma querer estudar sozinho: comparar ficha com ficha,
+levar para o desenvolvimento, decidir sem vendedor no ouvido. Insistir em ligacao
+com quem pediu material por escrito e o caminho curto para ser eliminado em
+silencio.
+Mande a ficha COMPLETA — composicao, gramatura, medidas, tolerancia, certificacoes
+— junto com lote minimo e prazo de producao. Material pela metade para obrigar
+contato e um truque velho, e comprador tecnico reconhece na hora.
+Duas perguntas por escrito bastam, e so as que mudam a cotacao: qual aplicacao e
+que volume. A aplicacao evita que ele teste o item errado e devolva o lote, o que
+custaria a conta inteira.
+Ofereca amostra em vez de reuniao: para quem quer decidir sozinho, amostra na
+bancada vale mais que qualquer conversa. E deixe combinado um retorno leve, sem
+cobranca.',
+ '{"produto.especificacao"}',
+ '{"produto.certificacoes","producao.lote_minimo","producao.prazo_producao","produto.aplicacoes"}', '{}', 'escalate',
+ 'Ficha completa + duas perguntas por escrito + amostra no lugar de reuniao',
+ '{"Insistir em ligacao com quem pediu por escrito","Mandar ficha incompleta para forcar contato","Enviar material sem lote minimo e prazo","Nao perguntar a aplicacao e aceitar o teste errado"}',
+ 'entregar_material', 'skill_seed', 'active', null);

@@ -21,7 +21,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 (null, 'escola_esportiva', 'pricing', 'reactive',
@@ -39,7 +39,7 @@ Termine oferecendo a aula experimental: e ela que vende, nao a tabela.',
  '{"pricing.matricula","pricing.desconto_irmaos","experimental.oferece"}', '{}', 'escalate',
  'Transparencia + descoberta de horario + condução à experimental',
  '{"Esconder o valor","Responder so o preco e encerrar","Nao mencionar desconto para irmaos quando existe"}',
- 'agendar_experimental', 'skill_seed', 'active'),
+ 'agendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'availability', 'reactive',
  '{"que horario tem","tem turma de manha","qual dia","tem vaga","horario da turma","tem aula sabado"}',
@@ -56,7 +56,7 @@ espera — nunca deixe a familia sem proximo passo.',
  '{"modalidades.vagas_por_turma","modalidades.faixas_etarias","modalidades.lista"}', '{}', 'escalate',
  'Filtro por idade e turno (duas opcoes, nunca a grade inteira)',
  '{"Mandar a grade inteira e deixar a familia decifrar","Prometer vaga em turma cheia","Nao oferecer alternativa quando lotou"}',
- 'agendar_experimental', 'skill_seed', 'active'),
+ 'agendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'risk_free_entry', 'reactive',
  '{"tem aula experimental","posso experimentar","da pra fazer uma aula","como funciona a primeira aula","tem aula teste"}',
@@ -75,7 +75,7 @@ e assistir a uma aula.',
  '{"experimental.o_que_levar","experimental.precisa_agendar","regras.atestado_medico"}', '{}', 'escalate',
  'Reducao de incerteza (o que levar e onde ir) para garantir presenca',
  '{"Marcar sem explicar o que levar","Colocar em turma de idade errada","Prometer experimental que a escola nao faz"}',
- 'agendar_experimental', 'skill_seed', 'active'),
+ 'agendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'goal_matching', 'reactive',
  '{"meu filho tem","qual idade","serve pra crianca","tem turma pra ele","ele nunca praticou","qual modalidade indica"}',
@@ -93,7 +93,7 @@ Nunca prometa resultado ("vai ficar craque", "vai perder peso").',
  '{"modalidades.lista","estrutura.professores","modalidades.grade_horarios"}', '{}', 'escalate',
  'Acolhimento da preocupacao do responsavel + indicacao por idade e nivel',
  '{"Falar so de metodologia tecnica","Ignorar o medo de o filho nao se adaptar","Prometer resultado"}',
- 'agendar_experimental', 'skill_seed', 'active'),
+ 'agendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'objections', 'reactive',
  '{"ta caro","muito caro","achei caro","nao cabe no orcamento","o outro cobra menos"}',
@@ -111,7 +111,7 @@ Nunca fale mal da escola concorrente.',
  '{"pricing.desconto_irmaos","estrutura.professores","modalidades.vagas_por_turma"}', '{}', 'escalate',
  'Reconexao ao objetivo da familia + valor por aula',
  '{"Dar desconto na primeira objecao","Falar mal do concorrente","Repetir o valor cheio sem quebrar por aula"}',
- 'defender_valor', 'skill_seed', 'active'),
+ 'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'objections', 'reactive',
  '{"vou falar com meu marido","preciso ver com a mae","vou conversar em casa","depende do pai","o responsavel decide"}',
@@ -129,7 +129,7 @@ Combine retorno com DATA.',
  '{}', '{"pricing.range","modalidades.grade_horarios"}', '{}', 'omit',
  'Municiar o defensor + convidar o decisor para a experimental',
  '{"Tratar como enrolacao","Deixar sem data de retorno","Mandar informacao desorganizada e dificil de repassar"}',
- 'agendar_retorno', 'skill_seed', 'active'),
+ 'agendar_retorno', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'objections', 'reactive',
  '{"e longe","fica longe da minha casa","nao tenho como levar","quem leva","dificil de chegar"}',
@@ -147,7 +147,7 @@ preserva a reputacao e traz indicacao depois.',
  '{}', '{"modalidades.grade_horarios","estrutura.instalacoes","estrutura.estacionamento"}', '{}', 'omit',
  'Tratar a logistica como problema real (nao como objecao a contornar)',
  '{"Insistir que e perto","Ignorar quem leva e busca","Nao oferecer horario que reduza deslocamento"}',
- 'ajustar_horario', 'skill_seed', 'active'),
+ 'ajustar_horario', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'retention', 'proactive',
  '{"nao compareceu","faltou na experimental","nao veio","desmarcou","reagendar aula"}',
@@ -162,7 +162,7 @@ Se faltar de novo, espace o contato e mude o angulo. Insistir queima.',
  '{}', '{"modalidades.grade_horarios","experimental.o_que_levar"}', '{}', 'omit',
  'Recuperacao imediata do no-show + remocao do obstaculo',
  '{"Deixar quem faltou sem contato","Cobrar explicacao","Reagendar sem confirmar o que levar"}',
- 'reagendar_experimental', 'skill_seed', 'active'),
+ 'reagendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'retention', 'proactive',
  '{"pos experimental","como foi a aula","gostou da aula","depois da experimental","fechar matricula"}',
@@ -179,7 +179,7 @@ data da primeira aula.',
  '{}', '{"modalidades.vagas_por_turma","pricing.matricula","regras.atestado_medico"}', '{}', 'omit',
  'Fechamento no pico de empolgacao + urgencia honesta pela vaga',
  '{"Esperar a familia voltar sozinha","Perguntar se gostou e nao propor a matricula","Inventar urgencia que nao existe"}',
- 'fechar_matricula', 'skill_seed', 'active'),
+ 'fechar_matricula', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'retention', 'proactive',
  '{"aluno faltando","parou de vir","desanimou","vai trancar","quer cancelar","evasao"}',
@@ -196,7 +196,7 @@ Trancar com data marcada retem muito mais que deixar cancelar.',
  '{}', '{"modalidades.grade_horarios","estrutura.professores"}', '{}', 'omit',
  'Intervencao na FALTA (antes do pedido de cancelamento)',
  '{"Esperar o pedido de cancelamento","Cobrar a ausencia","Nao oferecer troca de turma ou pausa com data"}',
- 'reter_aluno', 'skill_seed', 'active'),
+ 'reter_aluno', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'expertise_proof', 'reactive',
  '{"quem da aula","o professor e formado","tem experiencia","quantos alunos por turma","e seguro"}',
@@ -214,7 +214,7 @@ convence mais que qualquer descricao.',
  '{"modalidades.vagas_por_turma","estrutura.instalacoes"}', '{}', 'escalate',
  'Prova de seguranca por fato + convite para ver a aula',
  '{"Responder com adjetivo","Omitir o tamanho da turma quando e grande","Nao convidar para conhecer"}',
- 'agendar_visita', 'skill_seed', 'active'),
+ 'agendar_visita', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'catalog', 'reactive',
  '{"voces tem natacao","tem judo","fazem hidroginastica","tem aula para adulto","atende idoso","tem turma para bebe"}',
@@ -231,7 +231,7 @@ experimental.',
  '{"modalidades.grade_horarios","pricing.range"}', '{}', 'escalate',
  'Confirmacao factual por idade + alternativa por objetivo',
  '{"Aceitar idade fora da faixa da turma","Dizer que tem modalidade que nao existe","Nao oferecer alternativa"}',
- 'agendar_experimental', 'skill_seed', 'active'),
+ 'agendar_experimental', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'commitment_offer', 'reactive',
  '{"tem plano semestral","desconto se pagar tudo","tem pacote","vale mais a pena anual","desconto para irmaos"}',
@@ -248,7 +248,7 @@ Nunca prometa condicao que a escola nao pratica.',
  '{"pricing.desconto_irmaos","pricing.formas_pagamento","modalidades.vagas_por_turma"}', '{}', 'escalate',
  'Diluicao com conta fechada + valor travado + desconto familia',
  '{"Falar do plano sem mostrar a economia","Empurrar anual para quem ainda nao experimentou","Esconder o desconto de irmaos"}',
- 'fechar_plano', 'skill_seed', 'active'),
+ 'fechar_plano', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'limits_and_ethics', 'reactive',
  '{"precisa de atestado","ele tem problema de saude","tem asma","teve lesao","pode fazer mesmo com","e seguro pra ele"}',
@@ -265,7 +265,7 @@ mesmo quando a familia insiste.',
  '{"Nunca opinar sobre condicao de saude nem liberar atividade"}', 'omit',
  'Acolher a preocupacao sem opinar sobre saude',
  '{"Dizer que pode fazer sem restricao","Prometer melhora de condicao de saude","Ignorar a exigencia de atestado para nao perder a matricula"}',
- 'orientar_atestado', 'skill_seed', 'active'),
+ 'orientar_atestado', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'reciprocity', 'reactive',
  '{"oi","ola","bom dia","boa tarde","boa noite","queria informacoes","gostaria de saber sobre as aulas"}',
@@ -280,7 +280,7 @@ primeira que acolhe bem sai na frente.',
  '{}', '{"modalidades.lista","modalidades.faixas_etarias"}', '{}', 'omit',
  'Acolhimento + duas perguntas que direcionam (para quem e que idade)',
  '{"Mandar tabela e grade de imediato","\"Como posso ajudar?\" e esperar","Demorar para responder"}',
- 'qualificar', 'skill_seed', 'active'),
+ 'qualificar', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'ecosystem', 'reactive',
  '{"tem convenio","escola parceira","desconto empresa","indicacao de amigo","trouxe um colega"}',
@@ -296,4 +296,25 @@ agradeca de forma concreta assim mesmo — e reconheça publicamente quando pude
  '{}', '{"pricing.desconto_irmaos","modalidades.lista"}', '{}', 'omit',
  'Indicacao no pico de orgulho (conquista do aluno)',
  '{"Pedir indicacao durante negociacao","Prometer convenio sem confirmar","Nao reconhecer quem indicou"}',
- 'pedir_indicacao', 'skill_seed', 'active');
+ 'pedir_indicacao', 'skill_seed', 'active', null),
+
+(null, 'escola_esportiva', 'commitment_offer', 'reactive',
+ '{"vou pensar","vou ver com meu marido","vou falar com a minha esposa","nao sei se ele vai gostar","e se ele nao se adaptar","depois eu confirmo","vou ver se ele quer"}',
+ null,
+ 'Quem decide e o responsavel, mas quem usa e a crianca — e o medo dele e
+especifico: matricular, pagar e a crianca desistir em duas semanas. Nao e preco.
+Ja aconteceu com ele ou com um conhecido.
+Nao volte a explicar os beneficios da modalidade. Ele ja concordou; repetir soa
+como venda e aumenta a desconfianca.
+Nomeie o receio de frente: "a duvida costuma ser se ele vai gostar mesmo". Isso
+alivia, porque e exatamente o que a pessoa estava pensando sem falar.
+Depois RECOMENDE UMA turma — a certa para a idade e o nivel — em vez de mandar a
+grade inteira. E tire o risco com o que existir: aula experimental, comecar sem
+compromisso de semestre, poder trocar de turma se o horario nao funcionar.
+Fechar aqui e marcar a experimental com dia e hora, nao conseguir um "sim" para o
+semestre. O compromisso pequeno e o que destrava o grande.',
+ '{"modalidades.lista"}',
+ '{"experimental.oferece","experimental.como_funciona","modalidades.grade_horarios","modalidades.vagas_por_turma","pricing.matricula"}', '{}', 'escalate',
+ 'Nomear o medo da desistencia + recomendar UMA turma + experimental com data',
+ '{"Repetir os beneficios da modalidade","Mandar a grade inteira de horarios","Pressionar o responsavel a fechar o semestre","Ignorar que quem usa e a crianca"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');

@@ -28,7 +28,7 @@ delete from public.knowledge_entries
 insert into public.knowledge_entries
   (tenant_id, skill_key, category, entry_type, trigger_questions,
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
-   on_missing_facts, technique, common_errors, next_objective, source, status)
+   on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
 
 -- ---------------------------------------------------------------- PREÇO
@@ -44,7 +44,7 @@ A pergunta de preco e uma chance de agendar, nao de negociar.',
  '{"pricing.range"}', '{"catalog.items","pricing.plans"}', '{}', 'escalate',
  'Transparencia (Hormozi) + fechamento por alternativa',
  '{"Enrolar ou fugir do valor: derruba a confianca na hora","Despejar a tabela inteira quando ele perguntou um servico so","Responder o preco e nao oferecer horario: a conversa morre"}',
- 'oferecer_horario', 'skill_seed', 'active'),
+ 'oferecer_horario', 'skill_seed', 'active', null),
 
 (null, 'barbearia', 'objections', 'reactive',
  '{"ta caro","muito caro","achei caro","ta salgado","o outro cobra menos","mais barato ali"}',
@@ -58,7 +58,7 @@ Se houver plano/pacote, aqui e a hora: dilua o valor no mes, com o numero real.'
  '{"differentials.items"}', '{"pricing.plans","pricing.range"}', '{}', 'escalate',
  'Ancoragem em valor + reformulacao (Voss). Nunca desconto reflexo.',
  '{"Dar desconto na primeira objecao: ensina o cliente a sempre pedir","Falar mal do concorrente","Justificar o preco com custo proprio — o cliente nao paga o seu custo"}',
- 'defender_valor', 'skill_seed', 'active'),
+ 'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'barbearia', 'commitment_offer', 'proactive',
  '{"tem plano","tem pacote","tem mensalidade","assinatura","clube","desconto pra vir sempre","vale a pena o pacote"}',
@@ -73,7 +73,7 @@ na saida deste, que produz o mesmo efeito de recorrencia.',
  '{"pricing.plans"}', '{"pricing.range","availability.booking_rule"}', '{}', 'escalate',
  'Diluicao de valor + aversao a perda',
  '{"Falar do plano sem mostrar a economia em numero","Empurrar plano para quem veio a primeira vez e ainda nao confia","Prometer condicao que nao existe na tabela"}',
- 'fechar_plano', 'skill_seed', 'active'),
+ 'fechar_plano', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------------- AGENDA
 (null, 'barbearia', 'availability', 'reactive',
@@ -87,7 +87,7 @@ pode?". Duas opcoes decidem; pergunta aberta adia.',
  '{"availability.weekly_hours"}', '{"availability.booking_rule","location_contact.address"}', '{}', 'escalate',
  'Fechamento por alternativa (duas opcoes de horario)',
  '{"Responder so o horario de funcionamento e parar","Perguntar \"que dia voce pode?\" — devolve o trabalho ao cliente","Dizer que esta cheio sem oferecer a proxima janela"}',
- 'agendar', 'skill_seed', 'active'),
+ 'agendar', 'skill_seed', 'active', null),
 
 (null, 'barbearia', 'availability', 'reactive',
  '{"precisa agendar","tem que marcar","posso chegar","atende por ordem de chegada","tem fila"}',
@@ -100,7 +100,7 @@ Em qualquer caso, termine oferecendo um horario.',
  '{"availability.booking_rule"}', '{"availability.weekly_hours"}', '{}', 'escalate',
  'Reducao de atrito + reciprocidade informativa',
  '{"Apresentar o agendamento como regra chata em vez de vantagem","Nao dizer o horario de menor fila quando e por ordem de chegada"}',
- 'agendar', 'skill_seed', 'active'),
+ 'agendar', 'skill_seed', 'active', null),
 
 -- ----------------------------------------------------------- SERVICOS
 (null, 'barbearia', 'catalog', 'reactive',
@@ -115,7 +115,7 @@ e o momento natural de aumentar o ticket sem parecer venda.',
  '{"catalog.items"}', '{"pricing.range"}', '{}', 'escalate',
  'Confirmacao factual + venda combinada no momento certo',
  '{"Dizer que faz um servico que a casa nao faz","Chutar tempo de execucao","Perder a chance do combo quando o servico e complementar"}',
- 'oferecer_horario', 'skill_seed', 'active'),
+ 'oferecer_horario', 'skill_seed', 'active', null),
 
 -- ----------------------------------------------------- PRIMEIRA VISITA
 (null, 'barbearia', 'risk_free_entry', 'reactive',
@@ -130,7 +130,7 @@ sensacao de que vao ESCUTAR o que ele quer antes de passar a maquina.',
  '{"differentials.items"}', '{"risk_free_entry.exists","risk_free_entry.offer","location_contact.address"}', '{}', 'escalate',
  'Reducao de risco percebido + acolhimento (a experiencia e o produto)',
  '{"Tratar o novo igual ao antigo: perde a chance de encantar","Comecar por preco com quem ainda nao confia","Nao explicar como funciona a primeira visita"}',
- 'agendar_primeira', 'skill_seed', 'active'),
+ 'agendar_primeira', 'skill_seed', 'active', null),
 
 -- ----------------------------------------------------- O CICLO (CORE)
 (null, 'barbearia', 'retention', 'proactive',
@@ -147,7 +147,7 @@ Nunca cobre a ausencia nem use culpa. Curto, cordial, com horario na mao.',
  '{}', '{"availability.weekly_hours","pricing.range"}', '{}', 'omit',
  'Retorno programado — sugerir o horario em vez de pedir que ele marque',
  '{"Cobrar a ausencia (\"sumiu, hein\"): afasta","Mandar mensagem generica sem horario","Insistir em sequencia quando ele nao respondeu: espace e mude o angulo"}',
- 'agendar_retorno', 'skill_seed', 'active'),
+ 'agendar_retorno', 'skill_seed', 'active', null),
 
 (null, 'barbearia', 'retention', 'proactive',
  '{"reativacao","cliente parado","nao vem ha meses","recuperar cliente","ficou muito tempo sem vir"}',
@@ -162,7 +162,7 @@ funciona sem pressao.',
  '{}', '{"catalog.items","differentials.items"}', '{}', 'omit',
  'Reativacao por novidade + porta aberta (sem culpa, sem insistencia)',
  '{"Repetir a mesma oferta de sempre","Mandar varias mensagens seguidas","Fingir intimidade que nao existe"}',
- 'reativar', 'skill_seed', 'active'),
+ 'reativar', 'skill_seed', 'active', null),
 
 (null, 'barbearia', 'retention', 'proactive',
  '{"pos atendimento","depois do corte","agradecer","como ficou","proximo agendamento"}',
@@ -176,7 +176,7 @@ data do proximo pelo ciclo dele.',
  '{}', '{"availability.weekly_hours"}', '{}', 'omit',
  'Ancoragem do proximo agendamento no pico de satisfacao',
  '{"Deixar o proximo agendamento por conta do cliente","Perguntar se gostou e nao fazer nada com a resposta","Mandar so \"obrigado pela preferencia\": nao produz retorno"}',
- 'agendar_proximo', 'skill_seed', 'active'),
+ 'agendar_proximo', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------------ FALTAS
 -- Era 'policies', categoria que não existe no manifesto (corrigido em ago/2026
@@ -194,7 +194,7 @@ concreto recupera boa parte deles.',
  '{"policies.no_show"}', '{"availability.weekly_hours","policies.cancellation"}', '{}', 'omit',
  'Recuperacao imediata com alternativa (nunca punir na conversa)',
  '{"Cobrar explicacao","Deixar sem remarcar: e assim que o cliente some","Aplicar politica com aspereza — a regra existe, o tom nao precisa"}',
- 'remarcar', 'skill_seed', 'active'),
+ 'remarcar', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------- PROFISSIONAL
 (null, 'barbearia', 'expertise_proof', 'reactive',
@@ -209,7 +209,7 @@ Registre a preferencia — ela orienta todos os proximos contatos.',
  '{}', '{"availability.weekly_hours","differentials.items"}', '{}', 'omit',
  'Respeito ao vinculo + alternativa qualificada',
  '{"Trocar o barbeiro sem avisar: quebra a confianca","Dizer \"e tudo igual aqui\" — para ele nao e","Nao registrar a preferencia e errar no proximo contato"}',
- 'agendar_com_preferido', 'skill_seed', 'active'),
+ 'agendar_com_preferido', 'skill_seed', 'active', null),
 
 -- ----------------------------------------------------------- LOCAL
 (null, 'barbearia', 'goal_matching', 'reactive',
@@ -221,7 +221,7 @@ Emende com horario: quem pergunta onde fica esta decidindo ir agora.',
  '{"location_contact.address"}', '{"availability.weekly_hours","differentials.items"}', '{}', 'escalate',
  'Reducao de atrito fisico + agendamento na sequencia',
  '{"Mandar so o endereco sem referencia","Nao aproveitar o sinal de intencao para agendar"}',
- 'agendar', 'skill_seed', 'active'),
+ 'agendar', 'skill_seed', 'active', null),
 
 -- --------------------------------------------------------- ECOSSISTEMA
 (null, 'barbearia', 'ecosystem', 'reactive',
@@ -236,7 +236,7 @@ Nunca prometa resultado que o produto nao entrega.',
  '{}', '{"catalog.items","differentials.items"}', '{}', 'omit',
  'Autoridade tecnica + reciprocidade',
  '{"Empurrar produto sem explicar o porque","Prometer resultado exagerado","Nao indicar nada quando a casa nao vende: perde autoridade"}',
- 'venda_adicional', 'skill_seed', 'active'),
+ 'venda_adicional', 'skill_seed', 'active', null),
 
 -- --------------------------------------------------------- LIMITES
 (null, 'barbearia', 'limits_and_ethics', 'reactive',
@@ -252,7 +252,7 @@ Nao prometa devolucao ou cortesia que a casa nao pratica.',
  '{}', '{"policies.no_show","availability.weekly_hours"}', '{}', 'omit',
  'Acolhimento + recuperacao de servico (chamar para o presencial)',
  '{"Explicar por que tecnicamente esta certo: ele nao quer aula","Discutir por mensagem","Prometer reembolso sem saber a politica da casa"}',
- 'ajustar_presencial', 'skill_seed', 'active'),
+ 'ajustar_presencial', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------- ABORDAGEM
 (null, 'barbearia', 'reciprocity', 'reactive',
@@ -267,10 +267,11 @@ mais fideliza nesse ramo.',
  '{}', '{"availability.weekly_hours","catalog.items"}', '{}', 'omit',
  'Abertura com direcao (evita a conversa que nao anda)',
  '{"\"Como posso ajudar?\" e esperar: joga o trabalho no cliente","Nao reconhecer cliente antigo","Responder com bloco de texto longo"}',
- 'oferecer_horario', 'skill_seed', 'active');
+ 'oferecer_horario', 'skill_seed', 'active', null),
 
--- Verificação: quantas entradas ficaram por categoria.
--- Esperado: 16 entradas no total, cobrindo 11 categorias canônicas.,
+-- ⚠ Aqui havia um `;` que encerrava o INSERT no meio do arquivo, deixando as
+-- 3 últimas entradas órfãs — SQL inválido, e o carregador lia só 16 de 19.
+-- Achado em ago/2026 pela trava nova do library_check.
 
 -- ------------------------------------------------- CONFIRMACAO (anti-furo)
 -- Pesquisa: a ociosidade e o maior gargalo do ramo; cada furo de 45 min e
@@ -290,7 +291,7 @@ um furo por um remarcado.',
  '{}', '{"policies.no_show","availability.weekly_hours"}', '{}', 'omit',
  'Confirmacao de vespera com resposta de baixo atrito + troca imediata',
  '{"Confirmar em cima da hora: nao da tempo de preencher a vaga","Mensagem longa que exige leitura","Avisar da politica de falta so depois que faltou"}',
- 'confirmar_presenca', 'skill_seed', 'active'),
+ 'confirmar_presenca', 'skill_seed', 'active', null),
 
 -- ------------------------------------------------------------- INDICACAO
 -- Pesquisa: member-get-member converte mais e traz cliente mais fiel.
@@ -307,4 +308,24 @@ Nunca invente premio que a casa nao pratica.',
  '{}', '{"pricing.range","differentials.items"}', '{}', 'omit',
  'Member-get-member no pico de satisfacao + reciprocidade de mao dupla',
  '{"Pedir indicacao antes de entregar valor","Pedido vago (\"indica ai\")","Prometer recompensa que a casa nao tem"}',
- 'pedir_indicacao', 'skill_seed', 'active');
+ 'pedir_indicacao', 'skill_seed', 'active', null),
+
+(null, 'barbearia', 'commitment_offer', 'reactive',
+ '{"vou ver e te falo","depois eu marco","qualquer coisa eu chamo","vou pensar no horario","ainda nao sei se vou","te aviso"}',
+ null,
+ 'Aqui o valor e baixo e o cliente ja quis — o que trava e a agenda dele, nao a
+sua barbearia. Tratar isso como objecao de preco e o erro.
+Nao pergunte "que dia fica bom para voce". Pergunta aberta joga o trabalho de
+decidir de volta para quem ja esta travado, e a conversa morre ali.
+RECOMENDE DOIS horarios concretos e proximos, e so dois. Duas opcoes decidem;
+cinco viram lista para pensar depois.
+Tire o risco: diga que da para remarcar se aparecer imprevisto, quando isso for
+verdade na casa. Saber que nao esta preso resolve boa parte do adiamento — e
+quem remarca volta, quem nao marcou some.
+Se mesmo assim ele adiar, encerre leve e sem cobranca, deixando o proximo passo
+combinado. Insistencia em barbearia queima a relacao, que e o ativo.',
+ '{"catalog.items"}',
+ '{"policies.cancellation","availability.booking_rule","availability.weekly_hours"}', '{}', 'omit',
+ 'Duas opcoes concretas + remarcacao sem atrito (nunca pergunta aberta)',
+ '{"Perguntar que dia fica bom","Mandar a agenda inteira","Insistir depois do segundo nao","Tratar adiamento como objecao de preco"}',
+ 'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');

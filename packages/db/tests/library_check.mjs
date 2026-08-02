@@ -12,6 +12,13 @@
  *   3. on_missing_facts ∈ {escalate, omit}
  *   4. required_facts existe nas dna_sections do manifesto do segmento
  *   5. o manifesto do segmento tem strategy_map cobrindo as 12 categorias
+ *   6. o CARREGADOR lê todas as entradas do arquivo
+ *
+ * A verificação 6 existe porque um `;` perdido no meio do arquivo encerra o
+ * INSERT e deixa as entradas seguintes órfãs — SQL inválido que passa
+ * despercebido, porque o carregador simplesmente lê menos e não reclama. Foi
+ * o caso da barbearia: 19 entradas no arquivo, 16 carregadas, 3 sumindo do
+ * banco a cada recarga.
  *
  * ESPERADO: tudo PASSOU, 0 problemas.
  *
@@ -104,6 +111,31 @@ for (const arquivo of fs.readdirSync(MIGRATIONS).filter((f) => f.includes("seed_
   }
   for (const c of citados) {
     if (!manifesto.fatos.has(c)) problemas.push(`${arquivo}: fato órfão → "${c}"`);
+  }
+
+  // O carregador enxerga todas? Reproduz o corte dele: cada bloco `values` vai
+  // até o próximo INSERT, e as tuplas terminam no primeiro `;` de topo.
+  const semComentarios = sql.replace(/^\s*--.*$/gm, "");
+  let lidas = 0;
+  for (const m of semComentarios.matchAll(/\bvalues\b/gi)) {
+    const inicio = m.index + m[0].length;
+    const proximo = semComentarios.toLowerCase().indexOf("insert into", inicio);
+    const trecho = semComentarios.slice(inicio, proximo < 0 ? semComentarios.length : proximo);
+    let depth = 0, inStr = false;
+    for (let i = 0; i < trecho.length; i++) {
+      const c = trecho[i];
+      if (inStr) { if (c === "'") { if (trecho[i + 1] === "'") i++; else inStr = false; } continue; }
+      if (c === "'") { inStr = true; continue; }
+      if (c === ";" && depth === 0) break;
+      if (c === "(") depth++;
+      else if (c === ")") { depth--; if (depth === 0) lidas++; }
+    }
+  }
+  if (lidas !== entradas.length) {
+    problemas.push(
+      `${arquivo}: o carregador leria ${lidas} de ${entradas.length} entradas — ` +
+      `procure um ';' perdido no meio do INSERT`,
+    );
   }
 
   // strategy_map cobre as 12.
