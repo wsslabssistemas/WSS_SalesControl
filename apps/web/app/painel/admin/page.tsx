@@ -102,6 +102,7 @@ export default async function AdminPage() {
         <h1>Painel do fabricante</h1>
         <div className="row" style={{ gap: 8 }}>
           <Link href="/painel/admin/acesso" className="btn btn-sm btn-ghost">Acesso e planos →</Link>
+          <Link href="/painel/admin/precos" className="btn btn-sm btn-ghost">Preço sugerido →</Link>
           <Link href="/painel/admin/pagamentos" className="btn btn-sm btn-ghost">Pagamentos →</Link>
         </div>
       </div>

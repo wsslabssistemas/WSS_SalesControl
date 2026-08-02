@@ -89,17 +89,41 @@ export type Sugestao =
       tetoCents: number;
       atendimentosMes: number;
       custoIaMesCents: number;
+      /** Qual dos três termos ditou o preço: `piso`, `porte` ou `mínimo`. */
+      governadoPor: string;
       /** Cada linha explica de onde saiu um número. Sem isto é palpite com CSS. */
       base: string[];
     };
 
 const porMes = (valor: number, dias: number) => (dias > 0 ? (valor * 30) / dias : 0);
-const arredondar = (cents: number) => Math.round(cents / 1000) * 1000;
+
+/**
+ * ARREDONDAMENTO — duas regras, porque um piso não é um preço.
+ *
+ * `aproximar` serve para o que é derivado de conta: R$ 247,30 vira R$ 250 e
+ * ninguém se ofende. `paraCima` é para o PISO, que só arredonda numa direção —
+ * piso arredondado para baixo deixa de ser piso, e a diferença some no meio de
+ * um número que continua parecendo certo.
+ *
+ * E o que o fundador ESCREVEU não se arredonda de jeito nenhum: R$ 199 é um
+ * ponto de preço escolhido, não o resultado de uma divisão. Arredondar para
+ * R$ 200 é o sistema editando a política de quem manda nela.
+ */
+const aproximar = (cents: number) => Math.round(cents / 1000) * 1000;
+const paraCima = (cents: number) => Math.ceil(cents / 1000) * 1000;
 
 export function sugerirPreco(o: Observado, p: Politica = POLITICA_PADRAO): Sugestao {
   const custoMes = porMes(o.custoIaCents, o.diasObservados);
+
   // Piso: a receita mínima para o custo de IA caber dentro de (1 − margem).
-  const piso = p.margemAlvo < 1 ? Math.ceil(custoMes / (1 - p.margemAlvo)) : Infinity;
+  //
+  // Em pontos-base, e não com `1 - margemAlvo`, por um motivo concreto: em
+  // ponto flutuante `1 - 0.8` é `0.19999999999999996`, e a divisão devolvia
+  // R$ 500,00000000001 — que, arredondado para cima, virava R$ 510. Dez reais
+  // por empresa por mês, saídos do nada, num número que continua parecendo
+  // certo. Percentual de política é decimal exato; a conta é inteira.
+  const restanteBp = 10000 - Math.round(p.margemAlvo * 10000);
+  const piso = restanteBp > 0 ? Math.ceil((custoMes * 10000) / restanteBp) : Infinity;
   const temCusto = o.custoIaCents > 0 && o.diasObservados > 0;
 
   const motivos: string[] = [];
@@ -111,47 +135,67 @@ export function sugerirPreco(o: Observado, p: Politica = POLITICA_PADRAO): Suges
   }
   if (o.atendimentos < MIN_ATENDIMENTOS) {
     motivos.push(
-      `${o.atendimentos} ${o.atendimentos === 1 ? "atendimento" : "atendimentos"} registrados ` +
+      `${o.atendimentos} ${o.atendimentos === 1 ? "atendimento registrado" : "atendimentos registrados"} ` +
         `(o mínimo para a média significar algo é ${MIN_ATENDIMENTOS})`,
     );
   }
   if (motivos.length) {
-    return { tipo: "insuficiente", motivos, pisoCents: temCusto ? arredondar(piso) : null };
+    return { tipo: "insuficiente", motivos, pisoCents: temCusto ? paraCima(piso) : null };
   }
 
   const atendimentosMes = porMes(o.atendimentos, o.diasObservados);
   const porPorte = atendimentosMes * p.centsPorAtendimento;
+  const real = (c: number) => (c / 100).toFixed(2).replace(".", ",");
 
-  const sugerido = Math.max(piso, porPorte, p.minimoContratoCents);
+  // TRÊS TERMOS DISPUTAM O PREÇO, e qual deles venceu é informação — não
+  // detalhe de implementação. "R$ 500" não diz nada; "R$ 500 porque o custo de
+  // IA desta empresa é alto para o porte dela" muda a conversa de venda.
+  const termos = [
+    {
+      origem: "piso",
+      exato: piso,
+      arredondado: paraCima(piso),
+      explica: `o custo de IA (${real(custoMes)}/mês) não cabe em ${Math.round((1 - p.margemAlvo) * 100)}% da receita abaixo disso`,
+    },
+    {
+      origem: "porte",
+      exato: porPorte,
+      arredondado: aproximar(porPorte),
+      explica: `${Math.round(atendimentosMes)} atendimentos/mês × ${real(p.centsPorAtendimento)} por atendimento`,
+    },
+    {
+      origem: "mínimo",
+      exato: p.minimoContratoCents,
+      // Número escrito pelo fundador entra inteiro: R$ 199 não vira R$ 200.
+      arredondado: p.minimoContratoCents,
+      explica: `o porte observado justificaria ${real(porPorte)} — quem manda é o mínimo de contrato`,
+    },
+  ];
+  const vencedor = termos.reduce((a, b) => (b.exato > a.exato ? b : a));
+  // Rede de segurança: nada sai abaixo do piso, nem por arredondamento.
+  const sugerido = Math.max(vencedor.arredondado, paraCima(piso));
+
   // O teto não é "o quanto dá para espremer": é até onde o porte OBSERVADO
   // justifica. Passar disso é cobrar por uso que ainda não aconteceu.
-  const teto = Math.max(sugerido, porPorte * 1.3);
+  const teto = Math.max(sugerido, aproximar(porPorte * 1.3));
 
   const confianca =
     o.diasObservados >= DIAS_CONFIANTE && o.atendimentos >= ATENDIMENTOS_CONFIANTE ? "alta" : "media";
 
-  const base = [
-    `${o.atendimentos} atendimentos em ${o.diasObservados} dias → ${Math.round(atendimentosMes)}/mês`,
-    `${Math.round(atendimentosMes)}/mês × ${(p.centsPorAtendimento / 100).toFixed(2).replace(".", ",")} por atendimento`,
-    `piso: custo de IA de ${(custoMes / 100).toFixed(2).replace(".", ",")}/mês com margem alvo de ${Math.round(p.margemAlvo * 100)}%`,
-    `mínimo de contrato: ${(p.minimoContratoCents / 100).toFixed(2).replace(".", ",")}`,
-  ];
-  if (sugerido === p.minimoContratoCents && porPorte < p.minimoContratoCents) {
-    base.push("o porte observado justificaria menos — quem manda aqui é o mínimo de contrato");
-  }
-  if (sugerido === piso && piso > porPorte) {
-    base.push("ATENÇÃO: o custo de IA desta empresa é alto para o porte dela — quem manda é o piso");
-  }
-
   return {
     tipo: "faixa",
     confianca,
-    pisoCents: arredondar(piso),
-    sugeridoCents: arredondar(sugerido),
-    tetoCents: arredondar(teto),
+    pisoCents: paraCima(piso),
+    sugeridoCents: sugerido,
+    tetoCents: teto,
     atendimentosMes: Math.round(atendimentosMes),
     custoIaMesCents: Math.round(custoMes),
-    base,
+    governadoPor: vencedor.origem,
+    base: [
+      `${o.atendimentos} atendimentos em ${o.diasObservados} dias → ${Math.round(atendimentosMes)}/mês`,
+      `quem governa este preço: ${vencedor.origem} — ${vencedor.explica}`,
+      ...termos.filter((t) => t !== vencedor).map((t) => `${t.origem}: ${real(t.exato)}`),
+    ],
   };
 }
 
