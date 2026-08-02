@@ -141,7 +141,40 @@ fidelidade que pesquisa nenhuma alcança — e depende do fundador, não de API.
 
 ---
 
-## 8. Limite honesto
+## 8. O produto dentro do curso — onde entra e onde não entra
+
+Pergunta do fundador: *"o que tu acha de colocar conteúdo que reforça a
+importância do nosso sistema?"*
+
+**Não como conteúdo. Sim como ferramenta do exercício.** A diferença decide se
+o curso é respeitado ou descartado.
+
+Curso que elogia o próprio produto perde a autoridade que estava construindo —
+e no nosso caso seria pior: o diferencial declarado é ensinar **com nota de
+evidência**, separando pesquisa de folclore. Um módulo "por que o Kairós é
+bom" contradiz a própria tese e entrega ao aluno a chave para desconfiar do
+resto.
+
+O que funciona, e é mais forte:
+
+- **O exercício acontece no sistema.** O aluno lê sobre pergunta de implicação
+  e pratica no Responder, com o DNA da empresa dele. Demonstração, não
+  propaganda — ele conclui sozinho.
+- **As aulas ensinam os princípios que o sistema executa.** *Por que não se
+  promete o que não se pode cumprir* é aula de técnica; que a trava
+  anti-invenção faça isso sozinha é consequência, dita em uma linha, não em
+  um módulo.
+- **O último módulo é "colocar na sua operação".** Aí o produto é o assunto
+  legítimo: cadastrar o DNA, montar a cadência, registrar desfecho. Ninguém se
+  ofende com o "como aplicar" no fim de um curso que já entregou valor.
+
+Regra prática: **o produto aparece como o lugar onde se pratica, nunca como o
+tema da aula.** Quem terminar o curso vai querer usar o sistema porque aprendeu
+a vender melhor com ele — não porque foi convencido de que ele é bom.
+
+---
+
+## 9. Limite honesto
 
 Curso é produto novo, com custo de manutenção próprio: cada mudança de
 regulação, de escola ou de biblioteca vira lição desatualizada. E o projeto

@@ -167,6 +167,17 @@ trocar no seletor do topo do painel.
   carregaria 1 entrada **depois de apagar as 22**. E parseava o rodapé do
   arquivo: as queries de verificação viravam tuplas fantasma (28 lidas onde há
   22). Rode o carregador uma vez em qualquer seed novo antes de confiar nele.
+- **Policy `FOR ALL` roda em toda LEITURA.** Uma policy de escrita marcada como
+  `ALL` também é avaliada em cada `SELECT` — então `memberships`,
+  `commercial_dna` e `knowledge_entries` pagavam `is_admin_of` **além** de
+  `is_member_of` em toda leitura, nos três caminhos mais quentes do sistema.
+  Corrigido no `0032` separando em INSERT/UPDATE/DELETE. **Otimizar RLS é onde
+  mais se afrouxa segurança sem perceber** — por isso existe
+  `rls_shape_test.sql`: leitura por membro, escrita por admin, 3/3.
+- **`auth.uid()` sem `select` é reavaliado POR LINHA.** Numa policy, escrever
+  `auth.uid()` cru faz o Postgres executar a função para cada linha avaliada.
+  Com 50 contatos ninguém nota; com 50 mil, a consulta desaba. Sempre
+  `(select auth.uid())`.
 - **Etapa terminal desliga motor.** `computeDueTouches` (follow-up) e
   `computeDue` (recompra) pulam etapas `terminal`. Efeito descoberto em ago/2026:
   a barbearia tinha "Cliente recorrente" terminal, então **a carteira fiel nunca
