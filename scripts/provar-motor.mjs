@@ -87,6 +87,10 @@ const fatos = (sections) => {
 
 // --- a bateria -------------------------------------------------------------
 const CASOS = [
+  // Academia Nova tem DNA incompleto de propósito (só faixa de preço, horário e
+  // endereço): é o caso que prova a trava anti-invenção estrutural.
+  { slug: "academia-nova", msg: "Voces tem semana gratis para experimentar?" },
+  { slug: "academia-nova", msg: "Qual a faixa de preco da mensalidade?" },
   { slug: "demo-industria", msg: "Bom dia. Recebi a amostra e o pessoal do desenvolvimento aprovou, mas o importado sai bem mais barato. Como fica?" },
   { slug: "demo-industria", msg: "Vou aguardar a proxima colecao para decidir." },
   { slug: "demo-industria", msg: "So me manda a ficha tecnica por escrito, nao precisa ligar." },
@@ -106,7 +110,7 @@ for (const [i, caso] of alvos.entries()) {
   const [{ data: skill }, { data: dna }, { data: seed }] = await Promise.all([
     db.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
     db.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
-    db.from("knowledge_entries").select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules").is("tenant_id", null).eq("skill_key", tenant.skill_key).eq("status", "active"),
+    db.from("knowledge_entries").select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, on_missing_facts, hard_rules").is("tenant_id", null).eq("skill_key", tenant.skill_key).eq("status", "active"),
   ]);
   const manifest = skill?.manifest ?? {};
   const sections = dna?.sections ?? {};
@@ -115,6 +119,25 @@ for (const [i, caso] of alvos.entries()) {
   const ranked = (seed ?? []).map((e) => ({ e, s: pontuar(caso.msg, e) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
   const usadas = (ranked.length ? ranked.slice(0, 8) : (seed ?? []).slice(0, 6).map((e) => ({ e, s: 0 }))).map((x) => x.e);
   const escolas = usadas.map((e) => e.school ?? mapa[e.category] ?? null);
+
+  // Trava anti-invenção (espelho de lib/facts.ts).
+  const vazio = (v) => v == null || (typeof v === "string" && v.trim() === "") || (Array.isArray(v) && v.length === 0) || (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0);
+  const temFato = (sec, caminho) => {
+    const [s, c] = String(caminho ?? "").split(".");
+    if (!s || !c) return false;
+    const bloco = (sec ?? {})[s];
+    return bloco != null && typeof bloco === "object" && !vazio(bloco[c]);
+  };
+  // Só a 1ª entrada VETA; as 3 primeiras avisam o que falta.
+  const faltando = new Set();
+  let travou = false;
+  usadas.slice(0, 3).forEach((e, pos) => {
+    for (const cam of e.required_facts ?? []) {
+      if (temFato(sections, cam)) continue;
+      faltando.add(cam);
+      if ((e.on_missing_facts ?? "escalate") === "escalate" && pos < 1) travou = true;
+    }
+  });
 
   const { data: dic } = await db.from("sales_schools").select("key, name, author, principle, when_to_use, when_to_avoid");
   const porChave = new Map((dic ?? []).map((s) => [s.key, s]));
@@ -150,6 +173,10 @@ ${fatos(sections)}
 ESCOLAS DE VENDA em jogo nesta situação (o "NÃO usar quando" vale como regra):
 ${blocoEscolas || "(nenhuma)"}
 
+FATOS QUE A BIBLIOTECA EXIGE E NÃO EXISTEM NO DNA (verificado no banco, não é opinião):
+${faltando.size ? [...faltando].map((f) => `- ${f}`).join("\n") : "(nenhum — todos os fatos exigidos estão preenchidos)"}
+${travou ? "→ Falta fato EXIGIDO por uma entrada que manda escalar. Marque \"escalar\": true e escreva apenas uma mensagem curta e segura que encaminha para verificação humana. NÃO redija a resposta comercial." : ""}
+
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${biblioteca || "(biblioteca vazia)"}
 
@@ -168,6 +195,9 @@ Analise e gere a melhor resposta agora.`;
   const c = custo(tin, tout);
   totalCusto += c;
   const r = res.object;
+  // A trava tem a palavra final — espelho do que a action faz.
+  if (travou) r.escalar = true;
+  r.faltam_fatos = [...new Set([...faltando, ...(r.faltam_fatos ?? [])])];
 
   console.log(`\n${"=".repeat(78)}`);
   console.log(`[${i + 1}/${alvos.length}] ${tenant.name} (${tenant.skill_key})`);

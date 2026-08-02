@@ -8,6 +8,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
 import { resolveSchool, loadSchools, schoolsBlock, type StrategyMap } from "@/lib/schools";
+import { checkRequiredFacts } from "@/lib/facts";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { revalidatePath } from "next/cache";
 import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
@@ -83,13 +84,13 @@ export async function gerarResposta(input: {
     supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
     supabase
       .from("knowledge_entries")
-      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules")
+      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, on_missing_facts, hard_rules")
       .eq("tenant_id", tenant.id)
       .eq("source", "tenant")
       .eq("status", "active"),
     admin
       .from("knowledge_entries")
-      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, hard_rules")
+      .select("category, school, trigger_questions, strategy, technique, answer, common_errors, next_objective, required_facts, on_missing_facts, hard_rules")
       .is("tenant_id", null)
       .eq("skill_key", tenant.skill_key)
       .eq("status", "active"),
@@ -109,6 +110,7 @@ export async function gerarResposta(input: {
     common_errors: string[] | null;
     next_objective: string | null;
     required_facts: string[] | null;
+    on_missing_facts: string | null;
     hard_rules: string[] | null;
   };
   // A biblioteca da empresa vem primeiro: ela conhece o caso dela melhor que a
@@ -124,6 +126,11 @@ export async function gerarResposta(input: {
   const strategyMap = (manifest.strategy_map as StrategyMap | undefined) ?? null;
   const dicionario = await loadSchools();
   const escolas = usadas.map((e) => resolveSchool(e, strategyMap));
+
+  // A TRAVA ANTI-INVENÇÃO, EM CÓDIGO. Cruza o que a biblioteca exige
+  // (`required_facts`) com o que o DNA tem. Antes disto o campo era buscado do
+  // banco e nunca usado: quem decidia escalar era o julgamento do modelo.
+  const trava = checkRequiredFacts(sections, usadas);
 
   const library = usadas
     .map(
@@ -241,6 +248,10 @@ ${fatos(sections)}
 ESCOLAS DE VENDA em jogo nesta situação (o "NÃO usar quando" vale como regra):
 ${schoolsBlock(escolas, dicionario)}
 
+FATOS QUE A BIBLIOTECA EXIGE E NÃO EXISTEM NO DNA (verificado no banco, não é opinião):
+${trava.faltando.length ? trava.faltando.map((f) => `- ${f}`).join("\n") : "(nenhum — todos os fatos exigidos estão preenchidos)"}
+${trava.travou ? "→ Falta fato EXIGIDO por uma entrada que manda escalar. Marque \"escalar\": true e escreva apenas uma mensagem curta e segura que encaminha para verificação humana. NÃO redija a resposta comercial." : ""}
+
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}
 
@@ -268,6 +279,18 @@ Analise e gere a melhor resposta agora.`;
   // Valida o status sugerido contra as etapas reais do manifesto.
   const validKeys = new Set(stages.map((s) => s.key));
   if (!validKeys.has(object.status_sugerido)) object.status_sugerido = "";
+
+  // A trava tem a palavra final. O modelo pode escalar por conta própria, mas
+  // NÃO pode deixar de escalar quando a biblioteca exige um fato que o DNA não
+  // tem — essa decisão é do dado, não do julgamento dele.
+  if (trava.travou) object.escalar = true;
+  // O caminho verificado no banco vem primeiro. O que o modelo escreveu só
+  // entra se falar de outra coisa — senão a lista repete "pricing.plans" e
+  // "pricing.plans (detalhamento dos valores)" como se fossem dois problemas.
+  const doModelo = (object.faltam_fatos ?? []).filter(
+    (f) => !trava.faltando.some((c) => f.trim().toLowerCase().startsWith(c.toLowerCase())),
+  );
+  object.faltam_fatos = [...new Set([...trava.faltando, ...doModelo])];
 
   // Registra custo/tokens no ledger (por empresa). A usage_ledger só aceita
   // escrita do service_role (RLS) — por isso o admin client. Best-effort: se

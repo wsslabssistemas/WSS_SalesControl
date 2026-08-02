@@ -72,19 +72,33 @@ chegava ao motor.
 3. **`free_notes` existia em 4 dos 8 manifestos.** Diferença arbitrária;
    uniformizado.
 
-**Aberto, para decidir:**
-- **`escalar` fica `false` mesmo com `faltam_fatos` preenchido** (4 dos 8
-  casos). As respostas continuaram seguras, mas o campo virou "o que ajudaria"
-  em vez de "o que falta para não inventar". Quem segurou foi a regra de
-  conteúdo, não a flag. Vale afinar a instrução.
-- **Custo por resposta: R$ 0,14 a R$ 0,33 (média ~R$ 0,25).** A saída tem 1,8k a
-  2,7k tokens porque `explicacao` e `tecnica` viram redação. Com cobrança por
-  atendimento, 500 atendimentos/mês ≈ **R$ 125/mês de IA por empresa**. Limitar
-  os campos de ensino a 2–3 frases corta isso quase pela metade — mas mexe no
-  que ensina o vendedor, que é diferencial. **Decisão do fundador.**
+**Decidido depois da prova:**
+
+- ✅ **A trava anti-invenção virou estrutural** (`lib/facts.ts`). Era 100%
+  prompt: pedíamos ao modelo que escalasse e confiávamos no julgamento dele,
+  enquanto `required_facts` — o contrato curado há meses — era buscado do banco
+  e **nunca usado**. Agora o código cruza o exigido com o DNA e **a trava tem a
+  palavra final**: o modelo pode escalar por conta própria, mas não pode deixar
+  de escalar.
+  **Regra do veto, calibrada em campo:** só a entrada que GOVERNA a resposta (a
+  que casou melhor) trava; as 3 primeiras apenas informam o que não pode ser
+  afirmado. Sem isso o motor se recusava a dizer a faixa de preço que tinha no
+  DNA porque uma entrada vizinha exigia a tabela de planos — escalada indevida
+  mata o produto tão rápido quanto invenção.
+  Teste: `packages/db/tests/facts_lock_test.mjs`.
+- ✅ **Custo mantido como está.** Decisão do fundador: o vendedor provavelmente
+  não lê a explicação (ele testou isso na academia), mas **vendemos o oposto do
+  atalho** — o produto que ensina precisa ensinar de verdade, inclusive quando
+  ninguém lê. Fica registrado o número: ~R$ 0,25 por resposta, ~R$ 125/mês por
+  empresa a 500 atendimentos.
+  *Opção parada para o futuro, sem urgência:* gerar os campos de ensino só
+  quando o vendedor clicar "por quê?" — preserva o discurso e corta o custo.
+
+**Aberto:**
 - **Ruído no ranking**: em "o importado sai mais barato", a entrada de indecisão
   ficou em 1º porque a mensagem continha "aprovou". Inofensivo hoje (as 8
-  primeiras entram no contexto), mas piora conforme a biblioteca cresce.
+  primeiras entram no contexto), mas piora conforme a biblioteca cresce — e
+  agora importa mais, porque a 1ª entrada é quem veta.
 
 ### 2. Fechar a auditoria pendente
 
