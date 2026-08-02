@@ -113,7 +113,11 @@ export const refDaEntrada = (e: EntradaDaBiblioteca) =>
  * • só marca interrogação quando a frase realmente pergunta. Pontuação
  *   inventada é invenção pequena, e invenção pequena é o que esta casa não faz.
  */
-const INTERROGATIVAS = /^(qual|quais|quanto|quanta|quantos|como|quando|onde|quem|por que|porque|e se|tem |da |voces|voce|posso|aceita|fazem|faz |consegue|conseguem|sera)/i;
+// `faz ` saiu da lista: abre pergunta em "faz sobrancelha" e NÃO em "faz tempo
+// que não vou aí" — e o segundo caso virava "Faz tempo que não vou aí?", que
+// ninguém escreveria. `dá` entrou com acento, senão "dá tempo?" ficava sem a
+// interrogação. Lista curta e conservadora: na dúvida, não pontuar.
+const INTERROGATIVAS = /^(qual|quais|quanto|quanta|quantos|como|quando|onde|quem|por que|porque|e se|tem |d[aá] |voc[eê]s?|posso|aceita|fazem|consegue|conseguem|ser[aá])/i;
 
 function comoMensagem(gatilho: string): string {
   const t = gatilho.trim();

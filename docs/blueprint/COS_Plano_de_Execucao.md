@@ -343,8 +343,52 @@ pesquisa séria de folclore repetido.
 
 - [ ] **Qualificação de compra (MEDDIC-lite)** — orçamento, processo de
       aprovação, critério de decisão e defensor interno. Já temos `decisor`.
-- [~] **Fila de segmentos**: ~~oficina~~ ✅ (ago/2026, 10º segmento) · salão de
-      beleza, pet, imobiliária, curso, eventos. (Restaurante segue descartado.)
+- [~] **Fila de segmentos**: ~~oficina~~ ✅ (10º) · ~~salão de beleza~~ ✅ (11º) ·
+      pet, imobiliária, curso, eventos. (Restaurante segue descartado.)
+
+      **`salao_beleza` (ago/2026) — o primeiro escrito depois de PESQUISA
+      dirigida, a pedido do fundador.** A pesquisa mudou o desenho em cinco
+      pontos que eu não teria acertado por dedução:
+      1. **O preço da química não é um número, é uma régua.** Progressiva varia
+         por comprimento e volume — cotar por mensagem é criar o conflito do dia
+         do atendimento. Por isso `pricing` aqui é `consultiva_spin` e na
+         **barbearia é `oferta_valor`**: mesma pergunta, escolas opostas. É a
+         melhor prova até hoje de que o `strategy_map` por segmento não é
+         enfeite.
+      2. **O histórico químico é dado de SEGURANÇA.** Química sobre química
+         incompatível causa corte químico — o fio quebra. Henê é incompatível
+         com alisamento; formol e glutaraldeído são proibidos pela Anvisa e
+         ainda circulam. Virou a entrada mais importante da biblioteca, e é a
+         **primeira em 11 segmentos em que a resposta comercial certa pode ser
+         RECUSAR o serviço**.
+      3. **No-show custa a tarde, não a hora.** Faltas de última hora consomem
+         10% a 20% da receita do setor, e uma química perdida leva 3 a 5 horas
+         de cadeira. Sinal derruba no-show em 60% a 80% — virou entrada própria.
+      4. **A cliente é fiel à pessoa: 72% acompanham o profissional** quando ele
+         troca de salão. Não é problema de RH, é a fragilidade do negócio — e
+         gerou a entrada de transferência de carteira com continuidade
+         registrada.
+      5. **A expectativa chega em forma de foto**, e o cabelo dela não chega lá
+         em uma sessão. Alinhar antes é conversa comercial, não técnica.
+      Contexto de mercado: o Brasil é o 3º maior mercado de beleza do mundo,
+      ~500 novos MEIs do setor por dia. E o modelo de trabalho tem lei própria —
+      **Lei do Salão Parceiro (13.352/2016)**, com cota-parte fora da receita
+      bruta do salão.
+      **Checagem de cobertura feita ANTES**, contra as 19 entradas da barbearia:
+      ela já cobre agenda, confirmação, remarcação, vínculo com profissional,
+      recompra, preço direto e "não gostei do corte" — e não cobre nada dos
+      cinco pontos acima.
+      Entregue: manifesto (11/11), **19 entradas nas 12 categorias**, Salão Demo
+      + DNA (31 campos), 7 casos no `retrieval_check` (**37/37**, 96,2% dos 1.072
+      gatilhos) e 9 situações distintas no exercício do curso.
+
+      **Fontes da pesquisa:** [Beauty Fair — 72% acompanham o
+      profissional](https://negociosdebeleza.beautyfair.com.br/72-dos-clientes-acompanham-seus-cabeleireiros-quando-eles-mudam-de-salao/) ·
+      [Sebrae — Lei Salão Parceiro](https://agenciasebrae.com.br/economia-e-politica/lei-salao-parceiro-tudo-o-que-donos-e-profissionais-da-beleza-precisam-saber/) ·
+      [ABIHPEC — Panorama do Setor 2026](https://abihpec.org.br/site2019/wp-content/uploads/2026/02/Panorama-do-Setor-de-Beleza-e-Cuidados-Pessoais_23.02.26_Port.pdf) ·
+      [Incompatibilidade química e corte
+      químico](https://universo.salonline.com.br/compatibilidade-de-substancias-dos-cabelos-alisados/) ·
+      [Belio — no-show em salão](https://blog.belio.com.br/artigos/como-reduzir-no-shows-salao-beleza/)
       **`oficina` primeiro por dois motivos:** é a maior distância do que já
       existia (nada cobria diagnóstico, peça original, autorização de serviço
       nem revisão por quilometragem) e é o caso mais puro da tese do produto —

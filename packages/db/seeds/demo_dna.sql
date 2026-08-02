@@ -23,11 +23,80 @@ delete from public.commercial_dna d
  where d.tenant_id = t.id
    and t.slug in ('demo-clinica','demo-distribuidora','demo-escola-esportiva',
                   'demo-industria','demo-sob-medida','demo-energia-solar',
-                  'demo-oficina');
+                  'demo-oficina','demo-salao-beleza');
 
 insert into public.commercial_dna (tenant_id, version, sections, source, is_current)
 select t.id, 1, x.sections, 'demo_seed', true
 from (values
+
+-- ------------------------------------------------------------ SALÃO DE BELEZA
+-- Dado FICTÍCIO. A régua da química está preenchida de propósito: é o fato
+-- que a trava exige na pergunta que mais chega ("quanto custa a progressiva?").
+('demo-salao-beleza', $json$
+{
+  "catalog": {
+    "items": [
+      { "servico": "Corte feminino", "duracao": "1h", "observacao": "Inclui lavagem e finalização" },
+      { "servico": "Coloração (retoque de raiz)", "duracao": "2h", "observacao": "Cabelo longo pode levar 2h30" },
+      { "servico": "Mechas / iluminado", "duracao": "4h a 5h", "observacao": "Depende da base e do histórico" },
+      { "servico": "Progressiva sem formol", "duracao": "3h a 4h", "observacao": "Valor por comprimento e volume" },
+      { "servico": "Tratamento e reconstrução", "duracao": "1h30", "observacao": "Indicado antes de química em fio castigado" },
+      { "servico": "Manicure e pedicure", "duracao": "1h15", "observacao": "" },
+      { "servico": "Design de sobrancelha", "duracao": "30min", "observacao": "Com henna leva 45min" }
+    ],
+    "nao_faz": ["Alongamento de cílios", "Micropigmentação", "Depilação a laser", "Penteado com aplique"],
+    "marcas_produtos": ["Wella Professionals", "Kérastase", "Truss"]
+  },
+  "pricing": {
+    "range": "R$ 60 a R$ 780",
+    "como_cobra_quimica": "Progressiva: curto R$ 260, médio R$ 340, longo a partir de R$ 430. Mechas: a partir de R$ 480, fechado só após avaliação, porque depende do estado do fio e de quantas sessões.",
+    "varia_por_profissional": "Sim. Coloração e mechas com a Carla (especialista em loiros) têm acréscimo de 20%. Corte e tratamento têm o mesmo valor com qualquer profissional.",
+    "parcelamento": "PIX, débito e crédito em até 3x sem juros acima de R$ 300"
+  },
+  "availability": {
+    "weekly_hours": "Ter a Sex 9h-19h; Sáb 9h-17h",
+    "tempo_quimica": "Progressiva de 3h a 4h; mechas de 4h a 5h; coloração de raiz 2h",
+    "antecedencia": "Sábado costuma fechar com 10 dias de antecedência; terça e quarta têm horário na mesma semana"
+  },
+  "risk_free_entry": {
+    "avaliacao_gratuita": true,
+    "o_que_inclui": "Olhamos o fio e o couro cabeludo, conferimos o histórico de química e fazemos teste de mecha quando o histórico é desconhecido. Leva 20 minutos e sai com o plano e o valor por escrito.",
+    "primeira_vez": "Não damos desconto de primeira vez. Damos a avaliação sem custo e um diagnóstico por escrito."
+  },
+  "expertise_proof": {
+    "tempo_de_casa": "9 anos no mesmo endereço",
+    "especialidades": ["Loiros e correção de cor", "Cabelo cacheado", "Reconstrução de fio castigado"],
+    "profissionais": [
+      { "nome": "Carla", "especialidade": "Coloração e loiros", "nivel": "Especialista" },
+      { "nome": "Juliana", "especialidade": "Corte e cachos", "nivel": "Sênior" },
+      { "nome": "Bia", "especialidade": "Unhas e sobrancelha", "nivel": "Pleno" }
+    ],
+    "formacoes": ["Colorimetria Wella", "Curso de cachos Deva"]
+  },
+  "policies": {
+    "sinal": "30% no PIX para química e serviços acima de 3 horas, abatido no valor do dia.",
+    "cancelamento": "Remarcando com mais de 24h de antecedência, o sinal vale para o novo horário. Falta sem aviso, o sinal cobre a cadeira reservada.",
+    "atraso": "Acima de 20 minutos podemos precisar remarcar, porque atrasa quem vem depois. Avisando, a gente tenta encaixar.",
+    "garantia_servico": "Ajuste de cor ou de corte em até 7 dias, sem custo, se não ficou como combinado."
+  },
+  "retention": {
+    "intervalo_retoque": "Raiz a cada 30 dias; mechas a cada 3 meses; progressiva a cada 4 meses; unha a cada 15 dias",
+    "manutencao_casa": "Shampoo sem sulfato e máscara semanal. Cabelo com cor pede protetor térmico antes de secador e prancha.",
+    "lembrete": "Mensagem 3 dias antes do ciclo, com dois horários oferecidos"
+  },
+  "ecosystem": {
+    "revenda": ["Shampoo e condicionador sem sulfato", "Máscara de reconstrução", "Protetor térmico", "Leave-in para cachos"],
+    "parceiros": ["Maquiadora para noivas", "Fotógrafo de ensaio", "Clínica de estética ao lado"],
+    "indicacao": "Quem indica ganha 20% de desconto no próximo serviço, e quem chega indicada ganha a hidratação da primeira visita"
+  },
+  "location_contact": {
+    "address": "Rua Exemplo, 340 — Porto Alegre/RS",
+    "whatsapp": "(51) 98888-0000",
+    "instagram": "@salaodemo"
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Salão de bairro com 3 profissionais no modelo salão-parceiro (Lei 13.352/2016), foco em coloração e cachos."
+}
+$json$::jsonb),
 
 -- ---------------------------------------------------------------- OFICINA
 -- Dado FICTÍCIO. Escrito para exercitar a trava anti-invenção de verdade:
@@ -359,7 +428,7 @@ join public.tenants t on t.slug = x.slug
 -- `demo-` é tocado.
 where t.slug like 'demo-%';
 
--- Verificação. Esperado: 6 linhas, todas com 4 seções ou mais.
+-- Verificação. Esperado: 7 linhas, todas com 4 seções ou mais.
 select t.slug,
        (select count(*) from jsonb_object_keys(d.sections)) as secoes,
        d.source

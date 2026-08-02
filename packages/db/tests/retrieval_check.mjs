@@ -103,6 +103,17 @@ const CASOS = [
   { skill: "oficina", msg: "vou pensar e te falo depois", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "oficina", msg: "quero a peca velha de volta, nao autorizei isso", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
 
+  // SALÃO DE BELEZA (11º). A prova de que o strategy_map faz efeito: a MESMA
+  // pergunta de preço resolve para escolas OPOSTAS em barbearia e salão,
+  // porque na barbearia o preço fecha e aqui ele depende de ver o cabelo.
+  { skill: "salao_beleza", msg: "quanto custa a progressiva?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "salao_beleza", msg: "ja fiz hene, posso fazer progressiva?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  { skill: "salao_beleza", msg: "quero ficar assim, mandei a foto", categoria: "goal_matching", escola: "consultiva_spin" },
+  { skill: "salao_beleza", msg: "vou ver e te falo depois", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  { skill: "salao_beleza", msg: "minha amiga faz por menos", categoria: "objections", escola: "negociacao_voss" },
+  { skill: "salao_beleza", msg: "por que precisa dar sinal antes?", categoria: "commitment_offer", escola: "fechamento_classico" },
+  { skill: "salao_beleza", msg: "a raiz apareceu, esta na hora do retoque", categoria: "retention", escola: "cadencia_blount" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

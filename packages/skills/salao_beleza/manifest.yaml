@@ -1,0 +1,331 @@
+key: salao_beleza
+name: Salão de Beleza (cabelo, química, unhas, estética rápida)
+version: 1.0.0
+
+# =====================================================================
+# POR QUE ESTE SEGMENTO EXISTE, E POR QUE NÃO É BARBEARIA COM OUTRO NOME.
+#
+# A regra do segmento novo diz que nome não é cobertura. Rodei a checagem
+# contra as 19 entradas da barbearia antes de escrever uma linha. Ela já
+# cobre horário, confirmação de véspera, remarcação, vínculo com o
+# profissional, recompra por dias, preço direto, "não gostei do corte",
+# plano/assinatura e indicação. Nada disso precisa ser reescrito.
+#
+# O QUE ELA NÃO COBRE — e é o que sustenta esta Skill:
+#
+# 1. QUÍMICA É OUTRO NEGÓCIO. O preço da progressiva ou da coloração
+#    depende de COMPRIMENTO e VOLUME do cabelo, então não existe resposta
+#    honesta por telefone. Na barbearia o preço sai direto e fechar na
+#    hora é serviço prestado; aqui, dar um número sem ver o cabelo é a
+#    origem do conflito no caixa. Por isso `pricing` aqui é
+#    `consultiva_spin` e na barbearia é `oferta_valor` — mesma pergunta,
+#    escolas opostas, exatamente o que o `strategy_map` existe para
+#    declarar.
+#
+# 2. O HISTÓRICO QUÍMICO É DADO DE SEGURANÇA, NÃO PREFERÊNCIA. Química
+#    sobre química incompatível causa CORTE QUÍMICO — o fio quebra ou
+#    "derrete". Henê é incompatível com alisamentos; formol e
+#    glutaraldeído são proibidos pela Anvisa e ainda circulam. Saber o que
+#    já foi feito naquele cabelo decide o que PODE ser feito, e às vezes a
+#    resposta certa é recusar o serviço. Nenhuma outra Skill tem uma
+#    recusa técnica como categoria de venda.
+#
+# 3. A EXPECTATIVA CHEGA EM FORMA DE FOTO. A cliente traz a referência e o
+#    cabelo dela não chega lá em uma sessão. Alinhar isso ANTES é o que
+#    separa cliente encantada de reclamação — e é conversa comercial, não
+#    técnica.
+#
+# 4. O NO-SHOW AQUI CUSTA A TARDE. Faltas e cancelamentos de última hora
+#    consomem de 10% a 20% da receita mensal do setor, e um serviço longo
+#    (química, alongamento de unha, cílios) perdido leva junto 3 a 5 horas
+#    de cadeira que não se revendem. Política de sinal derruba no-show em
+#    60% a 80% — por isso `commitment_offer` tem uma entrada só para isso.
+#
+# 5. O MODELO DE TRABALHO É LEI PRÓPRIA. A Lei do Salão Parceiro
+#    (13.352/2016) permite o profissional-parceiro sem vínculo
+#    empregatício, desde que formalizado como MEI ou ME no Simples e com
+#    contrato homologado; a cota-parte dele não entra na receita bruta do
+#    salão. Isso convive com CLT e com aluguel de cadeira — e a confusão
+#    entre os três é o que mais drena caixa no setor.
+#
+# 6. A CLIENTE É FIEL À PESSOA, NÃO À MARCA. 72% acompanham o profissional
+#    quando ele muda de salão, e a maior parte chega por indicação
+#    pessoal. Isso não é detalhe de RH: é a fragilidade estrutural do
+#    negócio, e existe trabalho comercial que reduz — o salão precisa ter
+#    vínculo próprio com a cliente ANTES de perder o profissional.
+#
+# TAMANHO: o Brasil é o 3º maior mercado de beleza do mundo, com cerca de
+# 500 novos MEIs do setor formalizados por dia. Não falta cliente; falta
+# técnica comercial.
+# =====================================================================
+
+capabilities: []
+
+vocabulary:
+  lead: "cliente"
+  conversion: "cliente atendida"
+  churn: "cliente que parou de vir"
+  catalog_item: "serviço"
+
+discovery_axis: "o que a cliente quer alcançar no cabelo ou na unha, o que já foi feito antes e para quando ela precisa estar pronta"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Entender o que ela quer e o que já foi feito. Química não se cota por mensagem."
+    - key: avaliacao
+      label: "Avaliação do cabelo"
+      goal: "Ver o cabelo, conferir histórico químico e alinhar o que dá para fazer — e em quantas sessões."
+      cadence: pos_avaliacao
+      phases:
+        - { key: marcada,   label: "Avaliação marcada",  offset_days: 0 }
+        - { key: realizada, label: "Avaliação feita",    offset_days: 1 }
+    - key: agendado
+      label: "Horário marcado"
+      goal: "Confirmar na véspera e proteger a cadeira. Serviço longo pede sinal."
+      cadence: confirmacao
+      phases:
+        - { key: marcado,   label: "Horário marcado",     offset_days: 0 }
+        - { key: confirmar, label: "Confirmar véspera",   offset_days: -1 }
+    - key: atendida
+      label: "Atendida"
+      goal: "Entregar, explicar a manutenção e já deixar o próximo horário marcado."
+      cadence: pos_atendimento
+    - key: recorrente
+      label: "Cliente fiel"
+      goal: "Voltar no ciclo dela — retoque, manutenção, corte."
+      # Terminal E `won`, como na barbearia: é a cliente conquistada. O
+      # núcleo mantém a recompra em etapa `won`, que é o que sustenta o
+      # ciclo de retoque.
+      terminal: true
+      won: true
+    - key: perdida
+      label: "Não voltou"
+      terminal: true
+
+contact_fields:
+  - key: servico_principal
+    label: "O que ela busca"
+    type: enum
+    options:
+      [corte, coloracao, mechas_luzes, progressiva_alisamento, tratamento_reconstrucao,
+       manicure_pedicure, unhas_alongamento, sobrancelha, cilios, depilacao,
+       maquiagem, penteado_noiva, outro]
+  - key: comprimento
+    label: "Comprimento do cabelo"
+    type: enum
+    options: [curto, medio, longo, muito_longo, nao_se_aplica]
+  # CAMPO DE SEGURANÇA, não de preferência. Química sobre química
+  # incompatível quebra o fio, e a cliente quase nunca sabe que isso
+  # importa. Quem não pergunta, descobre no espelho.
+  - key: historico_quimico
+    label: "O que já foi feito no cabelo"
+    type: enum
+    options:
+      [nenhum, coloracao, descoloracao_mechas, progressiva, relaxamento, hene,
+       varios_procedimentos, nao_sei]
+  - key: alergia_sensibilidade
+    label: "Alergia ou sensibilidade"
+    type: text
+  - key: profissional_preferido
+    label: "Profissional de preferência"
+    type: text
+  - key: ciclo_retorno
+    label: "De quanto em quanto tempo ela volta"
+    type: enum
+    options: [15_dias, 21_dias, 30_dias, 45_dias, 60_dias, sem_padrao]
+  - key: ocasiao
+    label: "Tem data marcada?"
+    type: enum
+    options: [nenhuma, casamento, formatura, viagem, evento_trabalho, ensaio_fotos, outra]
+
+# Agenda é o ativo físico do salão: cadeira parada não se revende. O passo
+# é de 30 minutos porque o mesmo salão faz sobrancelha de 20 minutos e
+# progressiva de 4 horas — a duração real vem do serviço, não daqui.
+scheduling:
+  enabled: true
+  default_duration_min: 60
+  slot_step_min: 30
+  min_advance_min: 120
+
+services:
+  enabled: true
+  label: "Atendimentos realizados"
+  item_label: "serviço"
+
+# Retoque de raiz, manutenção de unha e corte têm ciclos DIFERENTES na
+# mesma cliente. O campo do contato manda; isto é só o padrão.
+recurrence:
+  enabled: true
+  default_interval_days: 30
+  field: ciclo_retorno
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - tiktok
+  - google
+  - indicacao
+  - passou_na_frente
+  - profissional_trouxe
+  - outro
+
+dna_sections:
+  - key: catalog
+    label: "Serviços do salão"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [servico, duracao, observacao], required: true, label: "Serviços e duração", help: "A duração é o que protege a agenda. O sistema só fala do que estiver aqui" }
+      - { key: nao_faz, type: list, label: "O que o salão NÃO faz", help: "Serviços que pedem e vocês não atendem. Evita promessa errada" }
+      - { key: marcas_produtos, type: list, label: "Marcas que vocês usam", help: "Linha profissional que vocês trabalham. É prova concreta para quem entende" }
+  - key: pricing
+    label: "Valores e pagamento"
+    required: true
+    fields:
+      - { key: range, type: money_range, required: true, label: "Faixa dos serviços", help: "Do mais simples ao mais caro. Ex.: de R$ 60 a R$ 600" }
+      - { key: como_cobra_quimica, type: text, required: true, label: "Como você cobra química", help: "Química varia por comprimento e volume. Escreva a régua: ex.: curto R$ 250, médio R$ 350, longo a partir de R$ 450, fechado após avaliação" }
+      - { key: varia_por_profissional, type: text, label: "O preço muda por profissional?", help: "Se há níveis (júnior, sênior, especialista), diga como funciona" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, débito, crédito em até 3x" }
+  - key: availability
+    label: "Agenda e prazos"
+    required: true
+    fields:
+      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Ex.: Ter a Sex 9h-19h; Sáb 9h-17h" }
+      - { key: tempo_quimica, type: text, required: true, label: "Tempo dos serviços longos", help: "O que ocupa a cadeira. Ex.: progressiva 3 a 4h; mechas 4 a 5h" }
+      - { key: antecedencia, type: text, label: "Com quanto tempo costuma lotar", help: "Ex.: sábado fecha com 10 dias de antecedência" }
+  - key: risk_free_entry
+    label: "Primeira vez e avaliação"
+    required: true
+    fields:
+      - { key: avaliacao_gratuita, type: boolean, required: true, label: "A avaliação do cabelo é gratuita?", help: "Ver o cabelo antes de orçar química. É a porta de entrada mais forte do salão" }
+      - { key: o_que_inclui, type: text, label: "O que acontece na avaliação", help: "Ex.: olhamos o fio, conferimos o histórico, fazemos teste de mecha se precisar" }
+      - { key: primeira_vez, type: text, label: "Condição para quem vem pela primeira vez", help: "Se existe. Não invente — cliente que veio por desconto volta por desconto" }
+  - key: expertise_proof
+    label: "Equipe e experiência"
+    required: true
+    fields:
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de salão", help: "Ex.: 9 anos no mesmo bairro" }
+      - { key: especialidades, type: list, label: "Especialidades da equipe", help: "Onde vocês são referência: loiros, cachos, coloração de fantasia" }
+      - { key: profissionais, type: table, columns: [nome, especialidade, nivel], label: "Quem atende", help: "A cliente escolhe pessoa, não empresa. Deixe isso explícito" }
+      - { key: formacoes, type: list, label: "Cursos e certificações", help: "Formação de marca, curso de colorimetria, etc." }
+  - key: policies
+    label: "Regras do salão"
+    required: true
+    fields:
+      - { key: sinal, type: text, required: true, label: "Política de sinal", help: "Para serviço longo. Ex.: 30% no PIX para química e alongamento, abatido no dia" }
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar sem perder o sinal. Seja claro e humano" }
+      - { key: atraso, type: text, label: "Atraso da cliente", help: "Ex.: acima de 20 minutos pode virar remarcação, porque atrasa quem vem depois" }
+      - { key: garantia_servico, type: text, label: "Se não ficar como combinado", help: "Prazo e condição para ajuste. Ex.: retoque de cor em até 7 dias, sem custo" }
+  - key: retention
+    label: "Retorno e manutenção"
+    required: true
+    fields:
+      - { key: intervalo_retoque, type: text, required: true, label: "Intervalo de retoque que vocês recomendam", help: "Por serviço. Ex.: raiz a cada 30 dias; progressiva a cada 4 meses; unha a cada 15 dias" }
+      - { key: manutencao_casa, type: text, label: "Manutenção em casa", help: "O que a cliente precisa usar para o resultado durar. É o que sustenta a venda de produto" }
+      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo, com dois horários oferecidos" }
+  - key: ecosystem
+    label: "Produtos e parcerias"
+    fields:
+      - { key: revenda, type: list, label: "Produtos que vocês vendem", help: "Home care é margem e é parte do resultado" }
+      - { key: parceiros, type: list, label: "Parcerias", help: "Fotógrafo, maquiadora, cerimonialista, clínica de estética" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a cliente ganha por trazer alguém" }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, label: "Endereço", help: "Onde fica o salão" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que a cliente usa" }
+      - { key: instagram, type: text, label: "Instagram", help: "Onde ela vê os trabalhos. Ex.: @seusalao" }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Faixa, régua da química por comprimento e preço por profissional"
+  risk_free_entry:    "Avaliação do cabelo e primeira vez"
+  availability:       "Agenda, tempo de cadeira e antecedência"
+  expertise_proof:    "Equipe, especialidade e trabalhos de referência"
+  catalog:            "Serviços, marcas usadas e o que o salão não faz"
+  goal_matching:      "A foto de referência → o que dá para fazer, e em quantas sessões"
+  objections:         "Tá caro, minha amiga faz mais barato, vou fazer em casa"
+  commitment_offer:   "Fechar o horário, sinal e pacote de manutenção"
+  reciprocity:        "Avaliação, diagnóstico capilar e orientação de cuidado"
+  limits_and_ethics:  "Histórico químico, recusa técnica e resultado que não saiu"
+  retention:          "Retoque no ciclo, cliente que sumiu e o vínculo com o salão"
+  ecosystem:          "Home care, parcerias e indicação"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA — e aqui está a diferença que prova o desenho.
+#
+# `pricing` na BARBEARIA é `oferta_valor`: ticket baixo, decisão em
+# segundos, transparência fecha na hora. `pricing` AQUI é
+# `consultiva_spin`, porque a resposta honesta para "quanto custa a
+# progressiva?" é uma pergunta, não um número — o valor depende de ver o
+# cabelo. Mesma pergunta, escolas opostas, por causa do tamanho da decisão.
+# É exatamente o que Rackham mostrou e o que o `strategy_map` existe para
+# declarar por segmento.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    fechamento_classico
+  reciprocity:         persuasao_cialdini
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           persuasao_cialdini
+
+cadences:
+  - key: pos_avaliacao
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Retomar quem fez a avaliação e não marcou, tirando a dúvida que ficou" }
+      - { offset_days: 6, intent: "Oferecer começar pelo primeiro passo do plano, menor que o pacote inteiro" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 2
+
+  # A cadeira vazia não se revende. Confirmação de véspera é a medida mais
+  # barata contra no-show, e a única que não depende de cobrar sinal.
+  - key: confirmacao
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a véspera com resposta de um toque e oferecer troca se não puder" }
+      - { offset_days: 1,  intent: "Retomar quem faltou, sem cobrança, oferecendo novo horário" }
+    stop_on: [converted, opted_out]
+
+  - key: pos_atendimento
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 2,  intent: "Perguntar como ficou depois da primeira lavagem e reforçar a manutenção" }
+      - { offset_days: 7,  intent: "Confirmar que o resultado se manteve, dentro do prazo de ajuste" }
+    stop_on: [opted_out]
+
+  - key: retoque
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,  intent: "Avisar que o ciclo dela está fechando e oferecer dois horários" }
+      - { offset_days: 10, intent: "Retomar com a agenda da semana, sem cobrança" }
+    stop_on: [replied, converted, opted_out]
+
+hard_rules:
+  - "NUNCA fechar preço de química por mensagem. Progressiva, coloração e mechas dependem de comprimento, volume e do estado do fio — número dado sem ver vira conflito no caixa."
+  - "NUNCA aplicar química sem conferir o histórico do cabelo. Química incompatível causa corte químico, e o fio quebra."
+  - "Cabelo com henê, ou com histórico que a cliente não souber informar, exige teste de mecha antes de qualquer alisamento ou coloração."
+  - "Formol e glutaraldeído como alisantes são proibidos pela Anvisa. Não oferecer, não aceitar produto trazido pela cliente."
+  - "Não prometer o resultado da foto de referência sem ver o cabelo. Alinhar quantas sessões leva, antes de marcar."
+  - "Não afirmar marca, produto ou técnica que não esteja no DNA."
+
+kpis:
+  - taxa_conversao
+  - taxa_no_show
+  - retorno_no_ciclo
+  - ticket_medio
+  - taxa_ocupacao_agenda
+  - tempo_resposta_mediana
