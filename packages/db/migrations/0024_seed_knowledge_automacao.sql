@@ -178,7 +178,11 @@ enxerga valor; meses depois, so enxerga custo.',
  'fechar_contrato', 'skill_seed', 'active', null),
 
 (null, 'automacao', 'objections', 'reactive',
- '{"preciso ver com a diretoria","depende da aprovacao","vou levar pro engenheiro","o financeiro decide","preciso de tres orcamentos"}',
+ -- "vou levar para a diretoria" e "vou ver com o financeiro" saíram daqui em
+ -- ago/2026: são travamento de decisão, e isso tem entrada própria em
+ -- commitment_offer (que já inclui municiar o defensor). Aqui fica o processo
+ -- de compra declarado — quem assina, quantos orçamentos, qual parecer falta.
+ '{"depende da aprovacao","vou levar pro engenheiro","preciso de tres orcamentos","quem assina o contrato","precisa passar pelo juridico"}',
  null,
  'Em B2B quem fala com voce raramente assina sozinho — e isso e normal, nao
 desculpa.

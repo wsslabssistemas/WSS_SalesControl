@@ -116,7 +116,11 @@ Cliente que volta depois de um servico ruim fecha sem discutir preco.',
  'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'sob_medida', 'objections', 'reactive',
- '{"vou pensar","preciso pensar","depois te falo","vou ver e te retorno","qualquer coisa eu chamo"}',
+ -- Os gatilhos de adiamento ("vou pensar", "depois te falo") saíram daqui em
+ -- ago/2026: adiamento é INDECISÃO, não objeção, e tem entrada própria em
+ -- commitment_offer. Aqui ficam os sinais de objeção de verdade — quando existe
+ -- uma pedra concreta a isolar.
+ '{"nao sei se vale a pena","nao era bem isso","fiquei em duvida com o prazo","quero mudar uma parte do projeto","tenho uma ressalva"}',
  null,
  '"Vou pensar" quase nunca e recusa — e duvida nao resolvida ou dinheiro.
 Nao aceite passivamente e nao pressione. Pergunte de forma direta e leve o que

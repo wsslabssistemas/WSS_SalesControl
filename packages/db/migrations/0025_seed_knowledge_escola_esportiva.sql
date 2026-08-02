@@ -114,7 +114,11 @@ Nunca fale mal da escola concorrente.',
  'defender_valor', 'skill_seed', 'active', null),
 
 (null, 'escola_esportiva', 'objections', 'reactive',
- '{"vou falar com meu marido","preciso ver com a mae","vou conversar em casa","depende do pai","o responsavel decide"}',
+ -- "vou falar com meu marido" e "vou conversar em casa" saíram daqui em
+ -- ago/2026: são adiamento, e adiamento é indecisão (entrada própria em
+ -- commitment_offer). Aqui fica quem DECLARA que outra pessoa decide — caso em
+ -- que a jogada certa é municiar o defensor, não reduzir risco.
+ '{"preciso ver com a mae","depende do pai","o responsavel decide","quem decide e o pai","quem paga e a avo"}',
  null,
  'Decisao compartilhada e a norma aqui: quase sempre um responsavel pesquisa e o
 outro participa da decisao. Isso nao e desculpa.

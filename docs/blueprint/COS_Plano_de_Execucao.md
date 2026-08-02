@@ -35,16 +35,56 @@ trava anti-invenção escala em tudo — o motor não redige. Curadoria que nunc
 rodou é hipótese, não ativo. E até anteontem a biblioteca dos segmentos sequer
 chegava ao motor.
 
-- [ ] **DNA de demonstração para os 5 segmentos sem DNA.** Vai em
-      `packages/db/seeds/` (demo seed, nunca em produção), com dado plausível e
-      declaradamente fictício.
-- [ ] **Rodar mensagens reais nos 8 segmentos** — preço, objeção, indecisão,
-      autosserviço, recompra — e ler o que o motor devolve.
-- [ ] **Corrigir o que sair errado.** Suspeitas a confirmar: prompt longo demais
-      com a biblioteca inteira, escola errada escolhida, escalada em excesso,
-      resposta genérica onde a entrada era específica.
-- [ ] **Registrar o resultado por segmento** neste arquivo — é a primeira
-      medida real de qualidade que o projeto vai ter.
+- [x] **DNA de demonstração para os 5 segmentos sem DNA.**
+      `packages/db/seeds/demo_dna.sql` + `scripts/seed-demo-dna.mjs`. Dado
+      fictício, `source = 'demo_seed'` (migration `0028`) para o registro se
+      identificar sozinho, além do prefixo `demo-` no slug.
+- [x] **Teste determinístico da escolha de técnica** —
+      `packages/db/tests/retrieval_check.mjs`, 22 casos com valor esperado
+      escrito. Roda de graça, sem IA: mede o que decide a qualidade antes de
+      qualquer token. **22/22, todos em 1º lugar.**
+- [x] **Bateria com IA** — `scripts/provar-motor.mjs`, 8 mensagens reais.
+      Resultado abaixo.
+
+### O que a prova mostrou (ago/2026)
+
+**Funcionou:**
+- **A trava segura de verdade.** "Conseguem entregar 3 mil metros até sexta?"
+  → o motor deu o prazo real (20 dias úteis), explicou o que faz o relógio
+  começar a contar e ofereceu negociar escopo. Não prometeu a data.
+- **A escola é respeitada e citada**, com o "não usar quando" junto: *"não se
+  usa fechamento por pressão aqui porque é venda de ciclo longo"*.
+- **Indecisão ≠ objeção**, na prática: *"o cliente não travou por preço — ele já
+  disse que gostou"*. É o M3 fazendo efeito.
+- **Autosserviço respeitado**: quem pediu por escrito recebeu ficha completa,
+  duas perguntas por escrito e amostra — nenhuma insistência em ligar.
+- Nenhum fato inventado e **nenhuma etapa de jornada inexistente** citada.
+
+**Falhas encontradas e corrigidas na hora:**
+1. **`custa` e `custam` eram palavras ignoradas** em `lib/match`. "Quanto custa
+   um implante?" virava só `["implante"]` e casava com catálogo em vez de preço
+   — a pergunta mais comum do funil perdia a palavra que a define.
+2. **A curadoria antiga tinha se apropriado dos gatilhos de indecisão.** Em
+   `sob_medida`, `escola_esportiva` e `automacao`, entradas de `objections`
+   escritas antes do M3 carregavam "vou pensar", "vou falar com meu marido",
+   "vou levar para a diretoria" — e empatavam com a entrada de indecisão. Os
+   gatilhos foram para o dono certo.
+3. **`free_notes` existia em 4 dos 8 manifestos.** Diferença arbitrária;
+   uniformizado.
+
+**Aberto, para decidir:**
+- **`escalar` fica `false` mesmo com `faltam_fatos` preenchido** (4 dos 8
+  casos). As respostas continuaram seguras, mas o campo virou "o que ajudaria"
+  em vez de "o que falta para não inventar". Quem segurou foi a regra de
+  conteúdo, não a flag. Vale afinar a instrução.
+- **Custo por resposta: R$ 0,14 a R$ 0,33 (média ~R$ 0,25).** A saída tem 1,8k a
+  2,7k tokens porque `explicacao` e `tecnica` viram redação. Com cobrança por
+  atendimento, 500 atendimentos/mês ≈ **R$ 125/mês de IA por empresa**. Limitar
+  os campos de ensino a 2–3 frases corta isso quase pela metade — mas mexe no
+  que ensina o vendedor, que é diferencial. **Decisão do fundador.**
+- **Ruído no ranking**: em "o importado sai mais barato", a entrada de indecisão
+  ficou em 1º porque a mensagem continha "aprovou". Inofensivo hoje (as 8
+  primeiras entram no contexto), mas piora conforme a biblioteca cresce.
 
 ### 2. Fechar a auditoria pendente
 

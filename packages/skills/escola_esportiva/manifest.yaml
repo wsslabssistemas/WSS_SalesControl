@@ -141,6 +141,12 @@ dna_sections:
       - { key: uniforme, type: text, label: "Uniforme", help: "Precisa de uniforme? Qual e onde comprar" }
       - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para participar" }
 
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, horário ou política.
+
 categories:
   pricing:            "Planos, matrícula e desconto para irmãos"
   risk_free_entry:    "Aula experimental"

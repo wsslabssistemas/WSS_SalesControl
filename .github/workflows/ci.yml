@@ -27,3 +27,7 @@ jobs:
       # existe e sobreviveu do 0017 até ago/2026.
       - name: Validar bibliotecas (categoria, escola e fatos)
         run: node packages/db/tests/library_check.mjs
+      # DNA de demonstração com chave errada falha na direção que PARECE segura:
+      # a entrada escala para sempre e ninguém entende por quê.
+      - name: Validar DNA de demonstração
+        run: node packages/db/tests/demo_dna_check.mjs

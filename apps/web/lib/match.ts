@@ -2,8 +2,13 @@
 // colada e VÁRIOS campos de cada entrada da biblioteca (gatilhos, categoria,
 // técnica, estratégia, resposta). Casamento parcial (prefixo/inclusão) para não
 // falhar por plural ou grafia. Objetivo: recall alto — raramente voltar vazio.
+// `custa` e `custam` NÃO entram aqui: são o sinal mais forte de uma pergunta
+// de preço. Com elas na lista, "quanto custa um implante?" virava só
+// ["implante"] e casava com o catálogo em vez da entrada de preço — a pergunta
+// mais comum do funil perdia justamente a palavra que a define.
+// `quanto` continua ignorada por ser ambígua ("quanto tempo", "quanto pesa").
 const STOP = new Set(
-  "a o e de da do das dos em no na nos nas um uma uns umas que qual quais quanto quanta quantos custa custam eh sao para pra por com sem me te se ao aos isso esse essa este esta vou quero queria gostaria saber ter tem tenho voce voces vcs oi ola bom boa dia tarde noite sobre mais menos meu minha teu tua nossa seu sua the of".split(
+  "a o e de da do das dos em no na nos nas um uma uns umas que qual quais quanto quanta quantos eh sao para pra por com sem me te se ao aos isso esse essa este esta vou quero queria gostaria saber ter tem tenho voce voces vcs oi ola bom boa dia tarde noite sobre mais menos meu minha teu tua nossa seu sua the of".split(
     /\s+/,
   ),
 );

@@ -147,6 +147,12 @@ dna_sections:
       - { key: porte_declarado, type: text, label: "Porte declarado", help: "Seu porte. Ex.: EPP — dá direito a vantagens em licitação" }
       - { key: atestados_capacidade, type: list, label: "Atestados de capacidade", help: "Atestados que comprovam que você já fez trabalho parecido" }
 
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, prazo ou política.
+
 categories:
   pricing:            "Investimento, condições e prazo de pagamento"
   risk_free_entry:    "Visita técnica e diagnóstico sem compromisso"

@@ -199,10 +199,18 @@ trocar no seletor do topo do painel.
 
 ```bash
 npm run -w @cos/skill-loader validate     # manifestos (deve dar 8/8)
+node packages/db/tests/library_check.mjs  # bibliotecas: categoria, escola, fatos
+node packages/db/tests/demo_dna_check.mjs # DNA de demonstração × manifestos
+node packages/db/tests/retrieval_check.mjs # escolha de técnica: 22/22 (precisa do banco)
 node scripts/seed-skills.mjs              # recarrega manifestos no banco
-node scripts/seed-knowledge.mjs packages/db/migrations/0026_seed_knowledge_industria.sql
-node packages/db/tests/required_facts_industria.mjs   # 0 órfãos, 12/12 categorias
+node scripts/seed-demo-dna.mjs            # DNA das empresas demo
 cd apps/web && npm run build              # build limpo
+```
+
+A prova do motor com IA (custa tokens, ~R$ 0,25 por resposta):
+```bash
+node scripts/provar-motor.mjs             # 8 mensagens reais nos segmentos
+node scripts/provar-motor.mjs industria   # só um segmento
 ```
 
 Fatos órfãos no banco (deve voltar vazio):

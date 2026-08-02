@@ -154,6 +154,12 @@ dna_sections:
       - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "Por que o cliente deveria trocar o fornecedor atual pelo seu" }
       - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda" }
 
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, prazo ou política.
+
 categories:
   pricing:            "Tabela, pedido mínimo e desconto por volume"
   risk_free_entry:    "Pedido de entrada reduzido para experimentar"

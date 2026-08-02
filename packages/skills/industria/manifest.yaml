@@ -249,6 +249,12 @@ dna_sections:
       - { key: tempo_de_fabrica, type: text, label: "Tempo de fábrica", help: "Desde quando produz, e para quem já produziu" }
       - { key: assistencia, type: text, label: "Pós-venda", help: "Como funciona troca, defeito de lote e assistência" }
 
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, prazo ou política.
+
 categories:
   pricing:            "Tabela, lote mínimo e faixa de quantidade"
   risk_free_entry:    "Pedido de entrada e amostra para o produto provar giro"
