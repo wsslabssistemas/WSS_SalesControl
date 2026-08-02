@@ -12,6 +12,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { escolherRepescagem, type Candidato } from "./repescagem";
+import { montarExercicio, type Exercicio, type EntradaDaBiblioteca } from "./exercicio";
+import { temFato } from "./facts";
 
 export type Modulo = {
   key: string;
@@ -129,6 +131,98 @@ export async function carregarProgresso(tenantId: string): Promise<Map<string, P
 // mora em `lib/repescagem.ts`, testada sem banco; aqui fica só o que ela não
 // pode fazer sozinha — juntar progresso, gabarito e agendamento.
 // ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// EXERCÍCIO DE FIM DE MÓDULO — a parte que nenhuma plataforma de curso copia.
+//
+// A montagem é pura e mora em `lib/exercicio.ts`. Aqui fica só o que ela não
+// pode fazer sozinha: buscar a biblioteca do segmento (service_role, porque é
+// produto vendido) e o DNA da empresa (client do usuário, para a RLS valer).
+// ---------------------------------------------------------------------
+
+export async function carregarExercicio(
+  tenantId: string,
+  skillKey: string,
+  moduleKey: string,
+): Promise<Exercicio | null> {
+  const admin = createAdminClient();
+  const supabase = await createClient();
+
+  const [{ data: modulos }, { data: licoes }, { data: biblioteca }, { data: dna }] = await Promise.all([
+    admin.from("course_modules").select("key, ord, school_key").order("ord"),
+    admin.from("course_lessons").select("module_key, example_category"),
+    admin
+      .from("knowledge_entries")
+      .select("category, school, trigger_questions, strategy, technique, common_errors, next_objective, required_facts")
+      .is("tenant_id", null)
+      .eq("skill_key", skillKey)
+      .eq("status", "active"),
+    supabase
+      .from("commercial_dna")
+      .select("sections")
+      .eq("tenant_id", tenantId)
+      .eq("is_current", true)
+      .maybeSingle(),
+  ]);
+
+  const mods = (modulos as { key: string; ord: number; school_key: string | null }[] | null) ?? [];
+  const alvo = mods.find((m) => m.key === moduleKey);
+  if (!alvo) return null;
+
+  const entradas = (biblioteca as EntradaDaBiblioteca[] | null) ?? [];
+  const sections = (dna?.sections as Record<string, unknown> | null) ?? null;
+
+  // As categorias do módulo saem das próprias lições: `example_category` já
+  // declara de qual situação da biblioteca cada aula puxa o exemplo. Criar um
+  // campo novo para dizer a mesma coisa seria uma segunda verdade para manter.
+  // A ORDEM é por frequência — a categoria que o módulo mais trabalha primeiro.
+  const categoriasDe = (key: string) => {
+    const conta = new Map<string, number>();
+    for (const l of ((licoes as { module_key: string; example_category: string | null }[] | null) ?? [])) {
+      if (l.module_key !== key || !l.example_category) continue;
+      conta.set(l.example_category, (conta.get(l.example_category) ?? 0) + 1);
+    }
+    return [...conta.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([c]) => c);
+  };
+
+  // MONTA OS MÓDULOS ANTERIORES SÓ PARA SABER O QUE EVITAR.
+  //
+  // Sem isto, com 20 entradas para 9 módulos o encaixe por categoria colide e o
+  // aluno vê a MESMA situação em três módulos — o que ensina que o exercício é
+  // enfeite. Custa alguns milissegundos de CPU sobre dados já carregados, e a
+  // sequência continua determinística: o módulo 7 sempre evita o mesmo conjunto.
+  const usadas: string[] = [];
+  for (const m of mods) {
+    const ex = montarExercicio(entradas, m.school_key, categoriasDe(m.key), sections, temFato, usadas);
+    if (m.key === moduleKey) return ex;
+    if (ex) usadas.push(ex.entryRef);
+  }
+  return null;
+}
+
+export type ExercicioFeito = {
+  situacao: string;
+  resposta: string;
+  autoavaliacao: Record<string, boolean>;
+  updated_at: string;
+};
+
+/** O que a pessoa já escreveu neste módulo (RLS: só o dela). */
+export async function carregarExercicioFeito(
+  tenantId: string,
+  moduleKey: string,
+): Promise<ExercicioFeito | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course_exercise")
+    .select("situacao, resposta, autoavaliacao, updated_at")
+    .eq("tenant_id", tenantId)
+    .eq("module_key", moduleKey)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as ExercicioFeito | null) ?? null;
+}
 
 export type PerguntaRepescagem = {
   id: string;

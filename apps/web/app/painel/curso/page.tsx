@@ -170,6 +170,26 @@ export default async function CursoPage() {
                   })}
                 </div>
               )}
+
+              {/* O exercício aparece quando o módulo fecha — é o "agora aplica
+                  na sua empresa", e ele não faz sentido antes de a teoria
+                  existir na cabeça. Antes disso seria só mais um campo vazio. */}
+              {completo && (
+                <div
+                  className="between mt-16"
+                  style={{
+                    alignItems: "center", gap: 10, flexWrap: "wrap",
+                    borderTop: "1px solid var(--border)", paddingTop: 14,
+                  }}
+                >
+                  <span className="text-dim" style={{ fontSize: 13 }}>
+                    Exercício: uma mensagem real do seu ramo, com os fatos da sua empresa.
+                  </span>
+                  <Link href={`/painel/curso/exercicio/${modulo.key}`} className="btn btn-sm btn-ghost">
+                    Fazer o exercício →
+                  </Link>
+                </div>
+              )}
             </div>
           );
         })}

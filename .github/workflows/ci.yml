@@ -44,3 +44,7 @@ jobs:
       # o app). Este teste confere que não divergiram.
       - name: Qualificação de compra
         run: node packages/db/tests/qualificacao_test.mjs
+      # A montagem do exercício de fim de módulo: determinismo, pontuação não
+      # inventada e nenhuma chave de máquina vazando para a tela.
+      - name: Exercício do curso
+        run: node packages/db/tests/exercicio_test.mjs

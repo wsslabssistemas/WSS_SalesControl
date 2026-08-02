@@ -111,6 +111,50 @@ export async function concluirLicao(
 }
 
 /**
+ * Guarda o exercício de fim de módulo.
+ *
+ * Não corrige e não dá nota — resposta aberta não tem gabarito, e nota
+ * inventada contradiz a tese do curso (ver o cabeçalho do `0038`). O que se
+ * guarda é o que a pessoa escreveu e o que ela marcou em si mesma, para poder
+ * comparar quando refizer.
+ */
+export async function salvarExercicio(
+  moduleKey: string,
+  situacao: string,
+  resposta: string,
+  autoavaliacao: Record<string, boolean>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
+
+  const ent = await loadEntitlements(tenant.id, tenant.skill_key);
+  if (!ent.has("curso")) return { ok: false, error: "Curso não liberado para esta empresa." };
+
+  const texto = (resposta ?? "").trim();
+  if (texto.length < 20) return { ok: false, error: "Escreva a sua resposta antes de ver a recomendação." };
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth?.user?.id;
+  if (!userId) return { ok: false, error: "Sessão expirada." };
+
+  const { error } = await supabase.from("course_exercise").insert({
+    tenant_id: tenant.id,
+    user_id: userId,
+    module_key: moduleKey,
+    situacao,
+    resposta: texto,
+    autoavaliacao,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/painel/curso");
+  return { ok: true };
+}
+
+/**
  * Responde UMA pergunta de repescagem e reagenda a próxima aparição.
  *
  * Separada de `responderPergunta` porque faz uma coisa a mais e não pode fazer
