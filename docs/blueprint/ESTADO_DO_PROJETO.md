@@ -212,6 +212,11 @@ node scripts/seed-demo-dna.mjs            # DNA das empresas demo
 cd apps/web && npm run build              # build limpo
 ```
 
+Levar a biblioteca para quem vive o ramo revisar (gera em `revisao/`):
+```bash
+node scripts/kit-revisao.mjs industria     # .html para ler, .csv para responder
+```
+
 A prova do motor com IA (custa tokens, ~R$ 0,25 por resposta):
 ```bash
 node scripts/provar-motor.mjs             # 8 mensagens reais nos segmentos

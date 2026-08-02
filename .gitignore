@@ -16,6 +16,11 @@ node_modules/
 dist/
 build/
 
+# Kits de revisão gerados por scripts/kit-revisao.mjs. São saída, não fonte:
+# o conteúdo real está no banco e nos seeds. Versionar geraria churn e daria
+# a impressão de que o arquivo é a verdade.
+revisao/
+
 # Sistema operacional / editor.
 .DS_Store
 Thumbs.db

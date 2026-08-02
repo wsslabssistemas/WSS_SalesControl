@@ -176,10 +176,28 @@ exatamente o que foi escrita para fazer.
 boa e excelente. A especialista (Feltros Bandeirantes) revisa quando puder; o que
 depende de nós é **deixar fácil**.
 
-- [ ] Exportar as 20 entradas em formato legível por quem não é técnico
-      (uma página por entrada: gatilho, o que o sistema responderia, o que evitar).
-- [ ] Perguntas dirigidas: o que está errado, o que falta, o que ninguém diria
-      assim no ramo.
+- [x] **`scripts/kit-revisao.mjs <segmento>`** gera o kit direto do banco, em
+      dois formatos, porque servem a momentos diferentes:
+      **`.html`** para LER (abre no celular, uma tela por situação, imprimível)
+      e **`.csv`** para RESPONDER (planilha volta; PDF comentado não volta).
+      Saída em `revisao/`, fora do Git — é resultado, não fonte.
+- [x] Por situação, três perguntas fechadas: *está certo no dia a dia? · o que
+      falta ou está errado? · como **você** diria?*
+- [x] E cinco perguntas de fechamento que valem mais que as 20 anteriores:
+      **A.** que pergunta o cliente faz toda semana e não está aqui;
+      **B.** o que faz o comprador perder a confiança na hora;
+      **C.** o que soa como "gente de fora falando";
+      **D.** falta ou sobra etapa na jornada;
+      **E.** falta alguma informação no cadastro do cliente.
+      As D e E fazem a especialista revisar a **estrutura**, não só o texto.
+
+**Uma decisão de integridade:** o texto interno é ASCII sem acento, e ficaria
+mais bonito reescrito por IA. Não foi — ela precisa revisar o que o sistema
+**realmente diz**, não uma paráfrase. O kit explica isso em uma linha e pede
+para julgar o conteúdo, não a forma.
+
+Gerado também para `energia_solar` (18 situações): a Skill nasceu de pesquisa e
+tem o mesmo limite.
 
 ### 5. Módulo de curso
 
