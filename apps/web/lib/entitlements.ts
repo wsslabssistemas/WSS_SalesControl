@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 // Módulos vendáveis à parte (add-ons). Abas do núcleo (Início, Responder etc.)
 // NÃO entram aqui — são sempre disponíveis.
-export type ModuleKey = "prospeccao" | "licitacoes";
+export type ModuleKey = "prospeccao" | "licitacoes" | "curso";
 
 export const MODULES: Record<ModuleKey, { label: string; href: string; hint: string }> = {
   prospeccao: {
@@ -14,6 +14,16 @@ export const MODULES: Record<ModuleKey, { label: string; href: string; hint: str
     label: "Licitações",
     href: "/painel/licitacoes",
     hint: "Editais públicos do seu segmento",
+  },
+  // O curso é oferecido a TODO segmento — a técnica de venda não é
+  // privilégio de ramo. Sendo uma chave de módulo, serve tanto para vender
+  // à parte quanto para embutir na mensalidade: muda a cobrança, não o
+  // produto. Por isso não entra em `capabilities` de manifesto nenhum e sim
+  // pelo override do tenant, liberado no painel do fabricante.
+  curso: {
+    label: "Curso",
+    href: "/painel/curso",
+    hint: "Técnicas de venda aplicadas ao seu ramo",
   },
 };
 

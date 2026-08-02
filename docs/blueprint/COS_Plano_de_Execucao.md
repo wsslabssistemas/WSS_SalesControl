@@ -206,8 +206,26 @@ aulas). Falta forma. É linha de receita nova que reaproveita o ativo — e o
 diferencial já está definido: ensinar **com nota de evidência**, separando
 pesquisa séria de folclore repetido.
 
-- [ ] Decidir o formato (dentro do painel? material à parte? ao vivo?).
-- [ ] Aula piloto para validar antes de produzir as 8.
+**Desenho decidido em `COS_Curso.md` (ago/2026).** Em resumo:
+- **40 lições de 5–8 min**, não 8 aulas. Microlearning completa 80%+; metade da
+  evasão acontece nas duas primeiras semanas.
+- **O quiz é o método, não a verificação.** Hattie & Donoghue (242 estudos):
+  as duas técnicas mais eficazes são prática distribuída e prática de teste.
+- **A teoria é uma só; o exemplo é do ramo; o exercício é da empresa.** A lição
+  não tem segmento — puxa o exemplo da biblioteca e o exercício do DNA. É o que
+  nenhuma plataforma de curso consegue copiar.
+- **Sem vídeo por ora**: caro, impossível de manter atualizado e é o formato
+  passivo — o oposto do que a evidência aponta.
+
+- [x] Modelo de dados (`0031`): módulos, lições, perguntas e progresso. Conteúdo
+      com `service_role` (é produto vendido — o P0 do `0006` vale aqui igual);
+      progresso com RLS por pessoa e empresa.
+- [x] Chave de módulo `curso` no entitlements — serve para vender à parte ou
+      embutir na mensalidade: muda a cobrança, não o produto.
+- [ ] As 40 lições, começando pelos módulos 1 a 3 (onde a evasão acontece).
+- [ ] A tela: uma lição por vez, prática ao fim, progresso visível.
+- [ ] O exercício com o DNA da empresa — a parte que ninguém copia.
+- [ ] Repescagem espaçada (perguntas de módulos anteriores voltando).
 
 ### 6. Depois disso
 
