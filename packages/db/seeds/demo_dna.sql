@@ -22,7 +22,7 @@ delete from public.commercial_dna d
  using public.tenants t
  where d.tenant_id = t.id
    and t.slug in ('demo-clinica','demo-distribuidora','demo-escola-esportiva',
-                  'demo-industria','demo-sob-medida');
+                  'demo-industria','demo-sob-medida','demo-energia-solar');
 
 insert into public.commercial_dna (tenant_id, version, sections, source, is_current)
 select t.id, 1, x.sections, 'demo_seed', true
@@ -232,6 +232,56 @@ $json$::jsonb),
     "instagram": "@demo.sobmedida"
   },
   "free_notes": "Empresa FICTÍCIA de demonstração. Marcenaria de planejados, com visita técnica, projeto 3D e instalação própria."
+}
+$json$::jsonb)
+
+,
+
+-- ----------------------------------------------------------- ENERGIA SOLAR
+('demo-energia-solar', $json$
+{
+  "oferta": {
+    "tipos_sistema": ["conectado à rede (on-grid)", "híbrido com bateria", "bombeamento rural"],
+    "marcas_modulo": ["Canadian Solar", "Trina Solar", "JA Solar"],
+    "marcas_inversor": ["Growatt", "Fronius", "microinversor Hoymiles"],
+    "telhados_atendidos": ["cerâmico", "metálico", "fibrocimento", "laje", "solo"]
+  },
+  "precos": {
+    "como_cobra": "Projeto fechado, definido por kWp instalado, sempre depois da análise da conta de luz e da visita técnica.",
+    "faixa": "R$ 14.000 a R$ 95.000",
+    "formas_pagamento": ["pix", "cartão em até 12x", "financiamento bancário", "boleto parcelado"],
+    "financiamento": "Trabalhamos com linha verde de dois bancos parceiros, em até 72 meses. A aprovação sai em 2 a 5 dias úteis e depende de análise de crédito — nunca é garantida.",
+    "o_que_inclui": "Módulos, inversor, estrutura conforme o telhado, string box e proteções (DPS CC e CA, disjuntores, aterramento), cabeamento, projeto elétrico com ART, mão de obra e todo o processo de homologação na concessionária."
+  },
+  "execucao": {
+    "prazo_visita": "Visita técnica em até 3 dias úteis",
+    "prazo_proposta": "Proposta com simulação em até 2 dias úteis após a visita",
+    "prazo_instalacao": "2 a 5 dias no telhado, após aprovação do projeto",
+    "prazo_homologacao": "Na RGE costuma levar de 30 a 60 dias após o envio do projeto. O prazo é da concessionária, não nosso — acompanhamos e damos posição.",
+    "distribuidoras": ["RGE", "CEEE Equatorial"]
+  },
+  "garantias": {
+    "modulo": "25 anos de garantia de desempenho (mínimo de 80% da capacidade ao final) e 12 anos de garantia de produto",
+    "inversor": "10 anos de fábrica, com extensão opcional para 15",
+    "instalacao": "5 anos de garantia de mão de obra, incluindo estanqueidade do telhado nos pontos de fixação",
+    "seguro": "Oferecemos seguro anual opcional contra granizo, vendaval e furto"
+  },
+  "pos_venda": {
+    "monitoramento": "Aplicativo do inversor com geração em tempo real. Acompanhamos remotamente e avisamos o cliente se a geração cair fora do esperado.",
+    "manutencao": "Limpeza e revisão anual (semestral em área rural ou de muita poeira), com laudo de geração. Contrato opcional.",
+    "ampliacao": "O sistema pode ser ampliado depois; por isso dimensionamos o inversor pensando em folga quando o cliente sinaliza consumo futuro."
+  },
+  "atuacao": {
+    "regiao": "Porto Alegre, região metropolitana e serra gaúcha, até 120 km",
+    "equipe_propria": true,
+    "responsavel_tecnico": "Engenheiro eletricista com CREA ativo, responsável por projeto e ART"
+  },
+  "diferencial": {
+    "motivo_escolher": "Equipe própria de instalação e acompanhamento da homologação até a troca do medidor — o cliente não fica sozinho na espera da concessionária.",
+    "tempo_de_casa": "8 anos instalando, mais de 400 sistemas entregues",
+    "obras_referencia": ["mercado de bairro na zona sul", "aviário em Montenegro", "residências em condomínio em Viamão"]
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Integradora de energia solar com equipe própria, atuando em residências, comércio e propriedades rurais."
 }
 $json$::jsonb)
 

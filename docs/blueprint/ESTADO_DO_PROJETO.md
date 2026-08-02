@@ -63,10 +63,11 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
 
-### Segmentos — 8 completos, 145 entradas curadas
+### Segmentos — 9 completos, 163 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
+| `energia_solar` (fotovoltaica: residência, comércio, rural, condomínio) | 18 | prospecção + licitações |
 | `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 20 | prospecção + licitações |
 | `barbearia` | 19 | — |
 | `distribuidora` (atacado) | 17 | prospecção |
@@ -76,8 +77,12 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 | `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 16 | prospecção + licitações |
 
 **Todo segmento tem uma entrada de INDECISÃO** (o cliente que concordou e mesmo
-assim travou — 40 a 60% das perdas, segundo o JOLT) e os três B2B têm a do
+assim travou — 40 a 60% das perdas, segundo o JOLT) e os B2B têm a do
 **comprador que não quer conversar** (67% do B2B prefere se servir sozinho).
+
+**Regra do segmento novo:** `energia_solar` só existiu porque `sob_medida` dizia
+"solar" no nome e **nenhuma das suas entradas falava de solar**. Nome de
+manifesto não é cobertura — cobertura é entrada curada.
 
 Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador —
 trocar no seletor do topo do painel.

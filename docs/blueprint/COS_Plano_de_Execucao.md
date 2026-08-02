@@ -144,14 +144,31 @@ atendemos**. `sob_medida` diz "solar" no nome e tem `energia_solar` como opção
 campo, mas **nenhuma das 16 entradas fala de solar** — o vendedor teria funil sem
 técnica. Mercado grande, funil já existe, custo é só curadoria.
 
-- [ ] Manifesto próprio (não remendar `sob_medida`: o DNA de solar —
-      `conta_de_luz`, `payback`, `financiamento`, `homologacao` — poluiria o DNA
-      de quem faz armário).
-- [ ] ~15 entradas curadas com o que é específico: conta de luz como dado de
-      entrada, simulação de payback, financiamento dentro da venda, homologação
-      na concessionária, Lei 14.300 e a cobrança gradual do fio B, garantia de 25
-      anos do painel contra 10 do inversor.
-- [ ] Empresa demo + DNA de demonstração.
+- [x] Manifesto próprio, **9/9 válidos**. Jornada com uma etapa que nenhum outro
+      segmento tem: **`em_execucao`, não-terminal** — é onde o cliente já pagou e
+      espera semanas pela concessionária, e onde a reputação se ganha ou se perde.
+- [x] **18 entradas curadas** (`0030`), com o que é específico do ramo.
+- [x] **Solar Demo** + DNA de demonstração (28 campos, 14 obrigatórios).
+
+**A pesquisa mudou o desenho em quatro pontos:**
+1. **A conta de luz é o dado de entrada.** Sem ela não há dimensionamento nem
+   payback. A entrada de preço não cota — pede a conta.
+2. **O cliente nunca zera a conta.** O custo de disponibilidade continua
+   (30 kWh mono, 50 bi, 100 tri). É a promessa mais comum do setor e a que mais
+   gera processo — virou `hard_rule` do manifesto **e** a entrada mais
+   importante da biblioteca.
+3. **Entre instalar e economizar existem 40 a 100 dias** de homologação (REN
+   1.059/2023). O prazo é da concessionária, a ansiedade é do cliente e a culpa
+   cai no instalador. Daí a cadência `pos_venda`, que dá posição antes de ele
+   perguntar.
+4. **O relógio regulatório corre contra a espera.** O Fio B é progressivo (60%
+   em 2026, 75% em 2027, 90% em 2028) e trava na homologação. É a única urgência
+   **real** deste mercado — e por isso a entrada "vou esperar baratear" pode
+   usá-la sem inventar escassez.
+
+**Provado com IA:** perguntado "fica zero?", o motor respondeu que **não zera**,
+explicou o custo mínimo por padrão de ligação e pediu a conta. A entrada fez
+exatamente o que foi escrita para fazer.
 
 ### 4. Kit de revisão da biblioteca de indústria
 

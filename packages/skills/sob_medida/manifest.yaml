@@ -1,5 +1,5 @@
 key: sob_medida
-name: Projetos Sob Medida (marcenaria, vidraçaria, serralheria, solar)
+name: Projetos Sob Medida (marcenaria, vidraçaria, serralheria, esquadrias)
 version: 1.0.0
 
 # =====================================================================
@@ -76,9 +76,12 @@ contact_fields:
   - key: tipo_servico
     label: "O que ele precisa"
     type: enum
+    # `energia_solar` saiu daqui em ago/2026: virou Skill própria. Manter a
+    # opção dava a impressão de cobertura que a biblioteca não tinha — nenhuma
+    # das 16 entradas deste segmento falava de solar.
     options:
       [moveis_planejados, esquadrias, vidro_temperado, box_banheiro, guarda_corpo,
-       portao_automatico, marmore_granito, energia_solar, climatizacao, forro_drywall, outro]
+       portao_automatico, marmore_granito, climatizacao, forro_drywall, outro]
   - key: ambiente
     label: "Onde"
     type: enum

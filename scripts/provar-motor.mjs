@@ -99,6 +99,10 @@ const CASOS = [
   { slug: "demo-escola-esportiva", msg: "Gostei, mas vou ver com meu marido antes de matricular." },
   { slug: "demo-distribuidora", msg: "Ja tenho fornecedor e estou bem atendido." },
   { slug: "demo-industria", msg: "Voces conseguem entregar 3 mil metros ate sexta que vem?" },
+  // Solar: as tres conversas que definem o segmento.
+  { slug: "demo-energia-solar", msg: "Quanto custa colocar energia solar na minha casa?" },
+  { slug: "demo-energia-solar", msg: "Com o sistema eu paro de pagar conta de luz, certo? Fica zero?" },
+  { slug: "demo-energia-solar", msg: "Vou esperar mais um tempo, acho que ainda vai baratear." },
 ];
 
 const filtro = process.argv[2];

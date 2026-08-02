@@ -12,11 +12,12 @@
 | `academia` | Academia, musculação, ginástica | **23 entradas** |
 | `barbearia` | Barbearia, barbeiro | **19** |
 | `clinica` | Clínica médica, odontologia, **estética**, harmonização, fisioterapia | **16** |
-| `sob_medida` | Marcenaria, vidraçaria, serralheria, esquadrias, marmoraria, **energia solar** | **16** |
+| `sob_medida` | Marcenaria, vidraçaria, serralheria, esquadrias, marmoraria | **16** |
 | `distribuidora` | Atacado e distribuição (alimentos, autopeças, construção, farma, higiene, embalagens, elétrica, agro…) | **17** |
 | `automacao` | Automação predial, climatização, refrigeração, energia, monitoramento | **17** |
 | `escola_esportiva` | Natação, artes marciais, **crossfit**, **pilates**, tênis, escolinhas, **clubes** | **17** |
 | `industria` | Têxtil e feltro, calçadista, moveleira (vendendo a lojista), metal-mecânica, embalagens, autopeças, implementos agrícolas | **20** |
+| `energia_solar` | Integradora fotovoltaica: residência, comércio, rural, condomínio, órgão público | **18** |
 
 **145 entradas.** Todo segmento tem a entrada de **indecisão** (o cliente que
 concordou e travou) e os três B2B têm a do **comprador que quer se servir
