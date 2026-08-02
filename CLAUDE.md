@@ -3,16 +3,26 @@
 Plataforma de inteligência comercial multi-tenant. **Fabricante:** WSS Labs.
 Um núcleo único (CIE) + especializações por segmento (Skills declaradas em dados).
 
-**Leia antes de propor qualquer coisa:** `docs/blueprint/ESTADO_DO_PROJETO.md`,
-`docs/blueprint/COS_Journal_Migracao.md`, `docs/blueprint/COS_GRD_Core.md`.
+**Leia antes de propor qualquer coisa**, nesta ordem:
+`docs/blueprint/ESTADO_DO_PROJETO.md` (o que existe e as armadilhas já pagas) →
+`docs/blueprint/COS_Plano_de_Execucao.md` (a fila e **o que está congelado**) →
+`docs/blueprint/COS_Escolas_de_Venda.md` (a técnica que o produto vende).
+Fundação e histórico: `COS_GRD_Core.md`, `COS_Journal_Migracao.md`.
+
+**Este arquivo guarda o que não muda** — as leis, a stack, as convenções e as
+decisões fechadas. **O estado do projeto mora só no `ESTADO_DO_PROJETO.md`.**
+Já foram duas fontes; a daqui apodreceu em silêncio e passou meses ensinando
+"ainda não existe aplicação" para toda conversa nova. Estado volátil em dois
+lugares não fica sincronizado — fica errado no lugar menos visitado.
 
 ---
 
 ## O que é o produto
 
-O produto vendável é o **núcleo**. Academia é apenas a primeira Skill instalada.
-Segmentos (academia, barbearia, clínica, estética) são arquivos de configuração,
-não sistemas separados.
+O produto vendável é o **núcleo**. Academia foi a primeira Skill instalada; hoje
+são nove (academia, barbearia, clínica, distribuidora, automação, escola
+esportiva, indústria, sob medida, energia solar). Segmento é **arquivo de
+configuração**, não sistema separado.
 
 **O ativo não é o código.** É a biblioteca comercial curada. Código se copia em
 duas semanas; a curadoria, não. Toda decisão de arquitetura deve proteger esse ativo.
@@ -111,115 +121,72 @@ vazar para produção ou biblioteca faltar em ambiente novo:
 
 ---
 
-## Estado atual
+## Estado atual — em uma linha
 
-Banco no Supabase, executado manualmente pelo SQL Editor. **Ainda não existe aplicação.**
+**Não existe checklist aqui de propósito.** O estado vive em
+`docs/blueprint/ESTADO_DO_PROJETO.md`, atualizado a cada entrega. Esta seção já
+foi uma cópia dele e ficou meses desatualizada — dizendo "ainda não existe
+aplicação" enquanto o produto estava no ar.
 
-- [x] `0001_foundation.sql` — 19 tabelas
-- [x] `0002_rls.sql` — RLS em todas as tabelas com `tenant_id`
-- [x] `isolation_test.sql` — 7/7 PASSOU
-- [x] `0003_seed_skills.sql` — Skills academia e barbearia
-- [x] `0004_seed_knowledge_academia.sql` — 22 entradas
-- [x] `demo_tenants.sql` + `dna_coverage_check.sql` — trava validada:
-      Be Fitness 22/22 PRONTA, Academia Nova 7/22 PRONTA e 15 ESCALA
-- [x] `0006_hardening.sql` — P0 corrigidos + `hardening_test.sql` 6/6 PASSOU
-- [x] Validador de Skill (RF-02) — `packages/skill-loader`, 7/7 testes; academia e barbearia válidos
-- [x] `required_facts_check.sql` — cruza `required_facts` × `dna_sections` (achou 1 bug)
-- [x] `0007_dna_single_current.sql` — um DNA corrente por tenant; teste 2/2 PASSOU
-- [x] `0008_manifest_reciprocity_academia.sql` — fecha o `reciprocity.gift`; órfãos: 0
-- [x] CI (`.github/workflows/ci.yml`) — valida manifestos a cada push
-- [x] App `apps/web` — Next.js 15 + Hono (`/api`) + Supabase; esqueleto navegável (modelo manual)
-- [x] Login (Supabase Auth: senha + Google/OAuth) + contexto de empresa; telas DNA (cobertura), Funil, Equipe — falta 1º login real
-- [x] Contatos — módulo completo: lista (busca+filtro+paginação), detalhe, edição, exclusão (soft), duplicidade por telefone normalizado; formulário Skill-driven. No ar em wss-kairos.vercel.app
-- [x] Edição de DNA (RF-04) — `0009_save_dna` versionado (teste 3/3); editor por tipo de campo (texto, valor, sim/não, lista, tabela em grade)
-- [x] Funil interativo (etapa → lista) + mover contato entre etapas (histórico da jornada)
-- [x] Equipe — convidar vendedor (link de senha, via service_role), trocar papel, remover com transferência de contatos (`0010_user_by_email`)
-- [x] Agenda/alertas — toques calculados das fases da jornada (offset_days do manifesto) + data de início editável no contato
-- [x] Contatos: aviso de duplicidade antes de salvar, botão WhatsApp, caixa de data na semana experimental
-- [x] Painel do fabricante (`/painel/admin`) — cross-tenant via service_role, gated por `PLATFORM_ADMIN_EMAILS`; empresas, atividade e custo de IA (`usage_ledger`)
-- [x] Inicio vira painel (números, toques de hoje, funil, atalhos)
-- [x] Equipe com desempenho (cadastros, em aberto, matrículas) + taxa de conversão no funil — etapa "ganha" no manifesto (`0011`, `won`)
-- [x] Responder (console manual, SEM IA) — cola a mensagem → casa com a biblioteca por palavra-chave (`lib/match`) → resposta pronta pra copiar
-- [x] Biblioteca WSS importada no banco (86 respostas + 9 réguas de Relacionamento Ativo, `source=tenant`, coluna `answer`) — ativo, não commitado
-- [x] Fabricante financeiro (`0012_tenant_payments`) — registrar pagamentos por empresa; painel mostra recebido, custo de IA e margem (dado só do fabricante)
-- [x] **Visual profissional** — sistema de design (`globals.css`: tokens da
-      paleta do logo azul→ciano→verde em fundo marinho, Inter, classes `card`/
-      `btn`/`stat`/`badge`/`table`/nav; tema escuro). Landing, login, shell do
-      painel e início repaginados; logo em `public/logo.png` no header/login.
-      Demais telas herdam via estilos-base + troca dos botões `#111`. Em revisão do fundador.
-- [x] **App instalável (PWA)** — `manifest.webmanifest`, service worker
-      (network-first + `/offline`), registro só em produção, ícones quadrados
-      gerados do logo (192/512/maskable + apple-touch + favicon). Instala no PC e celular.
-- [ ] Versão automática: IA que adapta ao contexto (paga) + anti-bloqueio + canais (WhatsApp Cloud API, Facebook Pages) + dashboard de tokens — roteiro na memória `roadmap-expandido`
-- [ ] Questionário de onboarding; calendário na agenda; configurações
-- [ ] Instalação de Skill em tenant (RF-03)
-- [ ] Motor de decisão (RF-05)
+O mínimo para se situar (confira no `ESTADO_DO_PROJETO.md` antes de usar como
+verdade): aplicação Next.js no ar em `wss-kairos.vercel.app`, migrations
+`0001`–`0037` aplicadas, **9 segmentos com 166 entradas curadas**, motor com IA
+e trava anti-invenção estrutural, e um módulo de curso com 45 lições.
+
+## Invariantes de segurança conquistadas (não regredir)
+
+Cada uma nasceu de um achado de auditoria e já está corrigida. O que importa
+aqui não é o histórico — é **o motivo**, que continua valendo e que é fácil de
+desfazer sem perceber.
+
+- **A biblioteca curada não é legível por `authenticated`** (`0006`). O Supabase
+  expõe `public` via PostgREST: com a policy antiga, qualquer teste grátis
+  baixava a curadoria inteira de todos os segmentos com uma chamada. Hoje o
+  `authenticated` lê só o conhecimento do próprio tenant; a biblioteca global é
+  `service_role`, com retrieval server-side. **Estratégia nunca chega ao
+  browser** — e tela nova que use a biblioteca com o client do usuário volta
+  vazia, o que é o comportamento certo.
+- **`decisions` é append-only por trigger, não por policy** (`0006`). RLS é
+  row-level, não column-level: a policy de UPDATE deixava reescrever
+  `context_snapshot`, `rationale` e `cost_cents`. O trigger
+  `t_decisions_append_only` só aceita mudança em `outcome`, `outcome_at` e
+  `executed_at`, **para todo papel, inclusive `service_role`**. DELETE fica
+  livre, por causa da cascata da LGPD.
+- **`required_facts` é validado, não confiado** (`required_facts_check.sql` +
+  validador no CI). Um typo no caminho deixava a entrada em ESCALA para sempre
+  — falha na direção que *parece* segura, e por isso ninguém procura.
+- **Um único DNA corrente por tenant** (`0007`), garantido por índice único no
+  banco. Teste `dna_single_current_test.sql`.
+- **A trava de DNA verifica atualidade, não só presença** (`0029`). Dado de um
+  ano atrás passava como PRONTO e era afirmado com a confiança do dado de
+  ontem: mentir sem nunca ter inventado.
+- **Diagnóstico olha todo mundo; o prefixo `demo-` protege escrita.** O
+  `dna_coverage_check` filtrava por `demo-` e voltava vazio para as empresas
+  reais — e zero linhas parece "nada errado".
+- **`tenants.skill_key` × `tenant_skills` não é contradição**, é papel
+  diferente: a junção é o que está instalado (fonte da RLS), a coluna é a ativa.
+  A regra única virou teste: `tenant_skill_coherence.sql`.
 
 ---
 
-## Auditoria pendente — corrigir antes de qualquer cliente externo
+## Auditoria — o que continua aberto
 
-**P0 — Biblioteca legível por qualquer usuário autenticado. ✅ RESOLVIDO (0006).**
-A policy de `knowledge_entries` permitia `tenant_id is null` para todo
-`authenticated`. Como o Supabase expõe `public` via PostgREST, qualquer trial
-baixava a curadoria inteira de todos os segmentos. Mesmo problema em `skills`.
-Correção aplicada: `authenticated` só lê o conhecimento do próprio tenant e
-a Skill que instalou; a biblioteca global fica com `service_role` (retrieval
-server-side). Estratégia nunca chega ao browser.
+Três itens, todos com motivo registrado para **não** terem sido feitos ainda.
+Adiar com motivo escrito é decisão; adiar sem, é esquecimento.
 
-**P0 — `decisions` não é append-only. ✅ RESOLVIDO (0006).**
-RLS é row-level, não column-level. A policy de UPDATE permitia reescrever
-`context_snapshot`, `rationale` e `cost_cents`. Correção aplicada: trigger
-`t_decisions_append_only` só aceita alteração em `outcome`, `outcome_at`,
-`executed_at` — para todo papel, inclusive `service_role`. DELETE fica livre
-(cascata LGPD).
-
-**P1 — `required_facts` é contrato sem validação. ✅ RESOLVIDO.**
-Typo em caminho deixava a entrada em ESCALA para sempre, falhando na direção que
-parece segura. Agora `required_facts_check.sql` cruza todo `required_facts`
-contra as `dna_sections` do manifesto, e o validador de manifesto (RF-02,
-`packages/skill-loader`) roda no CI. O check achou um caso real —
-`reciprocity.gift` — corrigido no `0008` (a categoria `reciprocity` ganhou
-seção de DNA; o dado da Be Fitness já a assumia).
-
-**Achado (jul/2026) — `dna_coverage_check` era no-op. ✅ RESOLVIDO (ago/2026).**
-O check filtrava `slug like 'demo-%'` e fixava `skill_key='academia'`; como as
-empresas reais de academia não têm o prefixo, ele voltava **vazio** — e zero
-linhas parece "nada errado". A decisão: **o prefixo `demo-` protege escrita**
-(seed nunca alcança empresa real); **diagnóstico é leitura e olha todo mundo**,
-cada empresa contra a biblioteca do próprio segmento. Be Fitness e
-`academia-nova` mantêm os slugs. Hoje: Be Fitness 23/23 PRONTA, Academia Nova
-7 PRONTA / 16 ESCALA, demos 0 em escala.
-
-**P1 — A trava verificava presença, não atualidade. ✅ RESOLVIDO (0029).**
-DNA de um ano atrás passava como PRONTA e era afirmado com a confiança do dado
-de ontem — mentir sem nunca ter inventado. Agora `commercial_dna.section_updated_at`
-carimba **por seção**, e o carimbo **sobrevive ao versionamento**: salvar sem
-mudar não renova a data (senão abrir-e-salvar viraria "revisão"). A regra é uma
-função pura e testada — `dna_section_stamps` + `dna_freshness_test.sql`, 5/5. A
-tela de DNA mostra a idade por seção e alerta acima de 6 meses.
-
-**P1 — Telefone não normalizado.** O índice único é sobre texto cru;
-`(51) 98251-2270` e `5551982512270` passam os dois. Correção: E.164.
-
-**P1 — Podem existir dois DNAs correntes. ✅ RESOLVIDO (0007).**
-`ix_dna_tenant_current` virou `unique` — o banco garante um único DNA corrente
-por tenant. Teste: `dna_single_current_test.sql` 2/2.
-
-**P2 — Dinheiro como string de exibição** no DNA (`"R$ 169,00"`). Impede
-qualquer análise por faixa de preço. Correção: inteiro em centavos + moeda.
-
-**P2 — Schema se contradiz sobre Skills por tenant. ✅ RESOLVIDO (decisão,
-ago/2026).** Não era contradição, era papel diferente: `tenant_skills` é o que a
-empresa **tem instalado** (e é a fonte da RLS — sem o vínculo o painel abre sem
-etapas); `tenants.skill_key` é a Skill **ativa**, o ponteiro que evita um join
-em toda página. A regra que precisa valer é uma só — *a ativa tem que estar
-entre as instaladas* — e virou teste: `tenant_skill_coherence.sql`, 9/9 empresas
-coerentes. Quando uma empresa tiver duas Skills, a junção já suporta; muda só o
-seletor de ativa.
-
-**P2 — `embedding vector(1536)` sem índice.** E índice ANN + RLS interagem mal:
-o índice devolve top-k e o RLS filtra depois. Reforça o retrieval server-side.
+- **P1 — Telefone não está em E.164.** Hoje normaliza só dígitos, o que já pega
+  duplicidade — que era o problema real. E.164 de verdade precisa de biblioteca
+  de telefonia; normalizar no chute **corrompe número de cliente**, e número
+  corrompido não se recupera. Fazer quando houver envio por WhatsApp, que exige
+  o formato — ou seja, junto com a automação, hoje congelada.
+- **P2 — Dinheiro como string de exibição no DNA** (`"R$ 169,00"`), o que impede
+  análise por faixa de preço. Correção: inteiro em centavos + moeda, como já faz
+  `lib/money.ts`. Mexe no editor, nos seeds, no prompt e no dado já gravado das
+  empresas reais, e o ganho é um relatório que ainda não existe. Fazer junto com
+  o primeiro relatório que precise disso.
+- **P2 — `embedding vector(1536)` sem índice.** E índice ANN interage mal com
+  RLS: o índice devolve top-k e o RLS filtra depois, então o resultado pode vir
+  curto sem erro nenhum. Reforça a decisão do retrieval server-side.
 
 ---
 
@@ -233,6 +200,12 @@ o índice devolve top-k e o RLS filtra depois. Reforça o retrieval server-side.
   de empresas, a Commercial Memory é escrituração honesta. Não vender o contrário.
 - **O gargalo do produto é o onboarding**, não o motor. O extrator de DNA por
   entrevista é tão crítico quanto o CIE e não está em nenhum documento fundador.
+- **Zero desfecho registrado é o bloqueio que mais aparece.** Já travou o M2
+  (qual escola converte) e o score de potencial do preço sugerido. Antes de
+  desenhar qualquer coisa que dependa de "o que converteu", confira se existe
+  desfecho no banco — e, se não existir, **entregue a versão medida e declare a
+  recusa** em vez de estimar. Número inventado com aparência de número é pior
+  que campo vazio: campo vazio ninguém usa para decidir.
 
 ---
 
