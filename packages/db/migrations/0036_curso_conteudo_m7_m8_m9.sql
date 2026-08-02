@@ -708,7 +708,7 @@ insert into public.course_questions (lesson_key, ord, question, options, correct
        '"Faz sentido para você?"',
        '"Quer pensar com calma?"'],
  0,
- 'As outras aceitam "vou ver" e não movem nada. A primeira exige sim, não ou um motivo — e motivo é matéria-prima.'),
+ 'Perguntar "o que você acha?" aceita "vou ver" e não move nada. Pedir a decisão com dia marcado exige sim, não ou um motivo — e motivo é matéria-prima.'),
 
 ('m8_l3', 3, 'O que fazer depois de pedir a decisão?',
  array['Reforçar o principal benefício',

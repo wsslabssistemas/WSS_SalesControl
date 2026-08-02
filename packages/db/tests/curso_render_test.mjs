@@ -96,7 +96,62 @@ for (const l of licoes) {
   }
 }
 
-console.log(falhas ? `\n✗ FALHOU — ${falhas} lição(ões)` : "\n✓ PASSOU — todas as lições renderizam sem perder texto");
+// ---------------------------------------------------------------------------
+// AS PERGUNTAS TAMBÉM SÃO TEXTO QUE O ALUNO LÊ.
+//
+// Este bloco existe por um defeito real: o texto de um comentário `--` do
+// arquivo de seed foi parar na EXPLICAÇÃO de uma pergunta do Módulo 1, e ficou
+// lá até o fundador ler na tela — no lugar do ensino. O carregador não
+// reclamou, o número de perguntas continuou certo, e este teste só olhava as
+// lições. Contar não é conferir.
+// ---------------------------------------------------------------------------
+const { data: perguntas } = await db
+  .from("course_questions")
+  .select("lesson_key, ord, question, options, correct, explanation")
+  .order("lesson_key");
+
+let ruins = 0;
+for (const q of perguntas ?? []) {
+  const problemas = [];
+  const onde = `${q.lesson_key} #${q.ord}`;
+
+  // Restos de SQL em qualquer campo significam que o parser leu o arquivo
+  // errado — e o sintoma aparece como texto plausível, não como erro.
+  for (const [campo, valor] of [
+    ["pergunta", q.question],
+    ["explicação", q.explanation],
+    ...q.options.map((o, i) => [`opção ${i + 1}`, o]),
+  ]) {
+    if (/^\s*--/.test(valor) || /\barray\s*\[/i.test(valor) || /^\s*'/.test(valor)) {
+      problemas.push(`${campo} tem resto de SQL: ${JSON.stringify(String(valor).slice(0, 60))}`);
+    }
+  }
+
+  if ((q.explanation ?? "").trim().length < 40) problemas.push("explicação curta demais para ensinar algo");
+  if ((q.question ?? "").trim().length < 15) problemas.push("pergunta curta demais");
+  if (new Set(q.options).size !== q.options.length) problemas.push("alternativas repetidas");
+  if (q.options.some((o) => !String(o).trim())) problemas.push("alternativa vazia");
+
+  // Explicação NUNCA se refere a posição: a ordem das alternativas muda
+  // (e mudou), e a explicação passa a mentir sem ninguém perceber.
+  if (/\b(a primeira|a segunda|a terceira|a quarta|a última|as outras três)\b/i.test(q.explanation ?? "")) {
+    problemas.push("explicação se refere a POSIÇÃO — referencie o conteúdo da alternativa");
+  }
+
+  if (problemas.length) {
+    ruins++;
+    console.log(`✗ ${onde}`);
+    for (const p of problemas) console.log(`     ${p}`);
+  }
+}
+console.log(
+  ruins
+    ? `\n✗ ${ruins} pergunta(s) com problema de ${perguntas?.length ?? 0}`
+    : `\n✓ ${perguntas?.length ?? 0} perguntas íntegras (sem resto de SQL, sem referência a posição)`,
+);
+falhas += ruins;
+
+console.log(falhas ? `\n✗ FALHOU — ${falhas} problema(s)` : "\n✓ PASSOU — lições e perguntas íntegras");
 // `exitCode` em vez de `process.exit()`: encerrar à força com a conexão HTTP do
 // Supabase ainda aberta faz o Node abortar no Windows, e um teste que passou
 // mas aborta ao sair parece um teste que falhou.

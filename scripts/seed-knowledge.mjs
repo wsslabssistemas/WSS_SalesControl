@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { stripComments } from "./lib/sql-seed.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -35,24 +36,6 @@ function readEnv() {
     if (i > 0) env[line.slice(0, i).trim()] = line.slice(i + 1).trim().replace(/^["']|["']$/g, "");
   }
   return env;
-}
-
-/** Remove comentários de linha, respeitando aspas. */
-function stripComments(sql) {
-  let out = "";
-  let inStr = false;
-  for (let i = 0; i < sql.length; i++) {
-    const c = sql[i];
-    if (inStr) {
-      out += c;
-      if (c === "'") inStr = sql[i + 1] === "'" ? (out += sql[++i], true) : false;
-      continue;
-    }
-    if (c === "'") { inStr = true; out += c; continue; }
-    if (c === "-" && sql[i + 1] === "-") { while (i < sql.length && sql[i] !== "\n") i++; out += "\n"; continue; }
-    out += c;
-  }
-  return out;
 }
 
 /** Divide a lista de VALUES em tuplas, respeitando aspas e parênteses. */

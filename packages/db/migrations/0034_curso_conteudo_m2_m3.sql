@@ -165,7 +165,7 @@ Uma venda que só fecha com urgência falsa é uma venda que não deveria fechar
  'Liste as três objeções que você mais ouve. Ao lado de cada uma, escreva o que ela realmente significa. Você vai perceber que pelo menos uma é pedido de informação disfarçado.',
  'Quem levanta objeção está na conversa. Quem não tem interesse não argumenta — agradece e some.
 
-Essa inversão é a primeira coisa a entender neste módulo: **a objeção é sinal de que a pessoa está considerando.** Ela está tentando resolver a última dúvida antes de decidir, e escolheu resolver com você em vez de sozinha.
+Essa inversão é a primeira coisa a entender neste módulo: **a objeção é sinal de que a pessoa está considerando.** Ela está tentando resolver a dúvida que falta antes de decidir, e escolheu resolver com você em vez de sozinha.
 
 ### Por que ela assusta tanto
 
@@ -428,7 +428,7 @@ insert into public.course_questions (lesson_key, ord, question, options, correct
        'Porque quem não tem interesse não argumenta — agradece e some',
        'Porque indica que o preço está próximo do aceitável'],
  2,
- 'Quem levanta objeção está na conversa: está tentando resolver a última dúvida antes de decidir, e escolheu resolver com você.'),
+ 'Quem levanta objeção está na conversa: está tentando resolver a dúvida que falta antes de decidir, e escolheu resolver com você.'),
 
 ('m3_l1', 2, 'Quais são as duas reações instintivas ruins diante de uma objeção?',
  array['Defender ou desistir',

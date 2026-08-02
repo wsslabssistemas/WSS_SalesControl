@@ -316,7 +316,7 @@ insert into public.course_questions (lesson_key, ord, question, options, correct
        'Porque ele costuma completar, e o complemento é mais verdadeiro',
        'Porque demonstra respeito'],
  2,
- 'A primeira resposta é a versão pronta; a segunda é a real. "Tá caro" vira "na verdade não esperava fechar esse mês" — e são dois problemas diferentes, com soluções diferentes.'),
+ 'A resposta que vem na hora é a versão pronta; a que vem depois do silêncio é a real. "Tá caro" vira "na verdade não esperava fechar esse mês" — e são dois problemas diferentes, com soluções diferentes.'),
 
 ('m1_l5', 2, 'Para que serve confirmar o que você entendeu antes de responder?',
  array['Para ganhar tempo na negociação',

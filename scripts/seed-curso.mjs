@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { stripComments } from "./lib/sql-seed.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -34,7 +35,11 @@ function readEnv() {
 const env = readEnv();
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-const sql = fs.readFileSync(path.resolve(ROOT, arquivo), "utf8");
+// COMENTÁRIO DENTRO DE UMA TUPLA VIRAVA CONTEÚDO.
+// Faltava esta linha, e o texto de um comentário `--` foi parar na explicação
+// de uma pergunta do Módulo 1 — o fundador leu isso na tela, no lugar do
+// ensino. O `seed-knowledge` já limpava; este não. Agora a peça é a mesma.
+const sql = stripComments(fs.readFileSync(path.resolve(ROOT, arquivo), "utf8"));
 
 /** Tuplas de um bloco VALUES, parando no `;` de topo. */
 function tuplas(bloco) {
