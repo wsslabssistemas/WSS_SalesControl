@@ -44,6 +44,49 @@ export const CANONICAL_SCHOOLS = [
   "oferta_valor",            // Hormozi/Kahneman — montar oferta, aversão à perda
 ] as const;
 
+/**
+ * QUALIFICAÇÃO DE COMPRA (MEDDIC-lite) — o item 3 do M3.
+ *
+ * Quatro perguntas que decidem se um negócio existe de verdade: tem verba,
+ * quem assina, o que vai pesar na escolha, e quem defende a compra por dentro.
+ * O campo `decisor` já existia por segmento; estes quatro faltavam.
+ *
+ * POR QUE CANÔNICO NO NÚCLEO, e não redeclarado em cada manifesto:
+ * isto é vocabulário de **processo de compra**, que é a técnica — o produto —
+ * e não vocabulário de mercado (aluno, corte, gramatura). Mesma justificativa
+ * que já vale para `school` e para as 12 categorias, e a Lei 1 continua de pé:
+ * o núcleo segue sem saber o que é academia.
+ *
+ * E as OPÇÕES também são canônicas, não só as chaves. Se cada segmento
+ * inventasse as suas, a pergunta "qual critério de decisão aparece nos
+ * negócios ganhos" ficaria sem resposta — que foi exatamente o que aconteceu
+ * com os 134 rótulos de `technique` antes do M1. `CLAUDE.md`: toda dimensão de
+ * análise é enum, nunca texto livre.
+ *
+ * O manifesto escolhe SE usa (segmento de decisão instantânea não usa) e pode
+ * trocar o `label`, que é o que o vendedor lê. A chave e as opções, não.
+ */
+export const QUALIFICATION_FIELDS = {
+  verba: {
+    label: "Verba",
+    options: ["sem_verba", "verba_prevista", "verba_aprovada", "busca_financiamento", "indefinido"],
+  },
+  processo_decisao: {
+    label: "Como decidem",
+    options: ["decide_sozinho", "duas_pessoas", "comite_ou_diretoria", "licitacao", "indefinido"],
+  },
+  criterio_decisao: {
+    label: "O que vai pesar na escolha",
+    options: ["preco", "prazo", "qualidade_tecnica", "atendimento", "risco_ou_garantia", "indefinido"],
+  },
+  defensor_interno: {
+    label: "Quem defende por dentro",
+    options: ["sim_identificado", "sim_mas_sem_forca", "nao_ha", "indefinido"],
+  },
+} as const;
+
+export const QUALIFICATION_KEYS = Object.keys(QUALIFICATION_FIELDS) as (keyof typeof QUALIFICATION_FIELDS)[];
+
 const key = z
   .string()
   .regex(/^[a-z][a-z0-9_]*$/, "chave deve ser snake_case minúsculo");
@@ -172,6 +215,29 @@ export const manifestSchema = z
             `Sem escola: [${semMapa.join(", ")}]. ` +
             `Escola inexistente: [${invalidas.join(", ")}]. ` +
             `Categoria inexistente: [${foraDasCategorias.join(", ")}]`,
+        });
+      }
+    }
+
+    // QUALIFICAÇÃO DE COMPRA: quem usa uma das quatro chaves canônicas usa as
+    // OPÇÕES canônicas junto. Só o `label` é livre, porque é o que o vendedor
+    // lê na tela. Sem esta trava, cada segmento inventaria o próprio conjunto
+    // e a dimensão deixaria de ser comparável entre eles — que é a única razão
+    // de ela existir. É o mesmo erro dos 134 rótulos de `technique`, e ele já
+    // custou o M1 inteiro para ser desfeito.
+    for (const f of m.contact_fields) {
+      const canonico = QUALIFICATION_FIELDS[f.key as keyof typeof QUALIFICATION_FIELDS];
+      if (!canonico) continue;
+      const esperado = [...canonico.options].join(",");
+      const veio = [...(f.options ?? [])].join(",");
+      if (f.type !== "enum" || veio !== esperado) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["contact_fields", f.key],
+          message:
+            `"${f.key}" é campo canônico de qualificação de compra: precisa ser enum com ` +
+            `exatamente estas options, nesta ordem — [${esperado}]. ` +
+            `O label pode mudar; a chave e as opções, não.`,
         });
       }
     }

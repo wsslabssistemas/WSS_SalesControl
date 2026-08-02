@@ -36,3 +36,11 @@ jobs:
       # Roda no CI porque é lógica pura — sem banco e sem chave.
       - name: Regra da repescagem espaçada
         run: node packages/db/tests/repescagem_test.mjs
+      # A conta que COBRA dinheiro de alguem: piso, sugestao e, principalmente,
+      # a recusa quando a amostra nao sustenta.
+      - name: Preço sugerido
+        run: node packages/db/tests/precificacao_test.mjs
+      # As quatro chaves de qualificação existem em dois arquivos (o validador e
+      # o app). Este teste confere que não divergiram.
+      - name: Qualificação de compra
+        run: node packages/db/tests/qualificacao_test.mjs

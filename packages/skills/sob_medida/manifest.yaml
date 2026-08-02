@@ -103,6 +103,31 @@ contact_fields:
     type: enum
     options: [ninguem, arquiteto, engenheiro, construtora, cliente_antigo, outro_profissional]
 
+  # ---------------------------------------------------------------------
+  # QUALIFICACAO DE COMPRA (MEDDIC-lite) - item 3 do M3.
+  # As quatro perguntas que dizem se o negocio existe de verdade. O campo
+  # `decisor` diz QUEM e o contato; estes dizem como a compra anda.
+  # Chaves e opcoes sao CANONICAS (validadas pelo skill-loader): sem isso a
+  # dimensao nao se compara entre segmentos, que e a unica razao de existir.
+  # So o label e do ramo.
+  # ---------------------------------------------------------------------
+  - key: verba
+    label: "Verba do cliente"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem decide junto"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisao em casa"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
 # ---------------------------------------------------------------------
 # AGENDAMENTO
 # A visita técnica é o gargalo: agendar bem evita deslocamento perdido.

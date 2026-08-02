@@ -9,6 +9,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
 import { resolveSchool, loadSchools, schoolsBlock, type StrategyMap } from "@/lib/schools";
 import { checkRequiredFacts } from "@/lib/facts";
+import { lerQualificacao, blocoParaPrompt } from "@/lib/qualificacao";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { revalidatePath } from "next/cache";
 import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
@@ -71,7 +72,7 @@ export async function gerarResposta(input: {
 
   try {
   const supabase = await createClient();
-  const { stages } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, fields } = await getSkillFormConfig(tenant.skill_key);
 
   // A biblioteca CURADA do segmento (tenant_id null) é lida com service_role.
   // Ela nunca pode chegar ao browser — a policy de `knowledge_entries` só a
@@ -141,12 +142,15 @@ export async function gerarResposta(input: {
 
   // Contexto do cliente + histórico.
   let contactBlock = "Nenhum cliente selecionado — trate como primeiro contato.";
+  // QUALIFICAÇÃO DE COMPRA: o que se sabe do negócio e o que falta descobrir.
+  // Vazio quando o segmento não usa (barbearia não tem processo de aprovação).
+  let qualificacaoBlock = "";
   // Cada profissional tem a sua agenda: as vagas oferecidas precisam ser as
   // DELE, não as da casa. O contato pertence a um responsável.
   let donoDoContato: string | null = null;
   if (input.contactId) {
     const [{ data: c }, { data: h }] = await Promise.all([
-      supabase.from("contacts").select("name, journey_stage, owner_id").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
+      supabase.from("contacts").select("name, journey_stage, owner_id, custom").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
       supabase
         .from("interactions")
         .select("direction, content, occurred_at")
@@ -155,7 +159,12 @@ export async function gerarResposta(input: {
         .order("occurred_at", { ascending: false })
         .limit(10),
     ]);
-    const contact = c as { name: string; journey_stage: string; owner_id: string | null } | null;
+    const contact = c as {
+      name: string;
+      journey_stage: string;
+      owner_id: string | null;
+      custom: Record<string, unknown> | null;
+    } | null;
     const hist = (h as { direction: string; content: string; occurred_at: string }[] | null) ?? [];
     const stageLabel = stages.find((s) => s.key === contact?.journey_stage)?.label ?? contact?.journey_stage;
     const histText = hist.length
@@ -166,6 +175,7 @@ export async function gerarResposta(input: {
       : "Sem histórico anterior.";
     donoDoContato = contact?.owner_id ?? null;
     contactBlock = `Cliente: ${contact?.name ?? "?"}\nEtapa atual: ${stageLabel}\nHISTÓRICO (não repita abordagens já usadas; evolua a conversa):\n${histText}`;
+    qualificacaoBlock = blocoParaPrompt(lerQualificacao(fields, contact?.custom));
   }
 
   // Horários livres: sem isto o motor escala para um humano toda vez que
@@ -266,7 +276,7 @@ ${winners || "(ainda sem histórico de conversões registrado)"}
 
 CONTEXTO DO CLIENTE:
 ${contactBlock}
-
+${qualificacaoBlock ? `\n${qualificacaoBlock}\n` : ""}
 MENSAGEM DO CLIENTE (responda a isto):
 """${message}"""
 

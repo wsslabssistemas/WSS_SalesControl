@@ -120,12 +120,28 @@ trocar no seletor do topo do painel.
    neste segmento, nesta etapa"*. É o único ativo que melhora com escala.
    **Bloqueio real:** ainda há **0 desfechos registrados** — sem uso, não há o
    que medir.
-3. **M3 — qualificação de compra (MEDDIC-lite).** O que sobrou do M3: orçamento,
-   processo de aprovação, critério de decisão e defensor interno. Já temos o
-   campo `decisor`; falta o resto. As entradas de **indecisão** e de
-   **autosserviço** já estão no ar (ago/2026).
-   Decisão fechada: **não criar dimensão de gênero** (evidência fraca; viraria
-   estereótipo automatizado). Ver `COS_Escolas_de_Venda.md` §3.
+3. ~~**M3 — qualificação de compra (MEDDIC-lite).**~~ ✅ **FEITO (ago/2026).**
+   Quatro campos canônicos — `verba`, `processo_decisao`, `criterio_decisao`,
+   `defensor_interno` — nos cinco segmentos onde existe processo de compra
+   (indústria, distribuidora, automação, sob medida, energia solar). B2C de
+   decisão instantânea não recebe: barbearia não tem comitê.
+   **Chave E opções são canônicas**, só o `label` é do ramo — senão a dimensão
+   não se compara entre segmentos, que é a única razão de ela existir. É o erro
+   dos 134 rótulos de `technique`, e agora o validador **falha o build** se um
+   manifesto inventar as próprias opções (testado quebrando de propósito).
+   A chave é `verba` e não `orcamento` porque em `sob_medida` "orçamento" já é
+   a ETAPA da jornada (a proposta apresentada) — em pt-BR a palavra significa a
+   proposta e o dinheiro, e essa ambiguidade iria para o JSON que o motor lê.
+   **O valor está na lacuna, não no preenchido.** `lib/qualificacao.ts` diz ao
+   motor o que ninguém descobriu ainda e manda fazer **uma** pergunta, só
+   quando couber — responder o que o cliente perguntou vem primeiro; motor que
+   responde preço com questionário perde a venda que ia fechar. `indefinido`
+   conta como não sabido de propósito.
+   Descoberto no caminho: `gerarResposta` nem lia o `custom` do contato, então
+   campo nenhum de segmento chegava ao motor. Ligado.
+   Testes: `qualificacao_test.mjs` 12/12, no CI — e o primeiro caso compara a
+   lista de chaves do app com a do `skill-loader`, porque são duas cópias e
+   cópia que ninguém confere é cópia que diverge.
 4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
 5. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),

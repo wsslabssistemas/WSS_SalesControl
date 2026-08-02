@@ -168,6 +168,31 @@ contact_fields:
     type: enum
     options: [concorrente_nacional, importado, industria_local, produz_internamente, nao_sei]
 
+  # ---------------------------------------------------------------------
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite) — item 3 do M3.
+  # As quatro perguntas que dizem se o negócio existe de verdade. O campo
+  # `decisor` acima diz QUEM é o contato; estes dizem como a compra anda.
+  # Chaves e opções são CANÔNICAS (validadas pelo skill-loader): sem isso a
+  # dimensão não se compara entre segmentos, que é a única razão de existir.
+  # Só o label é do ramo.
+  # ---------------------------------------------------------------------
+  - key: verba
+    label: "Verba do comprador"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Como decidem a compra"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem defende por dentro"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
 # ---------------------------------------------------------------------
 # O ciclo declarado no contato vira previsão de reposição. É daqui que
 # sai "quem está no ponto de voltar" e, principalmente, quem passou do
