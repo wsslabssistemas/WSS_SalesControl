@@ -435,4 +435,97 @@ consorcio — desde que existam na sua operacao.',
  '{"precos.formas_pagamento","precos.faixa","execucao.prazo_proposta"}', '{}', 'escalate',
  'Financiamento como parte da venda + dossie tecnico para o banco',
  '{"Citar taxa ou banco que nao confirmou","Deixar o cliente ir sozinho ao banco","Tratar reprovacao como fim da venda","Prometer aprovacao"}',
- 'encaminhar_financiamento', 'skill_seed', 'active', null);
+ 'encaminhar_financiamento', 'skill_seed', 'active', null),
+
+-- ---------------------------------------------------------------------
+-- HÍBRIDO COM BATERIA (BESS) — acrescentado em ago/2026 a partir do
+-- retorno de um ESPECIALISTA DO RAMO. Primeira correção da curadoria vinda
+-- de quem vive o mercado, e não de pesquisa.
+--
+-- O que ele apontou: o on-grid virou commodity (guerra de preço, margem
+-- derretida) e o híbrido é onde poucos sabem — "o buraco é bem mais
+-- embaixo". Some-se o gargalo de conexão: concessionárias limitando ou
+-- negando novos sistemas por saturação da rede.
+--
+-- A lógica econômica que sustenta, e que conecta com o resto desta
+-- biblioteca: com o Fio B subindo todo ano, a energia INJETADA vale menos
+-- a cada ano, enquanto a ARMAZENADA e consumida direto não paga o pedágio.
+-- O mercado migra de "gerar e injetar" para "gerar, guardar e usar".
+-- ---------------------------------------------------------------------
+
+(null, 'energia_solar', 'catalog', 'reactive',
+ '{"tem bateria","sistema hibrido","funciona quando falta luz","e off grid","guarda energia","backup de energia","bess"}',
+ null,
+ 'Comece separando as tres coisas que o cliente costuma misturar, porque quase
+ninguem sabe a diferenca e e nisso que voce ganha autoridade.
+On-grid: gera de dia e injeta o excedente na rede. Barato, mas quando falta luz
+o sistema DESLIGA — inclusive por norma, para nao energizar a rede e por em
+risco quem esta consertando. Muita gente instala achando que tem backup e
+descobre isso no primeiro apagao.
+Hibrido com bateria: gera, guarda o excedente e usa quando quiser — inclusive
+quando a rede cai. E o que resolve o que a maioria imagina que ja comprou.
+Off-grid: sem rede nenhuma. So faz sentido onde nao existe ligacao.
+Depois pergunte o que ELE quer resolver, porque muda tudo: reduzir conta,
+continuar funcionando na queda de energia, ou fugir do horario caro. Cada um
+pede um dimensionamento diferente e nem todos precisam de bateria.
+Se o assunto for bateria, informe com honestidade o que a SUA operacao entrega:
+quais marcas, quanta autonomia e o que ela alimenta. Bateria nao sustenta a casa
+inteira: sustenta o que foi dimensionado para sustentar, e prometer diferente e
+reclamacao garantida no primeiro uso.',
+ '{"oferta.tipos_sistema"}',
+ '{"oferta.marcas_bateria","oferta.autonomia_backup","precos.faixa","oferta.marcas_inversor"}', '{}', 'escalate',
+ 'Separar on-grid, hibrido e off-grid antes de cotar — e dimensionar o backup pelo que ele quer manter ligado',
+ '{"Deixar o cliente achar que on-grid funciona na queda de energia","Prometer autonomia sem dimensionar as cargas","Vender bateria para quem so quer reduzir conta","Falar BESS e sigla tecnica com quem quer entender o basico"}',
+ 'avaliar_hibrido', 'skill_seed', 'active', null),
+
+(null, 'energia_solar', 'objections', 'reactive',
+ '{"bateria nao vale a pena","bateria e muito cara","bateria nao compensa no brasil","ouvi dizer que bateria nao vale","melhor so o solar comum"}',
+ null,
+ 'Essa objecao foi verdade por muito tempo, e por isso circula tanto. O
+comprador nao esta sendo teimoso: esta repetindo uma informacao que ja foi
+correta. Nao corrija como quem corrige um erro — atualize o cenario.
+Duas coisas mudaram. O preco da bateria caiu muito, e a REGRA mudou: o Fio B
+sobe todos os anos, entao a energia que voce injeta na rede vale menos a cada
+ano. Isso inverte a conta: guardar para usar deixou de competir com injetar,
+porque injetar esta ficando pior por decisao regulatoria, nao por opiniao de
+vendedor.
+Mesmo assim, seja honesto — bateria NAO compensa para todo mundo. Para quem
+consome de dia, tem conta baixa e nunca falta luz na rua, o on-grid puro segue
+sendo a escolha certa, e dizer isso constroi mais confianca que qualquer
+argumento.
+Ela compensa quando existe pelo menos um destes: consumo concentrado a noite,
+queda de energia frequente, tarifa com horario caro, ou restricao da
+concessionaria que impede injetar. Descubra qual e o caso dele ANTES de
+defender a bateria — senao voce esta vendendo solucao para um problema que
+talvez ele nao tenha.',
+ '{}',
+ '{"oferta.marcas_bateria","oferta.autonomia_backup","precos.financiamento","precos.faixa"}', '{}', 'omit',
+ 'Atualizar o cenario em vez de corrigir o cliente — e admitir quando nao compensa',
+ '{"Tratar a objecao como ignorancia do cliente","Empurrar bateria para quem nao tem nenhum dos quatro casos","Prometer payback de bateria sem simular","Ignorar que a informacao antiga ja foi verdadeira"}',
+ 'defender_o_hibrido', 'skill_seed', 'active', 'challenger'),
+
+(null, 'energia_solar', 'availability', 'reactive',
+ '{"a concessionaria negou","nao tem capacidade na rede","rede saturada","limitaram minha potencia","nao aprovaram meu projeto","so aprovaram parte"}',
+ null,
+ 'Esta e a conversa que mais cresce e a que mais integrador perde por nao saber
+responder. Em varias regioes a distribuidora limita ou nega a conexao de novos
+sistemas porque a rede local esta saturada — e o cliente costuma receber isso
+como um "nao" definitivo, quando raramente e.
+Primeiro descubra o que exatamente veio: negativa total, limite de potencia
+menor que o projetado, ou exigencia de reforco na rede com custo. Sao tres
+situacoes diferentes e so a primeira e realmente uma parede.
+Depois mostre o caminho que quase ninguem apresenta: se o problema e INJETAR na
+rede, existe a saida de nao injetar. Um sistema hibrido com bateria, ou com
+limitacao de injecao, consome a propria geracao em vez de mandar para fora — e
+o que a concessionaria restringe e a injecao, nao o consumo proprio.
+Isso muda o projeto: dimensiona pelo consumo, nao pelo excedente. E muda a
+conversa comercial, porque voce deixou de ser mais um orcamento e virou quem
+resolveu o problema que travou o cliente.
+Nunca prometa aprovacao. Diga que vai levantar a situacao da unidade junto a
+distribuidora e voltar com o que e possivel — e volte, mesmo que a resposta
+seja ruim.',
+ '{"execucao.prazo_homologacao"}',
+ '{"oferta.tipos_sistema","execucao.distribuidoras","oferta.marcas_bateria"}', '{}', 'escalate',
+ 'Separar os tres tipos de negativa e apresentar a saida de nao injetar',
+ '{"Aceitar a negativa como fim da venda","Prometer que consegue aprovar","Manter o projeto original e so recorrer","Nao verificar a situacao real da unidade junto a distribuidora"}',
+ 'viabilizar_com_bateria', 'skill_seed', 'active', null);

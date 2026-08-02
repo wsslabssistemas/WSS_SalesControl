@@ -63,11 +63,11 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
   planos** (teste grátis e liberação de módulos por empresa).
 
-### Segmentos — 9 completos, 163 entradas curadas
+### Segmentos — 9 completos, 166 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
-| `energia_solar` (fotovoltaica: residência, comércio, rural, condomínio) | 18 | prospecção + licitações |
+| `energia_solar` (fotovoltaica + **híbrido com bateria**) | 21 | prospecção + licitações |
 | `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 20 | prospecção + licitações |
 | `barbearia` | 19 | — |
 | `distribuidora` (atacado) | 17 | prospecção |
@@ -167,6 +167,12 @@ trocar no seletor do topo do painel.
   carregaria 1 entrada **depois de apagar as 22**. E parseava o rodapé do
   arquivo: as queries de verificação viravam tuplas fantasma (28 lidas onde há
   22). Rode o carregador uma vez em qualquer seed novo antes de confiar nele.
+- **Entrada nova vai no seed DO PRÓPRIO SEGMENTO, nunca em arquivo separado.**
+  `seed-knowledge.mjs` recarrega com DELETE de tudo do `skill_key` antes do
+  INSERT. Criei o `0036` só com 3 entradas de solar e ele **apagou as 18
+  originais** — a regra já estava escrita aqui e eu mesmo violei. Fundido no
+  `0030`. Se precisar acrescentar assunto novo a um segmento, **edite o seed
+  dele**.
 - **`technique` é USER-FACING.** Aparece no Responder e no curso. A biblioteca
   da academia veio do Base44 com rótulos em inglês ("Hot Button", "Puppy Dog
   Close") e o fundador leu isso na tela. Traduzidos em ago/2026 mantendo o

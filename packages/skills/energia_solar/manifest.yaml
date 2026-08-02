@@ -130,6 +130,20 @@ benchmarks:
     capacidade ao fim) e de produto entre 10 e 12 anos. Inversor: 5 a 10 anos,
     com extensão paga. Quem apresenta "25 anos de garantia" sem separar as duas
     coisas está criando o próprio problema.
+  onda_do_hibrido: >-
+    Retorno de especialista do ramo (ago/2026): o on-grid convencional virou
+    commodity — todo mundo conhece, o equipamento é padronizado e a comparação
+    é só por preço, o que derreteu a margem do integrador. O híbrido com
+    bateria (BESS) é onde poucos têm conhecimento técnico e onde há margem.
+    A lógica econômica sustenta: com o Fio B subindo todo ano, a energia
+    INJETADA na rede vale menos a cada ano, enquanto a energia ARMAZENADA e
+    consumida direto não paga esse pedágio. O mercado está migrando de "gerar
+    e injetar" para "gerar, guardar e usar".
+  rede_saturada: >-
+    Em várias regiões a concessionária limita ou nega a conexão de novos
+    sistemas por saturação da rede local. Para esse cliente o híbrido não é
+    upgrade: é a única forma de fazer o projeto sair. Perguntar sobre restrição
+    de rede na qualificação evita desenhar um projeto que não vai ser aprovado.
   o_que_entra_no_orcamento: >-
     Módulos, inversor, estrutura conforme o telhado, string box e proteções
     (DPS CC e CA, disjuntores, aterramento), cabeamento, projeto elétrico com
@@ -165,7 +179,16 @@ contact_fields:
   - key: gatilho
     label: "O que motivou"
     type: enum
-    options: [conta_alta, obra_nova, ampliacao, sustentabilidade, valorizacao_imovel, indicacao, outro]
+    options:
+      [conta_alta, obra_nova, ampliacao, sustentabilidade, valorizacao_imovel,
+       queda_de_energia, backup_bateria, indicacao, outro]
+  # A rede saturada virou qualificador: em várias regiões a concessionária
+  # limita ou nega a conexão de novos sistemas, e aí o híbrido deixa de ser
+  # upgrade e passa a ser a única saída.
+  - key: situacao_rede
+    label: "Situação da rede"
+    type: enum
+    options: [sem_restricao, limitado_pela_concessionaria, negado, nao_sei]
   # Alimenta o motor de recompra: limpeza e revisão têm data.
   - key: ciclo_manutencao
     label: "Ciclo de manutenção"
@@ -225,6 +248,9 @@ dna_sections:
       - { key: tipos_sistema, type: list, required: true, label: "Tipos de sistema", help: "Ex.: conectado à rede (on-grid), híbrido com bateria, bombeamento rural" }
       - { key: marcas_modulo, type: list, label: "Marcas de módulo", help: "As marcas de painel que você trabalha" }
       - { key: marcas_inversor, type: list, label: "Marcas de inversor", help: "As marcas de inversor que você trabalha" }
+      # Híbrido com bateria (BESS) — ver benchmark `onda_do_hibrido`.
+      - { key: marcas_bateria, type: list, label: "Marcas de bateria", help: "Se você trabalha com sistema híbrido, quais baterias" }
+      - { key: autonomia_backup, type: text, label: "Autonomia do backup", help: "Quanto tempo o sistema com bateria sustenta, e o que ele alimenta. Ex.: 6h nas cargas essenciais" }
       - { key: telhados_atendidos, type: list, required: true, label: "Telhados que atende", help: "Ex.: cerâmico, metálico, fibrocimento, laje, solo" }
   - key: precos
     label: "Preço e pagamento"

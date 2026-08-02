@@ -7,6 +7,20 @@
 
 ---
 
+## Onde estamos (2 de agosto de 2026)
+
+- **9 segmentos, 166 entradas curadas.** A `energia_solar` recebeu a **primeira
+  correção vinda de especialista do ramo** (contato do fundador, integrador):
+  híbrido com bateria/BESS é a onda que se forma, porque o on-grid virou
+  commodity e a margem derreteu. Três entradas novas. **É o começo da saída do
+  N=1.**
+- **Curso: 6 dos 9 módulos escritos** — 30 lições, ~180 min, 93 perguntas.
+  Faltam os módulos 7 (Confiança e limite), 8 (Fechamento) e 9 (Na sua
+  operação). A tela funciona e o fundador aprovou a régua depois de fazer o
+  Módulo 1.
+- **O kit de revisão está com o especialista da indústria** e as respostas do
+  de solar estão a caminho.
+
 ## O que está CONGELADO por decisão (não reabrir sem motivo novo)
 
 Um plano vale tanto pelo que exclui quanto pelo que inclui. Estes itens são
