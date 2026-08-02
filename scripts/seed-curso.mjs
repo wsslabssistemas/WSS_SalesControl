@@ -120,27 +120,83 @@ if (ruins.length) {
   process.exit(1);
 }
 
-// A ALTERNATIVA CERTA NÃO PODE VIVER NA MESMA POSIÇÃO.
+// A POSIÇÃO DA ALTERNATIVA CERTA NÃO PODE SER PREVISÍVEL.
 //
-// O fundador pegou isto fazendo a primeira lição: as 16 respostas certas
-// estavam todas na 1ª opção. Quem percebe o padrão acerta sem ler — e aí não
-// existe prática de recuperação, que é o método do curso inteiro. É o tipo de
-// erro que passa despercebido de quem escreve (a resposta certa vem primeiro
-// na cabeça) e é óbvio para quem responde.
-if (perguntas.length >= 4) {
+// Esta trava foi escrita duas vezes, e a primeira versão media a coisa errada.
+//
+// 1ª versão: o fundador pegou, fazendo a lição 1, que as 16 respostas certas
+// estavam todas na 1ª opção. A trava passou a exigir distribuição — no máximo
+// metade na mesma posição.
+//
+// 2ª versão: ele pegou de novo, e o padrão era outro — a certa ANDAVA uma casa
+// a cada pergunta (1, 2, 3, 4, 1, 2, 3, 4...) pelo módulo inteiro. A trava de
+// distribuição não só deixou passar: uma rotação perfeita dá 25% em cada
+// posição, o número mais saudável que existe. Ela media o sintoma do primeiro
+// erro, não a propriedade que importa.
+//
+// A propriedade que importa é uma só: **não dá para prever a próxima olhando a
+// anterior**. Distribuição é necessária e não é suficiente. Por isso agora tem
+// as duas medidas, e a segunda procura CICLO — a forma que o erro assume quando
+// quem escreve tenta "variar" de cabeça, porque variar de cabeça vira ritmo.
+function verificarSequencia(nome, seq) {
+  if (seq.length < 4) return;
+
   const porPosicao = new Map();
-  for (const q of perguntas) porPosicao.set(q.correct, (porPosicao.get(q.correct) ?? 0) + 1);
+  for (const c of seq) porPosicao.set(c, (porPosicao.get(c) ?? 0) + 1);
   const [posicao, quantas] = [...porPosicao.entries()].sort((a, b) => b[1] - a[1])[0];
-  const limite = Math.ceil(perguntas.length * 0.5);
+  const limite = Math.ceil(seq.length * 0.5);
   if (quantas > limite) {
     console.error(
-      `✗ ${quantas} de ${perguntas.length} respostas certas estão na posição ${posicao + 1} ` +
-        `(limite: ${limite}). Redistribua antes de carregar.`,
+      `✗ ${nome}: ${quantas} de ${seq.length} respostas certas estão na posição ` +
+        `${posicao + 1} (limite: ${limite}). Redistribua antes de carregar.`,
     );
     process.exit(1);
   }
-  console.log(`   distribuição das corretas: ${[...porPosicao.entries()].sort().map(([p, n]) => `${p + 1}ª:${n}`).join("  ")}`);
+
+  // Ciclo de período p: a certa de agora é igual à de p perguntas atrás.
+  // Rotação de uma casa é o caso p = número de alternativas, e é o que passou.
+  //
+  // O TETO: com 4 alternativas o acaso bate ~25%. Num módulo de 15 perguntas
+  // são ~11 comparações, onde o desvio padrão do acaso é ~13 pontos — então
+  // 60% já está a quase três desvios e não se explica por sorte. A primeira
+  // versão desta regra usou 70% e deixou passar um módulo com 64%, onde dava
+  // para ler "3 1 4 2 · 3 1 4" no começo da lista. Falso positivo aqui custa
+  // um reembaralhamento; falso negativo custa o método do curso.
+  const TETO_CICLO = 0.6;
+  for (let p = 2; p <= 5; p++) {
+    const comparacoes = seq.length - p;
+    if (comparacoes < 6) continue;
+    let iguais = 0;
+    for (let i = p; i < seq.length; i++) if (seq[i] === seq[i - p]) iguais++;
+    const taxa = iguais / comparacoes;
+    if (taxa >= TETO_CICLO) {
+      console.error(
+        `✗ ${nome}: a posição da certa se repete a cada ${p} perguntas em ${iguais} de ` +
+          `${comparacoes} casos (${Math.round(taxa * 100)}%). Isso é um ciclo: ` +
+          `quem percebe acerta sem ler.\n   sequência: ${seq.map((c) => c + 1).join(" ")}`,
+      );
+      process.exit(1);
+    }
+  }
+
+  console.log(
+    `   ${nome}: ${[...porPosicao.entries()].sort().map(([p, n]) => `${p + 1}ª:${n}`).join("  ")}`,
+  );
 }
+
+// POR MÓDULO **E** NO ARQUIVO INTEIRO. Só o arquivo não basta: um arquivo com
+// três módulos dilui o ciclo de um deles até ele sumir na média — foi assim que
+// a rotação do módulo 7 sobreviveu à primeira versão desta verificação. O aluno
+// vive um módulo por vez, então é nessa janela que o padrão aparece para ele.
+const moduloDaLicao = new Map(licoes.map((l) => [l.key, l.module_key]));
+const porModulo = new Map();
+for (const q of perguntas) {
+  const m = moduloDaLicao.get(q.lesson_key) ?? "(fora deste arquivo)";
+  if (!porModulo.has(m)) porModulo.set(m, []);
+  porModulo.get(m).push(q.correct);
+}
+for (const [m, seq] of porModulo) verificarSequencia(`módulo ${m}`, seq);
+if (porModulo.size > 1) verificarSequencia("arquivo", perguntas.map((q) => q.correct));
 
 // Recarga: as perguntas e lições dos módulos declarados saem primeiro.
 const chavesLicao = licoes.map((l) => l.key);

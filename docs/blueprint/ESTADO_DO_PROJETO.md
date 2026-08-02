@@ -189,12 +189,28 @@ trocar no seletor do topo do painel.
   QUESTÃO, não por lição: chave diferente, tabela diferente (`course_review`,
   `0037`). O plano de execução afirmava que "o dado já é guardado desde o
   `0031`" — era meia verdade: o *erro* estava lá, o *quando volta* não.
-- **Alternativa correta não pode viver na mesma posição.** As 16 primeiras
-  perguntas do curso saíram todas com a resposta na 1ª opção — quem percebe o
-  padrão acerta sem ler, e aí não existe prática de recuperação, que é o método
-  do curso. Erro invisível para quem escreve (a certa vem primeiro na cabeça) e
-  óbvio para quem responde. `seed-curso.mjs` agora **recusa** carregar quando
-  mais de 50% das corretas estão na mesma posição.
+- **A posição da alternativa correta não pode ser PREVISÍVEL — e distribuição
+  não prova isso.** A trava do `seed-curso.mjs` foi escrita duas vezes, e a
+  primeira versão media a coisa errada.
+  *1ª vez:* as 16 primeiras perguntas saíram todas com a certa na 1ª opção. A
+  trava passou a exigir distribuição (máximo metade na mesma posição).
+  *2ª vez:* o fundador pegou de novo, e o padrão era outro — a certa **andava
+  uma casa a cada pergunta** (1, 2, 3, 4, 1, 2, 3, 4…) pelo módulo inteiro. A
+  trava de distribuição não só deixou passar: uma rotação perfeita dá **25% em
+  cada posição**, o número mais saudável possível. Ela media o sintoma do
+  primeiro erro, não a propriedade que importa.
+  Hoje a trava mede **ciclo**: para períodos de 2 a 5, quanto a certa se repete
+  em relação a *p* perguntas atrás. O acaso bate ~25%; o teto é 60%. E mede
+  **por módulo além do arquivo** — um arquivo com três módulos dilui o ciclo de
+  um deles até ele sumir na média, e o aluno vive um módulo por vez.
+  A lição geral: **quando uma trava nasce de um bug concreto, ela tende a medir
+  aquele bug em vez da propriedade.** "Variar de cabeça" vira ritmo, e ritmo é
+  ainda mais fácil de decorar do que posição fixa.
+- **Explicação de pergunta nunca se refere a posição.** "A primeira faz ele
+  calcular", "as outras três" — a ordem das alternativas muda e a explicação
+  passa a mentir sem ninguém perceber. Uma delas já estava errada antes de
+  qualquer reordenação: dizia "a primeira" para uma resposta que estava na
+  quarta. Referencie pelo **conteúdo** da alternativa.
 - **Policy `FOR ALL` roda em toda LEITURA.** Uma policy de escrita marcada como
   `ALL` também é avaliada em cada `SELECT` — então `memberships`,
   `commercial_dna` e `knowledge_entries` pagavam `is_admin_of` **além** de

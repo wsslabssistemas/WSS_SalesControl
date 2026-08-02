@@ -310,6 +310,23 @@ pesquisa séria de folclore repetido.
       exatamente com "ainda não chegou a hora" — a tela continua funcionando e
       metade do método simplesmente não acontece.
 
+- [x] **Ciclo na posição da resposta (achado do fundador, ago/2026).** Fazendo o
+      curso, ele viu que a certa **andava uma casa a cada pergunta** — 1, 2, 3,
+      4, 1, 2, 3, 4 — pelo Módulo 1 inteiro. O Módulo 7 tinha o mesmo defeito
+      com outro ciclo, `(2,3,1,4)`. A trava de distribuição deixou passar
+      porque rotação perfeita dá 25% em cada posição.
+      Corrigido nos dois lados: a trava agora procura **ciclo** (períodos 2 a 5,
+      teto 60% contra ~25% do acaso) e mede **por módulo**, não só por arquivo.
+      Com o teto justo, mais dois módulos caíram (`cadencia` 63%, `operacao`
+      64%) e foram reembaralhados também.
+      As alternativas dos 4 módulos afetados foram reposicionadas com semente
+      fixa, e a verificação foi feita contra o banco: **o texto da resposta
+      certa é idêntico nas 43 perguntas mexidas** — só a ordem mudou. Maior
+      ciclo do curso inteiro hoje: 50%.
+      Junto, uma explicação que se referia a posição ("a primeira faz ele
+      calcular") foi reescrita — ela já estava errada antes, apontando para a
+      primeira quando a certa estava na quarta.
+
 **Decisões de implementação que valem registro:**
 - **A correção é no servidor, uma pergunta por vez.** O gabarito nunca vai ao
   browser — senão bastaria abrir o inspetor e a prática de recuperação viraria
