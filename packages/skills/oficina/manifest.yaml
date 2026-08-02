@@ -1,0 +1,342 @@
+key: oficina
+name: Oficina Mecânica (automotiva, elétrica, funilaria e pneus)
+version: 1.0.0
+
+# =====================================================================
+# POR QUE ESTE SEGMENTO EXISTE, e por que nenhum dos nove anteriores o
+# cobria.
+#
+# Regra do segmento novo (ESTADO_DO_PROJETO): nome de manifesto não é
+# cobertura — cobertura é entrada curada. Rodei a checagem antes de
+# escrever: nenhuma das 166 entradas existentes fala de diagnóstico, peça
+# original, autorização de serviço ou revisão por quilometragem.
+#
+# O QUE MUDA AQUI, e não muda em lugar nenhum:
+#
+# 1. O CLIENTE NÃO PEDE UM SERVIÇO, DESCREVE UM SINTOMA. "Está fazendo um
+#    barulho" não é pedido de orçamento — é pedido de diagnóstico. Cotar
+#    por telefone o que ninguém olhou é a origem de metade dos conflitos
+#    do setor.
+#
+# 2. O DIAGNÓSTICO É O PRODUTO, e quase todo mundo dá de graça. Aí o
+#    cliente leva o laudo para a oficina que cobra menos pela mão de obra.
+#    Quem entende isso cobra o diagnóstico e abate na aprovação.
+#
+# 3. A CONFIANÇA É O EIXO, não o preço. O setor carrega a fama de trocar
+#    peça que não precisava. Toda a estratégia daqui é construída para
+#    provar em vez de afirmar: mostrar a peça, mostrar o teste, devolver o
+#    que foi substituído.
+#
+# 4. A RECOMPRA É PREVISÍVEL E NINGUÉM TRABALHA. Revisão tem intervalo de
+#    quilometragem e de tempo — dá para saber o mês em que o cliente vai
+#    precisar. É o segmento onde o motor de recorrência mais rende.
+#
+# 5. EXISTE LEI, e ela protege quem trabalha certo. O Código de Defesa do
+#    Consumidor exige orçamento prévio discriminado (art. 40), proíbe
+#    executar sem autorização, obriga peça original ou de mesma
+#    especificação salvo autorização do cliente (art. 21) e dá 90 dias de
+#    garantia ao serviço (art. 26, II). Isso não é burocracia: é o
+#    argumento de venda de quem faz direito, e virou `hard_rules`.
+#
+# O buraco da tese do produto aparece aqui na forma mais pura: o orçamento
+# aprovado no balcão que some. Por isso a cadência pós-orçamento é a mais
+# importante deste manifesto.
+# =====================================================================
+
+capabilities:
+  - prospeccao
+
+vocabulary:
+  lead: "cliente"
+  conversion: "serviço aprovado"
+  churn: "orçamento não aprovado"
+  catalog_item: "serviço"
+
+discovery_axis: "o sintoma que o cliente descreve, o uso que ele faz do veículo e há quanto tempo o problema aparece"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Entender o sintoma e o veículo. Nunca cotar serviço sem saber modelo, ano e motor."
+    - key: agendado
+      label: "Entrada agendada"
+      goal: "Trazer o carro para diagnóstico, com dia e hora combinados."
+      cadence: pre_entrada
+      phases:
+        - { key: marcada,   label: "Entrada marcada",   offset_days: 0 }
+        - { key: confirmar, label: "Confirmar véspera", offset_days: -1 }
+    - key: diagnostico
+      label: "Em diagnóstico"
+      goal: "Identificar a causa e separar o que é urgente do que pode esperar."
+    - key: orcamento
+      label: "Orçamento apresentado"
+      goal: "Apresentar, não só mandar. É aqui que a maioria dos serviços morre em silêncio."
+      cadence: pos_orcamento
+      phases:
+        - { key: entrega,  label: "Orçamento entregue", offset_days: 0 }
+        - { key: duvidas,  label: "Tirar dúvidas",      offset_days: 2 }
+        - { key: decisao,  label: "Buscar decisão",     offset_days: 5 }
+    - key: aprovado
+      label: "Serviço aprovado"
+      goal: "Executar com prazo combinado e avisar antes de qualquer atraso de peça."
+    - key: entregue
+      label: "Veículo entregue"
+      goal: "Entregar explicando o que foi feito e quando é a próxima revisão."
+      # Terminal E `won`: é o cliente conquistado. O núcleo pula etapa
+      # terminal no follow-up, mas mantém a recompra em etapa `won` — que é
+      # exatamente o que este segmento precisa, porque a revisão é o
+      # próximo negócio e ele tem data previsível.
+      terminal: true
+      won: true
+    - key: nao_aprovado
+      label: "Não aprovado"
+      terminal: true
+
+contact_fields:
+  - key: veiculo
+    label: "Veículo"
+    type: text
+  - key: ano_modelo
+    label: "Ano/modelo"
+    type: text
+  - key: km_atual
+    label: "Quilometragem"
+    type: number
+  - key: tipo_servico
+    label: "O que ele procura"
+    type: enum
+    options:
+      [revisao, motor, cambio, suspensao, freios, eletrica, injecao, ar_condicionado,
+       funilaria_pintura, pneus_alinhamento, escapamento, diagnostico_eletronico, outro]
+  - key: uso_do_veiculo
+    label: "Uso do veículo"
+    type: enum
+    options: [particular, trabalho_app, frota_empresa, comercial_leve, pouco_uso]
+  - key: urgencia
+    label: "Urgência"
+    type: enum
+    options: [nao_anda, anda_mas_arriscado, incomoda_so, preventivo]
+  - key: garantia_fabrica
+    label: "Ainda na garantia de fábrica?"
+    type: enum
+    options: [sim, nao, nao_sei]
+
+  # ---------------------------------------------------------------------
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite). Chaves e opções são canônicas —
+  # o skill-loader falha o build se desviarem. Só o label é do ramo.
+  # Faz sentido aqui por causa da frota: quem cuida de cinco carros de
+  # empresa tem verba, processo e alguém que assina.
+  # ---------------------------------------------------------------------
+  - key: verba
+    label: "Como pretende pagar"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem autoriza o serviço"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisão do lado dele"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
+# A entrada do veículo tem hora marcada e ocupa elevador: agenda é gargalo
+# físico aqui, não conveniência.
+scheduling:
+  enabled: true
+  default_duration_min: 60
+  slot_step_min: 30
+  min_advance_min: 120
+
+# A receita vem de serviço executado e repetido, com valor por atendimento.
+services:
+  enabled: true
+  label: "Serviços executados"
+  item_label: "serviço"
+
+# A revisão tem intervalo previsível — é o motor de recorrência com o
+# melhor encaixe de todos os segmentos até aqui.
+recurrence:
+  enabled: true
+  default_interval_days: 180
+  field: intervalo_revisao
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - google
+  - indicacao
+  - passou_na_frente
+  - seguradora
+  - guincho
+  - aplicativo_motorista
+  - prospeccao
+  - outro
+
+dna_sections:
+  - key: catalog
+    label: "O que a oficina faz"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [servico, tempo_medio, observacao], required: true, label: "Serviços que você executa", help: "O sistema só pode falar do que estiver aqui" }
+      - { key: nao_faz, type: list, label: "O que você NÃO faz", help: "Serviços que costumam pedir e você não atende. Evita promessa errada e retrabalho" }
+      - { key: marcas_atendidas, type: list, label: "Marcas que você atende", help: "Se você é especialista em algumas, liste. Se atende todas, escreva isso" }
+  - key: pricing
+    label: "Valores e pagamento"
+    required: true
+    fields:
+      - { key: hora_tecnica, type: text, required: true, label: "Valor da hora técnica", help: "É o que sustenta qualquer orçamento. Ex.: R$ 180/hora" }
+      - { key: diagnostico_valor, type: text, required: true, label: "Quanto custa o diagnóstico", help: "E se abate na aprovação. Ex.: R$ 150, abatido se o serviço for aprovado" }
+      - { key: range, type: money_range, label: "Faixa dos serviços mais comuns", help: "Ex.: de R$ 300 a R$ 4.000" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: à vista, PIX, cartão em até 6x sem juros" }
+      - { key: politica_peca, type: text, required: true, label: "Política de peça", help: "Você trabalha com original, paralela ou as duas? Como o cliente escolhe?" }
+  - key: availability
+    label: "Prazos e agenda"
+    required: true
+    fields:
+      - { key: prazo_diagnostico, type: text, required: true, label: "Prazo do diagnóstico", help: "Do carro entrar até o orçamento sair. Ex.: no mesmo dia, se entrar até 10h" }
+      - { key: prazo_servico, type: text, required: true, label: "Prazo dos serviços comuns", help: "Ex.: revisão no dia; embreagem em 2 dias úteis" }
+      - { key: prazo_peca, type: text, required: true, label: "Prazo de peça que não é de estoque", help: "O que mais atrasa entrega. Ex.: 1 a 3 dias úteis na região" }
+      - { key: weekly_hours, type: schedule, label: "Horário de atendimento", help: "Ex.: Seg a Sex 8h-18h; Sáb 8h-12h" }
+  - key: risk_free_entry
+    label: "Porta de entrada"
+    required: true
+    fields:
+      - { key: checagem_gratuita, type: boolean, required: true, label: "Faz checagem rápida gratuita?", help: "Ex.: conferir freio, pneu e níveis sem cobrar" }
+      - { key: o_que_inclui, type: text, label: "O que a checagem inclui", help: "Seja específico: é o que o cliente recebe antes de decidir" }
+      - { key: leva_e_traz, type: boolean, label: "Tem leva e traz?", help: "Buscar e devolver o veículo. Pesa mais do que parece em cliente que trabalha" }
+      - { key: carro_reserva, type: text, label: "Carro reserva ou apoio", help: "Se oferece algo para quem fica sem carro" }
+  - key: expertise_proof
+    label: "Experiência e garantia"
+    required: true
+    fields:
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Ex.: 12 anos no mesmo endereço" }
+      - { key: especialidades, type: list, label: "Suas especialidades", help: "Onde você é melhor que a oficina da esquina" }
+      - { key: equipamentos, type: list, label: "Equipamentos de diagnóstico", help: "Scanner, alinhamento, banco de teste. É prova concreta, não adjetivo" }
+      - { key: garantia, type: text, required: true, label: "Garantia que você dá", help: "A lei garante 90 dias ao serviço. Se você dá mais, é diferencial — escreva aqui" }
+      - { key: certificacoes, type: list, label: "Certificações e cursos", help: "Autorizada de alguma marca, curso de injeção, etc." }
+  - key: policies
+    label: "Regras do serviço"
+    required: true
+    fields:
+      - { key: autorizacao, type: text, required: true, label: "Como funciona a autorização", help: "Nada é executado sem o cliente aprovar. Descreva como você registra isso" }
+      - { key: pecas_substituidas, type: text, required: true, label: "As peças trocadas", help: "A lei manda devolver ao cliente. Diga como você faz" }
+      - { key: veiculo_parado, type: text, label: "Veículo parado no pátio", help: "Regra e prazo para carro que o cliente não retira" }
+      - { key: orcamento_validade, type: text, label: "Validade do orçamento", help: "A lei dá 10 dias, salvo combinação diferente" }
+  - key: retention
+    label: "Retorno e revisão"
+    required: true
+    fields:
+      - { key: intervalo_revisao, type: text, required: true, label: "Intervalo de revisão que você recomenda", help: "Em km e em meses. Ex.: 10 mil km ou 6 meses, o que vier primeiro" }
+      - { key: lembrete, type: text, label: "Como você avisa o cliente", help: "Ex.: mensagem 15 dias antes de vencer o prazo" }
+  - key: ecosystem
+    label: "Parceiros"
+    fields:
+      - { key: parceiros, type: list, label: "Com quem você trabalha", help: "Autopeças, guincho, funilaria, seguradora, retífica" }
+      - { key: indicacao, type: text, label: "Como funciona a indicação", help: "O que você oferece a quem indica" }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, label: "Endereço", help: "Onde o cliente deixa o carro" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que o cliente usa" }
+      - { key: instagram, type: text, label: "Instagram", help: "Onde ele vê os serviços. Ex.: @suaoficina" }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Hora técnica, diagnóstico, peça original ou paralela e parcelamento"
+  risk_free_entry:    "Checagem rápida e diagnóstico como porta de entrada"
+  availability:       "Prazo de diagnóstico, de serviço e de peça"
+  expertise_proof:    "Tempo de casa, especialidade, equipamento e garantia"
+  catalog:            "O que a oficina faz, marcas atendidas e o que não faz"
+  goal_matching:      "O sintoma que ele descreve → o que investigar"
+  objections:         "Fizeram por menos, meu primo disse, vou levar em outro lugar"
+  commitment_offer:   "Aprovação do orçamento, serviço em etapas e condição"
+  reciprocity:        "Checagem gratuita, laudo e a peça velha na mão do cliente"
+  limits_and_ethics:  "Nada sem autorização, nada de serviço que não precisa"
+  retention:          "Revisão por quilometragem e o cliente que sumiu"
+  ecosystem:          "Autopeças, guincho, funilaria e seguradora"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA — qual escola governa cada situação AQUI.
+#
+# A escolha central deste segmento: ticket médio e decisão em horas, mas
+# com MEDO no meio. Rackham diz que fechamento por pressão funciona em
+# ticket baixo; aqui funcionaria — e destruiria a confiança, que é o ativo
+# do ramo. Por isso `objections` e `commitment_offer` não vão para
+# `fechamento_classico`: vão para Voss e JOLT.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        consultiva_spin
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    cadencia_blount
+  reciprocity:         persuasao_cialdini
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
+cadences:
+  - key: pre_entrada
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a entrada do veículo na véspera e evitar elevador parado" }
+      - { offset_days: 1,  intent: "Retomar quem marcou e não apareceu, sem cobrança" }
+    stop_on: [converted, opted_out]
+
+  # A CADÊNCIA MAIS IMPORTANTE DESTE MANIFESTO.
+  # O orçamento de oficina tem urgência natural (o carro não anda) e mesmo
+  # assim some — porque o cliente sai para consultar e ninguém volta a
+  # falar com ele. Três toques em cinco dias, ângulo diferente em cada.
+  - key: pos_orcamento
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Tirar dúvida sobre o que foi diagnosticado, sem cobrar decisão" }
+      - { offset_days: 5, intent: "Oferecer fazer só o urgente agora e o resto depois" }
+      - { offset_days: 9, intent: "Avisar que o orçamento vence e perguntar o que faltou para decidir" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: pos_servico
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 3,  intent: "Perguntar se o problema resolveu de verdade" }
+      - { offset_days: 30, intent: "Conferir se o sintoma não voltou, dentro da garantia" }
+    stop_on: [opted_out]
+
+  - key: revisao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,   intent: "Avisar que a revisão está chegando pela quilometragem estimada" }
+      - { offset_days: 15,  intent: "Retomar com a agenda da semana, oferecendo dia e hora" }
+    stop_on: [replied, converted, opted_out]
+
+hard_rules:
+  - "NUNCA executar serviço sem autorização do cliente. O CDC exige orçamento prévio discriminado (art. 40) e o serviço não autorizado não pode ser cobrado."
+  - "NUNCA cotar serviço sem saber modelo, ano e motor. Preço dado por mensagem sem esses dados vira conflito na entrega."
+  - "Peça de reposição é original ou de mesma especificação técnica; usar paralela exige autorização do cliente (CDC art. 21). Nunca trocar por conta própria."
+  - "As peças substituídas são do cliente e devem ser devolvidas a ele."
+  - "Não afirmar diagnóstico sem ter olhado o veículo. Sintoma não é causa."
+  - "Não prometer prazo de serviço sem confirmar a disponibilidade da peça."
+  - "Não indicar serviço que o veículo não precisa. É a fama que o setor inteiro paga."
+
+kpis:
+  - taxa_conversao
+  - taxa_aprovacao_orcamento
+  - ticket_medio
+  - retorno_revisao
+  - tempo_resposta_mediana
+  - reincidencia_garantia

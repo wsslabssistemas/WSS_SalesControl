@@ -94,6 +94,15 @@ const CASOS = [
   { skill: "barbearia", msg: "tem horario hoje?", categoria: "availability", escola: "fechamento_classico" },
   { skill: "industria", msg: "para quando fica pronto?", categoria: "availability", escola: "negociacao_voss" },
 
+  // OFICINA (10º segmento, ago/2026). O sintoma não é pedido de serviço, e a
+  // objeção nº 1 não é preço — é desconfiança fantasiada de opinião técnica.
+  { skill: "oficina", msg: "quanto custa trocar a embreagem do meu carro?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "oficina", msg: "esta fazendo um barulho quando eu freio", categoria: "goal_matching", escola: "consultiva_spin" },
+  { skill: "oficina", msg: "na outra oficina fizeram por menos", categoria: "objections", escola: "negociacao_voss" },
+  { skill: "oficina", msg: "meu primo disse que e so a vela", categoria: "objections", escola: "negociacao_voss" },
+  { skill: "oficina", msg: "vou pensar e te falo depois", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  { skill: "oficina", msg: "quero a peca velha de volta, nao autorizei isso", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

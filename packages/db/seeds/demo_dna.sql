@@ -22,11 +22,79 @@ delete from public.commercial_dna d
  using public.tenants t
  where d.tenant_id = t.id
    and t.slug in ('demo-clinica','demo-distribuidora','demo-escola-esportiva',
-                  'demo-industria','demo-sob-medida','demo-energia-solar');
+                  'demo-industria','demo-sob-medida','demo-energia-solar',
+                  'demo-oficina');
 
 insert into public.commercial_dna (tenant_id, version, sections, source, is_current)
 select t.id, 1, x.sections, 'demo_seed', true
 from (values
+
+-- ---------------------------------------------------------------- OFICINA
+-- Dado FICTÍCIO. Escrito para exercitar a trava anti-invenção de verdade:
+-- todos os fatos EXIGIDOS pela biblioteca estão aqui, e alguns opcionais
+-- ficaram de fora de propósito, para a tela de cobertura ter o que mostrar.
+('demo-oficina', $json$
+{
+  "catalog": {
+    "items": [
+      { "servico": "Revisão completa", "tempo_medio": "3 horas", "observacao": "Inclui filtros, óleo, checagem de 30 itens" },
+      { "servico": "Troca de embreagem", "tempo_medio": "6 a 8 horas", "observacao": "Depende do modelo; tração dianteira leva mais" },
+      { "servico": "Freios (pastilha e disco)", "tempo_medio": "2 horas", "observacao": "Por eixo" },
+      { "servico": "Diagnóstico eletrônico com scanner", "tempo_medio": "1 hora", "observacao": "Leitura, teste e laudo por escrito" },
+      { "servico": "Suspensão completa", "tempo_medio": "5 horas", "observacao": "Amortecedor, batente, bandeja" },
+      { "servico": "Ar-condicionado (higienização e carga)", "tempo_medio": "2 horas", "observacao": "Teste de vazamento incluso" }
+    ],
+    "nao_faz": ["Funilaria e pintura", "Retífica de motor", "Câmbio automático de linha premium", "Blindagem"],
+    "marcas_atendidas": ["Volkswagen", "Fiat", "Chevrolet", "Renault", "Ford", "Toyota", "Hyundai"]
+  },
+  "pricing": {
+    "hora_tecnica": "R$ 180 a hora",
+    "diagnostico_valor": "R$ 150, abatidos se o serviço for aprovado em até 10 dias",
+    "range": "R$ 300 a R$ 4.500",
+    "parcelamento": "à vista no PIX com 5% de desconto; cartão em até 6x sem juros",
+    "politica_peca": "Trabalhamos com original e com paralela de linha reconhecida. Em item de segurança (freio, embreagem, direção, correia) só usamos original. A escolha é sempre do cliente e fica registrada por escrito no orçamento."
+  },
+  "availability": {
+    "prazo_diagnostico": "no mesmo dia para veículos que entram até as 10h",
+    "prazo_servico": "revisão sai no dia; embreagem em 2 dias úteis; suspensão em 1 dia",
+    "prazo_peca": "1 a 2 dias úteis para peça de linha; até 5 dias para importado",
+    "weekly_hours": "Seg a Sex 8h-18h; Sáb 8h-12h"
+  },
+  "risk_free_entry": {
+    "checagem_gratuita": true,
+    "o_que_inclui": "Freio, pneu, nível de óleo, água, palheta e leitura de erro no painel. Leva 15 minutos e o resultado é dito por inteiro, inclusive o que está bom.",
+    "leva_e_traz": true,
+    "carro_reserva": "Não temos carro reserva. Para serviço acima de 1 dia, buscamos e devolvemos o veículo na região."
+  },
+  "expertise_proof": {
+    "tempo_de_casa": "12 anos no mesmo endereço",
+    "especialidades": ["Injeção eletrônica", "Suspensão", "Ar-condicionado automotivo"],
+    "equipamentos": ["Scanner automotivo multimarcas", "Alinhamento 3D", "Máquina de ar-condicionado", "Elevador de 4 colunas"],
+    "garantia": "90 dias de garantia legal em todo serviço; 6 meses em serviço de motor e câmbio, com nota",
+    "certificacoes": ["Curso de injeção eletrônica (2 mecânicos)"]
+  },
+  "policies": {
+    "autorizacao": "Nenhum serviço é executado sem aprovação por escrito. O orçamento vai discriminado por mensagem, e o cliente responde aprovando. Serviço novo que aparecer no meio do reparo é parado e consultado antes de seguir.",
+    "pecas_substituidas": "Guardamos todas as peças trocadas e entregamos ao cliente na retirada do veículo, sem ele precisar pedir.",
+    "veiculo_parado": "Após 15 dias da conclusão sem retirada, cobramos diária de pátio de R$ 30, avisando antes.",
+    "orcamento_validade": "10 dias, conforme o CDC"
+  },
+  "retention": {
+    "intervalo_revisao": "10 mil km ou 6 meses, o que vier primeiro",
+    "lembrete": "Mensagem 15 dias antes da estimativa, com o km da última visita e dois horários oferecidos"
+  },
+  "ecosystem": {
+    "parceiros": ["Autopeças do bairro (entrega em 2h)", "Guincho 24h parceiro", "Funilaria do Marcelo", "Retífica Central"],
+    "indicacao": "Quem indica ganha a próxima troca de óleo com a mão de obra por nossa conta"
+  },
+  "location_contact": {
+    "address": "Av. Exemplo, 1200 — Porto Alegre/RS",
+    "whatsapp": "(51) 99999-0000",
+    "instagram": "@oficinademo"
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Oficina de bairro com 4 mecânicos, foco em injeção e suspensão, atendendo carro particular e motorista de aplicativo."
+}
+$json$::jsonb),
 
 -- ---------------------------------------------------------------- CLÍNICA
 ('demo-clinica', $json$
@@ -291,7 +359,7 @@ join public.tenants t on t.slug = x.slug
 -- `demo-` é tocado.
 where t.slug like 'demo-%';
 
--- Verificação. Esperado: 5 linhas, todas com 4 seções ou mais.
+-- Verificação. Esperado: 6 linhas, todas com 4 seções ou mais.
 select t.slug,
        (select count(*) from jsonb_object_keys(d.sections)) as secoes,
        d.source

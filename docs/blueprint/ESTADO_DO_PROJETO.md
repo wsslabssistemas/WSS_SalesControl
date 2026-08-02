@@ -67,7 +67,7 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
   biblioteca do segmento da empresa.
 
-### Segmentos — 9 completos, 166 entradas curadas
+### Segmentos — 10 completos, 184 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
@@ -79,6 +79,7 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 | `escola_esportiva` (natação, lutas, crossfit, pilates, clubes) | 17 | — |
 | `clinica` (médica, odonto, estética) | 16 | — |
 | `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 16 | prospecção + licitações |
+| `oficina` (mecânica, elétrica, funilaria, pneus) | 18 | prospecção |
 
 **Todo segmento tem uma entrada de INDECISÃO** (o cliente que concordou e mesmo
 assim travou — 40 a 60% das perdas, segundo o JOLT) e os B2B têm a do
@@ -86,7 +87,18 @@ assim travou — 40 a 60% das perdas, segundo o JOLT) e os B2B têm a do
 
 **Regra do segmento novo:** `energia_solar` só existiu porque `sob_medida` dizia
 "solar" no nome e **nenhuma das suas entradas falava de solar**. Nome de
-manifesto não é cobertura — cobertura é entrada curada.
+manifesto não é cobertura — cobertura é entrada curada. A regra foi aplicada de
+novo em `oficina` (ago/2026): antes de escrever, conferi que nenhuma das 166
+entradas existentes falava de diagnóstico, peça original, autorização de serviço
+ou revisão por quilometragem.
+
+**Biblioteca nova nasce COM ACENTO (decisão, ago/2026).** As nove primeiras
+foram escritas em ASCII, quando `technique`, `strategy` e `trigger_questions`
+eram anotação interna do motor. Não são mais: o Responder mostra a técnica ao
+vendedor e o exercício do curso mostra o gatilho ao aluno **como mensagem de
+cliente**. `oficina` é a primeira com acento; as antigas ficam como dívida
+registrada — trocar depois é achar e substituir, escrever errado de novo é
+aumentar a conta.
 
 Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador —
 trocar no seletor do topo do painel.

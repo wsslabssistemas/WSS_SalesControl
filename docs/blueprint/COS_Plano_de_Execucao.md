@@ -343,8 +343,23 @@ pesquisa séria de folclore repetido.
 
 - [ ] **Qualificação de compra (MEDDIC-lite)** — orçamento, processo de
       aprovação, critério de decisão e defensor interno. Já temos `decisor`.
-- [ ] **Fila de segmentos**: salão de beleza, pet, imobiliária, oficina, curso,
-      eventos. (Restaurante segue descartado.)
+- [~] **Fila de segmentos**: ~~oficina~~ ✅ (ago/2026, 10º segmento) · salão de
+      beleza, pet, imobiliária, curso, eventos. (Restaurante segue descartado.)
+      **`oficina` primeiro por dois motivos:** é a maior distância do que já
+      existia (nada cobria diagnóstico, peça original, autorização de serviço
+      nem revisão por quilometragem) e é o caso mais puro da tese do produto —
+      o orçamento aprovado no balcão que some.
+      Quatro achados que o setor tem e nenhum outro segmento tinha:
+      **o cliente traz sintoma, não pedido**; **o diagnóstico é o produto** e
+      quase todo mundo dá de graça; **a objeção nº 1 não é preço**, é "meu primo
+      disse que é só a vela"; e **existe lei do lado de quem trabalha certo** —
+      o CDC exige orçamento prévio discriminado (art. 40), obriga peça original
+      ou de mesma especificação salvo autorização (art. 21) e dá 90 dias de
+      garantia ao serviço (art. 26). Isso virou `hard_rules`, não folclore.
+      Entregue completo: manifesto (10/10 válidos), **18 entradas nas 12
+      categorias** com a de indecisão, `Oficina Demo` + DNA de demonstração
+      (33 campos, 14 obrigatórios), 6 casos no `retrieval_check` (**30/30**) e o
+      exercício do curso montando **9 situações distintas** para o segmento.
 - [ ] **Google Agenda mão dupla** — exige OAuth e ação do fundador.
 - [x] **Preço sugerido** (`/painel/admin/precos`). Ver o registro em §5 do curso — o "score de potencial" pedido não era construível: ele dependia de conversão observada, e há 0 desfechos. Entregue a versão medida: piso pelo custo de IA, sugestão pelo porte observado, e RECUSA declarada quando a janela não sustenta. Hoje as 10 empresas caem na recusa — que é a resposta certa.
 
