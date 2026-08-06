@@ -121,6 +121,15 @@ const CASOS = [
   { skill: "energia_solar", msg: "posso enviar a geracao para outro endereco?", categoria: "goal_matching", escola: "consultiva_spin" },
   { skill: "energia_solar", msg: "quando eu compro o material do kit?", categoria: "availability", escola: "consultiva_spin" },
 
+  // CASA DE FESTAS (12º). O segmento onde a DATA é o estoque — e por isso o
+  // único do catálogo em que a escassez é REAL e verificável na agenda.
+  { skill: "casa_de_festa", msg: "quanto custa a festa para 80 pessoas?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "casa_de_festa", msg: "posso levar minha bebida? tem taxa de rolha?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "casa_de_festa", msg: "o sabado dia 15 esta livre?", categoria: "availability", escola: "fechamento_classico" },
+  { skill: "casa_de_festa", msg: "da para segurar a data sem pagar?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  { skill: "casa_de_festa", msg: "vou pensar e depois confirmo", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  { skill: "casa_de_festa", msg: "aniversario do ano que vem, ela fez festa aqui", categoria: "retention", escola: "cadencia_blount" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

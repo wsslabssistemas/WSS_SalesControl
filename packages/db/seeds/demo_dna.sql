@@ -23,11 +23,71 @@ delete from public.commercial_dna d
  where d.tenant_id = t.id
    and t.slug in ('demo-clinica','demo-distribuidora','demo-escola-esportiva',
                   'demo-industria','demo-sob-medida','demo-energia-solar',
-                  'demo-oficina','demo-salao-beleza');
+                  'demo-oficina','demo-salao-beleza','demo-casa-de-festa');
 
 insert into public.commercial_dna (tenant_id, version, sections, source, is_current)
 select t.id, 1, x.sections, 'demo_seed', true
 from (values
+
+-- --------------------------------------------------------- CASA DE FESTAS
+-- Dado FICTÍCIO. Os quatro extras que estouram orçamento (rolha, hora
+-- extra, convidado a mais, sinal) estão preenchidos de propósito: são
+-- exatamente os fatos que a biblioteca EXIGE para poder responder.
+('demo-casa-de-festa', $json$
+{
+  "catalog": {
+    "items": [
+      { "pacote": "Infantil Completo", "o_que_inclui": "Espaço 5h, buffet salgado e doce, bebida não alcoólica, 4 monitores, brinquedoteca liberada, equipe de limpeza", "capacidade": "40 a 100 convidados" },
+      { "pacote": "Infantil Espaço", "o_que_inclui": "Espaço 5h, mesas, cadeiras, louça, 2 monitores e limpeza. Buffet por conta do cliente", "capacidade": "40 a 100 convidados" },
+      { "pacote": "Adulto / Confraternização", "o_que_inclui": "Espaço 6h, mesas postas, equipe de serviço e limpeza", "capacidade": "50 a 150 convidados" }
+    ],
+    "capacidade": "De 40 a 150 convidados. Abaixo de 40 o salão fica vazio e a festa perde graça — nesses casos a gente avisa.",
+    "nao_faz": ["Casamento com cerimônia no local", "Eventos após as 23h", "Festa com música ao vivo amplificada (restrição do condomínio vizinho)"],
+    "estrutura": ["Brinquedoteca com supervisão", "Área externa coberta", "Estacionamento para 25 carros", "Ar-condicionado no salão", "Sala dos pais com TV", "Acessibilidade e banheiro adaptado"]
+  },
+  "pricing": {
+    "regime": "Trabalhamos nos dois modelos: pacote fechado por convidado (com buffet) e aluguel do espaço com buffet do cliente. O preço muda muito entre os dois, e a gente sempre separa isso antes de orçar.",
+    "valor_por_convidado": "R$ 135 por convidado no pacote completo, mínimo cobrado de 40 pessoas",
+    "valor_espaco": "R$ 2.900 pelo espaço em 5 horas, com mesas, cadeiras, louça e limpeza",
+    "taxa_rolha": "Pode trazer bebida. Rolha de R$ 18 por garrafa de destilado e R$ 8 por garrafa de vinho ou espumante. Refrigerante e água sem taxa.",
+    "hora_extra": "R$ 450 por hora adicional, cobrada em fração de 30 minutos, combinada no dia",
+    "convidado_extra": "R$ 135 por pessoa acima do contratado, conferido na entrada e acertado ao final",
+    "parcelamento": "Sinal de 30% para reservar a data. Restante em até 3x, com a última parcela até 7 dias antes do evento. PIX ou cartão."
+  },
+  "availability": {
+    "sinal": "30% do valor fechado. A data fica disponível para outros interessados até o sinal entrar — não seguramos data na palavra.",
+    "antecedencia": "Sábado à tarde costuma fechar com 3 a 4 meses. Sábado à noite e domingo fecham com 2 meses. Meio de semana quase sempre tem data no mesmo mês.",
+    "horarios": "Sábado 12h-17h ou 18h-23h; domingo 12h-17h; meio de semana sob consulta",
+    "espera": "Mantemos lista de espera por data. Se o sinal de quem reservou não entrar no prazo, chamamos na ordem."
+  },
+  "policies": {
+    "cancelamento": "Cancelando com mais de 90 dias, devolvemos 70% do sinal. Entre 90 e 30 dias, 40%. Com menos de 30 dias o sinal não é devolvido, porque a data dificilmente é revendida.",
+    "remarcacao": "Uma troca de data sem custo, com no mínimo 45 dias de antecedência e sujeita à disponibilidade. O sinal acompanha.",
+    "chuva": "A área externa é coberta e o salão comporta todos os convidados. Chuva não cancela nem muda o valor.",
+    "fornecedor_externo": "Decoradora, fotógrafo e animação de fora podem entrar sem taxa, com montagem a partir de 2h antes. Buffet externo só no pacote de espaço, e precisa apresentar alvará sanitário."
+  },
+  "expertise_proof": {
+    "tempo_de_casa": "11 anos no mesmo endereço, mais de 900 festas realizadas",
+    "eventos_por_mes": "Entre 14 e 20 eventos por mês, mais nos meses de setembro a dezembro",
+    "depoimentos": ["Paula, festa de 6 anos em maio", "Comissão de formatura do Colégio Central 2025", "Renata, cliente há 4 anos seguidos"],
+    "alvara": "Alvará de funcionamento e AVCB em dia, seguro de responsabilidade civil, e 1 monitor para cada 12 crianças"
+  },
+  "retention": {
+    "antecedencia_contato": "Chamamos 4 meses antes do aniversário, oferecendo os dois primeiros fins de semana depois da data — que é quando a família costuma fazer.",
+    "condicao_retorno": "Família que já fez festa aqui tem 10% de desconto e prioridade de data por 15 dias antes de abrirmos para o público."
+  },
+  "ecosystem": {
+    "parceiros": ["Decoração Bilica", "Foto e vídeo Studio Luz", "Animação Turma do Riso", "Bolo da Dona Cida", "Cerimonial Encanto (formaturas)"],
+    "indicacao": "Quem indica uma família que fecha ganha 2 horas extras sem custo na própria festa, ou R$ 300 de desconto"
+  },
+  "location_contact": {
+    "address": "Rua Exemplo, 780 — Porto Alegre/RS",
+    "whatsapp": "(51) 97777-0000",
+    "instagram": "@casadefestasdemo"
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Casa de festas de bairro com foco em aniversário infantil, com operação também em formatura e confraternização de empresa."
+}
+$json$::jsonb),
 
 -- ------------------------------------------------------------ SALÃO DE BELEZA
 -- Dado FICTÍCIO. A régua da química está preenchida de propósito: é o fato
@@ -433,7 +493,7 @@ join public.tenants t on t.slug = x.slug
 -- `demo-` é tocado.
 where t.slug like 'demo-%';
 
--- Verificação. Esperado: 7 linhas, todas com 4 seções ou mais.
+-- Verificação. Esperado: 8 linhas, todas com 4 seções ou mais.
 select t.slug,
        (select count(*) from jsonb_object_keys(d.sections)) as secoes,
        d.source

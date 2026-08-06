@@ -1,0 +1,348 @@
+key: casa_de_festa
+name: Casa de Festas e Buffet (infantil, formatura, casamento, corporativo)
+version: 1.0.0
+
+# =====================================================================
+# POR QUE ESTE SEGMENTO EXISTE — e por que ele não é "eventos" genérico.
+#
+# A ideia veio do fundador e a pesquisa confirmou, com um detalhe a mais
+# que ele não tinha: aqui **a DATA é o estoque**, e é o estoque mais
+# perecível que já modelamos.
+#
+# 1. DUAS FESTAS NÃO CABEM NO MESMO SÁBADO. Na barbearia, cadeira vazia
+#    é prejuízo de uma hora; aqui, um sábado não vendido é perda total e
+#    irreversível — e sábado e domingo são a maior parte da receita do
+#    ano. As melhores datas esgotam com 30 a 60 dias de antecedência em
+#    festa infantil, e com muito mais em casamento.
+#    Consequência: o SINAL não é política de no-show, é o que transfere a
+#    posse da data. Segurar data sem sinal é a forma mais comum de
+#    perder duas vendas de uma vez.
+#
+# 2. A RECORRÊNCIA É ANUAL E QUASE NINGUÉM TRABALHA — a jogada que o
+#    fundador identificou. Aniversário se repete todo ano, a família
+#    costuma trocar de casa de festa, e "clientes recorrentes são o melhor
+#    negócio" do setor. O motor de recompra do COS resolve isso com um
+#    intervalo de 365 dias.
+#    O DETALHE QUE A PESQUISA ACRESCENTOU: a festa raramente acontece no
+#    dia do aniversário. O costume é o primeiro ou o segundo fim de semana
+#    DEPOIS. Então o alerta não pode ser "aniversário em X" — tem que ser
+#    "reservar o fim de semana próximo a X", disparado com meses de
+#    antecedência, porque quem chega em cima não acha data.
+#    Por isso existem DOIS campos de data neste manifesto: a do
+#    aniversariante (que se repete) e a do evento (que é a vendida).
+#
+# 3. O MODELO DE FORNECIMENTO MUDA A CONVERSA INTEIRA. Existem casas que
+#    entregam pacote fechado (espaço + comida + bebida + equipe, cobrado
+#    por convidado) e casas que alugam só o espaço, com buffet de fora e
+#    TAXA DE ROLHA por garrafa aberta. São dois negócios diferentes
+#    vendidos com o mesmo nome, e comparar preço entre eles sem separar é
+#    a origem do "achei mais barato" que não é mais barato.
+#
+# 4. O QUE ESTOURA O ORÇAMENTO NÃO É O PREÇO, É O QUE NÃO FOI DITO:
+#    hora extra, taxa de rolha, convidado além do contratado, taxa de
+#    serviço. Dizer isso ANTES é o principal diferencial de confiança —
+#    e é o que vira reclamação quando fica para depois.
+#
+# NÚMEROS DE REFERÊNCIA (2026): casamento de 100 pessoas custa de R$ 40 a
+# R$ 120 mil, com espaço e buffet levando 45% a 50%; buffet por convidado
+# em capital fica entre R$ 120 e R$ 350; o aluguel do espaço representa
+# 15% a 25% do orçamento. Servem de régua, nunca de preço — o preço é o
+# do DNA da casa.
+# =====================================================================
+
+capabilities: []
+
+vocabulary:
+  lead: "cliente"
+  conversion: "data reservada"
+  churn: "data perdida"
+  catalog_item: "pacote"
+
+discovery_axis: "que evento é, para quantas pessoas, em que data, e se a pessoa quer pacote fechado ou só o espaço"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir data, número de convidados e tipo de evento. Sem isso não existe orçamento."
+    - key: orcamento
+      label: "Orçamento enviado"
+      goal: "Orçamento com TUDO que entra e o que não entra. O que não foi dito vira reclamação."
+      cadence: pos_orcamento
+      phases:
+        - { key: envio,   label: "Orçamento enviado",  offset_days: 0 }
+        - { key: duvidas, label: "Tirar dúvidas",      offset_days: 3 }
+        - { key: data,    label: "Alertar sobre a data", offset_days: 7 }
+    - key: visita
+      label: "Visita ao espaço"
+      goal: "Quem visita fecha muito mais. O espaço se vende sozinho quando a pessoa entra."
+      cadence: pre_visita
+      phases:
+        - { key: agendada,  label: "Visita agendada",   offset_days: 0 }
+        - { key: confirmar, label: "Confirmar véspera", offset_days: -1 }
+    - key: reservado
+      label: "Data reservada"
+      goal: "Sinal pago e contrato assinado. A data só é dela depois disso."
+      cadence: pre_evento
+    - key: realizado
+      label: "Evento realizado"
+      # Terminal E `won`: é o cliente conquistado, e é de onde sai a
+      # recompra do ano que vem. O núcleo mantém a recorrência em etapa
+      # `won` — que aqui é a razão de existir do segmento.
+      terminal: true
+      won: true
+      goal: "Festa entregue. A próxima venda é a do ano que vem, e ela começa agora."
+    - key: perdido
+      label: "Não fechou"
+      terminal: true
+
+contact_fields:
+  - key: tipo_evento
+    label: "Tipo de evento"
+    type: enum
+    options:
+      [aniversario_infantil, aniversario_adulto, casamento, formatura, cha_revelacao,
+       batizado, bodas, confraternizacao_empresa, outro]
+  # A DATA DO EVENTO é a que se vende. Ela é única e não se repete.
+  - key: data_evento
+    label: "Data pretendida do evento"
+    type: date
+  # A DATA DO ANIVERSARIANTE é a que se REPETE — e é dela que sai o alerta
+  # do ano seguinte. São coisas diferentes de propósito: a festa costuma
+  # cair no fim de semana seguinte ao aniversário, não no dia.
+  - key: data_aniversario
+    label: "Data de nascimento do aniversariante"
+    type: date
+  - key: nome_aniversariante
+    label: "Nome do aniversariante"
+    type: text
+  - key: convidados
+    label: "Número de convidados"
+    type: number
+  - key: regime
+    label: "O que ela quer contratar"
+    type: enum
+    options: [pacote_fechado, espaco_com_buffet_proprio, espaco_puro, ainda_nao_sabe]
+  - key: bebida
+    label: "Bebida"
+    type: enum
+    options: [inclusa_no_pacote, contratada_a_parte, cliente_leva_com_rolha, sem_bebida, indefinido]
+  - key: flexibilidade_data
+    label: "A data é fechada?"
+    type: enum
+    options: [data_unica, aceita_fim_de_semana_proximo, aceita_outro_mes, so_pesquisando]
+
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite). Chaves e opções canônicas.
+  # Faz sentido aqui porque formatura e evento de empresa têm comissão,
+  # verba aprovada e mais de uma pessoa assinando.
+  - key: verba
+    label: "Verba do evento"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem decide junto"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisão do outro lado"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
+# A visita ao espaço é o que mais converte, e ela tem hora marcada.
+scheduling:
+  enabled: true
+  default_duration_min: 45
+  slot_step_min: 30
+  min_advance_min: 240
+
+services:
+  enabled: true
+  label: "Eventos realizados"
+  item_label: "evento"
+
+# A RECOMPRA ANUAL — o motivo comercial de este segmento existir.
+# 365 dias, e o alerta precisa sair com MESES de antecedência, porque data
+# boa esgota. O campo do contato manda; isto é o padrão.
+recurrence:
+  enabled: true
+  default_interval_days: 365
+  field: data_aniversario
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - google
+  - indicacao
+  - passou_na_frente
+  - festa_anterior
+  - cerimonialista
+  - fornecedor_parceiro
+  - outro
+
+dna_sections:
+  - key: catalog
+    label: "Pacotes e espaço"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [pacote, o_que_inclui, capacidade], required: true, label: "Pacotes que você vende", help: "O sistema só fala do que estiver aqui. Seja explícito no que inclui" }
+      - { key: capacidade, type: text, required: true, label: "Capacidade do espaço", help: "Mínimo e máximo de convidados. Ex.: de 40 a 150 pessoas" }
+      - { key: nao_faz, type: list, label: "O que você NÃO faz", help: "Serviços que pedem e você não atende. Evita promessa errada" }
+      - { key: estrutura, type: list, label: "O que o espaço tem", help: "Brinquedoteca, estacionamento, ar-condicionado, acessibilidade, área externa" }
+  - key: pricing
+    label: "Valores e regras de cobrança"
+    required: true
+    fields:
+      - { key: regime, type: text, required: true, label: "Como você trabalha", help: "Pacote fechado por convidado, espaço puro, ou os dois? É a primeira coisa que muda o preço" }
+      - { key: valor_por_convidado, type: text, label: "Valor por convidado", help: "Se o pacote é por pessoa. Diga o mínimo de convidados cobrado" }
+      - { key: valor_espaco, type: text, label: "Valor do espaço", help: "Se aluga o espaço puro, quanto e por quantas horas" }
+      # OS EXTRAS SÃO O QUE ESTOURA O ORÇAMENTO — e o que vira reclamação
+      # quando não foi dito antes. Por isso são campos separados e obrigatórios.
+      - { key: taxa_rolha, type: text, required: true, label: "Taxa de rolha", help: "Se o cliente pode levar bebida e quanto custa por garrafa. Se não permite, escreva isso" }
+      - { key: hora_extra, type: text, required: true, label: "Hora extra", help: "Quanto custa passar do horário e como é cobrada" }
+      - { key: convidado_extra, type: text, required: true, label: "Convidado além do contratado", help: "Como cobra quem chega a mais no dia" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: sinal de 30%, restante em até 4x até 7 dias antes do evento" }
+  - key: availability
+    label: "Datas e agenda"
+    required: true
+    fields:
+      - { key: sinal, type: text, required: true, label: "Sinal que reserva a data", help: "Quanto e em quanto tempo. A data só sai do mercado depois disso" }
+      - { key: antecedencia, type: text, required: true, label: "Com quanta antecedência lota", help: "Ex.: sábado à tarde fecha com 3 meses; meio de semana tem data no mês" }
+      - { key: horarios, type: text, required: true, label: "Horários disponíveis", help: "Ex.: sábado 12h-17h ou 18h-23h; domingo 12h-17h" }
+      - { key: espera, type: text, label: "Lista de espera", help: "Como funciona quando a data pedida já está reservada" }
+  - key: policies
+    label: "Regras do contrato"
+    required: true
+    fields:
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e devolução do sinal", help: "Seja claro. É a pergunta que mais gera desconfiança" }
+      - { key: remarcacao, type: text, label: "Troca de data", help: "Se permite, com quanta antecedência e se o sinal acompanha" }
+      - { key: chuva, type: text, label: "Se o espaço tem área externa", help: "O que acontece se chover. Plano B declarado tira medo" }
+      - { key: fornecedor_externo, type: text, label: "Fornecedor de fora", help: "Pode entrar decoradora, fotógrafo e buffet de fora? Tem taxa ou credenciamento?" }
+  - key: expertise_proof
+    label: "Experiência e prova"
+    required: true
+    fields:
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 11 anos e mais de 900 festas" }
+      - { key: eventos_por_mes, type: text, label: "Quantos eventos por mês", help: "Volume é prova concreta de operação" }
+      - { key: depoimentos, type: list, label: "Clientes que aceitam conversar", help: "Vale mais que qualquer depoimento escrito" }
+      - { key: alvara, type: text, label: "Alvará e segurança", help: "Alvará, AVCB, seguro. Em espaço com criança isso pesa" }
+  - key: retention
+    label: "O ano que vem"
+    required: true
+    fields:
+      - { key: antecedencia_contato, type: text, required: true, label: "Com quanta antecedência você chama de volta", help: "Data boa esgota. Ex.: 4 meses antes do aniversário, oferecendo o fim de semana mais próximo" }
+      - { key: condicao_retorno, type: text, label: "Condição para quem já fez festa aqui", help: "O que a família ganha por voltar. É a venda mais barata que existe" }
+  - key: ecosystem
+    label: "Fornecedores e parcerias"
+    fields:
+      - { key: parceiros, type: list, label: "Parceiros que você indica", help: "Decoração, fotografia, animação, bolo, cerimonial" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a família ganha por indicar. Festa gera festa: os convidados são o público" }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, label: "Endereço", help: "Onde fica o espaço" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que o cliente usa" }
+      - { key: instagram, type: text, label: "Instagram", help: "Onde ele vê as festas. Ex.: @suacasadefestas" }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Pacote por convidado, espaço puro, rolha, hora extra e convidado a mais"
+  risk_free_entry:    "Visita ao espaço e a experiência de entrar no lugar"
+  availability:       "Data disponível, antecedência e lista de espera"
+  expertise_proof:    "Tempo de casa, volume de festas, alvará e segurança"
+  catalog:            "Pacotes, capacidade e estrutura do espaço"
+  goal_matching:      "Que evento é, para quem, e qual pacote resolve"
+  objections:         "Achei mais barato, é caro, vou pesquisar outros espaços"
+  commitment_offer:   "Sinal que reserva a data e contrato"
+  reciprocity:        "Visita guiada, degustação e orçamento aberto"
+  limits_and_ethics:  "Não segurar data sem sinal, não esconder extra"
+  retention:          "O aniversário do ano que vem e a família que volta"
+  ecosystem:          "Decoração, foto, animação e os convidados como público"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA.
+#
+# A escolha central: ticket alto e decisão emocional, mas com ESTOQUE
+# ESCASSO e verificável. Isso cria a única urgência honesta do catálogo do
+# COS — a data existe ou não existe, e dá para provar na agenda. Por isso
+# `availability` e `commitment_offer` vão para `fechamento_classico`: aqui
+# pedir a decisão é serviço prestado, porque hesitar custa a data.
+# Já `objections` continua em Voss: quando o assunto é preço, comparar
+# pacote fechado com espaço puro é o que resolve, não pressão.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    fechamento_classico
+  reciprocity:         persuasao_cialdini
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
+cadences:
+  # O orçamento de festa some rápido porque a pessoa pede em cinco lugares
+  # no mesmo dia. O terceiro toque usa a única urgência honesta que existe
+  # aqui: a data que ela quer ainda está livre — e pode não estar amanhã.
+  - key: pos_orcamento
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 3, intent: "Tirar dúvida sobre o que está incluso, sem cobrar decisão" }
+      - { offset_days: 7, intent: "Convidar para conhecer o espaço — quem visita fecha muito mais" }
+      - { offset_days: 12, intent: "Avisar com honestidade a situação real da data pretendida" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: pre_visita
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a visita na véspera" }
+      - { offset_days: 1,  intent: "Retomar quem visitou e não fechou, com o que ficou pendente" }
+    stop_on: [converted, opted_out]
+
+  - key: pre_evento
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -30, intent: "Fechar o número de convidados e o cardápio" }
+      - { offset_days: -7,  intent: "Confirmar detalhes finais, horário e fornecedores externos" }
+      - { offset_days: 2,   intent: "Agradecer, pedir a foto e o depoimento no pico da satisfação" }
+    stop_on: [opted_out]
+
+  # A CADÊNCIA QUE JUSTIFICA O SEGMENTO. Dispara meses antes do próximo
+  # aniversário, porque data boa esgota — chegar no mês da festa é chegar
+  # tarde. E a oferta é do FIM DE SEMANA próximo, não do dia exato.
+  - key: aniversario_do_ano_que_vem
+    applies_to: reactivation
+    steps:
+      - { offset_days: -120, intent: "Lembrar que o aniversário está chegando e oferecer o fim de semana mais próximo, antes de a agenda fechar" }
+      - { offset_days: -75,  intent: "Retomar com as datas que ainda restam no período" }
+      - { offset_days: -45,  intent: "Último aviso honesto sobre a disponibilidade do mês" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+hard_rules:
+  - "NUNCA segurar data sem sinal. Data prometida na palavra é a forma mais comum de perder duas vendas: a que não pagou e a que foi recusada."
+  - "Todo orçamento diz o que ESTÁ e o que NÃO está incluso. Taxa de rolha, hora extra, convidado além do contratado e taxa de serviço são ditos antes, sempre."
+  - "Não afirmar disponibilidade de data sem conferir a agenda."
+  - "Não comparar preço com outra casa sem separar o regime: pacote fechado e espaço puro não são a mesma coisa."
+  - "Não prometer estrutura, capacidade ou fornecedor que não esteja no DNA."
+
+kpis:
+  - taxa_conversao
+  - taxa_ocupacao_datas
+  - ticket_medio
+  - retorno_ano_seguinte
+  - visitas_realizadas
+  - tempo_resposta_mediana

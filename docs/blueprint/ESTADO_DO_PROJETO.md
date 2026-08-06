@@ -67,7 +67,7 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
   biblioteca do segmento da empresa.
 
-### Segmentos — 11 completos, 205 entradas curadas
+### Segmentos — 12 completos, 222 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
@@ -81,6 +81,7 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 | `sob_medida` (marcenaria, vidraçaria, serralheria, solar) | 16 | prospecção + licitações |
 | `oficina` (mecânica, elétrica, funilaria, pneus) | 18 | prospecção |
 | `salao_beleza` (cabelo, química, unhas, estética rápida) | 19 | — |
+| `casa_de_festa` (infantil, formatura, casamento, corporativo) | 17 | — |
 
 **Todo segmento tem uma entrada de INDECISÃO** (o cliente que concordou e mesmo
 assim travou — 40 a 60% das perdas, segundo o JOLT) e os B2B têm a do
