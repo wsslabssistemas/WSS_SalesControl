@@ -1,0 +1,354 @@
+key: pet
+name: Pet (banho e tosa, creche, hotel e day care)
+version: 1.0.0
+
+# =====================================================================
+# POR QUE ESTE SEGMENTO EXISTE — e por que não é barbearia com cachorro.
+#
+# A dica veio do fundador: "hoje temos pets com creche e hotel". É
+# exatamente isso que separa este segmento de tudo que já existe.
+#
+# Banho e tosa, sozinho, seria quase barbearia: agenda, recompra por dias,
+# vínculo com o profissional. Creche e hotel são OUTRO NEGÓCIO, e trazem
+# quatro coisas que nenhuma das 12 Skills anteriores tem:
+#
+# 1. HOSPEDAGEM SE VENDE POR PERÍODO, NÃO POR HORÁRIO. Entrada e saída,
+#    diárias, e um limite físico de vagas. É estoque de leito, não de
+#    cadeira — e na alta temporada (feriado, férias, fim de ano) ele
+#    esgota com antecedência, como a data da casa de festas.
+#
+# 2. CRECHE SE VENDE POR PLANO MENSAL, com frequência declarada (2x, 3x,
+#    5x por semana). É receita recorrente contratada, mais parecida com
+#    academia do que com banho e tosa — e a evasão se parece com a de
+#    academia também.
+#
+# 3. EXISTE UMA PORTA DE ENTRADA OBRIGATÓRIA QUE NÃO É COMERCIAL: a
+#    AVALIAÇÃO COMPORTAMENTAL. Cão que não se adapta ao grupo não entra —
+#    e aceitar sem avaliar é como o salão fazer química sem ver o
+#    histórico do fio: o dano acontece com outro cliente junto.
+#    Some-se a isso a exigência de carteira de vacina em dia, que é regra
+#    sanitária e não preferência.
+#
+# 4. QUEM DECIDE NÃO É QUEM USA, e a emoção é o produto. O tutor deixa um
+#    membro da família com desconhecidos. O relatório do dia — foto,
+#    vídeo, como ele passou — não é mimo: é a entrega do serviço, e é o
+#    que faz a mensalidade se sustentar.
+#
+# CONTEXTO: o Brasil é o 3º maior mercado pet do mundo, com mais de 240
+# milhões de animais. E um alerta que vale escrever: cerca de 29% das
+# empresas do setor fecham em até dois anos, quase sempre por gestão
+# financeira e controle — não por falta de cliente.
+#
+# ATENÇÃO AO LIMITE: veterinário NÃO está coberto aqui. Consulta, exame e
+# cirurgia são `clinica`, que já existe. Se um dia houver Skill de clínica
+# veterinária, ela nasce de `clinica`, não daqui.
+# =====================================================================
+
+capabilities: []
+
+vocabulary:
+  lead: "tutor"
+  conversion: "cliente ativo"
+  churn: "tutor que parou de trazer"
+  catalog_item: "serviço"
+
+discovery_axis: "que animal é (porte, idade, temperamento), do que o tutor precisa (rotina, viagem, socialização) e com que frequência"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir o animal e a necessidade. Porte e temperamento mudam preço, vaga e viabilidade."
+    - key: avaliacao
+      label: "Avaliação e adaptação"
+      goal: "Dia de teste para creche e hotel. Cão que não se adapta ao grupo não entra — e isso protege todo mundo."
+      cadence: pos_avaliacao
+      phases:
+        - { key: marcada,   label: "Avaliação marcada",  offset_days: 0 }
+        - { key: realizada, label: "Avaliação feita",    offset_days: 1 }
+    - key: agendado
+      label: "Serviço agendado"
+      goal: "Banho, tosa ou primeira diária marcada, com vacina conferida."
+      cadence: confirmacao
+      phases:
+        - { key: marcado,   label: "Agendado",            offset_days: 0 }
+        - { key: confirmar, label: "Confirmar véspera",   offset_days: -1 }
+    - key: ativo
+      label: "Cliente ativo"
+      goal: "Frequência estabelecida: banho no ciclo, plano de creche ou diárias recorrentes."
+      cadence: pos_servico
+    - key: fiel
+      label: "Cliente fiel"
+      # Terminal E `won`, como barbearia e salão: é o tutor conquistado, e
+      # é de onde sai a recompra por ciclo.
+      terminal: true
+      won: true
+      goal: "Rotina firmada. Daqui em diante o jogo é frequência, alta temporada e indicação."
+    - key: perdido
+      label: "Parou de trazer"
+      terminal: true
+
+contact_fields:
+  - key: nome_animal
+    label: "Nome do animal"
+    type: text
+  - key: especie
+    label: "Espécie"
+    type: enum
+    options: [cao, gato, outro]
+  - key: porte
+    label: "Porte"
+    type: enum
+    options: [mini, pequeno, medio, grande, gigante]
+  - key: raca_pelagem
+    label: "Raça / pelagem"
+    type: text
+  - key: idade
+    label: "Idade"
+    type: enum
+    options: [filhote, adulto, idoso]
+  - key: servico_principal
+    label: "O que o tutor procura"
+    type: enum
+    options:
+      [banho_tosa, creche_diaria, creche_plano, hotel, day_care, adestramento,
+       taxi_dog, leva_e_traz, outro]
+  # CAMPO DE SEGURANÇA, não de preferência — como o histórico químico no
+  # salão. Cão reativo em grupo machuca outro animal, e a responsabilidade
+  # é da casa. Sem avaliação não entra.
+  - key: temperamento
+    label: "Como ele é com outros animais"
+    type: enum
+    options: [sociavel, reservado, reativo, nao_sei, ainda_nao_avaliado]
+  - key: vacinas
+    label: "Vacinas em dia"
+    type: enum
+    options: [sim_comprovado, sim_sem_comprovante, vencidas, nao_sei]
+  - key: castrado
+    label: "Castrado"
+    type: enum
+    options: [sim, nao, nao_sei]
+  - key: restricao_saude
+    label: "Restrição de saúde ou medicação"
+    type: text
+  - key: frequencia
+    label: "Frequência pretendida"
+    type: enum
+    options: [1x_semana, 2x_semana, 3x_semana, 5x_semana, quinzenal, mensal, so_quando_viaja, indefinida]
+
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite). Chaves e opções canônicas.
+  # Faz sentido no plano mensal e na hospedagem longa, que são compromisso
+  # de valor e costumam ser decididos por duas pessoas na casa.
+  - key: verba
+    label: "Como pretende pagar"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem decide junto"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisão em casa"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
+scheduling:
+  enabled: true
+  default_duration_min: 90
+  slot_step_min: 30
+  min_advance_min: 120
+
+services:
+  enabled: true
+  label: "Atendimentos realizados"
+  item_label: "serviço"
+
+# Banho tem ciclo próprio por pelagem; creche é frequência semanal; hotel
+# é por viagem. O campo do contato manda; isto é o padrão do banho.
+recurrence:
+  enabled: true
+  default_interval_days: 21
+  field: frequencia
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - google
+  - indicacao
+  - passou_na_frente
+  - veterinario_parceiro
+  - vizinhanca
+  - outro
+
+dna_sections:
+  - key: catalog
+    label: "Serviços e estrutura"
+    required: true
+    fields:
+      - { key: items, type: table, columns: [servico, duracao, observacao], required: true, label: "Serviços que vocês fazem", help: "O sistema só fala do que estiver aqui" }
+      - { key: nao_faz, type: list, label: "O que vocês NÃO fazem", help: "Ex.: não atendemos gato, não fazemos tosa de raça específica, não aceitamos cão reativo" }
+      - { key: estrutura, type: list, label: "O que a casa tem", help: "Área externa, piscina, câmeras, ar-condicionado, separação por porte" }
+      - { key: capacidade, type: text, label: "Capacidade", help: "Quantos animais por dia na creche e quantas vagas no hotel. É o que esgota na alta temporada" }
+  - key: pricing
+    label: "Valores"
+    required: true
+    fields:
+      # PORTE E PELAGEM mudam o preço do banho como comprimento muda o da
+      # química. Régua, não número solto.
+      - { key: banho_por_porte, type: text, required: true, label: "Preço do banho por porte", help: "A régua. Ex.: mini R$ 55, pequeno R$ 65, médio R$ 85, grande R$ 110. Pelagem longa tem acréscimo" }
+      - { key: plano_creche, type: text, label: "Planos de creche", help: "Por frequência semanal. Ex.: 2x R$ 380/mês, 3x R$ 520, 5x R$ 750" }
+      - { key: diaria_hotel, type: text, label: "Diária do hotel", help: "Por porte, e se a diária conta por pernoite ou por período de 24h" }
+      - { key: alta_temporada, type: text, label: "Alta temporada", help: "Se tem acréscimo em feriado e férias, e quanto. Dizer antes evita conflito" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, cartão, e como funciona a cobrança do plano mensal" }
+  - key: availability
+    label: "Agenda e vagas"
+    required: true
+    fields:
+      - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Inclua o horário de entrega e retirada, que é o que mais gera dúvida" }
+      - { key: antecedencia_hotel, type: text, required: true, label: "Antecedência do hotel", help: "Com quanto tempo lota em feriado e férias. Ex.: fim de ano fecha com 60 dias" }
+      - { key: prazo_banho, type: text, label: "Tempo do banho e tosa", help: "Quanto o animal fica na casa. Ex.: 2 a 3 horas, ou por agendamento com hora marcada" }
+  - key: risk_free_entry
+    label: "Avaliação e adaptação"
+    required: true
+    fields:
+      - { key: avaliacao_obrigatoria, type: boolean, required: true, label: "A avaliação comportamental é obrigatória?", help: "Para creche e hotel. É o que protege os outros animais e a sua responsabilidade" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona o dia de teste", help: "Duração, o que vocês observam e o que acontece se o cão não se adaptar" }
+      - { key: primeira_vez, type: text, label: "Condição de primeira vez", help: "Se existe. Ex.: dia de experimentação de creche sem custo" }
+  - key: policies
+    label: "Regras da casa"
+    required: true
+    fields:
+      # Vacina é regra sanitária, não preferência. Fica destacada.
+      - { key: vacinas_exigidas, type: text, required: true, label: "Vacinas exigidas", help: "Quais, e com que antecedência. Ex.: V8/V10, antirrábica e gripe canina, com no mínimo 15 dias" }
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar. No hotel, a reserva de alta temporada costuma ter regra própria" }
+      - { key: emergencia, type: text, required: true, label: "Se acontecer alguma coisa", help: "Qual veterinário vocês acionam, quem autoriza e quem paga. É a pergunta que o tutor tem medo de fazer" }
+      - { key: nao_aceita, type: text, label: "Quando vocês recusam", help: "Cão reativo, fêmea no cio, animal doente, vacina vencida. Recusar bem escrito é confiança" }
+  - key: expertise_proof
+    label: "Equipe e cuidado"
+    required: true
+    fields:
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 7 anos no bairro" }
+      - { key: equipe, type: text, label: "Quem cuida", help: "Quantas pessoas, formação, e quantos animais por cuidador na creche" }
+      - { key: monitoramento, type: text, label: "Câmeras e relatório", help: "Se o tutor acompanha, como e com que frequência. É a entrega emocional do serviço" }
+      - { key: parceria_vet, type: text, label: "Veterinário de apoio", help: "Com quem vocês trabalham em caso de intercorrência" }
+  - key: retention
+    label: "Frequência e retorno"
+    required: true
+    fields:
+      - { key: intervalo_banho, type: text, required: true, label: "Intervalo de banho recomendado", help: "Por pelagem. Ex.: pelo curto a cada 21 dias; pelo longo a cada 15" }
+      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo com dois horários" }
+  - key: ecosystem
+    label: "Produtos e parcerias"
+    fields:
+      - { key: revenda, type: list, label: "O que vocês vendem", help: "Ração, antipulgas, brinquedo, acessório" }
+      - { key: parceiros, type: list, label: "Parcerias", help: "Veterinário, adestrador, pet sitter, transporte" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que o tutor ganha por trazer alguém" }
+  - key: location_contact
+    label: "Endereço e contatos"
+    required: true
+    fields:
+      - { key: address, type: text, label: "Endereço", help: "Onde fica" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que o tutor usa" }
+      - { key: instagram, type: text, label: "Instagram", help: "Onde ele vê os animais. Ex.: @seupet" }
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Banho por porte e pelagem, plano de creche, diária e alta temporada"
+  risk_free_entry:    "Avaliação comportamental e dia de adaptação"
+  availability:       "Horário, vaga de creche e reserva de hotel em alta temporada"
+  expertise_proof:    "Equipe, quantos animais por cuidador, câmera e veterinário de apoio"
+  catalog:            "Serviços, estrutura da casa e o que não fazem"
+  goal_matching:      "O que o tutor precisa (rotina, viagem, socialização) → serviço certo"
+  objections:         "Tá caro, tenho medo de deixar, faço em casa"
+  commitment_offer:   "Plano mensal, pacote de banhos e reserva de hotel"
+  reciprocity:        "Dia de experimentação, relatório do dia e orientação de cuidado"
+  limits_and_ethics:  "Vacina, cão que não se adapta e o que acontece se algo der errado"
+  retention:          "Ciclo do banho, frequência da creche e o tutor que sumiu"
+  ecosystem:          "Veterinário, adestrador, ração e indicação"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA.
+#
+# A diferença deste segmento: existe MEDO no meio de uma compra de ticket
+# baixo. Deixar um animal com desconhecidos é decisão emocional, e por isso
+# `objections` e `commitment_offer` NÃO vão para fechamento por pressão,
+# apesar do ticket — vão para Voss e JOLT, como na clínica.
+# Já `availability` vai para fechamento clássico, porque vaga de hotel em
+# feriado é escassez real e verificável, como a data da casa de festas.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    oferta_valor
+  reciprocity:         persuasao_cialdini
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
+cadences:
+  - key: pos_avaliacao
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 1, intent: "Contar como o animal se saiu no dia de teste, com foto — é o que vende a creche" }
+      - { offset_days: 4, intent: "Oferecer o plano com a frequência que fez sentido para a rotina dele" }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 2
+
+  - key: confirmacao
+    applies_to: trial_followup
+    steps:
+      - { offset_days: -1, intent: "Confirmar a véspera e lembrar da carteira de vacina" }
+      - { offset_days: 1,  intent: "Retomar quem faltou, sem cobrança, oferecendo novo horário" }
+    stop_on: [converted, opted_out]
+
+  - key: pos_servico
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 1,  intent: "Mandar como ele passou e perguntar se ficou tudo bem em casa" }
+      - { offset_days: 15, intent: "Sugerir o próximo banho pelo ciclo da pelagem dele" }
+    stop_on: [opted_out]
+
+  # ALTA TEMPORADA: vaga de hotel em feriado e férias esgota, e quem avisa
+  # antes vende a temporada inteira. É a cadência que mais rende aqui.
+  - key: alta_temporada
+    applies_to: reactivation
+    steps:
+      - { offset_days: -60, intent: "Avisar que a temporada está abrindo e oferecer reserva antes de lotar" }
+      - { offset_days: -30, intent: "Retomar com as datas que ainda restam" }
+    stop_on: [replied, converted, opted_out]
+
+  - key: reativacao
+    applies_to: reactivation
+    steps:
+      - { offset_days: 0,  intent: "Perguntar pelo animal, não pelo serviço — quem sumiu costuma ter um motivo" }
+      - { offset_days: 20, intent: "Oferecer horário do ciclo dele, sem cobrança pela ausência" }
+    stop_on: [replied, converted, opted_out]
+
+hard_rules:
+  - "NUNCA aceitar animal em creche ou hotel sem avaliação comportamental. Cão que não se adapta machuca outro animal, e a responsabilidade é da casa."
+  - "NUNCA aceitar animal sem carteira de vacina em dia. É regra sanitária, não preferência, e protege todos os outros."
+  - "Não cotar banho sem saber porte e pelagem. O preço muda e o número dito antes vira conflito na retirada."
+  - "Não prometer vaga de creche ou hotel sem conferir a ocupação do dia."
+  - "Não afirmar estrutura, câmera ou parceria veterinária que não esteja no DNA."
+  - "Consulta, exame, vacina e cirurgia são de veterinário. Não orientar tratamento nem diagnosticar."
+
+kpis:
+  - taxa_conversao
+  - frequencia_media
+  - taxa_ocupacao_creche
+  - ocupacao_hotel_alta_temporada
+  - ticket_medio
+  - tempo_resposta_mediana

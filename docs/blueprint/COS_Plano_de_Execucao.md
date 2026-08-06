@@ -418,7 +418,13 @@ pesquisa séria de folclore repetido.
 - [ ] **Qualificação de compra (MEDDIC-lite)** — orçamento, processo de
       aprovação, critério de decisão e defensor interno. Já temos `decisor`.
 - [~] **Fila de segmentos**: ~~oficina~~ ✅ (10º) · ~~salão de beleza~~ ✅ (11º) ·
-      pet, imobiliária, curso, eventos. (Restaurante segue descartado.)
+      ~~casa de festa~~ ✅ (12º) · ~~pet~~ ✅ (13º) · curso (o último, e o de menor distância).
+      **Imobiliária DESCARTADA (ago/2026)**, por dúvida do fundador que se
+      confirmou: os fatos que governam a resposta são de imóveis de terceiros,
+      não da empresa, e já vivem num CRM que a imobiliária tem. Seríamos o
+      segundo sistema. O critério completo está no `ESTADO_DO_PROJETO.md`.
+      **Eventos genéricos também sai:** virou `casa_de_festa`, que é o recorte
+      com dono, data e recompra. (Restaurante segue descartado.)
 
       **`salao_beleza` (ago/2026) — o primeiro escrito depois de PESQUISA
       dirigida, a pedido do fundador.** A pesquisa mudou o desenho em cinco

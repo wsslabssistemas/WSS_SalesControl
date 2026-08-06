@@ -29,6 +29,72 @@ insert into public.commercial_dna (tenant_id, version, sections, source, is_curr
 select t.id, 1, x.sections, 'demo_seed', true
 from (values
 
+-- -------------------------------------------------------------------- PET
+-- Dado FICTÍCIO. A régua do banho por porte e as vacinas exigidas estão
+-- preenchidas de propósito: são os fatos que a biblioteca EXIGE para poder
+-- responder as duas perguntas que mais chegam.
+('demo-pet', $json$
+{
+  "catalog": {
+    "items": [
+      { "servico": "Banho", "duracao": "1h30 a 3h", "observacao": "Secagem na mão. Tempo varia por porte e pelagem" },
+      { "servico": "Banho e tosa higiênica", "duracao": "2h a 3h30", "observacao": "" },
+      { "servico": "Tosa na máquina", "duracao": "2h30 a 4h", "observacao": "Raças de pelo duro têm tosa própria" },
+      { "servico": "Creche (day care)", "duracao": "Meio período ou dia inteiro", "observacao": "Separação por porte e energia" },
+      { "servico": "Hotel", "duracao": "Diária", "observacao": "Entrada até 10h, saída até 18h" },
+      { "servico": "Leva e traz", "duracao": "—", "observacao": "Raio de 6 km" }
+    ],
+    "nao_faz": ["Atendimento a gatos", "Adestramento", "Tosa de raças de pelo duro (stripping)", "Hospedagem de fêmea no cio"],
+    "estrutura": ["Área externa gramada de 200m²", "Piscina no verão", "Câmeras com acesso do tutor pelo app", "Separação por porte e por energia", "Ar-condicionado no alojamento"],
+    "capacidade": "Creche: 24 cães por dia. Hotel: 12 vagas, que esgotam em feriado e fim de ano."
+  },
+  "pricing": {
+    "banho_por_porte": "Mini R$ 55, pequeno R$ 65, médio R$ 85, grande R$ 110, gigante R$ 140. Pelo longo tem acréscimo de R$ 20 pelo tempo de secagem.",
+    "plano_creche": "2x por semana R$ 380/mês (R$ 47 o dia); 3x R$ 520 (R$ 43 o dia); 5x R$ 750 (R$ 37 o dia). Diária avulsa R$ 75.",
+    "diaria_hotel": "Pequeno R$ 90, médio R$ 110, grande R$ 135. A diária conta por período de 24h, com tolerância de 2h na saída.",
+    "alta_temporada": "Feriados prolongados, julho e de 20/12 a 05/01 têm acréscimo de 20%. Avisamos no ato da reserva, nunca depois.",
+    "parcelamento": "PIX e cartão. O plano de creche é cobrado até o dia 5, por recorrência no cartão ou PIX combinado."
+  },
+  "availability": {
+    "weekly_hours": "Seg a Sex 7h30-19h; Sáb 8h-17h. Entrega e retirada do hotel até as 18h.",
+    "antecedencia_hotel": "Fim de ano fecha em outubro. Carnaval e feriados prolongados, com 45 a 60 dias. Fora disso costuma ter vaga na semana.",
+    "prazo_banho": "De 1h30 a 3h dependendo do porte e do pelo. Trabalhamos com hora marcada, o cão não fica esperando."
+  },
+  "risk_free_entry": {
+    "avaliacao_obrigatoria": true,
+    "como_funciona": "Dia de avaliação de 4 horas, sem custo. Observamos como ele se comporta no grupo, se respeita limite e como reage à separação. No fim do dia contamos com sinceridade se este é o lugar dele — inclusive quando a resposta é não.",
+    "primeira_vez": "A avaliação de creche não tem custo. Não damos desconto de primeira vez em banho."
+  },
+  "expertise_proof": {
+    "tempo_de_casa": "7 anos no mesmo endereço",
+    "equipe": "5 pessoas, sendo 3 dedicadas à creche. No máximo 8 cães por cuidador, separados por porte e por energia.",
+    "monitoramento": "Câmeras com acesso do tutor pelo aplicativo, e relatório com foto no meio do dia para quem está na creche ou no hotel.",
+    "parceria_vet": "Clínica Vet Amigo, a 400 metros, com atendimento prioritário para nossos hóspedes."
+  },
+  "policies": {
+    "vacinas_exigidas": "V8 ou V10, antirrábica e gripe canina (tosse dos canis), todas com no mínimo 15 dias da aplicação. Carteira conferida na primeira visita e a cada reforço.",
+    "cancelamento": "Banho e creche: desmarcando com mais de 4 horas, sem custo. Hotel em alta temporada: sinal de 30% não devolvido se cancelar com menos de 15 dias.",
+    "emergencia": "Levamos à Clínica Vet Amigo, avisamos o tutor na hora e não autorizamos procedimento sem a confirmação dele, salvo risco de vida. O custo é do tutor.",
+    "nao_aceita": "Cão reativo com outros animais, fêmea no cio, animal com vacina vencida, animal doente ou com suspeita de doença de pele. Nesses casos oferecemos banho individual em horário separado."
+  },
+  "retention": {
+    "intervalo_banho": "Pelo curto a cada 21 dias; pelo longo a cada 15; cão que frequenta a creche costuma precisar a cada 15.",
+    "lembrete": "Mensagem 3 dias antes do ciclo, com o nome do animal e dois horários oferecidos"
+  },
+  "ecosystem": {
+    "revenda": ["Ração premium", "Shampoo profissional", "Antipulgas", "Brinquedo de enriquecimento"],
+    "parceiros": ["Clínica Vet Amigo", "Adestradora Camila (comportamento)", "Pet sitter Rê para quem prefere em casa"],
+    "indicacao": "Quem indica um tutor que fecha plano ganha uma diária de creche"
+  },
+  "location_contact": {
+    "address": "Rua Exemplo, 155 — Porto Alegre/RS",
+    "whatsapp": "(51) 96666-0000",
+    "instagram": "@petdemo"
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Pet de bairro com banho e tosa, creche com área externa e hotel de 12 vagas. Não atende gatos e não faz veterinária."
+}
+$json$::jsonb),
+
 -- --------------------------------------------------------- CASA DE FESTAS
 -- Dado FICTÍCIO. Os quatro extras que estouram orçamento (rolha, hora
 -- extra, convidado a mais, sinal) estão preenchidos de propósito: são
@@ -493,7 +559,7 @@ join public.tenants t on t.slug = x.slug
 -- `demo-` é tocado.
 where t.slug like 'demo-%';
 
--- Verificação. Esperado: 8 linhas, todas com 4 seções ou mais.
+-- Verificação. Esperado: 9 linhas, todas com 4 seções ou mais.
 select t.slug,
        (select count(*) from jsonb_object_keys(d.sections)) as secoes,
        d.source

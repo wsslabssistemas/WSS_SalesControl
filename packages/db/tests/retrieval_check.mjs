@@ -130,6 +130,16 @@ const CASOS = [
   { skill: "casa_de_festa", msg: "vou pensar e depois confirmo", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "casa_de_festa", msg: "aniversario do ano que vem, ela fez festa aqui", categoria: "retention", escola: "cadencia_blount" },
 
+  // PET (13º). Creche e hotel são o que separa isto de barbearia com
+  // cachorro: plano mensal, vaga por período, e uma recusa SANITÁRIA que é
+  // resposta comercial correta.
+  { skill: "pet", msg: "quanto custa o banho do meu cachorro?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "pet", msg: "quanto custa a creche, tem plano mensal?", categoria: "pricing", escola: "consultiva_spin" },
+  { skill: "pet", msg: "tem vaga no hotel para o feriado?", categoria: "availability", escola: "fechamento_classico" },
+  { skill: "pet", msg: "a vacina dele esta vencida, posso deixar mesmo assim?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  { skill: "pet", msg: "tenho medo de deixar ele, nunca ficou sem mim", categoria: "risk_free_entry", escola: "persuasao_cialdini" },
+  { skill: "pet", msg: "ele fica sozinho o dia todo e destroi tudo em casa", categoria: "goal_matching", escola: "consultiva_spin" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

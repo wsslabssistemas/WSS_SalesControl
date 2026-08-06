@@ -67,7 +67,7 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
   biblioteca do segmento da empresa.
 
-### Segmentos — 12 completos, 222 entradas curadas
+### Segmentos — 13 completos, 239 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
@@ -82,10 +82,48 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
 | `oficina` (mecânica, elétrica, funilaria, pneus) | 18 | prospecção |
 | `salao_beleza` (cabelo, química, unhas, estética rápida) | 19 | — |
 | `casa_de_festa` (infantil, formatura, casamento, corporativo) | 17 | — |
+| `pet` (banho e tosa, creche, hotel) | 17 | — |
 
 **Todo segmento tem uma entrada de INDECISÃO** (o cliente que concordou e mesmo
 assim travou — 40 a 60% das perdas, segundo o JOLT) e os B2B têm a do
 **comprador que não quer conversar** (67% do B2B prefere se servir sozinho).
+
+### O critério que decide SE um segmento vira Skill (ago/2026)
+
+Descoberto respondendo uma dúvida do fundador sobre imobiliária — *"se não
+teremos acesso aos sites de locação e venda, onde poderíamos ser diferentes?"*.
+A dúvida estava certa, e ela expôs uma regra que os 12 segmentos entregues já
+seguiam sem estar escrita.
+
+**Uma Skill vale quando as duas coisas valem:**
+
+1. **Os fatos que governam a resposta são DA EMPRESA — poucos, estáveis e
+   capazes de caber no DNA.** Hora técnica, lote mínimo, política de peça,
+   régua da química, taxa de rolha, intervalo de revisão. É isso que a trava
+   anti-invenção verifica; sem isso ela não tem contra o que verificar.
+2. **O gargalo do negócio é técnica de conversa, não gestão de inventário.**
+
+**Imobiliária quebra as duas.** O "produto" são centenas de imóveis de
+TERCEIROS, que mudam toda semana, e cujos fatos (preço, metragem, condomínio,
+IPTU, matrícula) são por unidade — não da empresa. E esses dados já vivem num
+CRM imobiliário que a imobiliária tem, com feed para os portais. Seríamos o
+**segundo sistema**, e o segundo sistema perde.
+
+**E o add-on que parecia óbvio é o teste que reprova.** Licitações e
+Oportunidades funcionam porque trazem **demanda de fora para dentro**: editais
+e empresas que o vendedor não tinha. Um feed de portais faz o **contrário** —
+leva o inventário de dentro para fora. Isso é logística de publicação, é table
+stakes naquele mercado, e construir seria **empatar, não diferenciar**: nos
+colocaria a competir no eixo onde somos fracos (inventário) diluindo o eixo
+onde somos fortes (técnica).
+
+**Regra do add-on, então:** bom add-on traz demanda de fora para dentro. Add-on
+que leva dado de dentro para fora é integração, e quem já faz isso faz melhor.
+
+*Se um dia houver frente imobiliária, o recorte que passa nos dois critérios é o
+**corretor autônomo** — carteira pequena, relacionamento é tudo, follow-up é o
+buraco e ele não tem CRM. O ticket é pequeno; a decisão é comercial, não
+técnica.*
 
 **Regra do segmento novo:** `energia_solar` só existiu porque `sob_medida` dizia
 "solar" no nome e **nenhuma das suas entradas falava de solar**. Nome de
