@@ -102,8 +102,14 @@ function pgArray(v) {
 const ARRAY_COLS = new Set(["trigger_questions", "required_facts", "optional_facts", "hard_rules", "common_errors"]);
 
 const file = process.argv[2];
+// `--tenant <slug>` carrega a biblioteca PRÓPRIA de uma empresa em vez da
+// curadoria do segmento. São coisas diferentes e não podem se misturar: a do
+// segmento é `tenant_id null, source=skill_seed`; a da empresa é
+// `tenant_id=X, source=tenant`. Cada modo só apaga o que ele mesmo grava.
+const iTenant = process.argv.indexOf("--tenant");
+const tenantSlug = iTenant > 0 ? process.argv[iTenant + 1] : null;
 if (!file) {
-  console.error("Uso: node scripts/seed-knowledge.mjs <arquivo.sql>");
+  console.error("Uso: node scripts/seed-knowledge.mjs <arquivo.sql> [--tenant <slug>]");
   process.exit(1);
 }
 
@@ -146,18 +152,31 @@ if (!skill || rows.some((r) => r.skill_key !== skill)) {
 const env = readEnv();
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-// Recarga idempotente: substitui a biblioteca do segmento, sem tocar no tenant.
-const { error: delErr } = await db
-  .from("knowledge_entries")
-  .delete()
-  .eq("skill_key", skill)
-  .is("tenant_id", null)
-  .eq("source", "skill_seed");
-if (delErr) { console.error("Erro ao limpar:", delErr.message); process.exit(1); }
+let alvo = `segmento "${skill}"`;
+if (tenantSlug) {
+  const { data: t } = await db.from("tenants").select("id, name").eq("slug", tenantSlug).maybeSingle();
+  if (!t) { console.error(`Empresa "${tenantSlug}" não encontrada.`); process.exit(1); }
+  for (const r of rows) { r.tenant_id = t.id; r.source = "tenant"; }
+  alvo = `empresa "${t.name}"`;
+  // Substitui só a biblioteca PRÓPRIA dela. A curadoria do segmento
+  // (tenant_id null) continua intacta — as duas convivem no motor.
+  const { error: e1 } = await db
+    .from("knowledge_entries").delete().eq("tenant_id", t.id).eq("source", "tenant");
+  if (e1) { console.error("Erro ao limpar:", e1.message); process.exit(1); }
+} else {
+  // Recarga idempotente: substitui a biblioteca do segmento, sem tocar no tenant.
+  const { error: delErr } = await db
+    .from("knowledge_entries")
+    .delete()
+    .eq("skill_key", skill)
+    .is("tenant_id", null)
+    .eq("source", "skill_seed");
+  if (delErr) { console.error("Erro ao limpar:", delErr.message); process.exit(1); }
+}
 
 const { error } = await db.from("knowledge_entries").insert(rows);
 if (error) { console.error("Erro ao inserir:", error.message); process.exit(1); }
 
 const porCategoria = rows.reduce((a, r) => ((a[r.category] = (a[r.category] ?? 0) + 1), a), {});
-console.log(`✓ ${rows.length} entradas carregadas para "${skill}"`);
+console.log(`✓ ${rows.length} entradas carregadas para ${alvo}`);
 for (const [c, n] of Object.entries(porCategoria).sort()) console.log(`   ${c}: ${n}`);

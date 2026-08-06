@@ -28,3 +28,6 @@ Thumbs.db
 
 # Dados de cliente real extraidos do Base44 — nunca commitar
 .base44/
+
+# Curadoria propria de empresa — o ativo. Nunca em repo publico.
+private/

@@ -382,12 +382,20 @@ tempo entre o contato e o primeiro toque de retomada.
   plausível e menor. Aconteceu na canonização das técnicas e 53 interações
   sumiram em silêncio. Toda leitura que possa passar de mil linhas precisa
   de `.range()` paginado. Limite que não reclama é o pior tipo.
-- **A biblioteca própria da Be Fitness (95 entradas) NÃO tem seed no
-  repositório.** Ela veio do PDF do fundador direto para o banco. Isso
-  significa que qualquer correção nela é uma edição sem rastro, e um
-  ambiente novo nasce sem ela. 26 dessas entradas ainda têm rótulo de
-  técnica em inglês ("Puppy Dog Close", "Hot Button"), e `technique` é
-  user-facing. Gerar o seed é pré-requisito para corrigir direito.
+- **Biblioteca própria de empresa tem seed, mas ele NÃO vai para o Git.**
+  ✅ Resolvido (ago/2026): `scripts/exportar-biblioteca-tenant.mjs` gera o
+  arquivo e `seed-knowledge.mjs --tenant <slug>` recarrega. A ida e volta
+  está provada com as 95 entradas da Be Fitness.
+  **O arquivo mora em `private/`, que está no .gitignore, e o motivo é
+  duro: o repositório é PÚBLICO.** Esta biblioteca é o ativo que o
+  `CLAUDE.md` manda proteger — "código se copia em duas semanas; a
+  curadoria, não". Commitar entregaria de graça a única coisa difícil de
+  copiar. Se um dia o repositório virar privado, basta mover o arquivo
+  para `packages/db/migrations/`: o formato já é o mesmo.
+  Com o seed no lugar, os **rótulos em inglês foram traduzidos** (27 nomes
+  de técnica + 58 frases descritivas com "CTA", "reassurance", "benefit
+  stacking"). Hoje: 0 em inglês. O autor ficou entre parênteses — creditar
+  a escola é o método; o que não pode é o vendedor ler inglês na tela.
 - **Dois donos do mesmo gatilho é empate por construção.** Quando duas entradas
   do mesmo segmento reivindicam a mesma frase, nenhum ajuste de ranking
   desempata — e o efeito é silencioso, porque a errada vence com aparência de
