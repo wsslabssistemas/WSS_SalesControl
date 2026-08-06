@@ -94,7 +94,7 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       .map(([k, v]) => `- ${k}: ${v.total} leads, ${v.fech} fechados`);
 
     // Desfechos e tempo de resposta
-    const desfechos = ["respondeu", "marcou_visita", "matriculou", "sumiu"]
+    const desfechos = ["respondeu", "avancou", "ganhou", "perdeu_decisao", "perdeu_silencio"]
       .map((o) => `- ${o}: ${ix.filter((i) => i.outcome === o).length}`);
     const respEvents = ix.filter((i) => i.direction === "outbound" || (i.direction === "inbound" && i.input_kind === "customer_message"));
     const rmins = responseMinutes(respEvents);

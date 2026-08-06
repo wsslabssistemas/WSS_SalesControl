@@ -17,11 +17,15 @@ type Contact = {
 };
 type Ix = { contact_id: string | null; occurred_at: string; outcome: string | null };
 
+// Desfecho canônico (0044). As DUAS perdas aparecem separadas de propósito:
+// perder por silêncio tem conserto barato (follow-up); perder por decisão é
+// outro remédio. Somar as duas esconde justamente o que dá para consertar.
 const OUTCOMES: { key: string; label: string; color: string }[] = [
-  { key: "matriculou", label: "Fecharam", color: "var(--success)" },
-  { key: "marcou_visita", label: "Marcaram visita", color: "var(--brand-cyan)" },
+  { key: "ganhou", label: "Fecharam", color: "var(--success)" },
+  { key: "avancou", label: "Avançaram", color: "var(--brand-cyan)" },
   { key: "respondeu", label: "Responderam", color: "var(--brand-blue)" },
-  { key: "sumiu", label: "Sumiram", color: "var(--danger)" },
+  { key: "perdeu_decisao", label: "Disseram não", color: "var(--warn)" },
+  { key: "perdeu_silencio", label: "Sumiram", color: "var(--danger)" },
 ];
 
 export default async function PainelHome() {

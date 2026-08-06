@@ -226,7 +226,7 @@ export async function gerarResposta(input: {
     .select("content, technique")
     .eq("tenant_id", tenant.id)
     .eq("direction", "outbound")
-    .in("outcome", ["matriculou", "marcou_visita"])
+    .in("outcome", ["ganhou", "avancou"])
     .order("occurred_at", { ascending: false })
     .limit(4);
   const winners = ((winData as { content: string; technique: string | null }[] | null) ?? [])
@@ -478,11 +478,12 @@ export async function saveInteraction(
   return { ok: true, id };
 }
 
-// Registra o desfecho de um atendimento (respondeu/marcou/matriculou/sumiu).
+// Registra o desfecho CANONICO de um atendimento (0044). A chave e de
+// processo, nao de mercado; o rotulo do ramo fica na tela.
 // É o feedback que alimenta o "aprender o que converte".
 export async function setOutcome(
   interactionId: string,
-  outcome: "respondeu" | "marcou_visita" | "matriculou" | "sumiu",
+  outcome: "respondeu" | "avancou" | "ganhou" | "perdeu_decisao" | "perdeu_silencio",
 ): Promise<{ ok: boolean }> {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;

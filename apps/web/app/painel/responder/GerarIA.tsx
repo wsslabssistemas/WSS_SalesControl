@@ -5,11 +5,18 @@ import { gerarResposta, applyStage, saveInteraction, setOutcome, type AiAnswer }
 import { marcarCompromisso } from "../agenda/horarios-actions";
 import { CopyButton } from "./CopyButton";
 
-const OUTCOMES: { key: "respondeu" | "marcou_visita" | "matriculou" | "sumiu"; label: string }[] = [
+// Chave CANÔNICA no banco (0044), rótulo legível na tela. A separação entre
+// "disse não" e "parou de responder" é o que permite ao M2 responder se a
+// perda foi de objeção ou de follow-up — e são remédios opostos.
+const OUTCOMES: {
+  key: "respondeu" | "avancou" | "ganhou" | "perdeu_decisao" | "perdeu_silencio";
+  label: string;
+}[] = [
   { key: "respondeu", label: "Respondeu" },
-  { key: "marcou_visita", label: "Marcou visita" },
-  { key: "matriculou", label: "Fechou" },
-  { key: "sumiu", label: "Sumiu" },
+  { key: "avancou", label: "Avançou de etapa" },
+  { key: "ganhou", label: "Fechou" },
+  { key: "perdeu_decisao", label: "Disse não" },
+  { key: "perdeu_silencio", label: "Parou de responder" },
 ];
 
 type StageLite = { key: string; label: string };

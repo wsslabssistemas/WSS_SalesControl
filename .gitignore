@@ -25,3 +25,6 @@ revisao/
 .DS_Store
 Thumbs.db
 *.log
+
+# Dados de cliente real extraidos do Base44 — nunca commitar
+.base44/

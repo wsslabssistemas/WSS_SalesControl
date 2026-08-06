@@ -31,9 +31,9 @@ importantes e **não são agora**:
 
 | Congelado | Por quê |
 |---|---|
-| **Migrar os dados da Be Fitness do Base44** | Decisão do fundador. Trabalho grande, valor de aprendizado baixo — o que falta provar não está nesses dados. |
+| ~~**Migrar os dados da Be Fitness do Base44**~~ | **DESCONGELADO e FEITO (ago/2026).** O motivo original ("valor de aprendizado baixo") deixou de valer quando a empresa externa virou incerta: sem ela, o piloto passou a ser a única fonte de uso real. E ele trouxe mais do que se esperava — ver abaixo. |
 | **Automação (WhatsApp Cloud API + motor proativo agendado)** | Decisão do fundador: automatizar antes de provar que a resposta manual é boa é otimizar a coisa errada. Depende de conta Meta e amarra o produto num canal antes da hora. |
-| **M2 — ligar desfecho a escola** | Bloqueado por dado, não por código: **0 desfechos registrados**. Sem uso real não há o que medir. |
+| ~~**M2 — ligar desfecho a escola**~~ | **DESTRAVADO em ago/2026.** O piloto do Base44 entrou: 273 contatos e 2.105 interações da Be Fitness, com **846 desfechos registrados**. Deixou de ser bloqueio de dado. |
 | **Volume da prospecção (base própria da Receita)** | Custo e esforço altos para um gargalo que hoje não é o gargalo. |
 
 Quando a automação voltar, ela entra na ordem: canal de envio → motor proativo
