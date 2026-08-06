@@ -149,6 +149,15 @@ chegava ao motor.
   cada um traga a própria entrada em 1º (piso de 95%). Os casos escolhidos a mão
   não tinham apontado isso; a varredura cega aponta.
 
+### 1.5. Acentuação das 9 bibliotecas antigas — ✅ FEITO (ago/2026)
+
+A dívida registrada quando `oficina` virou a primeira biblioteca com acento.
+**+4.573 acentos** nas nove, com a densidade batendo a das quatro novas.
+O detalhe do método, da invariante que protegeu a curadoria e da trava de CI
+(`acentuacao_check.mjs`) está no `ESTADO_DO_PROJETO.md`. Em uma linha: a
+automação fez o que é regra, o classificador foi **medido e reprovado** no
+`e/é`, e os homógrafos foram decididos a mão.
+
 **Aberto:**
 - **Contradição de doutrina em `academia`** — decisão de curadoria, não de
   código. A entrada `objections` que hoje isola a dúvida vaga ensina *"devolver

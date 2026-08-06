@@ -48,3 +48,8 @@ jobs:
       # inventada e nenhuma chave de máquina vazando para a tela.
       - name: Exercício do curso
         run: node packages/db/tests/exercicio_test.mjs
+      # `technique`, `strategy` e `trigger_questions` são LIDOS pelo vendedor e
+      # pelo aluno. Palavra sem acento não quebra nada e não aparece em revisão
+      # — só chega ao cliente pagante. Roda no CI porque é texto puro.
+      - name: Acento na biblioteca e nos manifestos
+        run: node packages/db/tests/acentuacao_check.mjs

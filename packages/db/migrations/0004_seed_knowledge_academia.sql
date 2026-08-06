@@ -5,9 +5,9 @@
 -- Toda academia que instalar esta Skill herda estas entradas.
 --
 -- O PONTO CENTRAL DESTE ARQUIVO:
---   Nenhuma entrada contem preco, horario, endereco ou nome de servico.
---   Ela guarda a ESTRATEGIA. Os FATOS vem do commercial_dna da empresa.
---   E por isso que a segunda academia nao precisa reescrever nada.
+--   Nenhuma entrada contém preço, horário, endereço ou nome de serviço.
+--   Ela guarda a ESTRATÉGIA. Os FATOS vêm do commercial_dna da empresa.
+--   É por isso que a segunda academia não precisa reescrever nada.
 -- =====================================================================
 
 delete from public.knowledge_entries
@@ -19,14 +19,14 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'pricing', 'reactive', '{"quanto custa","qual o valor","qual o preco","quanto e a mensalidade","valor do plano"}',
-   null, 'Entregue a faixa de preco com transparencia total. Esconder valor gera desconfianca
-e o lead procura o concorrente. Logo apos o numero, devolva UMA pergunta de descoberta
-sobre {{skill.discovery_axis}}, para a conversa nao morrer no preco.
+  (null, 'academia', 'pricing', 'reactive', '{"quanto custa","qual o valor","qual o preço","quanto é a mensalidade","valor do plano"}',
+   null, 'Entregue a faixa de preço com transparência total. Esconder valor gera desconfiança
+e o lead procura o concorrente. Logo após o número, devolva UMA pergunta de descoberta
+sobre {{skill.discovery_axis}}, para a conversa não morrer no preço.
 Se existir oferta de entrada sem risco, mencione ao final como redutor de risco.
 Nunca liste todos os planos nesta primeira resposta: faixa + pergunta.', '{"pricing.range"}',
    '{"risk_free_entry.exists","commitment_offer.best_value"}', '{}', 'escalate',
-   'Transparencia (Hormozi) + qualificar antes de cotar (Belfort)', '{"Responder so o valor: a conversa morre","Esconder o preco: gera desconfianca e perde o lead","Despejar a tabela inteira logo de cara"}', 'discover_goal',
+   'Transparência (Hormozi) + qualificar antes de cotar (Belfort)', '{"Responder só o valor: a conversa morre","Esconder o preço: gera desconfiança e perde o lead","Despejar a tabela inteira logo de cara"}', 'discover_goal',
    'skill_seed', 'active', 'consultiva_spin');
 
 insert into public.knowledge_entries
@@ -34,13 +34,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'pricing', 'reactive', '{"so quero saber o preco","so o valor","nada mais","manda so os valores"}',
-   null, 'O lead sinalizou explicitamente que NAO quer conversa. Respeite.
+  (null, 'academia', 'pricing', 'reactive', '{"só quero saber o preço","só o valor","nada mais","manda só os valores"}',
+   null, 'O lead sinalizou explicitamente que NÃO quer conversa. Respeite.
 Entregue os valores de forma direta e organizada, sem pergunta de descoberta,
-sem tentar prolongar. Encerre com uma porta aberta curta e sem pressao.
-Insistir aqui soa artificial e queima a relacao.', '{"pricing.plans"}',
+sem tentar prolongar. Encerre com uma porta aberta curta e sem pressão.
+Insistir aqui soa artificial e queima a relação.', '{"pricing.plans"}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Resposta direta + reciprocidade sem pressao', '{"Fazer perguntas quando a pessoa pediu para nao fazer","Encerrar com fechamento agressivo"}', 'keep_door_open',
+   'Resposta direta + reciprocidade sem pressão', '{"Fazer perguntas quando a pessoa pediu para não fazer","Encerrar com fechamento agressivo"}', 'keep_door_open',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -48,12 +48,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'pricing', 'reactive', '{"tem desconto","consegue fazer um desconto","da para baixar o valor"}',
-   null, 'Nunca conceda desconto puro. Troque valor por compromisso: mantenha o preco e
-empilhe o que ja existe no DNA (brinde, oferta de entrada, condicoes do plano longo).
-Toda concessao pede contrapartida: fechamento agora ou agendamento concreto.', '{"pricing.plans"}',
+  (null, 'academia', 'pricing', 'reactive', '{"tem desconto","consegue fazer um desconto","dá para baixar o valor"}',
+   null, 'Nunca conceda desconto puro. Troque valor por compromisso: mantenha o preço e
+empilhe o que já existe no DNA (brinde, oferta de entrada, condições do plano longo).
+Toda concessão pede contrapartida: fechamento agora ou agendamento concreto.', '{"pricing.plans"}',
    '{"reciprocity.gift","commitment_offer.best_value"}', '{}', 'escalate',
-   'Nada de graca sem contrapartida (Jim Thomas) + oferta irrecusavel (Hormozi)', '{"Ceder desconto sem pedir nada em troca","Inventar promocao que nao existe no DNA"}', 'close_commitment',
+   'Nada de graça sem contrapartida (Jim Thomas) + oferta irrecusável (Hormozi)', '{"Ceder desconto sem pedir nada em troca","Inventar promoção que não existe no DNA"}', 'close_commitment',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -61,9 +61,9 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'risk_free_entry', 'reactive', '{"tem aula experimental","posso experimentar","tem teste gratis","como funciona a experimental"}',
+  (null, 'academia', 'risk_free_entry', 'reactive', '{"tem aula experimental","posso experimentar","tem teste grátis","como funciona a experimental"}',
    null, 'Confirme a oferta de entrada sem risco com entusiasmo e descreva o que a pessoa
-vai viver, nao o que ela vai receber. Cite o brinde se existir no DNA.
+vai viver, não o que ela vai receber. Cite o brinde se existir no DNA.
 Encerre SEMPRE com fechamento por alternativa oferecendo dois momentos concretos.
 Nunca termine com pergunta aberta.', '{"risk_free_entry.exists","availability.weekly_hours"}',
    '{"risk_free_entry.duration","risk_free_entry.gift"}', '{}', 'escalate',
@@ -76,11 +76,11 @@ insert into public.knowledge_entries
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
   (null, 'academia', 'risk_free_entry', 'reactive', '{"tem custo escondido","preciso levar algo","precisa pagar alguma coisa"}',
-   null, 'Elimine o risco percebido de forma explicita: diga o que NAO tem (taxa, cartao,
-compromisso) antes de dizer o que tem. Liste o minimo necessario para participar.
-Feche com alternativa de horario.', '{"risk_free_entry.exists"}',
+   null, 'Elimine o risco percebido de forma explícita: diga o que NÃO tem (taxa, cartão,
+compromisso) antes de dizer o que tem. Liste o mínimo necessário para participar.
+Feche com alternativa de horário.', '{"risk_free_entry.exists"}',
    '{"risk_free_entry.gift"}', '{}', 'escalate',
-   'Eliminacao de risco + Transparencia', '{"Deixar qualquer duvida sobre custo: o lead desiste por desconfianca"}', 'schedule_visit',
+   'Eliminação de risco + Transparência', '{"Deixar qualquer dúvida sobre custo: o lead desiste por desconfiança"}', 'schedule_visit',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -88,12 +88,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'availability', 'reactive', '{"qual o horario","que horas abre","funciona ate que horas","abre no sabado"}',
-   null, 'Informe o horario exatamente como esta no DNA, sem arredondar nem supor.
-Em seguida pergunte a preferencia de turno da pessoa, para personalizar a proxima
-resposta e abrir espaco para o convite.', '{"availability.weekly_hours"}',
-   '{}', '{"Nunca afirmar que esta aberto em dia ou horario ausente do DNA."}', 'escalate',
-   'Resposta factual + pergunta de personalizacao', '{"Listar horario sem perguntar a preferencia","Afirmar funcionamento em dia que nao esta no DNA"}', 'discover_routine',
+  (null, 'academia', 'availability', 'reactive', '{"qual o horário","que horas abre","funciona até que horas","abre no sábado"}',
+   null, 'Informe o horário exatamente como está no DNA, sem arredondar nem supor.
+Em seguida pergunte a preferência de turno da pessoa, para personalizar a próxima
+resposta e abrir espaço para o convite.', '{"availability.weekly_hours"}',
+   '{}', '{"Nunca afirmar que está aberto em dia ou horário ausente do DNA."}', 'escalate',
+   'Resposta factual + pergunta de personalização', '{"Listar horário sem perguntar a preferência","Afirmar funcionamento em dia que não está no DNA"}', 'discover_routine',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -101,13 +101,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'expertise_proof', 'reactive', '{"tem profissional para orientar","tem acompanhamento","alguem me ensina"}',
-   null, 'Transforme o diferencial em beneficio sentido, nao em caracteristica listada.
-Explique o que muda na experiencia da pessoa por existir acompanhamento.
-Se o DNA indicar que isso e incluso, deixe claro que nao ha custo extra.
-Conduza para a experiencia presencial.', '{"differentials.items"}',
+  (null, 'academia', 'expertise_proof', 'reactive', '{"tem profissional para orientar","tem acompanhamento","alguém me ensina"}',
+   null, 'Transforme o diferencial em benefício sentido, não em característica listada.
+Explique o que muda na experiência da pessoa por existir acompanhamento.
+Se o DNA indicar que isso é incluso, deixe claro que não há custo extra.
+Conduza para a experiência presencial.', '{"differentials.items"}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Demonstracao de valor + Challenger', '{"Dizer apenas ''sim, temos'' sem traduzir em beneficio"}', 'schedule_visit',
+   'Demonstração de valor + Challenger', '{"Dizer apenas ''sim, temos'' sem traduzir em benefício"}', 'schedule_visit',
    'skill_seed', 'active', 'challenger');
 
 insert into public.knowledge_entries
@@ -115,12 +115,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'catalog', 'reactive', '{"o que voces tem","quais modalidades","quais servicos","tem quais aulas"}',
-   null, 'Apresente o catalogo do DNA agrupado e legivel, nunca em bloco unico.
-Destaque no maximo tres itens mais relevantes para o perfil ja conhecido do contato.
-Termine perguntando qual deles chamou mais atencao, para qualificar.', '{"catalog.items"}',
-   '{}', '{"Nunca citar item, dia ou horario que nao esteja no catalogo do DNA."}', 'escalate',
-   'Apresentacao estruturada + pergunta de qualificacao', '{"Listar tudo sem hierarquia: o lead nao consegue processar","Citar item que nao esta no catalogo do DNA"}', 'discover_interest',
+  (null, 'academia', 'catalog', 'reactive', '{"o que vocês têm","quais modalidades","quais serviços","tem quais aulas"}',
+   null, 'Apresente o catálogo do DNA agrupado e legível, nunca em bloco único.
+Destaque no máximo três itens mais relevantes para o perfil já conhecido do contato.
+Termine perguntando qual deles chamou mais atenção, para qualificar.', '{"catalog.items"}',
+   '{}', '{"Nunca citar item, dia ou horário que não esteja no catálogo do DNA."}', 'escalate',
+   'Apresentação estruturada + pergunta de qualificação', '{"Listar tudo sem hierarquia: o lead não consegue processar","Citar item que não está no catálogo do DNA"}', 'discover_interest',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -128,13 +128,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'goal_matching', 'reactive', '{"qual o melhor para mim","o que serve para meu objetivo","o que voce recomenda"}',
-   null, 'Recomende com autoridade, cruzando o objetivo declarado com os itens do catalogo.
-Justifique a escolha em uma frase. Se o objetivo ainda nao foi declarado,
-pergunte antes de recomendar: recomendacao sem diagnostico e chute.
-Conduza para experimentar na pratica.', '{"catalog.items"}',
-   '{"risk_free_entry.exists"}', '{"Nunca prometer resultado, prazo de resultado ou beneficio de saude garantido."}', 'escalate',
-   'Recomendacao de especialista + achar o que move a pessoa (Tracy)', '{"Recomendar sem saber o objetivo da pessoa","Prometer resultado especifico"}', 'schedule_visit',
+  (null, 'academia', 'goal_matching', 'reactive', '{"qual o melhor para mim","o que serve para meu objetivo","o que você recomenda"}',
+   null, 'Recomende com autoridade, cruzando o objetivo declarado com os itens do catálogo.
+Justifique a escolha em uma frase. Se o objetivo ainda não foi declarado,
+pergunte antes de recomendar: recomendação sem diagnóstico é chute.
+Conduza para experimentar na prática.', '{"catalog.items"}',
+   '{"risk_free_entry.exists"}', '{"Nunca prometer resultado, prazo de resultado ou benefício de saúde garantido."}', 'escalate',
+   'Recomendação de especialista + achar o que move a pessoa (Tracy)', '{"Recomendar sem saber o objetivo da pessoa","Prometer resultado específico"}', 'schedule_visit',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -142,12 +142,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'objections', 'reactive', '{"esta caro","achei caro","encontrei mais barato","nao tenho esse valor"}',
-   null, 'Valide a preocupacao sem concordar que e caro. Reenquadre o valor para a menor
-unidade de tempo possivel usando os numeros reais do DNA, e reponha o que esta
-incluso. Conduza para a oferta de entrada sem risco em vez de negociar preco agora.', '{"pricing.plans"}',
+  (null, 'academia', 'objections', 'reactive', '{"está caro","achei caro","encontrei mais barato","não tenho esse valor"}',
+   null, 'Valide a preocupação sem concordar que é caro. Reenquadre o valor para a menor
+unidade de tempo possível usando os números reais do DNA, e reponha o que está
+incluso. Conduza para a oferta de entrada sem risco em vez de negociar preço agora.', '{"pricing.plans"}',
    '{"differentials.items","risk_free_entry.exists"}', '{}', 'escalate',
-   'Diluir o valor no dia a dia (Tracy) + reenquadrar', '{"Concordar que e caro","Oferecer desconto na primeira objecao"}', 'schedule_visit',
+   'Diluir o valor no dia a dia (Tracy) + reenquadrar', '{"Concordar que é caro","Oferecer desconto na primeira objeção"}', 'schedule_visit',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -155,20 +155,20 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  -- GATILHOS DE INDECISAO SAIRAM DAQUI (ago/2026, limpeza do M3).
-  -- "vou pensar" e familia pertencem a entrada de commitment_offer /
+  -- GATILHOS DE INDECISÃO SAÍRAM DAQUI (ago/2026, limpeza do M3).
+  -- "vou pensar" e família pertencem a entrada de commitment_offer /
   -- indecisao_jolt, mais abaixo neste arquivo. Enquanto as duas disputavam a
-  -- mesma frase, o casamento nao tinha como acertar: dois donos do mesmo
-  -- gatilho e empate por construcao. O mesmo conserto ja tinha sido feito em
-  -- sob_medida, escola_esportiva e automacao; academia e clinica ficaram para
-  -- tras. Esta entrada continua sendo a do ISOLAMENTO DA DUVIDA VAGA.
-  (null, 'academia', 'objections', 'reactive', '{"nao sei se vale a pena","nao era bem o que eu procurava","fiquei na duvida","tenho uma ressalva","acho que nao e pra mim"}',
-   null, 'Duvida vaga quase nunca e sobre tempo: e uma objecao nao dita.
+  -- mesma frase, o casamento não tinha como acertar: dois donos do mesmo
+  -- gatilho é empate por construção. O mesmo conserto já tinha sido feito em
+  -- sob_medida, escola_esportiva e automação; academia e clínica ficaram para
+  -- trás. Esta entrada continua sendo a do ISOLAMENTO DA DÚVIDA VAGA.
+  (null, 'academia', 'objections', 'reactive', '{"não sei se vale a pena","não era bem o que eu procurava","fiquei na dúvida","tenho uma ressalva","acho que não é pra mim"}',
+   null, 'Dúvida vaga quase nunca é sobre tempo: é uma objeção não dita.
 Antes de qualquer coisa, pergunte de forma leve o que especificamente ainda falta
-para decidir. So depois de isolar a duvida real, ofereca o proximo passo concreto
-com duas opcoes de horario.', '{}',
+para decidir. Só depois de isolar a dúvida real, ofereça o próximo passo concreto
+com duas opções de horário.', '{}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Devolver a pressao de preco (Jim Thomas) + fechamento por alternativa', '{"Aceitar a duvida vaga e encerrar: o lead nao volta","Pressionar sem descobrir a objecao real"}', 'isolate_objection',
+   'Devolver a pressão de preço (Jim Thomas) + fechamento por alternativa', '{"Aceitar a dúvida vaga e encerrar: o lead não volta","Pressionar sem descobrir a objeção real"}', 'isolate_objection',
    'skill_seed', 'active', 'fechamento_classico');
 
 insert into public.knowledge_entries
@@ -176,12 +176,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'objections', 'reactive', '{"nao tenho tempo","minha rotina e corrida","meu horario e complicado"}',
-   null, 'Nao discuta se a pessoa tem tempo. Reduza o sacrificio percebido: mostre a menor
-frequencia viavel e a amplitude de horario que existe no DNA. Depois projete o
-beneficio futuro em uma frase curta. Feche com duas opcoes de horario.', '{"availability.weekly_hours"}',
+  (null, 'academia', 'objections', 'reactive', '{"não tenho tempo","minha rotina é corrida","meu horário é complicado"}',
+   null, 'Não discuta se a pessoa tem tempo. Reduza o sacrifício percebido: mostre a menor
+frequência viável e a amplitude de horário que existe no DNA. Depois projete o
+benefício futuro em uma frase curta. Feche com duas opções de horário.', '{"availability.weekly_hours"}',
    '{}', '{}', 'escalate',
-   'Reducao de sacrificio (Hormozi) + projetar o depois (Tracy)', '{"Argumentar que a pessoa tem tempo sim"}', 'schedule_visit',
+   'Redução de sacrifício (Hormozi) + projetar o depois (Tracy)', '{"Argumentar que a pessoa tem tempo sim"}', 'schedule_visit',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -189,12 +189,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'objections', 'reactive', '{"tenho vergonha","nunca fiz","tenho medo de nao dar conta","sou iniciante"}',
-   null, 'Valide a emocao explicitamente: dizer "nao tenha vergonha" invalida a pessoa.
-Normalize com prova social generica e descreva o ambiente e o acompanhamento
-que existem no DNA. Convide sem pressao, com uma unica pergunta ao final.', '{}',
+  (null, 'academia', 'objections', 'reactive', '{"tenho vergonha","nunca fiz","tenho medo de não dar conta","sou iniciante"}',
+   null, 'Valide a emoção explicitamente: dizer "não tenha vergonha" invalida a pessoa.
+Normalize com prova social genérica e descreva o ambiente e o acompanhamento
+que existem no DNA. Convide sem pressão, com uma única pergunta ao final.', '{}',
    '{"differentials.items","risk_free_entry.exists"}', '{}', 'escalate',
-   'Empatia + Prova social + Reassurance', '{"Minimizar o sentimento da pessoa","Fazer tres perguntas seguidas"}', 'schedule_visit_low_pressure',
+   'Empatia + Prova social + Reassurance', '{"Minimizar o sentimento da pessoa","Fazer três perguntas seguidas"}', 'schedule_visit_low_pressure',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -202,13 +202,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'objections', 'reactive', '{"ja tenho outro","estou satisfeito onde estou","vou comparar"}',
+  (null, 'academia', 'objections', 'reactive', '{"já tenho outro","estou satisfeito onde estou","vou comparar"}',
    null, 'Nunca fale mal do concorrente. Elogie a iniciativa da pessoa, posicione a empresa
-como categoria propria listando diferenciais reais do DNA, e ofereca a comparacao
-na pratica atraves da oferta de entrada. Se a pessoa nao quiser, mantenha a porta
+como categoria própria listando diferenciais reais do DNA, e ofereça a comparação
+na prática através da oferta de entrada. Se a pessoa não quiser, mantenha a porta
 aberta sem insistir.', '{"differentials.items"}',
    '{"risk_free_entry.exists"}', '{}', 'escalate',
-   'Sair da comparacao (Hormozi) + fechamento leve', '{"Criticar a concorrencia","Competir por preco"}', 'schedule_visit_or_keep_warm',
+   'Sair da comparação (Hormozi) + fechamento leve', '{"Criticar a concorrência","Competir por preço"}', 'schedule_visit_or_keep_warm',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -216,12 +216,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'commitment_offer', 'reactive', '{"qual a diferenca entre os planos","vale a pena o mais longo","qual compensa mais"}',
-   null, 'Compare no maximo tres opcoes em estrutura paralela, usando exatamente os valores
-e condicoes do DNA. Deixe claro o que se ganha e o que se abre mao em cada uma
-(flexibilidade x economia x bonus). Termine perguntando qual perfil combina com a pessoa.', '{"pricing.plans"}',
+  (null, 'academia', 'commitment_offer', 'reactive', '{"qual a diferença entre os planos","vale a pena o mais longo","qual compensa mais"}',
+   null, 'Compare no máximo três opções em estrutura paralela, usando exatamente os valores
+e condições do DNA. Deixe claro o que se ganha e o que se abre mão em cada uma
+(flexibilidade x economia x bônus). Termine perguntando qual perfil combina com a pessoa.', '{"pricing.plans"}',
    '{"reciprocity.gift","policies.cancellation"}', '{}', 'escalate',
-   'Comparacao estruturada + Benefit stacking', '{"Empurrar o plano mais caro sem entender o perfil","Omitir condicoes de cancelamento"}', 'recommend_plan',
+   'Comparação estruturada + Benefit stacking', '{"Empurrar o plano mais caro sem entender o perfil","Omitir condições de cancelamento"}', 'recommend_plan',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -229,12 +229,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'reciprocity', 'reactive', '{"tem brinde","o que eu ganho","tem algum bonus"}',
-   null, 'Descreva o brinde como gesto de acolhimento, nao como isca. Se houver mais de um
+  (null, 'academia', 'reciprocity', 'reactive', '{"tem brinde","o que eu ganho","tem algum bônus"}',
+   null, 'Descreva o brinde como gesto de acolhimento, não como isca. Se houver mais de um
 momento de brinde no DNA, deixe claro qual vem quando. Use escassez apenas se for
-verdadeira segundo o DNA. Conduza para o proximo passo concreto.', '{"reciprocity.gift"}',
-   '{"risk_free_entry.gift"}', '{"Nunca prometer brinde, prazo ou condicao ausente do DNA."}', 'escalate',
-   'Reciprocidade (Cialdini)', '{"Prometer brinde que nao consta no DNA","Criar escassez falsa"}', 'schedule_visit',
+verdadeira segundo o DNA. Conduza para o próximo passo concreto.', '{"reciprocity.gift"}',
+   '{"risk_free_entry.gift"}', '{"Nunca prometer brinde, prazo ou condição ausente do DNA."}', 'escalate',
+   'Reciprocidade (Cialdini)', '{"Prometer brinde que não consta no DNA","Criar escassez falsa"}', 'schedule_visit',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -242,12 +242,12 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'limits_and_ethics', 'reactive', '{"tenho um problema de saude","tenho lesao","posso participar","estou gravida"}',
-   null, 'Responsabilidade vem antes de venda. Nunca autorize, libere ou minimize condicao
-de saude. Acolha, oriente a buscar avaliacao profissional adequada e explique como
-o acompanhamento existente no DNA adapta a atividade. Convide sem pressao.', '{}',
-   '{"differentials.items"}', '{"Nunca afirmar que a pessoa pode ou nao praticar por questao de saude.","Nunca prometer cura, melhora ou resultado terapeutico."}', 'escalate',
-   'Responsabilidade + Reassurance', '{"Garantir que pode participar","Dar orientacao clinica","Prometer melhora"}', 'invite_low_pressure',
+  (null, 'academia', 'limits_and_ethics', 'reactive', '{"tenho um problema de saúde","tenho lesão","posso participar","estou grávida"}',
+   null, 'Responsabilidade vem antes de venda. Nunca autorize, libere ou minimize condição
+de saúde. Acolha, oriente a buscar avaliação profissional adequada e explique como
+o acompanhamento existente no DNA adapta a atividade. Convide sem pressão.', '{}',
+   '{"differentials.items"}', '{"Nunca afirmar que a pessoa pode ou não praticar por questão de saúde.","Nunca prometer cura, melhora ou resultado terapêutico."}', 'escalate',
+   'Responsabilidade + Reassurance', '{"Garantir que pode participar","Dar orientação clínica","Prometer melhora"}', 'invite_low_pressure',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -255,13 +255,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'retention', 'reactive', '{"estou desanimado","pensei em desistir","nao estou vendo resultado","quero cancelar"}',
-   null, 'Sinal critico. Acolha antes de argumentar e faca UMA pergunta diagnostica para
-entender a causa real. Nao ofereca desconto nem produto novo neste momento.
-Proponha um ajuste concreto e um retorno com data. Se a pessoa mantiver a decisao,
+  (null, 'academia', 'retention', 'reactive', '{"estou desanimado","pensei em desistir","não estou vendo resultado","quero cancelar"}',
+   null, 'Sinal crítico. Acolha antes de argumentar e faça UMA pergunta diagnostica para
+entender a causa real. Não ofereça desconto nem produto novo neste momento.
+Proponha um ajuste concreto e um retorno com data. Se a pessoa mantiver a decisão,
 respeite e mantenha o relacionamento.', '{}',
    '{"differentials.items","catalog.items"}', '{}', 'escalate',
-   'Diagnostico antes de solucao + Relacionamento (Girard)', '{"Argumentar contra o sentimento","Empurrar oferta em momento de frustracao","Fazer varias perguntas de uma vez"}', 'diagnose_and_schedule_followup',
+   'Diagnóstico antes de solução + Relacionamento (Girard)', '{"Argumentar contra o sentimento","Empurrar oferta em momento de frustração","Fazer várias perguntas de uma vez"}', 'diagnose_and_schedule_followup',
    'skill_seed', 'active', 'relacionamento_carnegie');
 
 insert into public.knowledge_entries
@@ -269,13 +269,13 @@ insert into public.knowledge_entries
    opportunity_type, strategy, required_facts, optional_facts, hard_rules,
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
-  (null, 'academia', 'ecosystem', 'reactive', '{"voces tem nutricionista","tem personal","tem estetica","tem outros servicos"}',
-   null, 'Consulte as parcerias declaradas no DNA. Se o servico existir, explique com clareza
-que e parceria no espaco e informe a condicao registrada. Se NAO existir no DNA,
-nao afirme que nao existe: escale para um humano confirmar.
-Conduza para conhecer o espaco.', '{"policies.partnerships"}',
-   '{}', '{"Nunca afirmar que um servico nao existe sem que o DNA confirme a ausencia."}', 'escalate',
-   'Transparencia + Ecosystem value', '{"Negar servico que existe","Inventar valor de parceiro","Dizer que esta incluso quando nao esta"}', 'schedule_visit',
+  (null, 'academia', 'ecosystem', 'reactive', '{"vocês têm nutricionista","tem personal","tem estética","tem outros serviços"}',
+   null, 'Consulte as parcerias declaradas no DNA. Se o serviço existir, explique com clareza
+que é parceria no espaço e informe a condição registrada. Se NÃO existir no DNA,
+não afirme que não existe: escale para um humano confirmar.
+Conduza para conhecer o espaço.', '{"policies.partnerships"}',
+   '{}', '{"Nunca afirmar que um serviço não existe sem que o DNA confirme a ausência."}', 'escalate',
+   'Transparência + Ecosystem value', '{"Negar serviço que existe","Inventar valor de parceiro","Dizer que está incluso quando não está"}', 'schedule_visit',
    'skill_seed', 'active', null);
 
 insert into public.knowledge_entries
@@ -284,12 +284,12 @@ insert into public.knowledge_entries
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
   (null, 'academia', 'risk_free_entry', 'proactive', '{}',
-   'trial_followup', 'Check-in de realizacao de valor. UMA pergunta apenas, concreta e sobre a experiencia
-vivida ate aqui, nunca sobre compra. O objetivo e a pessoa verbalizar um ganho.
-Nao mencione plano, preco ou fechamento nesta mensagem.
-Se a resposta for negativa, isso e sinal de risco e deve gerar acompanhamento imediato.', '{"risk_free_entry.exists"}',
+   'trial_followup', 'Check-in de realização de valor. UMA pergunta apenas, concreta e sobre a experiência
+vivida até aqui, nunca sobre compra. O objetivo é a pessoa verbalizar um ganho.
+Não mencione plano, preço ou fechamento nesta mensagem.
+Se a resposta for negativa, isso é sinal de risco e deve gerar acompanhamento imediato.', '{"risk_free_entry.exists"}',
    '{}', '{"Uma mensagem, um objetivo. Nunca mais de uma pergunta."}', 'escalate',
-   'Fazer o valor aparecer antes da cobranca (Hormozi)', '{"Falar de preco no dia 2","Fazer tres perguntas seguidas","Mensagem generica que nao cita a experiencia"}', 'capture_value_statement',
+   'Fazer o valor aparecer antes da cobrança (Hormozi)', '{"Falar de preço no dia 2","Fazer três perguntas seguidas","Mensagem genérica que não cita a experiência"}', 'capture_value_statement',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -298,11 +298,11 @@ insert into public.knowledge_entries
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
   (null, 'academia', 'risk_free_entry', 'proactive', '{}',
-   'trial_followup', 'Ultimo dia da experiencia. Recupere o que a pessoa disse ter gostado, projete a
-continuidade e enquadre a interrupcao como perda do que ja foi construido.
-Apresente a opcao mais adequada ao que foi observado e feche com alternativa concreta.', '{"pricing.plans","risk_free_entry.exists"}',
+   'trial_followup', 'Último dia da experiência. Recupere o que a pessoa disse ter gostado, projete a
+continuidade e enquadre a interrupção como perda do que já foi construído.
+Apresente a opção mais adequada ao que foi observado e feche com alternativa concreta.', '{"pricing.plans","risk_free_entry.exists"}',
    '{"commitment_offer.best_value"}', '{}', 'escalate',
-   'Aversao a perda (Kahneman) + fechamento por alternativa', '{"Comecar pelo preco","Encerrar com ''o que achou?''"}', 'close',
+   'Aversão a perda (Kahneman) + fechamento por alternativa', '{"Começar pelo preço","Encerrar com ''o que achou?''"}', 'close',
    'skill_seed', 'active', 'oferta_valor');
 
 insert into public.knowledge_entries
@@ -311,40 +311,40 @@ insert into public.knowledge_entries
    on_missing_facts, technique, common_errors, next_objective, source, status, school)
 values
   (null, 'academia', 'retention', 'proactive', '{}',
-   'reactivation', 'Nunca abra cobrando ausencia: gera culpa e silencio. Abra com um gancho concreto e
-especifico que prove que a lembranca nao e disparo em massa. Ofereca retorno sem
+   'reactivation', 'Nunca abra cobrando ausência: gera culpa e silêncio. Abra com um gancho concreto e
+específico que prove que a lembrança não é disparo em massa. Ofereça retorno sem
 risco. Encerre com fechamento por alternativa.
-Verifique o historico: se a pessoa nunca foi cliente, e primeira oportunidade, nao retorno.', '{"risk_free_entry.exists"}',
-   '{"reciprocity.gift"}', '{"Nunca usar ''voltar'', ''retornar'' ou ''novamente'' com quem nunca foi cliente.","Nunca mencionar vaga, reserva ou lotacao sem o fato no DNA."}', 'escalate',
-   'Quebrar o padrao da mensagem (Robbins) + recuar para atrair (Tracy)', '{"Cobrar o sumico","Tratar lead nao convertido como ex-cliente","Reenviar a mesma mensagem generica"}', 'schedule_visit',
+Verifique o histórico: se a pessoa nunca foi cliente, é primeira oportunidade, não retorno.', '{"risk_free_entry.exists"}',
+   '{"reciprocity.gift"}', '{"Nunca usar ''voltar'', ''retornar'' ou ''novamente'' com quem nunca foi cliente.","Nunca mencionar vaga, reserva ou lotação sem o fato no DNA."}', 'escalate',
+   'Quebrar o padrão da mensagem (Robbins) + recuar para atrair (Tracy)', '{"Cobrar o sumiço","Tratar lead não convertido como ex-cliente","Reenviar a mesma mensagem genérica"}', 'schedule_visit',
    'skill_seed', 'active', null),
 
 (null, 'academia', 'commitment_offer', 'reactive',
- '{"vou pensar","depois eu vejo","preciso ver com calma","vou dar uma pensada","estou em duvida entre os planos","me manda mais informacao","qual plano voce acha melhor"}',
+ '{"vou pensar","depois eu vejo","preciso ver com calma","vou dar uma pensada","estou em dúvida entre os planos","me manda mais informação","qual plano você acha melhor"}',
  null,
- 'ATENCAO: isto quase nunca e preco. A pessoa ja entendeu que precisa treinar —
-ela travou com medo de errar de novo. Muita gente ja pagou academia que nao usou,
-e o medo real e repetir isso.
-Primeiro julgue: se ela ainda nao vê o problema, e falta de valor e voce volta
-para a descoberta. Mas se ela concordou com tudo e mesmo assim adiou, e INDECISAO
-— e ai o erro classico e reforcar o argumento de novo. Repetir por que treinar e
-importante para quem ja concordou empurra a pessoa para longe.
-Faca o contrario de mais opcoes: RECOMENDE UMA. "Pelo que voce me contou, eu
-comecaria pelo plano X" vale mais que uma tabela com cinco. Quem esta travado nao
-quer escolher, quer ser orientado por alguem que entende.
-Depois tire o risco da mesa com o que existir de verdade: comecar pelo periodo
-mais curto, experimentar antes, saber que da para cancelar. E combine UMA data
-concreta ("terça as 19h eu te espero"), porque decisao sem data marcada volta a
+ 'ATENÇÃO: isto quase nunca é preço. A pessoa já entendeu que precisa treinar —
+ela travou com medo de errar de novo. Muita gente já pagou academia que não usou,
+e o medo real é repetir isso.
+Primeiro julgue: se ela ainda não vê o problema, é falta de valor e você volta
+para a descoberta. Mas se ela concordou com tudo e mesmo assim adiou, é INDECISÃO
+— e aí o erro clássico é reforçar o argumento de novo. Repetir por que treinar é
+importante para quem já concordou empurra a pessoa para longe.
+Faça o contrário de mais opções: RECOMENDE UMA. "Pelo que você me contou, eu
+começaria pelo plano X" vale mais que uma tabela com cinco. Quem está travado não
+quer escolher, quer ser orientado por alguém que entende.
+Depois tire o risco da mesa com o que existir de verdade: começar pelo período
+mais curto, experimentar antes, saber que dá para cancelar. E combine UMA data
+concreta ("terça às 19h eu te espero"), porque decisão sem data marcada volta a
 adiar.',
  '{"pricing.plans"}',
  '{"policies.cancellation","risk_free_entry.exists","commitment_offer.best_value","availability.weekly_hours"}', '{}', 'escalate',
  'Recomendar UM caminho e tirar risco da mesa (nunca repetir o argumento)',
- '{"Repetir por que treinar e importante para quem ja concordou","Oferecer mais planos para quem esta em duvida","Dar desconto achando que o problema e preco","Deixar sem data marcada"}',
+ '{"Repetir por que treinar é importante para quem já concordou","Oferecer mais planos para quem está em dúvida","Dar desconto achando que o problema é preço","Deixar sem data marcada"}',
  'reduzir_risco', 'skill_seed', 'active', 'indecisao_jolt');
 
 
 -- =====================================================================
--- VERIFICACAO 1 — quantas entradas por categoria
+-- VERIFICAÇÃO 1 — quantas entradas por categoria
 -- =====================================================================
 select category      as "Categoria",
        count(*)      as "Entradas",
@@ -356,12 +356,12 @@ order by 1;
 
 
 -- =====================================================================
--- VERIFICACAO 2 — A PROVA DE REUTILIZACAO
+-- VERIFICAÇÃO 2 — A PROVA DE REUTILIZAÇÃO
 -- Procura fatos da Be Fitness dentro da biblioteca.
--- O resultado esperado e ZERO: a estrategia nao pode conter fato nenhum.
+-- O resultado esperado é ZERO: a estratégia não pode conter fato nenhum.
 -- =====================================================================
 select count(*) as "Entradas contaminadas com fato (esperado 0)"
 from public.knowledge_entries
 where skill_key = 'academia'
   and tenant_id is null
-  and (strategy ~* 'R\$|[0-9]{2,}:[0-9]{2}|Be Fitness|Protasio|Gympass|Totalpass|zumba|pilates|muay');
+  and (strategy ~* 'R\$|[0-9]{2,}:[0-9]{2}|Be Fitness|Protásio|Gympass|Totalpass|zumba|pilates|muay');

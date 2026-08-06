@@ -124,7 +124,7 @@ contact_fields:
     type: enum
     options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
   - key: defensor_interno
-    label: "Quem puxa a decisao em casa"
+    label: "Quem puxa a decisão em casa"
     type: enum
     options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
 

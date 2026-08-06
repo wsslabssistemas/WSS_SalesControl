@@ -132,13 +132,41 @@ novo em `oficina` (ago/2026): antes de escrever, conferi que nenhuma das 166
 entradas existentes falava de diagnóstico, peça original, autorização de serviço
 ou revisão por quilometragem.
 
-**Biblioteca nova nasce COM ACENTO (decisão, ago/2026).** As nove primeiras
-foram escritas em ASCII, quando `technique`, `strategy` e `trigger_questions`
-eram anotação interna do motor. Não são mais: o Responder mostra a técnica ao
-vendedor e o exercício do curso mostra o gatilho ao aluno **como mensagem de
-cliente**. `oficina` é a primeira com acento; as antigas ficam como dívida
-registrada — trocar depois é achar e substituir, escrever errado de novo é
-aumentar a conta.
+**Biblioteca nova nasce COM ACENTO (decisão, ago/2026) — e a dívida das nove
+antigas foi paga.** As nove primeiras foram escritas em ASCII, quando
+`technique`, `strategy` e `trigger_questions` eram anotação interna do motor.
+Não são mais: o Responder mostra a técnica ao vendedor e o exercício do curso
+mostra o gatilho ao aluno **como mensagem de cliente**.
+
+As nove foram acentuadas (ago/2026): **+4.573 acentos**, 13,2% a 16,4% das
+palavras acentuadas — a mesma densidade das quatro novas (14,8% a 17,5%).
+Três coisas fizeram isso ser seguro num arquivo de curadoria:
+
+- **A invariante.** Tirando os acentos do resultado, ele tem que ser idêntico ao
+  original. Nenhuma palavra some, nenhuma vírgula anda, nenhuma frase é
+  "melhorada" no caminho — e o diff fechou em 1.739 linhas trocadas por 1.739.
+  Sem essa trava, passar um script por 200 KB de curadoria é aposta.
+- **O casamento não se mexeu**, por construção: `toks()` em `lib/match.ts`
+  normaliza para NFD e remove diacrítico antes de comparar, então o fluxo de
+  termos é o mesmo. Medido depois: `retrieval_check` 51/51 e 96,7% dos 1.261
+  gatilhos, iguais.
+- **Homógrafo não se automatiza.** `é/e`, `está/esta`, `dá/da`, `fábrica/fabrica`,
+  `análise/analise` dependem de contexto. Um classificador treinado no português
+  já escrito no repositório foi medido por validação cruzada **antes** de
+  aplicar: 82% em `e/é` — reprovado, e as ~2.600 ocorrências foram decididas uma
+  a uma. O número existe porque medir antes é mais barato que descobrir depois.
+
+**A trava:** `packages/db/tests/acentuacao_check.mjs`, no CI. Ela conhece 444
+palavras que este repositório só escreve com acento e reprova qualquer uma delas
+sem acento na prosa das bibliotecas e dos manifestos. Fica de fora o que é
+**contrato** — `'clinica'` é `skill_key`, `options: [preco, prazo]` são as opções
+canônicas, `pricing.range` é caminho de fato — e ficam de fora os 59 homógrafos,
+de propósito: verificador que chuta contexto reprova texto certo até alguém
+desligar a trava. Testada quebrando um arquivo de propósito.
+
+Achado no caminho: dois `label` de manifesto (`"Quem puxa a decisao"`, em
+`energia_solar` e `sob_medida`) estavam sem acento **na tela do cliente**. Foi a
+trava que apontou.
 
 Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador —
 trocar no seletor do topo do painel.
@@ -450,6 +478,7 @@ node packages/db/tests/library_check.mjs  # bibliotecas: categoria, escola, fato
 node packages/db/tests/demo_dna_check.mjs # DNA de demonstração × manifestos
 node packages/db/tests/retrieval_check.mjs # escolha de técnica: 22/22 (precisa do banco)
 node packages/db/tests/repescagem_test.mjs # espaçamento do curso: 13/13 (sem banco)
+node packages/db/tests/acentuacao_check.mjs # acento na prosa curada (sem banco)
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql
 node scripts/seed-skills.mjs              # recarrega manifestos no banco
