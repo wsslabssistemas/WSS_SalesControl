@@ -77,6 +77,14 @@ const CASOS = [
   { skill: "clinica", msg: "vou conversar em casa antes de decidir", categoria: "objections", escola: "negociacao_voss" },
   { skill: "industria", msg: "vou aguardar a proxima colecao", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "academia", msg: "vou pensar com calma", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  // O PAR QUE FIXA A DECISÃO DE DOUTRINA (ago/2026). As duas mensagens são
+  // parecidas e pedem remédios opostos, e é isso que o JOLT chama de JULGAR:
+  // quem ainda não viu valor volta para a DESCOBERTA (`consultiva_spin`); quem
+  // viu valor e travou vai para REDUZIR RISCO (`indecisao_jolt`). Enquanto a
+  // entrada de dúvida vaga carregou o rótulo "devolver a pressão de preço" com
+  // escola `fechamento_classico`, o vendedor lia na tela a instrução de fazer
+  // exatamente o que piora o desfecho de quem já concordou.
+  { skill: "academia", msg: "não sei se vale a pena, não era bem o que eu procurava", categoria: "objections", escola: "consultiva_spin" },
   { skill: "escola_esportiva", msg: "vou ver com meu marido", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "automacao", msg: "vou levar para a diretoria", categoria: "commitment_offer", escola: "indecisao_jolt" },
   { skill: "barbearia", msg: "depois eu marco, qualquer coisa eu chamo", categoria: "commitment_offer", escola: "indecisao_jolt" },

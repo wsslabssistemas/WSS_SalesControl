@@ -337,11 +337,25 @@ tempo entre o contato e o primeiro toque de retomada.
   originais** — a regra já estava escrita aqui e eu mesmo violei. Fundido no
   `0030`. Se precisar acrescentar assunto novo a um segmento, **edite o seed
   dele**.
-- **`technique` é USER-FACING.** Aparece no Responder e no curso. A biblioteca
-  da academia veio do Base44 com rótulos em inglês ("Hot Button", "Puppy Dog
-  Close") e o fundador leu isso na tela. Traduzidos em ago/2026 mantendo o
-  autor entre parênteses — creditar a escola é o método; o que não pode é o
-  vendedor ler inglês. **Ao criar entrada nova, o rótulo é para ser lido.**
+- **`technique` é USER-FACING — e `next_objective` também.** Os dois aparecem no
+  Responder e no curso. A biblioteca da academia veio do Base44 com rótulos em
+  inglês ("Hot Button", "Puppy Dog Close") e o fundador leu isso na tela.
+  Traduzidos em ago/2026 mantendo o autor entre parênteses — creditar a escola é
+  o método; o que não pode é o vendedor ler inglês.
+  **A primeira passada não terminou o serviço:** em ago/2026 ainda havia 4
+  rótulos de `technique` com inglês dentro (`Reassurance`, `Benefit stacking`,
+  `Ecosystem value`) e **14 dos 15 `next_objective`** da academia em inglês.
+  `next_objective` parece chave de máquina e não é: `lib/exercicio.ts` troca o
+  `_` por espaço e mostra ao aluno *"Minha resposta leva ao próximo passo:
+  isolate objection"*. Nenhum código casa com esses valores — são texto.
+  **Ao criar entrada nova, os dois campos são para ser lidos.**
+- **Rótulo pode contradizer o texto da própria entrada, e o rótulo é o que o
+  vendedor obedece.** A entrada de dúvida vaga da academia ensinava descoberta
+  no `strategy` e mandava *"devolver a pressão de preço"* no `technique`, com
+  escola `fechamento_classico` — resto de quando ela era dona de "vou pensar".
+  Nada quebrava: o `library_check` valida categoria, escola e fatos, não
+  coerência entre campos. Ao mexer nos gatilhos de uma entrada, **releia o
+  rótulo**: ele foi escrito para os gatilhos antigos.
 - **Progresso de repescagem não pode morar em `course_progress.answers`.** O
   campo é reescrito quando a lição é refeita e é a base do cálculo da nota —
   gravar acerto de revisão ali infla a nota de uma prova que ninguém refez, e o

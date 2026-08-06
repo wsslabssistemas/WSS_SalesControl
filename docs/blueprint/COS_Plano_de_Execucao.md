@@ -158,15 +158,37 @@ O detalhe do método, da invariante que protegeu a curadoria e da trava de CI
 automação fez o que é regra, o classificador foi **medido e reprovado** no
 `e/é`, e os homógrafos foram decididos a mão.
 
-**Aberto:**
-- **Contradição de doutrina em `academia`** — decisão de curadoria, não de
-  código. A entrada `objections` que hoje isola a dúvida vaga ensina *"devolver
-  a pressão de preço (Jim Thomas) + fechamento por alternativa"*, com escola
-  `fechamento_classico`. A entrada de indecisão que veio no M3 ensina o oposto
-  para o mesmo cliente: **não repetir o argumento, reduzir risco**. O JOLT diz
-  que a primeira é o que piora o desfecho em 84% dos casos. Movi só os gatilhos;
-  **decidir se a entrada antiga é aposentada ou reescrita é do fundador** — e
-  `technique` é user-facing, aparece no Responder e no curso.
+### 1.6. Contradição de doutrina em `academia` — ✅ RESOLVIDA (ago/2026)
+
+**Decisão do fundador: reescrever, não aposentar.** A contradição era de
+**rótulo, não de texto** — e isso só ficou claro ao abrir as duas entradas.
+
+O `technique` da entrada de dúvida vaga dizia *"Devolver a pressão de preço
+(Jim Thomas) + fechamento por alternativa"*, com escola `fechamento_classico`.
+Mentia em três frentes: **nenhum gatilho dela cita preço** (são *"não sei se
+vale a pena"*, *"não era bem o que eu procurava"*), a entrada de preço já existe
+ao lado (`oferta_valor`, "Diluir o valor no dia a dia (Tracy)"), e o **texto**
+da entrada sempre ensinou descoberta. Era resto do desenho pré-M3, de quando ela
+era dona de "vou pensar".
+
+Virou `'Isolar a objeção não dita — uma pergunta antes de qualquer oferta'`,
+escola `consultiva_spin`.
+
+**Por que não foi aposentada:** o primeiro passo do JOLT é **julgar**. Quem
+ainda não viu valor volta para a descoberta — que é o que esta entrada faz.
+Quem viu valor e travou vai para a de indecisão, cuja estratégia e cujo
+`next_objective` (`reduzir_risco`) são o remédio da *outra* doença. Fundir as
+duas daria remédio certo para doença errada. A separação virou **par de teste**
+no `retrieval_check` (52/52), porque é a distinção que o produto vende.
+
+**Achado no caminho, na mesma faixa de defeito.** `academia` é a biblioteca que
+veio do Base44, e ela ainda carregava inglês na tela: **14 dos 15
+`next_objective` distintos** (`schedule_visit`, `isolate_objection`,
+`capture_value_statement`…) e **4 rótulos de `technique`** (`Reassurance`,
+`Benefit stacking`, `Ecosystem value`). Os dois campos aparecem para o vendedor
+no Responder e para o aluno no exercício do curso — `next_objective` vira
+literalmente *"Minha resposta leva ao próximo passo: isolate objection"*.
+Traduzidos. Só `reduzir_risco`, escrito no M3, já estava em português.
 
 ### A prova com IA dos 4 segmentos novos (ago/2026) — passou
 
