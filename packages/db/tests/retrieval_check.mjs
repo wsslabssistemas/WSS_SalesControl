@@ -114,6 +114,13 @@ const CASOS = [
   { skill: "salao_beleza", msg: "por que precisa dar sinal antes?", categoria: "commitment_offer", escola: "fechamento_classico" },
   { skill: "salao_beleza", msg: "a raiz apareceu, esta na hora do retoque", categoria: "retention", escola: "cadencia_blount" },
 
+  // ENERGIA SOLAR — casos vindos da REVISÃO DO ESPECIALISTA (ago/2026).
+  // O primeiro é a pergunta que ele disse receber toda semana e que a
+  // biblioteca não tinha; o segundo é a inversão de processo (homologar
+  // antes de comprar) que virou etapa da jornada.
+  { skill: "energia_solar", msg: "posso enviar a geracao para outro endereco?", categoria: "goal_matching", escola: "consultiva_spin" },
+  { skill: "energia_solar", msg: "quando eu compro o material do kit?", categoria: "availability", escola: "consultiva_spin" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

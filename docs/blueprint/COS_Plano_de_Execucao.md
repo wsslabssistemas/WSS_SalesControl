@@ -17,8 +17,12 @@
 - **Curso completo: 9 de 9 módulos** — 45 lições, 267 min, 122 perguntas, com
   **repescagem espaçada** no ar. A tela funciona e o fundador aprovou a régua
   depois de fazer o Módulo 1.
-- **O kit de revisão está com o especialista da indústria** e as respostas do
-  de solar estão a caminho.
+- **A revisão de `energia_solar` VOLTOU** (ago/2026) — integrador do RS,
+  engenheiro, trabalha por indicação. É a segunda devolutiva de especialista e a
+  mais substantiva até hoje: **inverteu uma etapa da jornada**, discriminou
+  prazos que estavam agregados num só, e trouxe a pergunta que ele recebe toda
+  semana e que a biblioteca não tinha. Detalhe abaixo, no item 3.
+- **O kit de revisão da indústria segue com a especialista.**
 
 ## O que está CONGELADO por decisão (não reabrir sem motivo novo)
 
@@ -224,6 +228,76 @@ técnica. Mercado grande, funil já existe, custo é só curadoria.
 **Provado com IA:** perguntado "fica zero?", o motor respondeu que **não zera**,
 explicou o custo mínimo por padrão de ligação e pediu a conta. A entrada fez
 exatamente o que foi escrita para fazer.
+
+### A REVISÃO DO ESPECIALISTA (ago/2026) — o que ela mudou
+
+Segunda devolutiva de especialista do projeto, e a que mais mexeu em estrutura.
+Ele respondeu as 18 situações e as 5 perguntas de fechamento. O que entrou:
+
+**1. A jornada estava na ordem errada — e isso é dinheiro do cliente.**
+Antes: fecha → compra o kit → instala → homologa. Ele inverteu na prática e
+explicou por quê: as concessionárias passaram a analisar o **fluxo de inversão**
+na rede, e podem **limitar a potência** do sistema ou **exigir subestação**. Quem
+comprou antes fica com kit errado e dinheiro parado, e a culpa cai no integrador
+mesmo não sendo dele. *"Hoje eu sempre homologo o projeto primeiro, e depois o
+cliente compra os materiais."* Virou a etapa `homologacao` **antes** de
+`em_execucao`, com as fases de protocolo, acompanhamento e parecer de acesso.
+
+**2. Existe um atalho legítimo, e ele tem número.** Consumo local até a potência
+da aprovação simplificada sai praticamente certo; acima disso entra análise de
+fluxo. O limite virou campo de DNA (`limite_fast_track`) em vez de ficar
+escondido na cabeça de quem vende.
+
+**3. "Peça a conta" estava incompleto: é a MÉDIA DE 12 MESES.** Solar se
+dimensiona por média porque gera mais no verão para abastecer o inverno, e o
+histórico dos 12 meses vem discriminado na própria fatura. Dimensionar pelo mês
+que a pessoa mandou erra a potência para cima ou para baixo. Ele ainda acrescenta
+**30% a 50% de folga**, porque o consumo cresce depois de instalar — e agora tem
+carro elétrico e híbrido plug-in no meio.
+
+**4. Um relógio virou quatro, com prazo cada um:** análise do projeto 10 a 30
+dias · entrega do kit 10 a 20 dias · instalação · vistoria em até 5 dias úteis
+depois de solicitada. Estavam agregados em "prazo de homologação", que é
+justamente o que faz o cliente ligar cobrando.
+
+**5. A pergunta que ele recebe TODA SEMANA e que não existia: autoconsumo
+remoto.** Gerar numa unidade e abater em outra, em percentual, desde que mesmo
+CPF ou CNPJ. Destrava projeto que parecia inviável — apartamento sem telhado com
+casa de praia, comércio com telhado ruim e galpão bom. **Entrada nova.**
+
+**6. O padrão de entrada de energia limita a geração**, e não estava em lugar
+nenhum. Virou `hard_rule`: não prometer potência sem conferir o padrão.
+
+**7. Consumo alto é BOM para vender** — o investimento é maior e o payback é mais
+rápido. Contra-intuitivo, e o oposto do que um vendedor sem vivência assume.
+
+**8. Argumentos verificáveis que substituíram genéricos:** o aumento real da
+tarifa (RGE +14% e +16% aprovado; CEEE +21,8%, muito acima da inflação) no lugar
+de "a energia sobe todo ano"; e "no fim de 2022 os kits custavam 50% mais que
+hoje" para quem quer esperar baratear.
+
+**9. Comparar proposta é sincronizar potência.** Orientar o cliente a igualar
+potência de módulos e de inversor entre os orçamentos — *"comparar laranja com
+laranja"*. É a régua que ele dá ao cliente, e ela favorece quem dimensionou
+certo.
+
+**10. Créditos duram 60 meses e ACOMPANHAM o titular** para outra unidade. Muda a
+resposta de "e se eu mudar de casa" e a de imóvel alugado.
+
+**11. Silêncio pós-proposta tem prazo e frase:** três dias, e *"o que está
+faltando para fecharmos?"*. E o diagnóstico honesto das duas hipóteses — ou só
+queria o preço para fechar com outro, ou está vendo como pagar.
+
+**12. Falta uma etapa na entrega: ativar o monitoramento** e ensinar o app. É
+como se confere se a geração bate com o que foi prometido — virou fase de
+`em_execucao`.
+
+**13. O que faz perder confiança na hora:** não olhar os pontos técnicos básicos
+na visita (entrada de energia, telhado, sombras). *"Se o cliente recebeu outro
+que viu e falou, provavelmente já era pra ti."*
+
+Resultado: **23 entradas** (eram 21), jornada com etapa nova, 6 campos de DNA
+novos, 4 `hard_rules` novas e 8 técnicas reescritas. `retrieval_check` 39/39.
 
 ### 4. Kit de revisão da biblioteca de indústria
 

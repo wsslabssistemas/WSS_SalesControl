@@ -67,11 +67,11 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
   biblioteca do segmento da empresa.
 
-### Segmentos — 11 completos, 203 entradas curadas
+### Segmentos — 11 completos, 205 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
-| `energia_solar` (fotovoltaica + **híbrido com bateria**) | 21 | prospecção + licitações |
+| `energia_solar` (fotovoltaica + **híbrido com bateria**) | 23 | prospecção + licitações |
 | `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 20 | prospecção + licitações |
 | `barbearia` | 19 | — |
 | `distribuidora` (atacado) | 17 | prospecção |

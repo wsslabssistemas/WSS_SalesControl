@@ -87,15 +87,35 @@ journey:
     - key: negociacao
       label: "Negociação e pagamento"
       goal: "Isolar o que trava (valor, financiamento, telhado, cônjuge) e viabilizar o pagamento."
+    # A ORDEM MUDOU POR CORREÇÃO DE ESPECIALISTA (ago/2026, integrador do RS).
+    # Antes: fecha → compra o kit → instala → homologa. O especialista
+    # inverteu na prática dele e explicou por quê: a concessionária pode
+    # LIMITAR a potência ou exigir subestação por causa do fluxo de inversão
+    # na rede. Quem comprou antes fica com material errado e dinheiro parado.
+    # "Hoje eu sempre homologo o projeto primeiro, e depois o cliente compra
+    # os materiais." Isso protege o cliente e protege o integrador.
+    - key: homologacao
+      label: "Projeto em homologação"
+      cadence: pos_venda
+      goal: "Aprovar o projeto na concessionária ANTES de o cliente comprar o kit. É aqui que aparece limitação de potência ou exigência de subestação."
+      phases:
+        - { key: protocolado, label: "Projeto protocolado",   offset_days: 0 }
+        - { key: acompanhar,  label: "Acompanhar a análise",  offset_days: 10 }
+        - { key: aprovado,    label: "Parecer de acesso",     offset_days: 30 }
     - key: em_execucao
       label: "Em execução"
       cadence: pos_venda
-      goal: "Projeto, instalação e homologação. Manter o cliente informado durante a espera da concessionária."
+      goal: "Kit comprado, instalação e vistoria. Manter o cliente informado durante a espera da concessionária."
+      phases:
+        - { key: kit,        label: "Kit a caminho",            offset_days: 0 }
+        - { key: instalado,  label: "Instalado",                offset_days: 14 }
+        - { key: vistoria,   label: "Vistoria solicitada",      offset_days: 16 }
+        - { key: monitor,    label: "Ativar o monitoramento",   offset_days: 21 }
     - key: fechado
       label: "Gerando"
       terminal: true
       won: true
-      goal: "Homologado e gerando. Daqui em diante o jogo é manutenção, ampliação e indicação."
+      goal: "Homologado, gerando e com o monitoramento ativo no app do cliente. Daqui em diante o jogo é manutenção, ampliação e indicação."
     - key: perdido
       label: "Perdido"
       terminal: true
@@ -294,6 +314,14 @@ dna_sections:
       - { key: prazo_proposta, type: text, required: true, label: "Prazo da proposta", help: "Quanto tempo até entregar a proposta com simulação" }
       - { key: prazo_instalacao, type: text, required: true, label: "Prazo da instalação", help: "Da aprovação até o sistema montado. Ex.: 2 a 5 dias no telhado" }
       - { key: prazo_homologacao, type: text, required: true, label: "Prazo de homologação", help: "Quanto costuma levar na SUA concessionária — é o prazo dela, não o seu" }
+      # Campos abertos por correção de especialista (ago/2026). Ele quebrou o
+      # "prazo de homologação" em três relógios que o cliente sente separados,
+      # e que o vendedor precisa saber de cor para não prometer errado.
+      - { key: prazo_analise_projeto, type: text, required: true, label: "Prazo da análise do projeto", help: "Da protocolação ao parecer de acesso. Costuma ser de 10 a 30 dias" }
+      - { key: prazo_vistoria, type: text, required: true, label: "Prazo da vistoria", help: "Depois de solicitada. O limite regulatório é de 5 dias úteis" }
+      - { key: prazo_kit, type: text, required: true, label: "Prazo de entrega do kit", help: "Do pedido ao material na obra. Costuma ser de 10 a 20 dias" }
+      - { key: limite_fast_track, type: text, label: "Limite de aprovação simplificada", help: "Até que potência a concessionária aprova sem análise de fluxo. Ex.: até 7,5 kW em consumo local" }
+      - { key: homologa_antes, type: boolean, label: "Você homologa antes de o cliente comprar o kit?", help: "Protege o cliente de comprar material que a concessionária pode limitar" }
       - { key: distribuidoras, type: list, label: "Concessionárias que você homologa", help: "Ex.: RGE, CEEE Equatorial, CPFL" }
   - key: garantias
     label: "Garantias"
@@ -306,8 +334,8 @@ dna_sections:
   - key: pos_venda
     label: "Depois da instalação"
     fields:
-      - { key: monitoramento, type: text, label: "Monitoramento", help: "Como o cliente acompanha a geração e quem avisa se cair" }
-      - { key: manutencao, type: text, label: "Limpeza e revisão", help: "Com que frequência, o que inclui e quanto custa" }
+      - { key: monitoramento, type: text, label: "Monitoramento", help: "Qual app, quem configura e quem avisa se a geração cair. Ativar e ensinar o app faz parte da entrega, não é extra" }
+      - { key: manutencao, type: text, label: "Limpeza e revisão", help: "Frequência, o que inclui e quanto custa. Mínimo de uma limpeza por ano, mais reaperto de estrutura, disjuntores e proteções" }
       - { key: ampliacao, type: text, label: "Ampliação", help: "Como funciona aumentar o sistema depois" }
   - key: atuacao
     label: "Onde você atende"
@@ -406,6 +434,11 @@ hard_rules:
   - "O prazo de homologação é da concessionária. Informar como estimativa, nunca como compromisso da empresa."
   - "Separar sempre garantia de desempenho do módulo, garantia de produto e garantia do inversor — nunca dizer '25 anos de garantia' sem qualificar."
   - "Não afirmar marca, certificação, seguro ou financiamento que não esteja no DNA."
+  # Regras acrescentadas pela revisão do especialista (ago/2026):
+  - "NÃO orientar a compra do kit antes do parecer de acesso. A concessionária pode limitar a potência ou exigir subestação por causa do fluxo de inversão na rede — e o cliente fica com material errado e dinheiro parado."
+  - "Dimensionar pela MÉDIA de 12 meses da fatura, nunca por um mês isolado: gera-se mais no verão para abastecer o inverno."
+  - "Verificar o padrão de entrada de energia antes de prometer potência. É ele que limita quanto o imóvel suporta gerar."
+  - "Não prometer prazo de análise da concessionária como se fosse seu. É de 10 a 30 dias e não depende do integrador."
 
 kpis:
   - taxa_conversao

@@ -49,6 +49,10 @@ ja perdeu antes de comecar.
 Explique isso em uma frase e peca a conta: "o valor depende do seu consumo,
 me manda uma foto da sua conta de luz que eu te trago o numero certo". Pedir a
 conta nao e burocracia, e o que te separa de quem manda tabela por WhatsApp.
+E o que voce precisa nao e o mes: e a MEDIA DE 12 MESES, que vem discriminada na
+propria fatura. Solar se dimensiona por media porque o sistema gera mais no verao
+para abastecer o inverno — quem dimensiona pelo mes que a pessoa mandou erra a
+potencia para cima ou para baixo, e as duas doem.
 Se precisar dar alguma referencia para a pessoa nao desistir, use a FAIXA dos
 projetos que voce costuma fazer, deixando claro que e faixa e do que depende.
 E diga o que esta incluso: kit, estrutura, protecoes, projeto com ART, mao de
@@ -78,7 +82,7 @@ Se ainda pesar, reduza o ESCOPO, nao a qualidade: um sistema menor que cobre
 parte do consumo e melhor que nenhum — e ele amplia depois.',
  '{"precos.formas_pagamento"}',
  '{"precos.financiamento","precos.faixa","precos.o_que_inclui","pos_venda.ampliacao"}', '{}', 'escalate',
- 'Custo de 25 anos sem fazer nada + trocar despesa por bem (nunca desconto reflexo)',
+ 'Custo de 25 anos sem fazer nada, com o aumento REAL da tarifa + devolver a pergunta de como ficaria bom pagar',
  '{"Dar desconto na primeira pressao","Usar payback de media de internet em vez do dimensionamento dele","Ignorar que a tarifa sobe ao comparar","Reduzir qualidade do equipamento em vez do escopo"}',
  'simular_pagamento', 'skill_seed', 'active', null),
 
@@ -119,7 +123,7 @@ so vamos conferir se estao comparando a mesma coisa". Quem ensina o cliente a
 comparar ganha autoridade mesmo quando perde o pedido.',
  '{"precos.o_que_inclui","garantias.modulo","garantias.inversor"}',
  '{"oferta.marcas_modulo","oferta.marcas_inversor","garantias.instalacao","atuacao.equipe_propria"}', '{}', 'escalate',
- 'Dar a regua de comparacao item a item (nunca atacar o concorrente)',
+ 'Sincronizar as propostas (mesma potencia de modulo e de inversor) para comparar laranja com laranja',
  '{"Falar mal do concorrente","Baixar o preco para igualar sem igualar o escopo","Nao perguntar o que a outra proposta inclui","Comparar so o valor final"}',
  'comparar_escopo', 'skill_seed', 'active', null),
 
@@ -140,7 +144,7 @@ Nao prometa percentual de valorizacao do imovel — nao e um numero que voce
 controla nem consegue provar.',
  '{}',
  '{"pos_venda.ampliacao","diferencial.motivo_escolher","atuacao.regiao"}', '{}', 'omit',
- 'Tres saidas concretas + descobrir quem e o titular antes de dimensionar',
+ 'Tres saidas concretas + os creditos acompanham o titular para a nova UC',
  '{"Prometer percentual de valorizacao do imovel","Dimensionar para quem mora de aluguel sem falar com o proprietario","Tratar a duvida como desculpa"}',
  'confirmar_titular', 'skill_seed', 'active', null),
 
@@ -184,7 +188,7 @@ compromisso. E combine que voce da posicao durante a espera, sem ele precisar
 perguntar. Essa unica frase evita a maior parte das reclamacoes do setor.',
  '{"execucao.prazo_instalacao","execucao.prazo_homologacao"}',
  '{"execucao.prazo_visita","execucao.prazo_proposta","execucao.distribuidoras"}', '{}', 'escalate',
- 'Nomear os tres relogios e separar o que e seu do que e da concessionaria',
+ 'Nomear os quatro relogios com os prazos reais e homologar ANTES de o cliente comprar o kit',
  '{"Dizer so o prazo de instalacao e omitir a homologacao","Prometer o prazo da concessionaria como se fosse seu","Deixar o cliente descobrir a espera depois de pagar","Sumir durante a homologacao"}',
  'alinhar_prazos', 'skill_seed', 'active', null),
 
@@ -206,7 +210,7 @@ fibrocimento, laje e solo pedem estruturas diferentes, com custo e prazo
 diferentes. Prometer sem ver o telhado e como orcar sem medir.',
  '{"oferta.telhados_atendidos","oferta.tipos_sistema"}',
  '{"pos_venda.ampliacao","execucao.prazo_visita","oferta.marcas_inversor"}', '{}', 'escalate',
- 'Dimensionar por consumo de 12 meses e telhado real, nunca por palpite',
+ 'Dimensionar pela media de 12 meses, com folga de consumo futuro e padrao de entrada conferido',
  '{"Dizer numero de placas sem ver consumo e telhado","Dimensionar pelo mes atipico","Superdimensionar para aumentar a venda","Prometer sem confirmar o tipo de telhado"}',
  'dimensionar', 'skill_seed', 'active', null),
 
@@ -364,7 +368,7 @@ Em solar, a promessa exagerada nao perde a venda: ganha a venda e perde a
 empresa.',
  '{}',
  '{"garantias.modulo","garantias.inversor","pos_venda.monitoramento"}', '{}', 'omit',
- 'Dizer o limite antes de fechar (conta minima, geracao estimada, credito 60 meses)',
+ 'Dizer o limite antes de fechar: taxa minima, imposto sobre o que vem da rede, geracao estimada e credito de 60 meses',
  '{"Prometer conta zero","Garantir economia em percentual fixo","Omitir o custo de disponibilidade","Falar 25 anos de garantia sem separar modulo, produto e inversor"}',
  'alinhar_expectativa', 'skill_seed', 'active', null),
 
@@ -409,7 +413,7 @@ familia esta gerando menos do que consome — e ele nao sabe. Voce sabe, se
 estiver olhando.',
  '{}',
  '{"pos_venda.manutencao","pos_venda.monitoramento","pos_venda.ampliacao"}', '{}', 'omit',
- 'Retorno programado com dado de geracao (a ampliacao e a venda esquecida)',
+ 'Conferir a geracao pelo app contra a proposta + limpeza anual com reaperto de estrutura e protecoes',
  '{"Sumir apos a homologacao","Chegar na revisao so para vender","Nao avisar quando a geracao cai","Perder a ampliacao para o concorrente que apareceu"}',
  'agendar_revisao', 'skill_seed', 'active', null),
 
@@ -528,4 +532,58 @@ seja ruim.',
  '{"oferta.tipos_sistema","execucao.distribuidoras","oferta.marcas_bateria"}', '{}', 'escalate',
  'Separar os tres tipos de negativa e apresentar a saida de nao injetar',
  '{"Aceitar a negativa como fim da venda","Prometer que consegue aprovar","Manter o projeto original e so recorrer","Nao verificar a situacao real da unidade junto a distribuidora"}',
- 'viabilizar_com_bateria', 'skill_seed', 'active', null);
+ 'viabilizar_com_bateria', 'skill_seed', 'active', null),
+
+-- =====================================================================
+-- ENTRADAS ACRESCENTADAS PELA REVISAO DO ESPECIALISTA (ago/2026)
+-- Integrador do RS, engenheiro, trabalha por indicacao. As duas vieram
+-- das perguntas de fechamento do kit de revisao: a primeira e a pergunta
+-- que ele recebe TODA SEMANA e que nao existia em lugar nenhum da
+-- biblioteca; a segunda e a mudanca de processo que ele adotou na pratica
+-- e que inverteu uma etapa da jornada deste segmento.
+-- =====================================================================
+
+(null, 'energia_solar', 'goal_matching', 'reactive',
+ '{"posso enviar para outro endereco","da para usar em outra casa","tenho dois imoveis","gerar aqui e usar la","autoconsumo remoto","posso dividir a geracao"}',
+ null,
+ 'PODE — e esta e a pergunta que mais aparece e a que menos gente sabe responder.
+Chama-se AUTOCONSUMO REMOTO: gera-se numa unidade e envia-se o excedente para
+outra, em percentual definido pelo cliente, desde que as unidades estejam no
+MESMO CPF ou CNPJ e na area da mesma concessionaria.
+Isso destrava projeto que parecia inviavel, e por isso vale perguntar sempre.
+Apartamento sem telhado e casa de praia com telhado grande? Gera la e abate
+aqui. Comercio com consumo alto e telhado ruim? Usa o telhado do galpao.
+Duas coisas ditas junto, senao a promessa fica maior que a entrega: o rateio e
+declarado a concessionaria e nao se muda toda hora, entao vale definir o
+percentual com calma; e cada unidade continua pagando o custo de
+disponibilidade dela, porque cada uma tem o proprio medidor.
+Antes de prometer, confirme o titular de CADA conta. E o dado que decide se o
+projeto existe.',
+ '{}',
+ '{"atuacao.regiao","execucao.distribuidoras"}', '{}', 'omit',
+ 'Autoconsumo remoto: gerar numa unidade e abater em outra do mesmo titular',
+ '{"Prometer rateio entre CPFs diferentes","Esquecer que cada unidade mantem a taxa minima","Dimensionar sem confirmar o titular de cada conta"}',
+ 'confirmar_titularidade', 'skill_seed', 'active', null),
+
+(null, 'energia_solar', 'availability', 'reactive',
+ '{"quando eu compro o material","ja posso comprar o kit","quando chega o equipamento","tenho que pagar tudo antes","quando comeca a instalacao"}',
+ null,
+ 'A ordem certa protege o dinheiro do cliente, e quase todo mundo faz ao contrario.
+O certo e HOMOLOGAR PRIMEIRO: protocola o projeto, espera o parecer de acesso, e
+so entao o cliente compra o kit.
+O motivo e concreto e virou comum: a rede das concessionarias esta com muita
+geracao instalada, e elas passaram a analisar o fluxo de inversao. Se a potencia
+for alta para aquela rua, elas podem LIMITAR a potencia do sistema ou exigir que
+o cliente construa uma subestacao. Quem comprou o material antes fica com kit
+errado e dinheiro parado — e a culpa cai no integrador, mesmo nao sendo dele.
+Existe um atalho legitimo: em consumo local, ate a potencia da aprovacao
+simplificada da sua concessionaria, o parecer sai praticamente certo. Acima
+disso entra analise de fluxo, e ai o risco e real.
+Diga os relogios separados, com numero: analise do projeto de 10 a 30 dias,
+entrega do kit de 10 a 20 dias, instalacao, e vistoria em ate 5 dias uteis
+depois de solicitada. Cliente que sabe a ordem nao liga cobrando.',
+ '{"execucao.prazo_analise_projeto","execucao.prazo_kit","execucao.prazo_vistoria"}',
+ '{"execucao.limite_fast_track","execucao.homologa_antes","execucao.distribuidoras"}', '{}', 'escalate',
+ 'Homologar antes de comprar: o parecer de acesso protege o cliente de material errado',
+ '{"Mandar comprar o kit antes do parecer de acesso","Somar todos os prazos num numero so","Prometer o prazo da concessionaria como se fosse seu","Ignorar o limite da aprovacao simplificada ao dimensionar"}',
+ 'protocolar_projeto', 'skill_seed', 'active', null);

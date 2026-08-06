@@ -395,6 +395,11 @@ $json$::jsonb)
     "prazo_proposta": "Proposta com simulação em até 2 dias úteis após a visita",
     "prazo_instalacao": "2 a 5 dias no telhado, após aprovação do projeto",
     "prazo_homologacao": "Na RGE costuma levar de 30 a 60 dias após o envio do projeto. O prazo é da concessionária, não nosso — acompanhamos e damos posição.",
+    "prazo_analise_projeto": "De 10 a 30 dias da protocolação ao parecer de acesso",
+    "prazo_vistoria": "Até 5 dias úteis depois de solicitada",
+    "prazo_kit": "De 10 a 20 dias do pedido ao material na obra",
+    "limite_fast_track": "Até 7,5 kW em consumo local sai praticamente certo; acima disso entra análise de fluxo e pode haver limitação de potência ou exigência de subestação",
+    "homologa_antes": true,
     "distribuidoras": ["RGE", "CEEE Equatorial"]
   },
   "garantias": {
