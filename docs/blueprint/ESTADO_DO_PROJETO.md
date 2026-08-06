@@ -205,6 +205,64 @@ trocar no seletor do topo do painel.
 
 ---
 
+## 3.5 O piloto real entrou (ago/2026) — o que ele mudou
+
+O piloto do Base44 (BeFitness Sales Mentor) foi importado:
+**273 contatos, 2.105 interações, 846 desfechos**. O COS tinha zero até
+então, e era o bloqueio que mais aparecia. `scripts/importar-base44.mjs`
+(simula por padrão) e `scripts/canonizar-tecnicas.mjs`.
+
+**O número que interessa** — pessoas distintas, 15 dias de operação:
+
+| desfecho | pessoas |
+|---|---|
+| perdeu por **silêncio** | **194** |
+| respondeu | 99 |
+| avançou de etapa | 45 |
+| perdeu por **decisão** | **56** |
+| ganhou | 14 |
+
+Perde-se **3,5× mais gente por falta de follow-up do que por objeção**. É a
+tese do produto medida na academia do fundador, não em blog.
+
+**Duas mudanças estruturais que o dado real forçou:**
+- `0044` — a enum de desfecho era estreita (um único `sumiu`) e violava a
+  Lei 1 (`matriculou` é vocabulário de academia). Virou canônica e de
+  processo: `respondeu | avancou | ganhou | perdeu_decisao |
+  perdeu_silencio`. Feito no único momento em que era de graça: zero
+  desfechos gravados.
+- `0045` — `interactions.schools` é **array**. O M2 previa uma escola
+  singular; o dado mostrou que cada atendimento usa 3 ou 4 juntas, e
+  creditar o desfecho a uma só seria inventar atribuição.
+
+**As 9 escolas absorveram 100% dos 898 rótulos do piloto** (Belfort,
+Girard, Tracy, Cardone, Hormozi, Kahneman, Jim Thomas). A taxonomia do M1
+aguentou dado de campo — é a primeira validação externa dela.
+
+### ⚠ A regra que eu quebrei e fica escrita
+
+**Não concluir nada sobre escola × conversão ainda.** Eu apresentei um
+ranking de "qual escola converte" e o fundador derrubou com dois
+argumentos, os dois certos:
+
+1. **Origem contamina o denominador.** Contato de convênio
+   (TotalPass/Gympass) tem 15% de perda contra 46% do WhatsApp — ele não
+   está comprando plano, está usando um benefício que já paga. Somar as
+   duas origens numa taxa só mede coisas diferentes.
+2. **A amostra não sustenta.** 15 dias, 14 pessoas que fecharam. Cialdini
+   "liderou" com 1 fechamento em 53 pessoas.
+
+**Antes de qualquer leitura de escola: segmentar por origem e declarar o
+n.** Tabela bonita com n pequeno é o folclore que este produto existe para
+não repetir — e ela é mais perigosa vinda de nós, porque tem cara de dado.
+
+Hipótese aberta, para medir quando houver volume: `cadencia_blount`
+progrediu 6% (o pior) com 157 de 183 pessoas sumindo. Pode ser que o
+follow-up esteja sendo usado **tarde**, em quem já esfriou — o teste é o
+tempo entre o contato e o primeiro toque de retomada.
+
+---
+
 ## 4. Armadilhas já descobertas (não repetir)
 
 - **`tenant_skills`**: a RLS de `skills` exige o vínculo. Gravar só
@@ -319,6 +377,17 @@ trocar no seletor do topo do painel.
   devolve um **array puro** com `descricao`, `quantidade`, `unidadeMedida`,
   `valorUnitarioEstimado` (verificado ago/2026). Buscar sob demanda, um edital
   por vez — puxar os itens de 100 editais de uma vez é a rajada que o PNCP corta.
+- **O PostgREST corta em 1.000 linhas sem avisar.** Uma consulta com 1.053
+  registros volta com 1.000, sem erro e sem aviso — o número chega
+  plausível e menor. Aconteceu na canonização das técnicas e 53 interações
+  sumiram em silêncio. Toda leitura que possa passar de mil linhas precisa
+  de `.range()` paginado. Limite que não reclama é o pior tipo.
+- **A biblioteca própria da Be Fitness (95 entradas) NÃO tem seed no
+  repositório.** Ela veio do PDF do fundador direto para o banco. Isso
+  significa que qualquer correção nela é uma edição sem rastro, e um
+  ambiente novo nasce sem ela. 26 dessas entradas ainda têm rótulo de
+  técnica em inglês ("Puppy Dog Close", "Hot Button"), e `technique` é
+  user-facing. Gerar o seed é pré-requisito para corrigir direito.
 - **Dois donos do mesmo gatilho é empate por construção.** Quando duas entradas
   do mesmo segmento reivindicam a mesma frase, nenhum ajuste de ranking
   desempata — e o efeito é silencioso, porque a errada vence com aparência de
