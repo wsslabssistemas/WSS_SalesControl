@@ -103,6 +103,21 @@ const CASOS = [
   { slug: "demo-energia-solar", msg: "Quanto custa colocar energia solar na minha casa?" },
   { slug: "demo-energia-solar", msg: "Com o sistema eu paro de pagar conta de luz, certo? Fica zero?" },
   { slug: "demo-energia-solar", msg: "Vou esperar mais um tempo, acho que ainda vai baratear." },
+
+  // Os quatro segmentos escritos em ago/2026. Cada mensagem foi escolhida
+  // para bater na entrada que define o segmento — a que, se falhar, mostra
+  // que a curadoria e' bonita e nao funciona.
+  { slug: "demo-oficina", msg: "Quanto custa trocar a embreagem do meu carro?" },
+  { slug: "demo-oficina", msg: "Meu primo disse que e so a vela, pode trocar so isso?" },
+  { slug: "demo-oficina", msg: "Voces trocaram o que eu nao pedi e quero a peca velha de volta." },
+  { slug: "demo-salao-beleza", msg: "Quanto custa a progressiva?" },
+  { slug: "demo-salao-beleza", msg: "Ja fiz hene no cabelo, da para fazer progressiva agora?" },
+  { slug: "demo-salao-beleza", msg: "Mandei a foto, quero ficar com esse loiro." },
+  { slug: "demo-casa-de-festa", msg: "Quanto custa a festa para 80 pessoas? Posso levar minha bebida?" },
+  { slug: "demo-casa-de-festa", msg: "Da para segurar o sabado dia 15 para mim sem pagar agora?" },
+  { slug: "demo-pet", msg: "Quanto custa a creche? Tem plano mensal?" },
+  { slug: "demo-pet", msg: "A vacina dele esta vencida, posso deixar mesmo assim?" },
+  { slug: "demo-pet", msg: "Nunca deixei ele em lugar nenhum, tenho medo." },
 ];
 
 const filtro = process.argv[2];

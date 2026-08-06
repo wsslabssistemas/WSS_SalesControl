@@ -159,6 +159,27 @@ chegava ao motor.
   **decidir se a entrada antiga é aposentada ou reescrita é do fundador** — e
   `technique` é user-facing, aparece no Responder e no curso.
 
+### A prova com IA dos 4 segmentos novos (ago/2026) — passou
+
+`provar-motor.mjs` ganhou 11 casos, um por entrada que DEFINE cada
+segmento novo. **11 de 11 escolheram a entrada e a escola certas**, nenhum
+inventou fato e nenhum escalou indevidamente. Custo real: **R$ 2,58** — a
+estimativa de R$ 15 estava alta porque o custo por resposta caiu.
+
+O que interessa mais que o acerto: **as quatro RECUSAS funcionaram.**
+- salão — *"já fiz henê, dá para fazer progressiva?"* → acolheu, explicou o
+  corte químico e ofereceu o teste de mecha, sem assustar;
+- pet — *"a vacina está vencida, posso deixar?"* → recusou pelo cuidado com
+  o animal DELE e ofereceu banho individual como alternativa;
+- casa de festa — *"dá para segurar o sábado sem pagar?"* → recusou com
+  afeto e ofereceu prazo declarado;
+- oficina — *"trocaram o que eu não pedi"* → não se defendeu, assumiu a
+  política e prometeu a peça de volta.
+
+Recusar bem é a coisa mais difícil de escrever e a que mais protege o
+cliente pagante. Era a maior dúvida sobre curadoria feita por pesquisa, e
+ela se sustentou.
+
 ### 2. Fechar a auditoria pendente
 
 **Por que agora:** é a lista do `CLAUDE.md` marcada como "corrigir antes de
