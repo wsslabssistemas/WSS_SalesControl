@@ -196,8 +196,14 @@ trocar no seletor do topo do painel.
    cópia que ninguém confere é cópia que diverge.
 4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
-5. **Kairós vender a si mesmo** — falta canal de envio (WhatsApp Cloud API),
-   motor proativo agendado e **score de potencial → preço sugerido**.
+5. **Kairós vender a si mesmo** — desenhado em `COS_Kairos_Vende_Kairos.md`
+   (ago/2026), respondendo às perguntas do fundador. Em resumo: vira a Skill
+   `software_b2b`; o mapeamento **já existe** (Oportunidades por CNAE,
+   filtrado por cidade e segmento — começar por Porto Alegre/academias); o
+   envio fica em **fila de um toque via `wa.me`**, sem Meta; e **nada disso
+   pode ser convidado antes de a cota de IA por empresa existir** — 30
+   empresas testando de graça custam ~R$ 690/mês do bolso do fundador, e só
+   trava estrutural segura isso.
 6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
    (~R$0,01/empresa) ou base própria do dump da Receita.
 7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
