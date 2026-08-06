@@ -216,20 +216,53 @@ if (porModulo.size > 1) verificarSequencia("arquivo", perguntas.map((q) => q.cor
 // A regra que vale para qualquer carregador daqui em diante: **o DELETE de
 // recarga só pode alcançar o que o próprio arquivo reinsere.** Um módulo é
 // registro de grade, compartilhado entre arquivos; ele se atualiza.
+// RECARREGAR CONTEÚDO NÃO PODE ALCANÇAR O PROGRESSO DA PESSOA.
+//
+// Segunda vez que esta parte cobra caro. Na primeira, o DELETE dos módulos
+// levou em cascata as 45 lições do curso inteiro. Na segunda, o DELETE das
+// lições e das perguntas levou o PROGRESSO do fundador — ele respondia e o
+// check verde não aparecia, porque eu apagava o registro dele a cada recarga
+// de conteúdo. O schema tem duas cascatas que ninguém tinha olhado juntas:
+//
+//   course_progress.lesson_key → course_lessons(key)  ON DELETE CASCADE
+//   course_review.question_id  → course_questions(id) ON DELETE CASCADE
+//
+// Agora tudo é UPSERT sobre identidade estável: a lição é o `key`, e a
+// pergunta é `(lesson_key, ord)` — o que ela É, "a 2ª pergunta da lição
+// m1_l3". O `id` uuid sobrevive à recarga, e com ele o mapa de acertos e o
+// agendamento da repescagem.
 const chavesLicao = licoes.map((l) => l.key);
 if (mods.length) {
   const { error } = await db.from("course_modules").upsert(mods, { onConflict: "key" });
   if (error) { console.error(`✗ course_modules: ${error.message}`); process.exit(1); }
   console.log(`✓ course_modules: ${mods.length} (atualizados, sem apagar)`);
 }
-if (chavesLicao.length) await db.from("course_questions").delete().in("lesson_key", chavesLicao);
-if (chavesLicao.length) await db.from("course_lessons").delete().in("key", chavesLicao);
 
-for (const [tabela, linhas] of [["course_lessons", licoes], ["course_questions", perguntas]]) {
+for (const [tabela, linhas, chave] of [
+  ["course_lessons", licoes, "key"],
+  ["course_questions", perguntas, "lesson_key,ord"],
+]) {
   if (!linhas.length) continue;
-  const { error } = await db.from(tabela).insert(linhas);
+  const { error } = await db.from(tabela).upsert(linhas, { onConflict: chave });
   if (error) { console.error(`✗ ${tabela}: ${error.message}`); process.exit(1); }
-  console.log(`✓ ${tabela}: ${linhas.length}`);
+  console.log(`✓ ${tabela}: ${linhas.length} (atualizadas, progresso preservado)`);
+}
+
+// SOBRAS: pergunta que existia e o arquivo não declara mais precisa sair —
+// senão uma lição que perdeu a 4ª pergunta fica com ela órfã para sempre.
+// Este é o único DELETE que sobrou, e ele é cirúrgico: só alcança perguntas
+// das lições DESTE arquivo, e só as que o arquivo não reinseriu.
+if (chavesLicao.length) {
+  const { data: noBanco } = await db
+    .from("course_questions")
+    .select("id, lesson_key, ord")
+    .in("lesson_key", chavesLicao);
+  const declaradas = new Set(perguntas.map((q) => `${q.lesson_key}#${q.ord}`));
+  const sobrando = (noBanco ?? []).filter((q) => !declaradas.has(`${q.lesson_key}#${q.ord}`));
+  if (sobrando.length) {
+    await db.from("course_questions").delete().in("id", sobrando.map((q) => q.id));
+    console.log(`  ${sobrando.length} pergunta(s) removida(s) por não existirem mais no arquivo`);
+  }
 }
 
 // CONFERÊNCIA DO CURSO INTEIRO, sempre — não só do arquivo que acabou de rodar.
