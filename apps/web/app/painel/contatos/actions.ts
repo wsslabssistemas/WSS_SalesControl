@@ -252,3 +252,74 @@ export async function deleteContact(id: string) {
   revalidatePath("/painel/contatos");
   redirect("/painel/contatos");
 }
+
+/**
+ * ATRIBUIR RESPONSÁVEL EM LOTE.
+ *
+ * Nasceu de um caso concreto: três recepcionistas importando uma lista de 3.000
+ * contatos. Cada importação grava um dono só — quem subiu o arquivo. Redistribuir
+ * isso um a um é trabalho que ninguém faz, e carteira mal distribuída não dá
+ * erro: ela simplesmente não é atendida.
+ *
+ * DUAS OPÇÕES, e a segunda é a que o rodízio de academia pede: passar tudo para
+ * uma pessoa, ou DIVIDIR igualmente entre várias. A divisão é por rodízio sobre
+ * a lista ordenada, determinística — rodar duas vezes dá o mesmo resultado.
+ *
+ * `owner_id` é a `membership`, não o usuário: um vendedor pode existir em duas
+ * empresas, e a carteira é de uma delas.
+ */
+export async function atribuirEmLote(formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+  if (!["owner", "admin", "manager"].includes(membership!.role)) {
+    redirect("/painel/contatos?erro=" + encodeURIComponent("Só o dono e os gestores redistribuem carteira."));
+  }
+
+  const ids = formData.getAll("sel").map(String).filter(Boolean);
+  const volta = String(formData.get("volta") ?? "/painel/contatos");
+  const dividir = String(formData.get("dividir") ?? "") === "1";
+
+  const supabase0 = await createClient();
+  // "Dividir entre todos" não manda a lista pela tela: ela é lida do banco na
+  // hora. Se viesse do formulário, uma aba aberta há uma semana redistribuiria
+  // a carteira para quem já saiu da equipe.
+  const destinos = dividir
+    ? (((await supabase0.from("memberships").select("id")
+        .eq("tenant_id", tenant.id).eq("status", "active").order("id")).data as { id: string }[] | null) ?? [])
+        .map((x) => x.id)
+    : formData.getAll("destino").map(String).filter(Boolean);
+
+  if (!ids.length) redirect(volta + (volta.includes("?") ? "&" : "?") + "erro=" + encodeURIComponent("Selecione ao menos um contato."));
+  if (!destinos.length) redirect(volta + (volta.includes("?") ? "&" : "?") + "erro=" + encodeURIComponent("Escolha para quem vai."));
+
+  const supabase = supabase0;
+
+  // Confere que todo destino é membro ATIVO desta empresa. Sem isto, um id
+  // colado à mão poria a carteira numa membership de outro tenant — e o
+  // contato sumiria da tela sem ninguém entender por quê.
+  const { data: validos } = await supabase
+    .from("memberships").select("id")
+    .eq("tenant_id", tenant.id).eq("status", "active").in("id", destinos);
+  const alvos = ((validos as { id: string }[] | null) ?? []).map((x) => x.id).sort();
+  if (!alvos.length) redirect(volta + (volta.includes("?") ? "&" : "?") + "erro=" + encodeURIComponent("Destino inválido."));
+
+  const ordenados = [...ids].sort();
+  const porDestino = new Map<string, string[]>(alvos.map((a) => [a, []]));
+  ordenados.forEach((id, i) => porDestino.get(alvos[i % alvos.length])!.push(id));
+
+  let n = 0;
+  for (const [destino, fatia] of porDestino) {
+    // Em lotes: `in()` com milhares de ids estoura o tamanho da requisição.
+    for (let i = 0; i < fatia.length; i += 200) {
+      const pedaco = fatia.slice(i, i + 200);
+      const { error } = await supabase
+        .from("contacts").update({ owner_id: destino })
+        .eq("tenant_id", tenant.id).in("id", pedaco);
+      if (!error) n += pedaco.length;
+    }
+  }
+
+  revalidatePath("/painel/contatos");
+  redirect(volta + (volta.includes("?") ? "&" : "?") + "atribuidos=" + n);
+}

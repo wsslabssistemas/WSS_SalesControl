@@ -8,6 +8,7 @@ import JourneyBar from "@/components/JourneyBar";
 import { hasAIKey } from "@/lib/ai";
 import { CopyButton } from "./CopyButton";
 import GerarIA from "./GerarIA";
+import { MoverEtapa } from "./MoverEtapa";
 import Abordar from "./Abordar";
 import { logInteraction } from "./actions";
 
@@ -131,6 +132,11 @@ export default async function ResponderPage({
           </div>
           <div className="mt-16" style={{ paddingBottom: 4 }}>
             <JourneyBar stages={stages} current={contact.journey_stage} />
+            <MoverEtapa
+              contactId={contact.id}
+              atual={contact.journey_stage}
+              stages={stages.map((s) => ({ key: s.key, label: s.label }))}
+            />
           </div>
           {history.length > 0 && (
             <div className="mt-16">

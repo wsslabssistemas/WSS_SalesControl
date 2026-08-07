@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { displayPhone } from "@/lib/phone";
+import { atribuirEmLote } from "./actions";
 
 const PAGE_SIZE = 20;
 
@@ -18,7 +19,7 @@ type Contact = {
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; etapa?: string; resp?: string; page?: string; importados?: string; dup?: string; sem?: string; nomeCol?: string; foneCol?: string; chute?: string }>;
+  searchParams: Promise<{ q?: string; etapa?: string; resp?: string; page?: string; importados?: string; dup?: string; sem?: string; nomeCol?: string; foneCol?: string; chute?: string; atribuidos?: string; erro?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
@@ -70,6 +71,15 @@ export default async function ContatosPage({
   const contacts = (data as Contact[] | null) ?? [];
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Redistribuir carteira é ato de gestão: quem faz é dono, admin ou gerente.
+  const podeAtribuir = ["owner", "admin", "manager"].includes(membership!.role);
+  // Volta para a MESMA busca depois de atribuir. Sem isto a pessoa perde o
+  // filtro que usou para selecionar — e refazer o filtro é o que faz desistir
+  // no meio de uma redistribuição de três mil contatos.
+  const voltaPara = `/painel/contatos?${new URLSearchParams(
+    Object.entries({ q, etapa, resp, page: sp.page ?? "" }).filter(([, v]) => v) as [string, string][],
+  )}`;
   const stageLabel = (key: string) =>
     stages.find((s) => s.key === key)?.label ?? key;
 
@@ -97,6 +107,13 @@ export default async function ContatosPage({
           <Link href="/painel/contatos/novo" className="btn btn-sm btn-primary">+ Novo contato</Link>
         </div>
       </div>
+
+      {sp.erro && <p className="badge badge-danger mt-16">{sp.erro}</p>}
+      {sp.atribuidos && (
+        <p className="badge badge-success mt-16">
+          {sp.atribuidos} contato(s) com responsável novo.
+        </p>
+      )}
 
       {imported !== null && (
         <div className="mt-16">
@@ -158,10 +175,12 @@ export default async function ContatosPage({
           </p>
         </div>
       ) : (
-        <div className="card mt-16" style={{ padding: 0, overflowX: "auto" }}>
+        <form action={atribuirEmLote} className="card mt-16" style={{ padding: 0, overflowX: "auto" }}>
+          <input type="hidden" name="volta" value={voltaPara} />
           <table className="table">
             <thead>
               <tr>
+                {podeAtribuir && <th style={{ width: 34 }}></th>}
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>Etapa</th>
@@ -172,6 +191,9 @@ export default async function ContatosPage({
             <tbody>
               {contacts.map((c) => (
                 <tr key={c.id}>
+                  {podeAtribuir && (
+                    <td><input type="checkbox" name="sel" value={c.id} aria-label={`Selecionar ${c.name}`} /></td>
+                  )}
                   <td><Link href={`/painel/contatos/${c.id}`}>{c.name}</Link></td>
                   <td>{displayPhone(c.phone)}</td>
                   <td><span className="badge">{stageLabel(c.journey_stage)}</span></td>
@@ -183,7 +205,35 @@ export default async function ContatosPage({
               ))}
             </tbody>
           </table>
-        </div>
+
+          {/* REDISTRIBUIR CARTEIRA. Fica no rodapé da lista, e não numa tela
+              própria, porque o filtro em cima já é a seleção: "todos os
+              contatos da Ana em Primeiro contato" é uma busca, e a partir dela
+              a redistribuição é um clique. */}
+          {podeAtribuir && membros.length > 0 && (
+            <div className="row wrap" style={{ gap: 8, alignItems: "center", padding: 12, borderTop: "1px solid var(--border)" }}>
+              <span className="text-faint" style={{ fontSize: 12 }}>Com os selecionados:</span>
+              <select name="destino" defaultValue="" style={{ width: "auto" }} multiple={false}>
+                <option value="" disabled>passar para…</option>
+                {membros.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
+              </select>
+              <button type="submit" className="btn btn-sm">Atribuir</button>
+              {membros.length > 1 && (
+                <button
+                  type="submit"
+                  className="btn btn-sm btn-ghost"
+                  name="dividir"
+                  value="1"
+                  title="Divide igualmente entre todos os profissionais ativos"
+                >
+                  Dividir entre os {membros.length}
+                </button>
+              )}
+            </div>
+          )}
+        </form>
       )}
 
       {totalPages > 1 && (
