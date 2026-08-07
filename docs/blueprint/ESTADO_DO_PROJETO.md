@@ -193,59 +193,80 @@ trocar no seletor do topo do painel.
 
 ---
 
-## 3. Pendências (em ordem de importância)
+## 3. Pendências — o quadro inteiro (ago/2026)
 
-> **A fila executável, com o que está congelado por decisão do fundador, mora em
-> `COS_Plano_de_Execucao.md`.** Automação (WhatsApp + motor proativo), migração
-> dos dados do Base44 e o M2 estão congelados — não reabrir sem motivo novo.
-> O item 1 de lá: **5 dos 8 tenants demo não têm DNA**, então as 145 entradas
-> curadas nunca foram vistas funcionando.
+> Esta seção foi reescrita porque tinha apodrecido: dizia "0 desfechos" com 846
+> no banco e "5 dos 8 demos sem DNA" com todos preenchidos. Item de estado que
+> ninguém confere vira mentira com aparência de documentação.
+>
+> A fila executável e o que está **congelado por decisão** moram em
+> `COS_Plano_de_Execucao.md`.
 
-1. **Revisão da biblioteca de `industria` pela especialista** (irmã do fundador,
-   Feltros Bandeirantes). Manifesto e 18 entradas já **no banco**, com
-   `Indústria Demo` criada — a curadoria veio de pesquisa, não de vivência, e é
-   essa a diferença entre boa e excelente.
-2. **M2 — ligar desfecho à escola.** Com o M1 no ar (abaixo), falta gravar
-   `school` em `interactions`/`decisions` e responder *"qual escola converte
-   neste segmento, nesta etapa"*. É o único ativo que melhora com escala.
-   **Bloqueio real:** ainda há **0 desfechos registrados** — sem uso, não há o
-   que medir.
-3. ~~**M3 — qualificação de compra (MEDDIC-lite).**~~ ✅ **FEITO (ago/2026).**
-   Quatro campos canônicos — `verba`, `processo_decisao`, `criterio_decisao`,
-   `defensor_interno` — nos cinco segmentos onde existe processo de compra
-   (indústria, distribuidora, automação, sob medida, energia solar). B2C de
-   decisão instantânea não recebe: barbearia não tem comitê.
-   **Chave E opções são canônicas**, só o `label` é do ramo — senão a dimensão
-   não se compara entre segmentos, que é a única razão de ela existir. É o erro
-   dos 134 rótulos de `technique`, e agora o validador **falha o build** se um
-   manifesto inventar as próprias opções (testado quebrando de propósito).
-   A chave é `verba` e não `orcamento` porque em `sob_medida` "orçamento" já é
-   a ETAPA da jornada (a proposta apresentada) — em pt-BR a palavra significa a
-   proposta e o dinheiro, e essa ambiguidade iria para o JSON que o motor lê.
-   **O valor está na lacuna, não no preenchido.** `lib/qualificacao.ts` diz ao
-   motor o que ninguém descobriu ainda e manda fazer **uma** pergunta, só
-   quando couber — responder o que o cliente perguntou vem primeiro; motor que
-   responde preço com questionário perde a venda que ia fechar. `indefinido`
-   conta como não sabido de propósito.
-   Descoberto no caminho: `gerarResposta` nem lia o `custom` do contato, então
-   campo nenhum de segmento chegava ao motor. Ligado.
-   Testes: `qualificacao_test.mjs` 12/12, no CI — e o primeiro caso compara a
-   lista de chaves do app com a do `skill-loader`, porque são duas cópias e
-   cópia que ninguém confere é cópia que diverge.
-4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
-   fundador. O `.ics` de leitura já existe e funciona.
-5. **Kairós vender a si mesmo** — desenhado em `COS_Kairos_Vende_Kairos.md`
-   (ago/2026). Vira a Skill `software_b2b`; o mapeamento **já existe**
-   (Oportunidades por CNAE, filtrado por cidade e segmento — começar por Porto
-   Alegre/academias); o envio fica em **fila de um toque via `wa.me`**, sem
-   Meta. **A cota de IA, que era o pré-requisito de tudo isso, está no ar
-   (`0047`)** — o portão que impedia convite virou trava de verdade. Falta a
-   Skill, o tenant WSS Labs com DNA próprio, o filtro de prospecção por cidade
-   e a fila de envio.
-6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
-   (~R$0,01/empresa) ou base própria do dump da Receita.
-7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,
-   eventos. **Restaurante descartado** (operação de fluxo, não de funil).
+### 3.1 Depende do fundador — não dá para eu fazer
+
+| O quê | Por que só ele | Custo dele |
+|---|---|---|
+| **Be Fitness: perfil de cota** | O número é decisão de caixa. `/painel/admin/cotas` → "Operação real" | 1 clique |
+| **Be Fitness: agenda** | Sem regra de disponibilidade **o motor não fecha horário** — diz "vou confirmar". Numa academia, onde quase toda conversa quer agendar visita, é metade do produto desligada. O DNA tem o horário como TEXTO; converter no chute seria inventar compromisso | ~10 min |
+| **Be Fitness: papel dos recepcionistas** | 2 vínculos ativos, **nenhum `agent`**. Sem isso não há carteira por vendedor nem métrica por pessoa | ~5 min |
+| **Be Fitness: ICP de prospecção** | Hoje está com CNAE de instalação elétrica e a palavra "climatização" — resíduo de teste. Ver 3.4: para academia, prospecção é **convênio corporativo** | ~5 min |
+| **WSS Labs: 6 campos de DNA** | Preço, duração do teste, o que acontece ao fim, prazo de implantação, exportação/retenção de dados e contrato. Enquanto vazios **o motor escala** — comportamento correto, e a prova de que a trava vale na própria casa | decisão |
+| **Revisão de `industria`** | A especialista (Feltros Bandeirantes). Kit pronto em `revisao/` | dela |
+| **Meta Business** | Exige login, documento e aceite em nome dele. Só quando a automação descongelar | — |
+| **Google Agenda mão dupla** | OAuth. O `.ics` de leitura já funciona | — |
+
+### 3.2 Congelado por decisão — não reabrir sem motivo novo
+
+- **Automação** (WhatsApp Cloud API + motor proativo agendado). Automatizar
+  antes de provar que a resposta manual é boa é otimizar a coisa errada.
+- **Volume da prospecção** (base própria do dump da Receita). Custo e esforço
+  altos para um gargalo que hoje não é o gargalo.
+
+### 3.3 Fila técnica — comigo
+
+1. **Filtro de prospecção por cidade + segmento** (Porto Alegre / academias).
+2. **Fila de envio de um toque via `wa.me`**, sem Meta: o motor decide *quem* e
+   *o quê*, a pessoa clica e envia.
+3. **M2 — escola × desfecho.** DESTRAVADO: os 846 desfechos do piloto existem.
+   Mas a regra que o fundador impôs vale — **segmentar por ORIGEM e declarar o
+   n** antes de qualquer leitura. Convênio tem 15% de perda contra 46% do
+   WhatsApp; somar as duas mede coisas diferentes.
+4. **Carga em massa de contatos com controle de custo** (ver 3.5).
+
+### 3.4 Descoberto conversando (ago/2026) — prospecção em B2C local
+
+O fundador perguntou como uma academia prospecta sem lista, "a não ser varrer as
+empresas próximas oferecendo convênio". **A intuição está certa e expõe uma
+lacuna do produto.**
+
+Prospecção fria B2C é proibida (LGPD, decisão fechada). Mas academia, salão,
+clínica e escola **prospectam B2B**: empresas vizinhas para convênio
+corporativo. Isso é dado público, é permitido, e o módulo Oportunidades já faz
+exatamente isso — só que os manifestos B2C-local têm `capabilities: []`, então
+ele nem aparece.
+
+**O que falta não é código de prospecção: é o recorte.** Para convênio, o filtro
+útil é CNAE de empresa com muitos funcionários **por raio de distância**, não por
+ramo do cliente final. Fica registrado como decisão a tomar, não como tarefa
+começada.
+
+### 3.5 O caso dos 3.000 contatos — custo e risco
+
+O fundador entregou aos 3 recepcionistas uma lista de 3.000+ contatos para
+cadastrar e mensagear. Duas contas que precisam estar na mesa:
+
+- **Cadastrar não custa nada.** Importar contato não gasta IA.
+- **Gerar uma resposta com IA por contato custa ~R$ 780** (3.000 × R$ 0,26), de
+  uma vez. Com duas ou três trocas por conversa, passa de R$ 2.000.
+- **O risco maior não é o custo, é o número.** Três pessoas disparando centenas
+  de mensagens em poucos dias é o padrão que faz o WhatsApp banir — mesmo com
+  envio manual, mesmo para base própria. O número da academia é o ativo.
+
+**O formato que gasta pouco e não queima o número:** o grosso da lista vai pelo
+**modo manual**, que é ilimitado e custa zero; a IA entra em quem RESPONDE, que
+é onde ela vale. E a lista se divide por situação (quem sumiu, quem nunca
+converteu, quem é recompra) em vez de virar um disparo só — que é exatamente o
+que Follow-up e Recorrência já fazem, com ritmo diário em vez de rajada.
 
 ---
 
