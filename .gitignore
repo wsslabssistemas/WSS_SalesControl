@@ -31,3 +31,4 @@ Thumbs.db
 
 # Curadoria propria de empresa — o ativo. Nunca em repo publico.
 private/
+*.tsbuildinfo
