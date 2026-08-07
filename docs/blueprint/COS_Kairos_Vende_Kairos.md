@@ -198,10 +198,25 @@ do Meta, a fila vira automática sem reescrever nada.
 
 ## 6. O que construir, em ordem
 
-1. **Skill `software_b2b`** — manifesto e biblioteca de quem vende sistema
-   para PME. Custa curadoria, não código.
-2. **Tenant WSS Labs** com DNA próprio: preço, módulos, o que o teste
-   inclui, o que o produto não faz.
+1. ~~**Skill `software_b2b`**~~ ✅ **FEITO (ago/2026)** — manifesto (15/15) e
+   **23 entradas nas 12 categorias**. Cobertura conferida antes de escrever
+   contra as 262 entradas: `automacao` e `industria` são B2B de equipamento;
+   nenhuma falava de planilha como concorrente, medo de adoção pela equipe,
+   teste grátis, LGPD, implantação ou "é mais um sistema?".
+   **O que inverte a venda aqui: o concorrente é o JEITO DE HOJE** — não outro
+   software, e sim o WhatsApp pessoal, a planilha e a memória do dono. Por isso
+   este é o **único segmento da casa em que `objections` é `challenger`** e não
+   `negociacao_voss`: Voss desarma quem já tem posição, Challenger é para quem
+   ainda não sabe que tem problema. `retrieval_check` 65/65.
+2. ~~**Tenant WSS Labs** com DNA próprio~~ ✅ **FEITO (ago/2026)**, com uma
+   decisão que vale mais que o cadastro: **preço, duração do teste, prazo de
+   implantação e contrato ficaram VAZIOS de propósito.** São decisões do
+   fundador, e preenchê-las por dedução seria fazer, na própria casa, o que a
+   trava anti-invenção existe para impedir.
+   **Provado com IA:** perguntado *"quanto custa por mês? quantos dias tem o
+   teste?"*, o motor **escalou** — `pricing.range`, `teste.duracao` e
+   `teste.o_que_acontece_depois` — e respondeu que vai confirmar em vez de
+   chutar. A trava funciona na casa do fabricante.
 3. ~~**Cota de IA por empresa + teto de gasto que suspende sozinho.**~~
    ✅ **FEITO (ago/2026)** — detalhe na §4. **O portão está de pé: daqui em
    diante convidar empresa para testar não é mais uma aposta no caixa.**

@@ -165,6 +165,21 @@ const CASOS = [
   // Sinal de compra alto que quase sempre morre num "já começou".
   { skill: "curso", msg: "a turma já começou, ainda dá para entrar?", categoria: "availability", escola: "fechamento_classico" },
 
+  // SOFTWARE_B2B (15º) — a Skill com que a WSS Labs vende a WSS Labs.
+  // O primeiro caso é a objeção CENTRAL do segmento, e é o único lugar da casa
+  // em que `objections` é `challenger` e não `negociacao_voss`: aqui não há um
+  // preço a negociar, há um custo invisível a tornar visível. Voss desarma quem
+  // já tem posição; Challenger é para quem ainda não sabe que tem problema.
+  { skill: "software_b2b", msg: "já tenho um sistema, uso planilha e o whatsapp resolve", categoria: "objections", escola: "challenger" },
+  { skill: "software_b2b", msg: "minha equipe não vai usar, já tentei antes e ninguém usou", categoria: "objections", escola: "challenger" },
+  { skill: "software_b2b", msg: "a IA vai responder pelo meu cliente sozinha?", categoria: "objections", escola: "challenger" },
+  // As duas recusas que protegem a casa.
+  { skill: "software_b2b", msg: "onde ficam meus dados? vocês veem meus clientes?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  { skill: "software_b2b", msg: "faz emissão de nota e controle de estoque?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  // Dono de PME que concordou e não assina tem medo de mais um sistema
+  // abandonado — é indecisão, não objeção.
+  { skill: "software_b2b", msg: "vou pensar e ver com meu sócio, depois te falo", categoria: "commitment_offer", escola: "indecisao_jolt" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

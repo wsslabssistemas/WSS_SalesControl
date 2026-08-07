@@ -125,6 +125,13 @@ const CASOS = [
   { slug: "demo-curso", msg: "Com esse curso eu consigo emprego? Da para ficar fluente em seis meses?" },
   { slug: "demo-curso", msg: "Ja tentei fazer curso duas vezes e acabei desistindo no meio." },
   { slug: "demo-curso", msg: "Quanto custa o ingles? O livro esta incluso?" },
+  // SOFTWARE_B2B (15o) — o Kairos vendendo o Kairos. Os dois primeiros sao a
+  // objecao central do segmento e uma recusa. O TERCEIRO e o mais importante:
+  // preco NAO esta no DNA da WSS Labs de proposito, entao a trava tem que
+  // ESCALAR em vez de inventar. E a prova de que ela funciona na propria casa.
+  { slug: "wss-labs", msg: "Ja tenho um sistema e uso planilha, o WhatsApp resolve pra mim." },
+  { slug: "wss-labs", msg: "Voces fazem emissao de nota e controle de estoque?" },
+  { slug: "wss-labs", msg: "Quanto custa por mes? Quantos dias tem o teste gratis?" },
 ];
 
 const filtro = process.argv[2];

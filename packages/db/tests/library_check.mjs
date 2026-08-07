@@ -73,14 +73,21 @@ const resumo = [];
 
 for (const arquivo of fs.readdirSync(MIGRATIONS).filter((f) => f.includes("seed_knowledge"))) {
   const sql = fs.readFileSync(path.join(MIGRATIONS, arquivo), "utf8");
-  const skill = sql.match(/\(null, '([a-z_]+)',/)?.[1];
-  if (!skill) continue;
+  // `[a-z0-9_]` e não `[a-z_]`: `software_b2b` tem um DÍGITO no meio, e com a
+  // classe antiga o arquivo inteiro não casava — a biblioteca era pulada em
+  // SILÊNCIO, sem validar categoria, escola nem fato. Um verificador que pula
+  // o que não entende é pior que não ter verificador: ele dá o ✓ verde.
+  const skill = sql.match(/\(null, '([a-z0-9_]+)',/)?.[1];
+  if (!skill) {
+    problemas.push(`${arquivo}: não consegui identificar o segmento — arquivo NÃO verificado`);
+    continue;
+  }
 
   const manifesto = fatosDoManifesto(skill);
   if (!manifesto) { problemas.push(`${arquivo}: sem manifesto para "${skill}"`); continue; }
 
   // Categoria e tipo de cada entrada.
-  const entradas = [...sql.matchAll(/\(null, '[a-z_]+', '([a-z_]+)', '([a-z_]+)'/g)];
+  const entradas = [...sql.matchAll(/\(null, '[a-z0-9_]+', '([a-z_]+)', '([a-z_]+)'/g)];
   for (const [, categoria] of entradas) {
     if (!CATEGORIAS.includes(categoria)) {
       problemas.push(`${arquivo}: categoria fora das 12 canônicas → "${categoria}"`);

@@ -1,0 +1,348 @@
+key: software_b2b
+name: Software para PME
+version: 1.0.0
+
+# =====================================================================
+# A Skill com que a WSS Labs vende a WSS Labs.
+#
+# ELA PASSA NO NOSSO PRÓPRIO CRITÉRIO — o mesmo que descartou imobiliária:
+# os fatos que governam a resposta são DA EMPRESA, poucos e estáveis
+# (preço, o que cada módulo faz, o que o teste inclui, prazo de
+# implantação, o que o produto NÃO faz), e o gargalo é inteiramente de
+# conversa: não existe inventário para administrar.
+#
+# E TEM UMA CONSEQUÊNCIA QUE VALE MAIS QUE O MÓDULO: somos obrigados a
+# usar o que vendemos, todo dia, com dinheiro real em jogo. Nenhum outro
+# mecanismo encontra tanto defeito tão rápido.
+#
+# COBERTURA CONFERIDA ANTES DE ESCREVER, contra as 262 entradas das 14
+# bibliotecas: `automacao` e `industria` são B2B, mas de equipamento e
+# material. Nenhuma das 262 fala de planilha como concorrente, medo de
+# adoção pela equipe, teste grátis, LGPD e posse do dado, implantação,
+# "é mais um sistema?" ou "a IA vai responder pelo meu cliente?".
+#
+# O QUE MUDA TUDO NESTE SEGMENTO: **o concorrente é o jeito de hoje.**
+# Não é outro software — é o WhatsApp pessoal, a planilha e a memória do
+# dono. Isso inverte a venda: o trabalho não é ganhar de um produto, é
+# tornar visível um custo que a pessoa já paga e não enxerga (o orçamento
+# que não recebeu segunda mensagem).
+# =====================================================================
+
+# B2B frio com dado público é permitido — é a única frente de prospecção
+# que a casa aceita, e é exatamente esta.
+capabilities: [prospeccao]
+
+vocabulary:
+  lead: "interessado"
+  conversion: "assinatura"
+  churn: "cancelamento"
+  catalog_item: "módulo"
+
+discovery_axis: "como a empresa atende HOJE — quem responde, por onde, e o que acontece quando ninguém responde"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir com quem se está falando e como a empresa atende hoje. A primeira mensagem NÃO vende — qualifica."
+    - key: descoberta
+      label: "Descoberta"
+      goal: "Volume de atendimento, quem responde, onde o funil vaza e quem decide. Sem isso, o preço não tem como estar certo."
+    - key: demonstracao
+      label: "Demonstração"
+      cadence: pos_demo
+      goal: "Mostrar o produto respondendo uma mensagem REAL da empresa dele. Demo genérica não vende software para PME."
+      phases:
+        - { key: agendada,  label: "Demo agendada",       offset_days: 0 }
+        - { key: lembrete,  label: "Confirmar véspera",   offset_days: -1 }
+        - { key: pos_demo,  label: "Retorno pós-demo",    offset_days: 2 }
+    # O TESTE É A ETAPA QUE DEFINE ESTE SEGMENTO, e é onde a venda morre
+    # calada. Software para PME não se perde na proposta: se perde no
+    # trial que ninguém usou. Por isso ela tem cadência própria e NÃO é
+    # terminal — o motor precisa alcançar quem está testando.
+    - key: teste
+      label: "Em teste"
+      cadence: acompanhamento_teste
+      goal: "Fazer a empresa USAR. Trial sem uso não vira assinatura, e o silêncio no trial é o sinal mais confiável de perda."
+      phases:
+        - { key: dia_1,  label: "Primeiro atendimento",     offset_days: 1 }
+        - { key: dia_3,  label: "Passou pelo primeiro uso", offset_days: 3 }
+        - { key: dia_7,  label: "Primeira semana",          offset_days: 7 }
+        - { key: dia_12, label: "Reta final do teste",      offset_days: 12 }
+    - key: proposta
+      label: "Proposta"
+      goal: "Preço pelo volume real observado no teste, não pela tabela. O número que ele viu funcionar é o argumento."
+    - key: negociacao
+      label: "Negociação"
+      goal: "Isolar o que trava — verba, quem assina, medo da equipe não usar — e viabilizar o começo."
+    # ASSINANTE É `won` E NÃO É TERMINAL: em software a receita se perde
+    # DEPOIS da venda. Cancelamento é o último passo, e ele avisa antes —
+    # queda de uso vem semanas antes do pedido.
+    - key: assinante
+      label: "Assinante"
+      won: true
+      cadence: acompanhamento
+      goal: "Assinou. Daqui em diante o jogo é uso, não venda: quem para de usar cancela, e quem usa indica."
+    - key: cancelado
+      label: "Cancelado"
+      cadence: retomada
+      goal: "Saiu. Não é terminal de propósito — quem já usou é o lead mais barato que existe, e o motivo do cancelamento costuma ter conserto."
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+# ---------------------------------------------------------------------
+# REFERÊNCIAS DO SETOR
+# NÃO são fatos da empresa — o motor nunca afirma isto ao cliente; só o
+# DNA vale. São o terreno em que esta venda acontece.
+# ---------------------------------------------------------------------
+benchmarks:
+  o_concorrente_e_o_jeito_de_hoje: >-
+    Mais de 60% das PMEs brasileiras não usam CRM estruturado. O que
+    disputamos não é a preferência entre dois sistemas: é a inércia de um
+    jeito que já funciona "mais ou menos" e que não tem custo visível. Por
+    isso a venda começa tornando visível o que já se perde, e não listando
+    funcionalidade.
+  o_buraco_e_o_followup: >-
+    Em serviços técnicos, mais de 70% dos orçamentos nunca recebem uma
+    segunda mensagem. É o número mais útil desta venda porque o cliente
+    reconhece o próprio comportamento nele — e porque é a coisa que o
+    produto conserta primeiro.
+  o_segundo_sistema_perde: >-
+    Regra da própria casa: quando o produto vira o SEGUNDO lugar onde a
+    pessoa digita a mesma coisa, ele é abandonado. Se o cliente já tem um
+    sistema que resolve a operação dele, a conversa honesta é sobre o que
+    falta ali (técnica de venda, follow-up), não sobre substituir.
+  o_gargalo_e_o_onboarding: >-
+    O produto não morre por falta de recurso: morre no cadastro que
+    ninguém terminou. Empresa sem DNA preenchido não tem produto — o motor
+    escala em tudo e a pessoa conclui que "a IA não sabe nada". Por isso a
+    implantação é assunto de VENDA, não de suporte.
+  trial_sem_uso_nao_converte: >-
+    O silêncio durante o teste é o sinal de perda mais confiável do
+    segmento, e ele acontece antes de qualquer objeção ser dita. Trial
+    longo sem acompanhamento é trial que expira sozinho.
+  quem_atende_nao_e_quem_decide: >-
+    Em micro e pequena empresa o número público costuma ser do dono ou de
+    quem fala por ele — o porteiro existe mais em empresa média. Ainda
+    assim, não se contorna: pergunta-se, no primeiro contato. Descobrir
+    depois da proposta pronta é tarde demais.
+
+contact_fields:
+  - key: porte
+    label: "Tamanho da equipe"
+    type: enum
+    options: [mei_ou_sozinho, ate_5, de_6_a_20, mais_de_20, indefinido]
+  - key: como_atende_hoje
+    label: "Como atende hoje"
+    type: enum
+    options: [whatsapp_pessoal, planilha, caderno_ou_memoria, ja_tem_crm, outro_sistema, indefinido]
+  - key: volume_atendimentos
+    label: "Atendimentos por mês"
+    type: enum
+    options: [ate_50, de_51_a_200, de_201_a_500, mais_de_500, indefinido]
+  - key: gargalo
+    label: "Onde perde venda hoje"
+    type: enum
+    options: [demora_para_responder, sem_followup, sem_padrao_de_resposta, sem_visibilidade, equipe_nova, indefinido]
+
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite). B2B com processo de compra, mesmo
+  # que curto: em PME o comitê é o sócio, e ele decide junto.
+  # Chaves e opções são CANÔNICAS (validadas pelo skill-loader).
+  - key: verba
+    label: "Como pretende pagar"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem decide junto"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisão lá dentro"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
+scheduling:
+  enabled: true
+  default_duration_min: 30
+  slot_step_min: 30
+  min_advance_min: 120
+
+# A receita é assinatura recorrente, não atendimento executado e repetido.
+services:
+  enabled: false
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - indicacao
+  - prospeccao
+  - site
+  - evento
+  - outro
+
+dna_sections:
+  - key: produto
+    label: "O produto"
+    required: true
+    fields:
+      - { key: o_que_e, type: text, required: true, label: "O que é, em uma frase", help: "Como você explica o produto para quem nunca ouviu falar. Sem jargão" }
+      - { key: para_quem, type: text, required: true, label: "Para quem serve", help: "Que tipo de empresa tira proveito, e a partir de que tamanho" }
+      - { key: modulos, type: table, required: true, columns: [modulo, o_que_faz, incluso], label: "Módulos", help: "Cada módulo, o que ele faz e se está incluso ou é à parte" }
+      - { key: o_que_nao_faz, type: list, required: true, label: "O que o produto NÃO faz", help: "A lista mais importante do cadastro. Sem ela o motor não consegue recusar, e prometer o que não existe é o jeito mais rápido de perder um cliente pagante" }
+  - key: pricing
+    label: "Preço e cobrança"
+    required: true
+    fields:
+      - { key: modelo, type: text, required: true, label: "Como cobra", help: "Por atendimento, por empresa, por usuário. Escreva do jeito que o cliente entende" }
+      - { key: range, type: money_range, required: true, label: "Faixa de mensalidade", help: "A faixa real, do menor ao maior plano" }
+      - { key: o_que_conta, type: text, required: true, label: "O que conta como atendimento", help: "A definição exata. É o que evita briga na primeira fatura" }
+      - { key: modulos_a_parte, type: text, label: "Módulos cobrados à parte", help: "Quais custam além da mensalidade e quanto" }
+      - { key: formas_pagamento, type: list, label: "Formas de pagamento", help: "Como o cliente pode pagar" }
+      - { key: implantacao_custa, type: text, label: "Implantação custa?", help: "Tem taxa de implantação ou setup? Quanto" }
+  - key: teste
+    label: "Teste grátis"
+    required: true
+    fields:
+      - { key: oferece, type: boolean, required: true, label: "Oferece teste?", help: "Marque se existe período de teste" }
+      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos dias dura o teste" }
+      - { key: o_que_inclui, type: text, required: true, label: "O que inclui", help: "Tudo liberado ou parte? Quais módulos entram no teste" }
+      - { key: precisa_cartao, type: boolean, label: "Pede cartão?", help: "Marque se o teste exige cartão de crédito" }
+      - { key: o_que_acontece_depois, type: text, required: true, label: "O que acontece ao fim do teste", help: "O acesso para, vira plano pago, ou continua limitado? Diga na venda, não no dia" }
+  - key: implantacao
+    label: "Implantação"
+    required: true
+    fields:
+      - { key: prazo, type: text, required: true, label: "Prazo até estar usando", help: "Quanto tempo entre o sim e o primeiro atendimento respondido pelo sistema" }
+      - { key: o_que_o_cliente_faz, type: text, required: true, label: "O que a empresa precisa fazer", help: "O trabalho que é DELE. Esconder isso é o que faz o cadastro parar pela metade" }
+      - { key: quem_faz, type: text, label: "Quem faz", help: "Você faz junto, ele faz sozinho, ou tem alguém dedicado" }
+      - { key: treinamento, type: text, label: "Treinamento da equipe", help: "Como a equipe aprende a usar, e quanto tempo leva" }
+  - key: dados
+    label: "Dados, LGPD e saída"
+    required: true
+    fields:
+      - { key: onde_ficam, type: text, required: true, label: "Onde ficam os dados", help: "Provedor, país e o que isso significa na prática" }
+      - { key: quem_ve, type: text, required: true, label: "Quem consegue ver", help: "Quem, dentro da sua empresa, tem acesso ao dado do cliente — e em que situação" }
+      - { key: exportacao, type: text, required: true, label: "Consegue levar embora?", help: "O cliente exporta os dados dele? Em que formato e quando" }
+      - { key: se_cancelar, type: text, required: true, label: "O que acontece se cancelar", help: "Por quanto tempo o dado fica, o que é apagado e como se pede" }
+  - key: contrato
+    label: "Contrato"
+    fields:
+      - { key: fidelidade, type: text, label: "Fidelidade", help: "Prende por quanto tempo? Escreva 'não tem' se não houver" }
+      - { key: cancelamento, type: text, label: "Como cancela", help: "O caminho real do cancelamento e o aviso prévio" }
+      - { key: reajuste, type: text, label: "Reajuste", help: "Quando e por qual índice" }
+  - key: integracoes
+    label: "Integrações"
+    fields:
+      - { key: quais, type: list, label: "O que integra hoje", help: "Só o que já funciona. Roadmap não entra aqui" }
+      - { key: whatsapp, type: text, label: "WhatsApp", help: "Como funciona hoje, com honestidade: envio automático ou copiar e colar" }
+      - { key: importacao, type: text, label: "Importar dados existentes", help: "O que dá para trazer de planilha ou de outro sistema, e o que não dá" }
+      - { key: o_que_nao_integra, type: list, label: "O que NÃO integra", help: "Os pedidos que você recebe e não atende. Dizer cedo economiza a venda errada" }
+  - key: prova
+    label: "Prova"
+    fields:
+      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo existe e quantas empresas usam" }
+      - { key: casos, type: text, label: "Casos", help: "O que empresas concretas conseguiram, com autorização. Número medido, nunca estimado" }
+      - { key: segmentos_atendidos, type: list, label: "Segmentos atendidos", help: "Os ramos que já têm biblioteca pronta" }
+
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+
+categories:
+  pricing:            "Mensalidade, o que conta como atendimento e implantação"
+  risk_free_entry:    "Teste grátis: o que inclui e o que acontece depois"
+  availability:       "Prazo de implantação e agenda de demonstração"
+  expertise_proof:    "Quem somos, quem já usa e o que é medido"
+  catalog:            "Módulos e o que cada um faz"
+  goal_matching:      "Como a empresa atende hoje → o que resolve o gargalo dela"
+  objections:         "Já tenho sistema, a equipe não vai usar, está caro, é mais um sistema"
+  commitment_offer:   "Contrato, fidelidade, cancelamento e o adiamento"
+  reciprocity:        "Indicação entre donos e implantação cortesia"
+  limits_and_ethics:  "LGPD, posse do dado e o que o produto NÃO faz"
+  retention:          "Quem parou de usar, quem cancelou e o próximo módulo"
+  ecosystem:          "Integrações, WhatsApp e importação"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA
+#
+# `objections` é `challenger` e NÃO `negociacao_voss` como em quase todo
+# lugar — é o único segmento da casa em que isso acontece, e o motivo é o
+# `benchmarks.o_concorrente_e_o_jeito_de_hoje`: aqui não há um preço a
+# negociar, há um custo invisível a tornar visível. Voss desarma quem já
+# tem posição; Challenger é para quem ainda não sabe que tem problema.
+#
+# `commitment_offer` é `indecisao_jolt`: dono de PME que concordou e não
+# assina não discorda do produto — ele tem medo de mais um sistema
+# abandonado. Repetir o argumento é o movimento que piora o desfecho.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          challenger
+  commitment_offer:    indecisao_jolt
+  reciprocity:         relacionamento_carnegie
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
+cadences:
+  - key: pos_demo
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Confirmar o que ficou claro e o que não ficou" }
+      - { offset_days: 5, intent: "Tratar o travamento real (equipe, verba, quem assina)" }
+      - { offset_days: 10, intent: "Perguntar o que falta para começar — e aceitar o não" }
+    stop_on: [converted, opted_out, lost]
+
+  # A CADÊNCIA QUE DECIDE A VENDA. Trial sem uso não vira assinatura, e o
+  # silêncio no teste é o sinal de perda mais confiável do segmento — ele
+  # aparece antes de qualquer objeção ser dita.
+  - key: acompanhamento_teste
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 1, intent: "Ajudar a responder o PRIMEIRO atendimento de verdade" }
+      - { offset_days: 3, intent: "Conferir se o cadastro travou em algum ponto" }
+      - { offset_days: 7, intent: "Mostrar o que já aconteceu na conta dele, com número" }
+      - { offset_days: 12, intent: "Reta final: o que muda quando o teste acabar" }
+    stop_on: [converted, opted_out, lost]
+
+  - key: acompanhamento
+    applies_to: onboarding
+    steps:
+      - { offset_days: 30, intent: "Primeiro mês: o que a conta dele mostra que antes não existia" }
+      - { offset_days: 90, intent: "Trimestre: onde ainda vaza, e qual módulo resolve" }
+    stop_on: [opted_out, lost]
+
+  - key: retomada
+    applies_to: reactivation
+    steps:
+      - { offset_days: 45, intent: "Voltar com o que mudou no produto sobre o motivo dele ter saído" }
+      - { offset_days: 120, intent: "Segundo toque, com caso parecido com o dele" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+hard_rules:
+  - "Nunca prometer integração, módulo ou recurso que não esteja no DNA. Roadmap não é produto, e prometer roadmap é vender o que não existe."
+  - "Nunca prometer resultado comercial do cliente — mais vendas, percentual de conversão, faturamento. Não controlamos o funil dele."
+  - "Nunca dizer que a IA atende sozinha ou substitui o vendedor. Ela redige e explica a técnica; quem envia é gente."
+  - "Nunca afirmar envio automático por WhatsApp sem o campo de integração confirmar. Hoje a inteligência é nossa e o envio é humano."
+  - "Nunca omitir o que o produto NÃO faz quando o cliente pergunta por algo que ele não resolve."
+  - "Nunca afirmar prazo de implantação, política de dados ou regra de cancelamento fora do que está no DNA."
+
+kpis:
+  - taxa_conversao
+  - testes_iniciados
+  - uso_no_teste
+  - tempo_resposta_mediana
+  - cancelamento

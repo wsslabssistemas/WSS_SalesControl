@@ -76,6 +76,11 @@ export function ocorrenciasDeProsa(t) {
     if (dep === "." && /[A-Za-z]/.test(t[fim + 1] ?? " ")) continue;
     // `e-mail`, `on-grid`, `pos-venda`: composto com hífen é termo, não prosa.
     if (antes === "-" || dep === "-") continue;
+    // ENTRE CRASES É REFERÊNCIA A CHAVE, não texto. `automacao` e `industria`
+    // citados num comentário são `skill_key` — acentuá-los quebraria a busca de
+    // quem for procurar a chave, e a chave no banco continua sem acento. A
+    // convenção de crase já é a do repositório inteiro; aqui ela vira regra.
+    if (antes === "`" && t[fim] === "`") continue;
     out.push({ w: m[0], i });
   }
   return out;
