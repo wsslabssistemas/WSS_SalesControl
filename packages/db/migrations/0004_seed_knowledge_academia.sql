@@ -338,6 +338,49 @@ Verifique o histórico: se a pessoa nunca foi cliente, é primeira oportunidade,
    'Quebrar o padrão da mensagem (Robbins) + recuar para atrair (Tracy)', '{"Cobrar o sumiço","Tratar lead não convertido como ex-cliente","Reenviar a mesma mensagem genérica"}', 'agendar_visita',
    'skill_seed', 'active', null),
 
+-- OS 90 DIAS DEPOIS DA MATRÍCULA (ago/2026).
+--
+-- Entrou junto com a cadência `pos_matricula` do manifesto, e por um motivo
+-- que vale registrar: a cadência foi criada primeiro e ficou SEM entrada de
+-- biblioteca para alimentar. Cadência sem curadoria é o motor com a boca
+-- aberta e nada para dizer — ele improvisa, e improviso é onde a invenção
+-- entra.
+--
+-- ESTA É TAMBÉM A RESPOSTA À IDEIA DE "FRASES MOTIVACIONAIS" (fundador,
+-- ago/2026). A intuição estava certa — existe um momento em que a pessoa
+-- desanima e o vendedor não sabe o que dizer —, mas frase pronta é o formato
+-- errado, e a própria biblioteca já dizia isso em três lugares: a entrada de
+-- desânimo lista "argumentar contra o sentimento" como erro, e `curso` e
+-- `software_b2b` listam "responder com motivação" como erro. Motivação
+-- genérica em cima de sentimento específico soa como cartão de autoajuda.
+-- O que funciona é o oposto e é o que está escrito aqui: fazer a PESSOA
+-- dizer o ganho. Quem verbaliza o próprio avanço se compromete com ele —
+-- ninguém precisa ser convencido do que acabou de afirmar.
+(null, 'academia', 'retention', 'proactive', '{}',
+ 'onboarding',
+ 'Os primeiros 90 dias decidem se o aluno fica, e quase toda academia fica
+calada justamente aqui — some depois de matricular e só reaparece quando ele
+para de vir. Este toque não vende nada: ele COLHE.
+Faça UMA pergunta, sobre o que ele já consegue fazer e não conseguia. Não
+pergunte se está gostando (a resposta é sempre "sim" e não serve para nada) e
+não pergunte se está vindo (soa como controle de presença).
+Se ele responder com um ganho concreto, REGISTRE a frase dele. É o ativo mais
+valioso desta conversa: serve para a renovação, para a indicação e para o dia
+em que ele pensar em desistir — e a frase dele vale mais que qualquer
+argumento seu.
+NÃO responda com motivação. "Você consegue", "não desista", "foco" — nada
+disso funciona sobre um sentimento específico, e quem recebe isso de um
+sistema percebe que é automático. Se ele disser que está difícil, trate como
+diagnóstico: o que atrapalhou (horário, dor, vergonha, rotina) e o que a
+academia tem que resolve AQUELE ponto.
+E nunca prometa resultado — nem de saúde, nem de estética, nem de prazo.',
+ '{}',
+ '{"catalog.items","differentials.items","availability.weekly_hours"}',
+ '{"Nunca prometer resultado de saúde, cura ou emagrecimento.","Uma mensagem, uma pergunta."}', 'omit',
+ 'Colher o ganho pela boca do aluno (Cialdini — compromisso e coerência), nunca motivar',
+ '{"Responder com frase motivacional: soa automático e não trata o que ele disse","Perguntar se está gostando: a resposta é sempre sim","Perguntar se está vindo: soa como controle de presença","Aproveitar o contato para oferecer plano ou personal"}',
+ 'registrar_ganho', 'skill_seed', 'active', 'relacionamento_carnegie'),
+
 (null, 'academia', 'commitment_offer', 'reactive',
  '{"vou pensar","depois eu vejo","preciso ver com calma","vou dar uma pensada","estou em dúvida entre os planos","me manda mais informação","qual plano você acha melhor"}',
  null,

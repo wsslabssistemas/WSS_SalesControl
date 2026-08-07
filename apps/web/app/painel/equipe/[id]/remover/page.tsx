@@ -11,10 +11,13 @@ type Member = {
 
 export default async function RemoverMembroPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
 }) {
   const { id } = await params;
+  const { erro } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
 
@@ -62,14 +65,36 @@ export default async function RemoverMembroPage({
           : "Esta pessoa não tem contatos atribuídos."}
       </p>
 
+      {erro && (
+        <p style={{ color: "var(--danger)", fontSize: 13, padding: "8px 10px", border: "1px solid rgba(192,57,43,0.4)", borderRadius: 8, background: "rgba(192,57,43,0.08)", marginTop: 12 }}>
+          {erro}
+        </p>
+      )}
+
       <form action={action} style={{ display: "grid", gap: 14, marginTop: 16 }}>
+        {/* DUAS SAÍDAS, e a segunda existe por causa do rodízio de recepção:
+            despejar a carteira inteira de quem saiu num vendedor só não
+            transfere a carteira, transfere o problema — e o resultado é
+            ninguém sendo acompanhado por ninguém. */}
+        {nContatos > 0 && outros.length > 1 && (
+          <label style={{ fontSize: 13, opacity: 0.85, display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <input type="checkbox" name="modo" value="dividir" style={{ marginTop: 3 }} />
+            <span>
+              Dividir igualmente entre os {outros.length} que ficam
+              <span style={{ display: "block", fontSize: 12, opacity: 0.6, marginTop: 2 }}>
+                Cerca de {Math.ceil(nContatos / outros.length)} contatos para cada. Marcando isto,
+                a escolha abaixo é ignorada.
+              </span>
+            </span>
+          </label>
+        )}
+
         {nContatos > 0 && (
           <label style={{ fontSize: 13, opacity: 0.85 }}>
-            Transferir contatos para
+            Ou passar todos para
             <select
               name="new_owner"
               defaultValue=""
-              required
               style={{
                 display: "block",
                 width: "100%",
