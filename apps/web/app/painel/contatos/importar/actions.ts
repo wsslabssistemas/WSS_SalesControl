@@ -25,7 +25,7 @@ export async function importContacts(formData: FormData) {
     redirect("/painel/contatos/importar?erro=Arquivo+vazio");
   }
 
-  const { nameIdx, phoneIdx, hasHeader } = detectColumns(rows[0]);
+  const { nameIdx, phoneIdx, hasHeader, nameLabel, phoneLabel, adivinhou } = detectColumns(rows[0]);
   const dataRows = hasHeader ? rows.slice(1) : rows;
 
   const supabase = await createClient();
@@ -85,5 +85,13 @@ export async function importContacts(formData: FormData) {
   }
 
   revalidatePath("/painel/contatos");
-  redirect(`/painel/contatos?importados=${importados}&dup=${dup}&sem=${semNome}`);
+  // Devolve QUAL coluna virou nome e qual virou telefone. Sem isso, uma
+  // planilha com cabeçalho fora do vocabulário importa três mil linhas com o
+  // campo errado e diz "3.000 importados" — o erro que só aparece quando
+  // alguém abre um contato e vê um código no lugar do nome.
+  const cols = new URLSearchParams({
+    nomeCol: nameLabel, foneCol: phoneLabel,
+    chute: [adivinhou.nome ? "nome" : "", adivinhou.telefone ? "telefone" : ""].filter(Boolean).join(","),
+  });
+  redirect(`/painel/contatos?importados=${importados}&dup=${dup}&sem=${semNome}&${cols}`);
 }

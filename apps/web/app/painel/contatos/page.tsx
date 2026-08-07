@@ -18,7 +18,7 @@ type Contact = {
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; etapa?: string; resp?: string; page?: string; importados?: string; dup?: string; sem?: string }>;
+  searchParams: Promise<{ q?: string; etapa?: string; resp?: string; page?: string; importados?: string; dup?: string; sem?: string; nomeCol?: string; foneCol?: string; chute?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
@@ -99,11 +99,34 @@ export default async function ContatosPage({
       </div>
 
       {imported !== null && (
-        <p className="badge badge-success mt-16">
-          {imported} importado{imported === 1 ? "" : "s"}
-          {sp.dup && Number(sp.dup) > 0 ? ` · ${sp.dup} duplicado(s) ignorado(s)` : ""}
-          {sp.sem && Number(sp.sem) > 0 ? ` · ${sp.sem} sem nome` : ""}
-        </p>
+        <div className="mt-16">
+          <p className="badge badge-success">
+            {imported} importado{imported === 1 ? "" : "s"}
+            {sp.dup && Number(sp.dup) > 0 ? ` · ${sp.dup} duplicado(s) ignorado(s)` : ""}
+            {sp.sem && Number(sp.sem) > 0 ? ` · ${sp.sem} sem nome` : ""}
+          </p>
+          {/* QUAL COLUNA VIROU O QUÊ. Conferir isto num arquivo de teste com 3
+              linhas é o que evita descobrir, depois de três mil, que a coluna
+              de nome era um código. */}
+          {sp.nomeCol && (
+            <p className="text-dim" style={{ fontSize: 13, marginTop: 8, marginBottom: 0 }}>
+              Colunas usadas: <strong>{sp.nomeCol}</strong> → nome ·{" "}
+              <strong>{sp.foneCol}</strong> → telefone.
+              {sp.chute && (
+                <>
+                  {" "}
+                  <span className="badge badge-warn" style={{ marginLeft: 4 }}>
+                    {sp.chute.includes("nome") && sp.chute.includes("telefone")
+                      ? "não reconheci o cabeçalho — usei a ordem das colunas"
+                      : `não reconheci a coluna de ${sp.chute} — usei a posição`}
+                  </span>{" "}
+                  Se estiver errado, apague os importados e renomeie o cabeçalho para{" "}
+                  <code>nome</code> e <code>telefone</code>.
+                </>
+              )}
+            </p>
+          )}
+        </div>
       )}
 
       {/* Busca + filtro (GET: server-side, sem JS) */}
