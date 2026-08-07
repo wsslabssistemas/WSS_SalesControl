@@ -62,3 +62,7 @@ jobs:
       # importados", o numero esta certo e o conteudo esta todo trocado.
       - name: Reconhecimento de coluna na importacao
         run: node packages/db/tests/importacao_test.mjs
+      # CNAE errado nao da erro: a busca volta vazia, e "nao achei empresa
+      # nenhuma" e indistinguivel de "o codigo esta errado".
+      - name: Catalogo de alvos da prospeccao
+        run: node packages/db/tests/cnae_test.mjs

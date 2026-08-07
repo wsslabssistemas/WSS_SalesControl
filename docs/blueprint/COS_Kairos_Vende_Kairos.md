@@ -220,8 +220,27 @@ do Meta, a fila vira automática sem reescrever nada.
 3. ~~**Cota de IA por empresa + teto de gasto que suspende sozinho.**~~
    ✅ **FEITO (ago/2026)** — detalhe na §4. **O portão está de pé: daqui em
    diante convidar empresa para testar não é mais uma aposta no caixa.**
-4. **Filtro de prospecção por cidade + segmento**, começando em Porto
-   Alegre / academias.
+4. ~~**Filtro de prospecção por cidade + segmento**~~ ✅ **FEITO (ago/2026).**
+   O atrito real não era o filtro: era exigir que a pessoa digitasse
+   `9313-1/00`. Ninguém sabe CNAE de cabeça — foi assim que o ICP de uma
+   academia real acabou com CNAE de instalação elétrica e a palavra
+   "climatização". Agora se escolhe por NOME, e a lista mora em `lib/cnae.ts`
+   como DADO: corrigir um código é editar uma linha, e nenhuma empresa fica com
+   o código velho gravado no `settings`.
+   **Duas famílias**, e a segunda é a resposta a uma pergunta do fundador
+   (*"não sei como a academia faz prospecção sem lista de contatos, a não ser
+   varrer as empresas próximas oferecendo convênio"*): `ramo` para quem vende a
+   outras empresas, e **`convenio`** para quem atende PESSOA no bairro e por
+   isso não pode prospectar pessoa — prospecta o EMPREGADOR dela, que é B2B com
+   dado público e é permitido.
+   **O limite está dito na tela, não escondido:** a busca pública filtra por
+   ramo e cidade, **não** por porte nem por distância. Para convênio, o que
+   decide é quantos funcionários e quão perto — e isso só aparece ao abrir cada
+   CNPJ.
+   **Provado contra a base pública:** academias em Porto Alegre → **1.085
+   encontradas**, 20 trazidas por chamada (o teto conhecido da fonte pública, já
+   registrado como pendência de volume). O ICP da WSS Labs está gravado.
+   `cnae_test.mjs` 9/9, no CI.
 5. **Fila de envio com um toque** (`wa.me`), sem Meta.
 6. **Score de potencial → preço sugerido** — já existe em
    `/painel/admin/precos`, e passa a receber dado real conforme os testes

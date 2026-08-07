@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
 import { searchCompanies, type Company } from "@/lib/prospect";
+import { alvosPorFamilia, alvosDasLinhas } from "@/lib/cnae";
 import { saveIcp, addOpportunity } from "./actions";
 
 export const metadata = { title: "Oportunidades" };
@@ -40,9 +41,14 @@ export default async function OportunidadesPage({
 
   const supabase = await createClient();
   const { data: t } = await supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle();
-  const icp = ((t?.settings as Record<string, unknown> | null)?.icp as { cnaes?: string[]; municipios?: string[] } | undefined) ?? {};
+  // `cnaes` é o que a busca usa (alvos marcados + extras digitados, já
+  // resolvidos no salvamento). `extras` guarda só o que foi digitado à mão,
+  // para a caixa de texto voltar com o que a pessoa escreveu e não com a lista
+  // inteira expandida pelos checkboxes.
+  const icp = ((t?.settings as Record<string, unknown> | null)?.icp as { cnaes?: string[]; municipios?: string[]; extras?: string[] } | undefined) ?? {};
   const isAdmin = membership!.role === "owner" || membership!.role === "admin";
   const hasIcp = (icp.cnaes?.length ?? 0) > 0 && (icp.municipios?.length ?? 0) > 0;
+  const marcados = alvosDasLinhas(icp.cnaes ?? []);
 
   // Busca sob demanda (Passo 2).
   let result: { total: number; companies: Company[]; capped: boolean } | null = null;
@@ -93,9 +99,45 @@ export default async function OportunidadesPage({
         </p>
         {isAdmin ? (
           <form action={saveIcp} className="stack mt-16" style={{ gap: 14 }}>
+            {/* ESCOLHER POR NOME, não por código. Exigir `9313-1/00` faz o
+                filtro só servir para quem já sabe — e foi assim que o ICP de
+                uma academia real acabou com CNAE de instalação elétrica. */}
+            <fieldset className="stack" style={{ gap: 10, border: 0, padding: 0, margin: 0 }}>
+              <legend className="text-dim" style={{ fontSize: 13, padding: 0 }}>
+                Ramos-alvo — marque os que você quer atender
+              </legend>
+              <div className="row wrap" style={{ gap: 6 }}>
+                {alvosPorFamilia("ramo").map((a) => (
+                  <label key={a.key} className="badge" style={{ cursor: "pointer", fontWeight: 400 }}>
+                    <input type="checkbox" name="alvos" value={a.key} defaultChecked={marcados.includes(a.key)} style={{ marginRight: 6 }} />
+                    {a.rotulo}
+                  </label>
+                ))}
+              </div>
+
+              {/* A resposta para quem atende PESSOA no bairro: prospecção fria
+                  B2C é proibida (LGPD, decisão fechada), mas prospectar o
+                  EMPREGADOR dela para convênio é B2B com dado público. */}
+              <legend className="text-dim" style={{ fontSize: 13, padding: 0, marginTop: 8 }}>
+                Ou empresas para <strong>convênio corporativo</strong> — para quem atende pessoa e não pode prospectar pessoa
+              </legend>
+              <div className="row wrap" style={{ gap: 6 }}>
+                {alvosPorFamilia("convenio").map((a) => (
+                  <label key={a.key} className="badge" style={{ cursor: "pointer", fontWeight: 400 }} title={a.nota}>
+                    <input type="checkbox" name="alvos" value={a.key} defaultChecked={marcados.includes(a.key)} style={{ marginRight: 6 }} />
+                    {a.rotulo}
+                  </label>
+                ))}
+              </div>
+              <p className="text-faint" style={{ fontSize: 12, margin: 0 }}>
+                A busca pública filtra por ramo e cidade — <strong>não</strong> por porte nem
+                por distância. Quantos funcionários a empresa tem só aparece ao abrir cada CNPJ.
+              </p>
+            </fieldset>
+
             <label className="text-dim" style={{ fontSize: 13 }}>
-              <span style={{ display: "block", marginBottom: 5 }}>CNAEs-alvo (um por linha — ex.: 9313-1/00 academias)</span>
-              <textarea name="cnaes" className="input" rows={4} defaultValue={(icp.cnaes ?? []).join("\n")} placeholder={"9313-1/00\n4644-3/01"} />
+              <span style={{ display: "block", marginBottom: 5 }}>CNAEs extras, se você já souber o código (um por linha)</span>
+              <textarea name="cnaes" className="input" rows={2} defaultValue={(icp.extras ?? []).join("\n")} placeholder={"9313-1/00 academias"} />
             </label>
             <label className="text-dim" style={{ fontSize: 13 }}>
               <span style={{ display: "block", marginBottom: 5 }}>Cidades/UF (uma por linha — ex.: Porto Alegre/RS)</span>

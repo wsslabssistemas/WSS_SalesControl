@@ -5,6 +5,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
 import { enrichCompany, resumirEmpresa } from "@/lib/prospect";
+import { cnaesDosAlvos } from "@/lib/cnae";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -24,7 +25,13 @@ export async function saveIcp(formData: FormData) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-  const cnaes = parseLines(formData.get("cnaes"));
+  // Os ramos marcados viram códigos aqui, no servidor. A tela nunca manda
+  // código: manda a CHAVE do alvo, e a lista de CNAE mora em `lib/cnae.ts`.
+  // Assim corrigir um código errado é editar uma linha de dado, e nenhuma
+  // empresa fica com o código velho gravado no `settings`.
+  const alvos = formData.getAll("alvos").map(String).filter(Boolean);
+  const extras = parseLines(formData.get("cnaes"));
+  const cnaes = [...new Set([...cnaesDosAlvos(alvos), ...extras])];
   const municipios = parseLines(formData.get("municipios"));
 
   const supabase = await createClient();
@@ -33,7 +40,7 @@ export async function saveIcp(formData: FormData) {
 
   await supabase
     .from("tenants")
-    .update({ settings: { ...settings, icp: { cnaes, municipios, updated_at: new Date().toISOString() } } })
+    .update({ settings: { ...settings, icp: { cnaes, municipios, extras, updated_at: new Date().toISOString() } } })
     .eq("id", tenant.id);
 
   redirect("/painel/oportunidades?ok=1");
