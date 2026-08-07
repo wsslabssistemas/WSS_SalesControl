@@ -50,10 +50,27 @@ journey:
     - key: negociacao
       label: "Negociação"
       goal: "Isolar a objeção real e fechar."
+    # MATRICULADO É `won` E DEIXOU DE SER TERMINAL (ago/2026).
+    #
+    # Era terminal, e etapa terminal DESLIGA O MOTOR: `computeDueTouches` pula
+    # terminal, então ninguém nunca recebia um toque depois de matricular. É a
+    # mesma armadilha que já custou a recompra da carteira fiel na barbearia —
+    # no segmento cuja tese é recompra.
+    #
+    # Aqui o efeito é pior: a evasão de academia acontece nos primeiros meses,
+    # e é exatamente nessa janela que o sistema estava calado. A conversão
+    # continua sendo contada aqui (`won`), que é o que a métrica canônica pede;
+    # o que muda é que o motor continua alcançando quem já é aluno.
     - key: convertido
       label: "Matriculado"
-      terminal: true
       won: true
+      cadence: pos_matricula
+      goal: "Matriculou. Os primeiros 90 dias decidem se ele fica — e é aqui que a academia costuma sumir."
+      phases:
+        - { key: primeira_semana, label: "Primeira semana",  offset_days: 7 }
+        - { key: primeiro_mes,    label: "Primeiro mês",     offset_days: 30 }
+        - { key: dois_meses,      label: "Dois meses",       offset_days: 60 }
+        - { key: tres_meses,      label: "Três meses",       offset_days: 90 }
     - key: perdido
       label: "Perdido"
       terminal: true
@@ -83,10 +100,15 @@ contact_fields:
 # Em venda de contrato/pedido (B2B), o dinheiro é acompanhado por
 # proposta e pedido — não por 'atendimento'. Por isso é dado, não código.
 # ---------------------------------------------------------------------
+# DESLIGADO EM ago/2026, a pedido do fundador — e ele está certo.
+# A receita de academia é MENSALIDADE, não serviço executado e repetido. A tela
+# de "Atendimentos" pedia para registrar um valor por atendimento, que nesse
+# ramo não significa nada: o aluno paga o mês, não a visita. Campo que não
+# significa nada não fica vazio — fica preenchido errado, e depois alguém soma.
+# Barbearia, salão, oficina e pet continuam com isto ligado, porque lá o
+# dinheiro entra por serviço mesmo.
 services:
-  enabled: true
-  label: "Atendimentos"
-  item_label: "Serviço"
+  enabled: false
 
 lead_sources:
   - whatsapp
@@ -215,6 +237,24 @@ cadences:
       - { offset_days: 6, intent: "Projeção de futuro e pré-fechamento" }
       - { offset_days: 8, intent: "Conversão com aversão à perda" }
     stop_on: [converted, opted_out, lost]
+
+  # OS 90 DIAS QUE DECIDEM SE O ALUNO FICA.
+  #
+  # Pedido do fundador, e a evidência do próprio piloto sustenta: a maior perda
+  # da academia não é o lead que não fecha — é o aluno que matricula e some. O
+  # objetivo de cada toque aqui é COLHER O QUE ELE JÁ CONQUISTOU, não vender
+  # nada: quem verbaliza um ganho fica, e quem some no primeiro mês nunca foi
+  # perguntado se estava conseguindo vir.
+  #
+  # Sem promessa de resultado — a `hard_rule` de saúde continua valendo aqui.
+  - key: pos_matricula
+    applies_to: onboarding
+    steps:
+      - { offset_days: 7,  intent: "Primeira semana: como foi vir, e o que já mudou na rotina" }
+      - { offset_days: 30, intent: "Primeiro mês: reconhecer a frequência e ajustar o que atrapalha" }
+      - { offset_days: 60, intent: "Dois meses: perguntar o que ele já consegue fazer e não conseguia" }
+      - { offset_days: 90, intent: "Três meses: pedir o retrato do ganho — e a indicação, que só faz sentido depois do resultado" }
+    stop_on: [opted_out, lost]
 
   - key: rescue_inactive
     applies_to: reactivation

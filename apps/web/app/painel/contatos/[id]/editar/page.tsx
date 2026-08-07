@@ -29,7 +29,7 @@ export default async function EditarContatoPage({
   const supabase = await createClient();
   const { data } = await supabase
     .from("contacts")
-    .select("name, phone, source, journey_stage, custom")
+    .select("name, phone, source, journey_stage, custom, next_action_at, next_action_note")
     .eq("id", id)
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null)

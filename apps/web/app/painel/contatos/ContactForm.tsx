@@ -16,6 +16,8 @@ export type ContactValues = {
   phone?: string | null;
   source?: string | null;
   journey_stage?: string | null;
+  next_action_at?: string | null;
+  next_action_note?: string | null;
   custom?: Record<string, string> | null;
 };
 
@@ -108,6 +110,30 @@ export function ContactForm({
           </span>
         </label>
       )}
+
+      {/* A PRÓXIMA AÇÃO — a data que o CLIENTE marcou.
+          É diferente das outras duas formas de lembrar que já existiam, e as
+          duas são do sistema: cadência é a régua do ramo ("toque no dia 2"), e
+          "esfriando" é alarme de ausência ("sem contato há 3 dias"). Nenhuma
+          sabe que ele disse "só vou em agosto" — e cobrar antes queima, esperar
+          o alarme genérico chega tarde. */}
+      <label style={lbl}>
+        Próxima ação (data combinada com o cliente)
+        <input type="date" name="next_action_at" defaultValue={contact?.next_action_at ?? ""} style={field} />
+      </label>
+      <label style={lbl}>
+        O que ficou combinado
+        <input
+          name="next_action_note"
+          defaultValue={contact?.next_action_note ?? ""}
+          placeholder="Ex.: disse que começa em agosto, depois das férias"
+          style={field}
+        />
+        <span style={{ fontSize: 12, opacity: 0.55 }}>
+          Aparece na tela inicial no dia marcado. Sem a nota, o lembrete vira
+          &quot;voltar dia 3&quot; — que não diz nada um mês depois.
+        </span>
+      </label>
 
       {fields.map((f) => (
         <label key={f.key} style={lbl}>

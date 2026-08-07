@@ -14,6 +14,8 @@ type Contact = {
   stage_entered_at: string;
   owner_id: string | null;
   custom: Record<string, unknown> | null;
+  next_action_at: string | null;
+  next_action_note: string | null;
 };
 type Ix = { contact_id: string | null; occurred_at: string; outcome: string | null };
 
@@ -28,7 +30,16 @@ const OUTCOMES: { key: string; label: string; color: string }[] = [
   { key: "perdeu_silencio", label: "Sumiram", color: "var(--danger)" },
 ];
 
-export default async function PainelHome() {
+export default async function PainelHome({
+  searchParams,
+}: {
+  searchParams: Promise<{ ver?: string }>;
+}) {
+  // `ver` abre uma seção inteira em vez das 8 primeiras. Antes, "+58 outros
+  // esfriando" era TEXTO MORTO: o número existia, o vendedor via, e não havia
+  // para onde ir. Número que informa e não leva a lugar nenhum é pior que
+  // número escondido — ele avisa de um problema e nega o caminho.
+  const { ver } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
 
@@ -48,7 +59,7 @@ export default async function PainelHome() {
   const [{ data: contactsData }, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom")
+      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
     supabase
@@ -102,6 +113,17 @@ export default async function PainelHome() {
   const recentOutcomes = ix.filter((i) => i.outcome && i.occurred_at >= monthAgo);
   const outcomeCount = (k: string) => recentOutcomes.filter((i) => i.outcome === k).length;
 
+  // A PRÓXIMA AÇÃO QUE VENCE. Ordenada pela mais atrasada, porque combinado
+  // furado é pior que combinado esquecido: o cliente lembra que marcou.
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const proximas = contacts
+    .filter((c) => c.next_action_at && c.next_action_at <= hojeISO && !terminalKeys.has(c.journey_stage))
+    .map((c) => ({
+      ...c,
+      atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at!)) / 86400000),
+    }))
+    .sort((a, b) => b.atraso - a.atraso);
+
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
   const perStage = stages
     .filter((s) => !s.terminal)
@@ -138,22 +160,22 @@ export default async function PainelHome() {
 
       {/* Números-chave */}
       <div className="stat-grid mt-24">
-        <div className="card">
+        <Link href="/painel/contatos" className="card card-hover" style={{ display: "block" }}>
           <div className="stat-num">{contacts.length}</div>
           <div className="stat-label">Contatos</div>
-        </div>
-        <div className="card">
+        </Link>
+        <Link href="/painel/funil" className="card card-hover" style={{ display: "block" }}>
           <div className="stat-num">{emAberto}</div>
           <div className="stat-label">Em aberto</div>
-        </div>
+        </Link>
         <Link href="/painel/agenda" className="card card-hover" style={{ display: "block" }}>
           <div className="stat-num" style={{ color: hoje.length ? "var(--warn)" : undefined }}>{hoje.length}</div>
           <div className="stat-label">Toques hoje</div>
         </Link>
-        <div className="card">
+        <Link href="/painel?ver=esfriando#esfriando" className="card card-hover" style={{ display: "block" }}>
           <div className="stat-num" style={{ color: cooling.length ? "var(--danger)" : undefined }}>{cooling.length}</div>
           <div className="stat-label">Esfriando</div>
-        </div>
+        </Link>
       </div>
 
       {/* Resultados dos últimos 30 dias — o feedback do que aconteceu */}
@@ -172,13 +194,13 @@ export default async function PainelHome() {
 
       {/* Recompra: quem já está no ponto de voltar (segmentos com ciclo) */}
       {retornos.length > 0 && (
-        <section style={{ marginTop: 32 }}>
+        <section id="retornos" style={{ marginTop: 32 }}>
           <div className="between" style={{ alignItems: "baseline" }}>
             <h2 style={{ fontSize: 15, margin: 0 }}>Hora de chamar de volta</h2>
             <span className="text-faint" style={{ fontSize: 13 }}>pelo ciclo de cada cliente</span>
           </div>
           <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {retornos.slice(0, 8).map((r) => {
+            {(ver === "retornos" ? retornos : retornos.slice(0, 8)).map((r) => {
               const wa = waLink(r.phone);
               const atrasado = r.overdueDays > 0;
               return (
@@ -211,9 +233,54 @@ export default async function PainelHome() {
                 </li>
               );
             })}
-            {retornos.length > 8 && (
-              <li className="text-faint" style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                +{retornos.length - 8} outros no ponto de voltar
+            {retornos.length > 8 && ver !== "retornos" && (
+              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                <Link href="/painel?ver=retornos#retornos" className="btn btn-sm btn-ghost">
+                  Ver os outros {retornos.length - 8} no ponto de voltar →
+                </Link>
+              </li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      {/* A PRÓXIMA AÇÃO COMBINADA — vem antes de tudo, e o motivo é ordem de
+          prioridade real: cadência e "esfriando" são palpites do sistema sobre
+          quando falar; isto é um compromisso que o vendedor assumiu com o
+          cliente. Furar o combinado é pior que esquecer o palpite, porque o
+          cliente lembra que marcou. */}
+      {proximas.length > 0 && (
+        <section id="acoes" style={{ marginTop: 32 }}>
+          <div className="between" style={{ alignItems: "baseline" }}>
+            <h2 style={{ fontSize: 15, margin: 0 }}>Você combinou de voltar</h2>
+            <span className="text-faint" style={{ fontSize: 13 }}>data marcada com o cliente</span>
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
+            {(ver === "acoes" ? proximas : proximas.slice(0, 8)).map((c) => {
+              const wa = waLink(c.phone);
+              return (
+                <li key={c.id} className="row wrap" style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
+                  <span className={c.atraso > 0 ? "badge badge-danger" : "badge badge-brand"} style={{ minWidth: 62, justifyContent: "center" }}>
+                    {c.atraso > 0 ? `+${c.atraso}d` : "hoje"}
+                  </span>
+                  <Link href={`/painel/contatos/${c.id}`} className="grow" style={{ minWidth: 120 }}>{c.name}</Link>
+                  {c.next_action_note && (
+                    <span className="text-faint" style={{ fontSize: 13 }}>{c.next_action_note}</span>
+                  )}
+                  {wa && (
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  <Link href={`/painel/responder?customer=${c.id}`} className="btn btn-sm btn-ghost">Responder</Link>
+                </li>
+              );
+            })}
+            {proximas.length > 8 && ver !== "acoes" && (
+              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                <Link href="/painel?ver=acoes#acoes" className="btn btn-sm btn-ghost">
+                  Ver os outros {proximas.length - 8} combinados →
+                </Link>
               </li>
             )}
           </ul>
@@ -221,7 +288,7 @@ export default async function PainelHome() {
       )}
 
       {/* Leads esfriando — a fila de ação: quem você está prestes a perder */}
-      <section style={{ marginTop: 32 }}>
+      <section id="esfriando" style={{ marginTop: 32 }}>
         <div className="between" style={{ alignItems: "baseline" }}>
           <h2 style={{ fontSize: 15, margin: 0 }}>Leads esfriando</h2>
           <span className="text-faint" style={{ fontSize: 13 }}>sem contato há 3 dias ou mais</span>
@@ -232,7 +299,7 @@ export default async function PainelHome() {
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {cooling.slice(0, 8).map((c) => {
+            {(ver === "esfriando" ? cooling : cooling.slice(0, 8)).map((c) => {
               const wa = waLink(c.phone);
               return (
                 <li
@@ -256,9 +323,11 @@ export default async function PainelHome() {
                 </li>
               );
             })}
-            {cooling.length > 8 && (
-              <li className="text-faint" style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                +{cooling.length - 8} outros esfriando
+            {cooling.length > 8 && ver !== "esfriando" && (
+              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                <Link href="/painel?ver=esfriando#esfriando" className="btn btn-sm btn-ghost">
+                  Ver os outros {cooling.length - 8} esfriando →
+                </Link>
               </li>
             )}
           </ul>

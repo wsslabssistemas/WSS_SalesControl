@@ -13,6 +13,9 @@ type Parsed = {
   source: string | null;
   journey_stage: string;
   stageStart: string | null;
+  /** A data que o CLIENTE marcou, e o que foi combinado nas palavras de quem atendeu. */
+  nextActionAt: string | null;
+  nextActionNote: string | null;
   custom: Record<string, string>;
 };
 
@@ -31,6 +34,8 @@ function parse(formData: FormData): Parsed {
     // não conhece etapa de mercado (Lei 1).
     journey_stage: String(formData.get("journey_stage") ?? "").trim(),
     stageStart: String(formData.get("stage_start") ?? "").trim() || null,
+    nextActionAt: String(formData.get("next_action_at") ?? "").trim() || null,
+    nextActionNote: String(formData.get("next_action_note") ?? "").trim() || null,
     custom,
   };
 }
@@ -62,6 +67,11 @@ function rowFrom(p: Parsed): Record<string, unknown> {
     custom: p.custom,
   };
   if (p.stageStart) row.stage_entered_at = new Date(p.stageStart).toISOString();
+  // Sempre gravado, inclusive quando volta vazio: limpar a data é como se
+  // desmarca um combinado que não vale mais. Se só gravasse quando preenchido,
+  // um lembrete cancelado ficaria cobrando para sempre.
+  row.next_action_at = p.nextActionAt;
+  row.next_action_note = p.nextActionNote;
   return row;
 }
 
