@@ -21,8 +21,8 @@ núcleo; os segmentos são **dado** (manifesto YAML), nunca código.
 Porto Alegre). A migração existe porque no-code não dá posse, multi-tenancy real
 nem controle de custo de IA.
 
-**O ativo real não é o código.** É a **biblioteca curada** — hoje 116 entradas
-em 7 segmentos, com técnica de venda aplicada a contexto específico.
+**O ativo real não é o código.** É a **biblioteca curada** — hoje 285 entradas
+em 15 segmentos, com técnica de venda aplicada a contexto específico.
 
 **A tese de venda** (pesquisa do fundador, ver `COS_Tese_de_Mercado.md`): o
 mercado não sofre de falta de bom atendimento — sofre da **mistura entre
@@ -550,10 +550,10 @@ tempo entre o contato e o primeiro toque de retomada.
 ## 6. Verificações rápidas de sanidade
 
 ```bash
-npm run -w @cos/skill-loader validate     # manifestos (deve dar 8/8)
+npm run -w @cos/skill-loader validate     # manifestos (deve dar 15/15)
 node packages/db/tests/library_check.mjs  # bibliotecas: categoria, escola, fatos
 node packages/db/tests/demo_dna_check.mjs # DNA de demonstração × manifestos
-node packages/db/tests/retrieval_check.mjs # escolha de técnica: 22/22 (precisa do banco)
+node packages/db/tests/retrieval_check.mjs # escolha de técnica: 65/65 + 96,6% de 1.515 gatilhos (precisa do banco)
 node packages/db/tests/repescagem_test.mjs # espaçamento do curso: 13/13 (sem banco)
 node packages/db/tests/acentuacao_check.mjs # acento na prosa curada (sem banco)
 node packages/db/tests/cota_test.mjs       # cota de IA e teto: 23/23

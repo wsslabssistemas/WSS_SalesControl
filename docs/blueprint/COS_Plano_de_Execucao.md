@@ -620,7 +620,10 @@ pesquisa séria de folclore repetido.
       (33 campos, 14 obrigatórios), 6 casos no `retrieval_check` (**30/30**) e o
       exercício do curso montando **9 situações distintas** para o segmento.
 - [ ] **Google Agenda mão dupla** — exige OAuth e ação do fundador.
-- [x] **Preço sugerido** (`/painel/admin/precos`). Ver o registro em §5 do curso — o "score de potencial" pedido não era construível: ele dependia de conversão observada, e há 0 desfechos. Entregue a versão medida: piso pelo custo de IA, sugestão pelo porte observado, e RECUSA declarada quando a janela não sustenta. Hoje as 10 empresas caem na recusa — que é a resposta certa.
+- [x] **Preço sugerido** (`/painel/admin/precos`). Ver o registro em §5 do curso — o "score de potencial" pedido não era construível: ele dependia de conversão observada, e **na época havia 0 desfechos**. Entregue a versão medida: piso pelo custo de IA, sugestão pelo porte observado, e RECUSA declarada quando a janela não sustenta. Hoje as 10 empresas caem na recusa — que é a resposta certa.
+      **Revisitar:** o piloto trouxe 846 desfechos. O bloqueio de dado caiu, mas
+      a regra do fundador continua valendo — segmentar por origem e declarar o
+      n antes de transformar desfecho em score. Vai junto com o M2, não antes.
 
 ---
 
