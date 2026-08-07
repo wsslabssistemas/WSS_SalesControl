@@ -55,6 +55,21 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   profissional**, folgas/bloqueios, e o motor **fecha o horário** (`origem=motor`).
 - **Contatos, Funil, Gestão** (com Analista de IA), **Equipe**, **DNA**,
   **Onboarding** (escolha de ramo + entrevista), **Tutorial**, **Automação**.
+- **Fila de envio** (`/painel/fila`) — os quatro motivos para falar com alguém
+  numa lista só, ordenados por **custo de furar**: o combinado (o cliente
+  lembra que marcou), o contrato a vencer, o follow-up devido e a recompra.
+  Cada pessoa aparece **uma vez**, pelo motivo mais urgente. A mensagem é
+  gerada sob demanda e vai pelo `wa.me` com um clique — **a inteligência é
+  nossa, o envio é humano.**
+- **Próxima ação com data** (`0049`) — a data que o CLIENTE marcou, diferente
+  da cadência (régua do ramo) e do "esfriando" (alarme de ausência).
+- **Renovação com vigência** (`0050`) — três janelas (60/30/7), e o primeiro
+  toque fala do RESULTADO, não de renovação.
+- **Placar da equipe** — time primeiro, indivíduo depois, e conversão só vira
+  percentual quando a amostra sustenta (piso de 30 leads).
+- **Aparência por empresa** (cor e logo) e a página **Sobre**, que continua
+  dizendo quem é o fabricante — marca branca completa esconderia quem responde
+  pela LGPD.
 - **Catálogo** — importação de planilha que reconhece as colunas sozinha.
 - **Add-ons**: **Oportunidades** (prospecção B2B por CNAE) e **Licitações**
   (PNCP: editais, inteligência, quem ganhou, guia + assistente de IA).
@@ -182,7 +197,7 @@ Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador
 trocar no seletor do topo do painel.
 
 ### Infra
-- Migrations `0001`–`0048` aplicadas. RLS em tudo com `tenant_id`.
+- Migrations `0001`–`0050` aplicadas. RLS em tudo com `tenant_id`.
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar

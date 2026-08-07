@@ -15,7 +15,7 @@ const SECTIONS: Section[] = [
     steps: [
       { title: "O que é o WSS Kairós?", content: "É um assistente comercial que padroniza o atendimento. Você não decora respostas: o sistema sugere o que dizer com base na sua biblioteca de vendas, nos fatos da empresa e no histórico do cliente. Seu trabalho é executar com qualidade, não inventar do zero." },
       { title: "Seu papel como vendedor aqui", content: "Você deixa de só \"atender\" e vira um consultor. O sistema te diz a próxima ação de cada cliente, sugere a resposta e te avisa quando alguém está esquecido." },
-      { title: "Fluxo do dia recomendado", content: "1) Abra o Início e veja os toques de hoje e os atrasados.\n2) No Responder, escolha o cliente e cole a mensagem dele.\n3) Copie a melhor resposta e mande pelo WhatsApp.\n4) Registre o atendimento no cliente.\n5) No fim do dia, confira a Agenda." },
+      { title: "Fluxo do dia recomendado", content: "1) Comece pela FILA DE ENVIO. Ela junta num lugar só quem você combinou de procurar, quem tem contrato vencendo, quem espera follow-up e quem está no ponto de voltar — já na ordem certa.\n2) Em cada linha, clique em Preparar mensagem, leia, ajuste se quiser e abra no WhatsApp.\n3) Marque como enviado. Isso faz a cadência avançar e tira a pessoa da fila.\n4) Quando alguém responder, vá ao Responder, cole a mensagem e trabalhe a resposta.\n5) Antes de fechar, registre a PRÓXIMA AÇÃO de quem pediu para falar depois." },
     ],
   },
   {
@@ -28,6 +28,9 @@ const SECTIONS: Section[] = [
       { title: "Criar um lead", content: "Clique em \"Novo contato\". Preencha ao menos o nome e o telefone — o sistema avisa se o telefone já existe. Quanto mais dados, melhor o sistema personaliza depois." },
       { title: "A jornada é uma barra", content: "Cada contato tem uma barra de jornada mostrando por onde passou e onde está. Abra a ficha do contato para ver e mover de etapa; cada mudança fica no histórico." },
       { title: "Etapas", content: "As etapas vêm do seu segmento (ex.: contato → descoberta → proposta → experiência → ganho). Ao mover, o sistema calcula os toques automáticos e joga na Agenda." },
+      { title: "Próxima ação: a data que o CLIENTE marcou", content: "Quando alguém disser \"me procura em agosto\", preencha PRÓXIMA AÇÃO na ficha dele: a data e o que ficou combinado.\n\nÉ diferente das outras duas formas de lembrar, que são do sistema: a cadência é a régua do ramo (toque no dia 2) e esfriando é alarme de ausência. Nenhuma das duas sabe o que ele te disse — e cobrar antes queima o contato.\n\nEscreva a nota. \"Voltar dia 3\" não diz nada um mês depois; \"ele começa em agosto, depois das férias\" faz você retomar de onde parou." },
+      { title: "Vigência: início e vencimento", content: "Nos ramos que vendem período (academia, curso, escola, clínica), preencha início e vencimento do plano.\n\nA partir daí o sistema avisa em 60, 30 e 7 dias. E o primeiro aviso NÃO fala de renovação: fala do RESULTADO. Renovação vendida em cima de um ganho que o cliente acabou de reconhecer é outra conversa — quem só aparece para cobrar mensalidade ensina o cliente a lembrar do produto como despesa." },
+      { title: "Perdido NÃO é quem sumiu", content: "Marque PERDIDO só quando a pessoa DISSER não — e para isso existe a etapa Disse não.\n\nQuem apenas parou de responder vai para Parou de responder, que continua alcançável: ela volta para você em 60 a 90 dias, com ângulo novo. O motivo é medido, não achismo: no piloto real foram 459 perdas por silêncio contra 59 por decisão. Sumir não é dizer não." },
     ],
   },
   {
@@ -39,7 +42,9 @@ const SECTIONS: Section[] = [
     steps: [
       { title: "Como funciona (hoje, manual)", content: "Escolha o cliente (traz a jornada e o histórico ao lado), cole a mensagem que ele mandou e clique em Buscar. O sistema encontra na sua biblioteca as melhores respostas para aquela situação. Você revisa, copia e manda pelo WhatsApp." },
       { title: "Registrar no cliente", content: "Ao usar uma resposta, clique em \"Registrar no cliente\". Isso guarda a mensagem recebida e a enviada no histórico — é o que constrói a memória de cada cliente." },
-      { title: "Com IA (versão automática)", content: "Na versão automática, em vez de só buscar, o sistema LÊ a mensagem e ESCREVE uma resposta personalizada, já adaptada ao histórico — e explica o porquê daquela abordagem e qual técnica usou. É o mesmo cockpit, com o motor ligado." },
+      { title: "Com IA", content: "Em vez de só buscar, o sistema LÊ a mensagem e ESCREVE uma resposta personalizada, adaptada ao histórico — e explica o porquê daquela abordagem e qual técnica usou. É o mesmo cockpit, com o motor ligado." },
+      { title: "Mover a etapa sem sair da conversa", content: "Logo abaixo da barra de jornada tem um seletor de etapa. Use quando a IA não sugeriu, ou sugeriu diferente do que você sabe — você acabou de falar com a pessoa, e isso não está escrito em lugar nenhum. Seu julgamento vence o do sistema." },
+      { title: "Se aparecer o aviso de cota de IA", content: "Cada empresa tem um limite de respostas com IA no mês. Se ele acabar, aparece um aviso AZUL — não é erro e não é defeito.\n\nO cockpit manual (busca na biblioteca por palavra-chave) continua ilimitado e sem custo. Você não fica sem produto: fica sem o motor até virar o mês, ou até o dono aumentar a cota." },
     ],
   },
   {
@@ -51,6 +56,8 @@ const SECTIONS: Section[] = [
     steps: [
       { title: "Funil", content: "Mostra quantas pessoas há em cada etapa e a taxa de conversão (quem chegou na etapa ganha ÷ total). Clique numa etapa para ver as pessoas." },
       { title: "Agenda em calendário", content: "Os toques de cada cliente aparecem no dia certo do calendário. O que está atrasado ou é para hoje fica destacado no topo. Sua missão é zerar os atrasados." },
+      { title: "Fila de envio — onde o dia começa", content: "A Fila junta os quatro motivos para falar com alguém numa lista só, já na ordem por CUSTO DE FURAR:\n1) o que você COMBINOU (o cliente lembra que marcou);\n2) contrato a VENCER (receita já vendida saindo pela porta);\n3) FOLLOW-UP devido (a maior perda medida);\n4) hora de CHAMAR DE VOLTA.\n\nCada pessoa aparece uma vez só, pelo motivo mais urgente — para você não mandar quatro mensagens à mesma pessoa no mesmo dia." },
+      { title: "Placar da equipe", content: "Em Equipe tem o placar dos últimos 30 dias. O número do TIME vem primeiro, porque é ele que a comissão cobra.\n\nEm destaque fica o que você controla: atendimentos, tempo de resposta e combinados cumpridos. Conversão só vira percentual quando há amostra suficiente — abaixo disso o sistema diz amostra pequena em vez de mostrar um número que engana." },
     ],
   },
   {
@@ -71,7 +78,8 @@ const SECTIONS: Section[] = [
     desc: "Ligar o motor sem perder o manual",
     color: "#34d399",
     steps: [
-      { title: "O que muda no upgrade", content: "O automático é o mesmo sistema, com o motor de IA ligado: ele gera as respostas (e pode até enviar sozinho por um canal). O manual continua disponível o tempo todo — nada é perdido." },
+      { title: "Como é HOJE: a inteligência é nossa, o envio é humano", content: "Hoje o sistema decide QUEM procurar e escreve O QUE dizer — isso é a Fila de envio. O que ele NÃO faz é apertar o botão: você lê, ajusta e envia pelo WhatsApp com um clique.\n\nIsso não é limitação temporária. Envio automático exige a API oficial da Meta, com número dedicado e mensagens aprovadas; e usar provedor não oficial arrisca BANIR o número da sua empresa. O número é o ativo." },
+      { title: "O que muda quando a automação ligar", content: "Quando o volume justificar a burocracia da Meta, a mesma fila passa a enviar sozinha — sem reescrever nada. O que muda é quem aperta o botão. O manual continua disponível o tempo todo." },
       { title: "Modo de operação", content: "Na aba Automação você escolhe o modo:\n• Desligado — 100% manual.\n• Simulação — gera e conta, mas não envia (para calibrar).\n• Automático — gera e envia dentro das regras." },
       { title: "Regras anti-bloqueio e orçamento", content: "Você define máximo de mensagens por dia, janela de horário, quanto esperar entre contatos, quando parar de insistir e um teto de orçamento mensal. Bateu o teto, a automação suspende até virar o mês — sem surpresa na conta." },
     ],
