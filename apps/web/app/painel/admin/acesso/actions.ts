@@ -52,7 +52,16 @@ export async function toggleModule(formData: FormData) {
     caps.add(mod); // passa a ser oferecido a este tenant
     ent[mod] = true; // e comprado (liberado fora do teste)
   } else {
-    ent[mod] = false;
+    // DESLIGAR TEM QUE DESFAZER O OVERRIDE, não só zerar a compra.
+    // Antes daqui só saía `ent[mod] = false`, e a capability ficava para
+    // trás: o módulo sumia do menu (o menu lê `unlocked`) mas continuava
+    // OFERECIDO para aquela empresa. Resíduo silencioso — a Be Fitness,
+    // que é academia e não prospecta, carregou `prospeccao` e `licitacoes`
+    // em `capabilities` desde um teste de julho.
+    // A capability do MANIFESTO não é tocada: ela não mora aqui, e um
+    // `delete` no override devolve o segmento ao padrão do ramo.
+    caps.delete(mod);
+    delete ent[mod];
   }
   await admin.from("tenants").update({ settings: { ...settings, capabilities: [...caps], entitlements: ent } }).eq("id", tenantId);
   revalidatePath("/painel/admin/acesso");

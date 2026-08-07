@@ -137,6 +137,30 @@ contract:
   enabled: true
   label: "Plano"
 
+# ---------------------------------------------------------------------
+# AGENDA — o caso da academia é DIFERENTE dos outros segmentos
+#
+# Barbearia, clínica e salão agendam porque a cadeira é o recurso escasso:
+# duas pessoas não ocupam a mesma hora. Academia é ACESSO LIVRE — não há
+# vaga, reserva nem lotação, e o próprio DNA da Be Fitness manda nunca
+# usar horário como escassez.
+#
+# Então por que ligar a agenda aqui? Porque o que se marca não é o
+# recurso, é o COMPROMISSO. Pedir "que dia você começa?" e registrar a
+# resposta reduz desistência entre o "quero" e o primeiro treino — que é
+# onde o lead de academia evapora. O horário é consequência do dia, não
+# uma reserva.
+#
+# Consequência prática: a janela é o horário de FUNCIONAMENTO inteiro
+# (`availability_rules` da empresa), não uma grade de atendimento. Todo
+# horário aberto é válido, porque nenhum deles está disputado.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 60
+  slot_step_min: 60
+  min_advance_min: 120
+
 lead_sources:
   - whatsapp
   - instagram
