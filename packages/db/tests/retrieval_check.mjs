@@ -148,6 +148,23 @@ const CASOS = [
   { skill: "pet", msg: "tenho medo de deixar ele, nunca ficou sem mim", categoria: "risk_free_entry", escola: "persuasao_cialdini" },
   { skill: "pet", msg: "ele fica sozinho o dia todo e destroi tudo em casa", categoria: "goal_matching", escola: "consultiva_spin" },
 
+  // CURSO (14º). O que separa isto de `escola_esportiva`, que já tem turma,
+  // horário e matrícula: aqui o produto é uma PROMESSA DE TRANSFORMAÇÃO
+  // FUTURA. Os dois primeiros casos são as duas RECUSAS que definem o
+  // segmento — e são as duas mentiras mais comuns do ramo.
+  { skill: "curso", msg: "o curso é reconhecido pelo MEC?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  { skill: "curso", msg: "com esse curso eu consigo emprego?", categoria: "limits_and_ethics", escola: "relacionamento_carnegie" },
+  // O custo esquecido: quem pergunta pelo material está somando o total.
+  { skill: "curso", msg: "o livro está incluso na mensalidade?", categoria: "pricing", escola: "consultiva_spin" },
+  // A objeção que ninguém trata, e que chega disfarçada de conversa fiada.
+  { skill: "curso", msg: "já tentei fazer curso antes e acabei desistindo", categoria: "objections", escola: "consultiva_spin" },
+  // O medo que decide a matrícula é a multa, não a mensalidade.
+  { skill: "curso", msg: "e se eu precisar parar no meio, tem multa?", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  // Adiamento COM DATA — é o que este ramo tem e a academia não.
+  { skill: "curso", msg: "vou ver no próximo semestre", categoria: "commitment_offer", escola: "indecisao_jolt" },
+  // Sinal de compra alto que quase sempre morre num "já começou".
+  { skill: "curso", msg: "a turma já começou, ainda dá para entrar?", categoria: "availability", escola: "fechamento_classico" },
+
   // Fornecedor atual: entrar pela fresta, não pedir substituição.
   { skill: "industria", msg: "ja tenho fornecedor, estou atendido", categoria: "objections", escola: "negociacao_voss" },
   { skill: "distribuidora", msg: "ja tenho fornecedor", categoria: "objections", escola: "negociacao_voss" },

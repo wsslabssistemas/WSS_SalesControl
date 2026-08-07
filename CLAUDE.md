@@ -130,7 +130,7 @@ aplicação" enquanto o produto estava no ar.
 
 O mínimo para se situar (confira no `ESTADO_DO_PROJETO.md` antes de usar como
 verdade): aplicação Next.js no ar em `wss-kairos.vercel.app`, migrations
-`0001`–`0037` aplicadas, **9 segmentos com 166 entradas curadas**, motor com IA
+`0001`–`0046` aplicadas, **14 segmentos com 262 entradas curadas**, motor com IA
 e trava anti-invenção estrutural, e um módulo de curso com 45 lições.
 
 ## Invariantes de segurança conquistadas (não regredir)

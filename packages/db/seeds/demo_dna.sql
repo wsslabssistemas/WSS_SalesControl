@@ -23,11 +23,88 @@ delete from public.commercial_dna d
  where d.tenant_id = t.id
    and t.slug in ('demo-clinica','demo-distribuidora','demo-escola-esportiva',
                   'demo-industria','demo-sob-medida','demo-energia-solar',
-                  'demo-oficina','demo-salao-beleza','demo-casa-de-festa');
+                  'demo-oficina','demo-salao-beleza','demo-casa-de-festa',
+                  'demo-pet','demo-curso');
 
 insert into public.commercial_dna (tenant_id, version, sections, source, is_current)
 select t.id, 1, x.sections, 'demo_seed', true
 from (values
+
+-- ------------------------------------------------------------------ CURSO
+-- Dado FICTÍCIO. Escola de idiomas e profissionalizante.
+-- Três campos estão preenchidos com cuidado extra porque são os que a
+-- biblioteca EXIGE para poder responder as perguntas que mais chegam e as
+-- duas que mais viram processo: `certificacao.reconhecimento` (curso livre
+-- NÃO tem MEC), `pricing.material_didatico` (o custo esquecido) e
+-- `contrato.multa_rescisao` (o medo que decide a matrícula).
+('demo-curso', $json$
+{
+  "cursos": {
+    "lista": ["Inglês regular", "Inglês para viagem", "Espanhol regular", "Excel do básico ao avançado", "Informática essencial", "Rotinas administrativas"],
+    "modalidades": ["Presencial", "Online ao vivo", "Híbrido (presencial com reposição online)"],
+    "niveis": "Idiomas: básico 1 a 4, intermediário 1 a 4, avançado 1 a 2. Cada módulo dura 4 meses. Cursos técnicos livres: módulo único.",
+    "carga_horaria": "Idiomas: 64h por módulo. Excel: 40h. Informática essencial: 60h. Rotinas administrativas: 80h.",
+    "duracao": "Idiomas: 4 meses por módulo, 2 aulas de 1h30 por semana. Excel: 2 meses, 2x por semana. Rotinas administrativas: 4 meses, 2x por semana.",
+    "grade_horarios": "Idiomas: seg/qua 8h, 14h, 19h e 20h30; ter/qui 8h, 14h, 19h e 20h30; sáb 9h e 11h. Excel e informática: ter/qui 19h e sáb 9h.",
+    "proximas_turmas": "Idiomas: turmas novas em 03/09 e 03/03. Excel: turma nova todo mês, na primeira segunda. Rotinas administrativas: 03/09.",
+    "vagas_por_turma": "Idiomas: 12 alunos. Informática: 10 alunos (um por computador)."
+  },
+  "pricing": {
+    "range": "de R$ 240 a R$ 420 por mês, conforme curso e modalidade",
+    "matricula": "R$ 120, cobrada uma vez por ano letivo. Isenta para quem vem por indicação de aluno matriculado.",
+    "material_didatico": "NÃO está incluso na mensalidade. Livro do módulo de idiomas: R$ 290, serve para os 4 meses e fica com o aluno. Excel e informática: apostila digital inclusa, sem custo. Sempre informar na primeira conversa.",
+    "formas_pagamento": ["Pix", "boleto mensal", "cartão de crédito recorrente", "cartão em até 12x para o curso inteiro"],
+    "desconto_a_vista": "10% para o módulo inteiro pago à vista; 15% para dois módulos.",
+    "politica_reajuste": "A mensalidade é travada durante o módulo contratado. O reajuste acontece na virada do módulo, sempre anunciado com 30 dias."
+  },
+  "contrato": {
+    "fidelidade": "O contrato é por módulo: 4 meses em idiomas, 2 meses em Excel. Não há fidelidade além do módulo em curso.",
+    "multa_rescisao": "Desistência no meio do módulo: 20% sobre as mensalidades que faltam, mais o material já entregue. Nos 7 primeiros dias, devolução integral e sem multa.",
+    "politica_trancamento": "Pode trancar uma vez por módulo, por até 6 meses, sem multa. O que já foi cursado fica registrado e o aluno volta no ponto em que parou, na próxima turma do mesmo nível.",
+    "transferencia_turma": "Troca de horário ou de turma a qualquer momento, conforme vaga, sem custo. É a saída para quem mudou de trabalho.",
+    "aproveitamento": "Quem já estudou antes faz o teste de nível e entra no módulo correspondente — não precisa recomeçar. O aproveitamento é definido pelo teste, não por tempo de curso anterior."
+  },
+  "certificacao": {
+    "emite_certificado": true,
+    "tipo": "Certificado de curso livre, com o nome do curso, a carga horária e o conteúdo programático no verso.",
+    "reconhecimento": "Curso livre, amparado pela LDB como formação inicial e continuada. NÃO tem reconhecimento do MEC e não precisa ter — o MEC reconhece graduação e pós. Serve para comprovar carga horária em processo seletivo, progressão interna e currículo. Nunca dizer que é reconhecido pelo MEC nem chamar de diploma.",
+    "exigencias": "75% de presença e aprovação na avaliação final do módulo."
+  },
+  "teste_nivel": {
+    "oferece": true,
+    "como_funciona": "Conversa de 30 a 40 minutos com um professor, sem prova escrita e sem nota. No fim o interessado recebe por escrito em que nível está e quantos módulos faltam para o objetivo dele.",
+    "gratuito": true,
+    "online_ou_presencial": "Os dois. Online por videochamada, presencial na escola.",
+    "aula_demonstrativa": true
+  },
+  "estrutura": {
+    "professores": "6 professores. Em idiomas, todos com certificação internacional de proficiência; dois com experiência de morar fora. Em informática, dois instrutores com atuação em escritório.",
+    "metodologia": "Aula de idiomas é conversação desde a primeira: o aluno fala na primeira aula. Informática é prática no computador, com exercício de rotina real de escritório.",
+    "alunos_por_turma": "12 em idiomas, 10 em informática. Ninguém passa disso.",
+    "plataforma": "Portal do aluno com o material, os exercícios e a gravação da aula da semana, disponível por 30 dias.",
+    "reposicao": "Uma reposição por mês, na turma do mesmo nível em outro horário, agendada com 24h de antecedência."
+  },
+  "resultados": {
+    "tempo_de_mercado": "12 anos na mesma esquina, mais de 3.000 alunos formados",
+    "casos": "Aluna do intermediário 2 passou em processo seletivo com entrevista em inglês; turma de Excel avançado de 2025 teve 4 alunos promovidos internamente. Sempre citados com autorização e sem nome.",
+    "aprovacoes": "Não somos preparatório. Não divulgamos aprovação em prova.",
+    "parcerias_empresas": ["metalúrgica do distrito industrial", "rede de farmácias local", "escritório de contabilidade do centro"]
+  },
+  "regras": {
+    "idade_minima": "A partir de 12 anos em idiomas; 14 em informática. Menor de 18 matricula com responsável.",
+    "pre_requisito": "Nenhum para o básico 1. Para os demais módulos, o teste de nível define.",
+    "frequencia_minima": "75% para receber o certificado.",
+    "entrada_turma_iniciada": "Até a terceira aula do módulo, com reposição do conteúdo perdido agendada. Depois disso, só na próxima turma."
+  },
+  "corporativo": {
+    "atende": true,
+    "minimo_alunos": "8 alunos para abrir turma fechada",
+    "local": "Na empresa, na escola ou online ao vivo — a empresa escolhe",
+    "faturamento": "Nota fiscal para o CNPJ, contrato por módulo, pagamento em 30 dias"
+  },
+  "free_notes": "Empresa FICTÍCIA de demonstração. Escola de idiomas e cursos livres profissionalizantes de bairro, com turmas presenciais e online ao vivo."
+}
+$json$::jsonb),
 
 -- -------------------------------------------------------------------- PET
 -- Dado FICTÍCIO. A régua do banho por porte e as vacinas exigidas estão

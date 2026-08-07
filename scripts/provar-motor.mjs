@@ -118,6 +118,13 @@ const CASOS = [
   { slug: "demo-pet", msg: "Quanto custa a creche? Tem plano mensal?" },
   { slug: "demo-pet", msg: "A vacina dele esta vencida, posso deixar mesmo assim?" },
   { slug: "demo-pet", msg: "Nunca deixei ele em lugar nenhum, tenho medo." },
+  // CURSO (14º). As duas primeiras são as RECUSAS que definem o segmento — as
+  // duas mentiras mais comuns do ramo. A terceira é a objeção que chega
+  // disfarçada de conversa fiada e que quase ninguém trata.
+  { slug: "demo-curso", msg: "O curso de voces e reconhecido pelo MEC?" },
+  { slug: "demo-curso", msg: "Com esse curso eu consigo emprego? Da para ficar fluente em seis meses?" },
+  { slug: "demo-curso", msg: "Ja tentei fazer curso duas vezes e acabei desistindo no meio." },
+  { slug: "demo-curso", msg: "Quanto custa o ingles? O livro esta incluso?" },
 ];
 
 const filtro = process.argv[2];

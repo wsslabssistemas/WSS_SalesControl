@@ -1,0 +1,412 @@
+key: curso
+name: Escola de Curso e Formação
+version: 1.0.0
+
+# =====================================================================
+# Idiomas, profissionalizante, preparatório, técnico livre e corporativo.
+#
+# POR QUE ESTE SEGMENTO EXISTE, se `escola_esportiva` já tem turma,
+# matrícula, horário e professor: porque o que ela cobre é a camada
+# OPERACIONAL, e a venda de curso não trava ali. Conferido contra as 239
+# entradas das treze bibliotecas antes de escrever uma linha — nenhuma
+# fala de certificação, reconhecimento, empregabilidade, teste de nível,
+# carga horária, aproveitamento de estudos, calendário de turmas ou
+# in-company. É o que separa "nome de manifesto" de "cobertura".
+#
+# A DIFERENÇA DE FUNDO: aqui o produto é uma PROMESSA DE TRANSFORMAÇÃO
+# FUTURA. A barbearia entrega o corte na hora; o curso entrega em 6, 12 ou
+# 24 meses. Isso muda três coisas de uma vez:
+#   • a prova não é a estrutura, é o resultado de quem já saiu;
+#   • o risco percebido não é o preço, é "e se eu não terminar?";
+#   • e a promessa fácil (emprego, aprovação, fluência) é a mais cara do
+#     setor — por isso ela é `hard_rule`, não recomendação.
+# =====================================================================
+
+capabilities: []   # B2C local: prospecção fria de pessoas é proibida (LGPD)
+
+vocabulary:
+  lead: "interessado"
+  conversion: "matrícula"
+  churn: "evasão"
+  catalog_item: "curso"
+
+discovery_axis: "para que serve o curso (trabalho, prova, viagem, exigência da empresa) e de que ponto a pessoa está partindo"
+
+journey:
+  allow_skip: true
+  allow_regression: true
+  stages:
+    - key: contato
+      label: "Primeiro contato"
+      goal: "Descobrir para quem é e para quê. O objetivo é que escolhe o curso — preço sem objetivo vende a trilha errada."
+    - key: descoberta
+      label: "Descoberta"
+      goal: "Nível atual, objetivo, prazo, disponibilidade e quem decide junto."
+    - key: teste_de_nivel
+      label: "Teste de nível"
+      cadence: pos_teste
+      goal: "O diagnóstico é o produto de entrada deste ramo. Sem ele a proposta chuta a trilha, e aluno em turma errada desiste no primeiro mês."
+      phases:
+        - { key: agendado,  label: "Teste agendado",      offset_days: 0 }
+        - { key: lembrete,  label: "Lembrete véspera",    offset_days: -1 }
+        - { key: resultado, label: "Devolver o resultado", offset_days: 1 }
+    - key: proposta
+      label: "Proposta"
+      goal: "Apresentar a trilha inteira: de onde ele parte, onde chega, quantos meses, quanto custa e o que está incluso."
+      cadence: pos_proposta
+      phases:
+        - { key: envio,    label: "Proposta entregue", offset_days: 0 }
+        - { key: retorno,  label: "Confirmar leitura", offset_days: 2 }
+        - { key: cobranca, label: "Cobrar posição",    offset_days: 7 }
+    - key: negociacao
+      label: "Negociação"
+      goal: "Isolar o que trava — valor, tempo, medo de não terminar, outra pessoa na decisão — e viabilizar o pagamento."
+    # MATRICULADO É `won` E **NÃO** É TERMINAL, de propósito.
+    #
+    # A conversão deste ramo é a matrícula: é ali que o dinheiro entra e é
+    # ali que a métrica canônica tem que contar. Mas etapa terminal desliga
+    # o motor (`computeDueTouches` pula terminal), e foi assim que a
+    # barbearia ficou sem recompra da carteira fiel — no segmento cuja tese
+    # É a recompra. Aqui o erro seria pior: a evasão acontece DEPOIS da
+    # matrícula, e é ela que decide se o contrato de 12 meses vira receita
+    # de 12 meses ou de 3.
+    - key: matriculado
+      label: "Matriculado"
+      won: true
+      cadence: acompanhamento
+      goal: "Matriculado e estudando. A evasão avisa antes — falta, atraso e sumiço vêm antes do cancelamento."
+      phases:
+        - { key: primeira_aula, label: "Primeira aula",        offset_days: 0 }
+        - { key: primeira_semana, label: "Primeira semana",    offset_days: 7 }
+        - { key: primeiro_mes,  label: "Primeiro mês",         offset_days: 30 }
+        - { key: meio_do_curso, label: "Meio do curso",        offset_days: 120 }
+    # TRANCADO TAMBÉM NÃO É TERMINAL. Quem trancou é o lead mais barato que
+    # existe: já escolheu a escola, já pagou, já conhece o professor.
+    # Marcar como final desligaria o motor exatamente em quem vale a pena
+    # chamar de volta.
+    - key: trancado
+      label: "Trancado"
+      cadence: retomada
+      goal: "Pausou sem cancelar. Chamar de volta com data de retorno e o que já foi cursado preservado."
+    - key: concluido
+      label: "Concluiu"
+      terminal: true
+      won: true
+      goal: "Terminou. Daqui em diante o jogo é o próximo nível, o certificado e a indicação — que neste ramo é a captação mais barata."
+    - key: perdido
+      label: "Perdido"
+      terminal: true
+
+# ---------------------------------------------------------------------
+# REFERÊNCIAS DO SETOR
+# NÃO são fatos da empresa — o motor nunca afirma isto ao cliente; só o
+# DNA vale. Servem de parâmetro para quem vende entender o terreno.
+# ---------------------------------------------------------------------
+benchmarks:
+  curso_livre_nao_tem_mec: >-
+    A pergunta "é reconhecido pelo MEC?" chega em quase toda conversa, e a
+    resposta honesta depende do tipo de curso. O MEC reconhece graduação e
+    pós-graduação. Curso TÉCNICO de nível médio é autorizado pelo Conselho
+    Estadual de Educação e registrado no SISTEC. CURSO LIVRE — idiomas,
+    profissionalizante de curta duração, formação inicial e continuada — é
+    amparado pela LDB e emite certificado próprio com carga horária, e **não
+    tem nem precisa ter** reconhecimento do MEC. Dizer que tem, para vender,
+    é propaganda enganosa; e é a mentira que o aluno descobre no primeiro
+    concurso ou na primeira entrevista, quando já pagou o curso inteiro.
+  promessa_de_emprego_e_a_mais_cara: >-
+    Prometer emprego, salário, aprovação ou fluência é a promessa mais comum
+    do setor e a que mais vira processo — o equivalente ao "conta zero" do
+    solar. Ninguém controla o resultado de outra pessoa. O que se pode
+    afirmar é o que a escola faz: carga horária, metodologia, o que o aluno
+    sai sabendo fazer, e o resultado verificável de quem já saiu.
+  material_didatico_a_parte: >-
+    O custo que mais gera briga não é a mensalidade: é o livro, a plataforma
+    ou o kit cobrado fora dela. Quando não é dito na venda, o aluno descobre
+    na matrícula e a conversa que já estava ganha volta para o começo — agora
+    com a confiança arranhada.
+  o_nivel_decide_a_trilha: >-
+    Sem teste de nível, a proposta chuta o ponto de partida. Aluno colocado
+    acima do nível trava e some; colocado abaixo, se entedia e some do mesmo
+    jeito. O teste não é burocracia de matrícula: é o que faz a proposta ser
+    sobre a pessoa e não sobre a tabela.
+  a_evasao_avisa_antes: >-
+    Cancelamento é o último passo, não o primeiro. Antes dele vêm falta
+    seguida, atraso de pagamento e o aluno que para de responder. Quem só
+    age no pedido de cancelamento está sempre chegando depois — e a essa
+    altura a decisão já foi tomada e explicada para a família.
+  turma_tem_data_de_inicio: >-
+    Diferente de academia, aqui a compra tem calendário: a turma começa num
+    dia e não recomeça. "Vou ver no próximo semestre" não é um não — é uma
+    DATA, e essa data é o ativo mais valioso da conversa. Sumir e voltar no
+    mês do início é chegar junto com todos os concorrentes.
+  multa_e_trancamento_sao_do_contrato: >-
+    Fidelidade, multa de rescisão e regra de trancamento existem e são
+    legítimas — desde que estejam no contrato e sejam proporcionais ao que
+    falta cumprir. Cobrar o contrato inteiro de quem desistiu no primeiro mês
+    é a cláusula que cai na Justiça e que vira avaliação pública. Vender
+    dizendo que "não tem multa" quando tem é pior ainda.
+
+# ---------------------------------------------------------------------
+# CAMPOS PRÓPRIOS DO SEGMENTO
+# ---------------------------------------------------------------------
+contact_fields:
+  - key: quem_estuda
+    label: "Quem vai estudar"
+    type: enum
+    options: [o_proprio, filho_menor, conjuge_ou_familiar, equipe_da_empresa]
+  - key: objetivo
+    label: "Para que serve o curso"
+    type: enum
+    options: [trabalho_ou_promocao, prova_ou_concurso, viagem_ou_intercambio, exigencia_da_empresa, desenvolvimento_pessoal, indefinido]
+  - key: nivel_atual
+    label: "Nível atual"
+    type: enum
+    options: [nunca_estudou, basico, intermediario, avancado, a_testar]
+  - key: modalidade_preferida
+    label: "Modalidade preferida"
+    type: enum
+    options: [presencial, online_ao_vivo, gravado, hibrido, indiferente]
+  - key: prazo
+    label: "Para quando"
+    type: enum
+    options: [urgente, este_semestre, este_ano, sem_data, indefinido]
+
+  # ---------------------------------------------------------------------
+  # QUALIFICAÇÃO DE COMPRA (MEDDIC-lite) — item 3 do M3.
+  #
+  # O M3 escreveu a regra assim: recebe quem tem PROCESSO de compra; B2C de
+  # decisão instantânea não recebe, porque barbearia não tem comitê. Curso
+  # entra pelos dois lados da regra, e por isso ganha o bloco:
+  #   • no B2C não é decisão instantânea — é contrato de 6 a 24 meses, com
+  #     financiamento e quase sempre uma segunda pessoa na conversa;
+  #   • no in-company é B2B puro, com RH, gestor e verba de treinamento.
+  # Chaves e opções são CANÔNICAS (validadas pelo skill-loader): sem isso a
+  # dimensão não se compara entre segmentos, que é a única razão de existir.
+  # Só o label é do ramo.
+  # ---------------------------------------------------------------------
+  - key: verba
+    label: "Como pretende pagar"
+    type: enum
+    options: [sem_verba, verba_prevista, verba_aprovada, busca_financiamento, indefinido]
+  - key: processo_decisao
+    label: "Quem decide junto"
+    type: enum
+    options: [decide_sozinho, duas_pessoas, comite_ou_diretoria, licitacao, indefinido]
+  - key: criterio_decisao
+    label: "O que vai pesar na escolha"
+    type: enum
+    options: [preco, prazo, qualidade_tecnica, atendimento, risco_ou_garantia, indefinido]
+  - key: defensor_interno
+    label: "Quem puxa a decisão em casa ou na empresa"
+    type: enum
+    options: [sim_identificado, sim_mas_sem_forca, nao_ha, indefinido]
+
+# ---------------------------------------------------------------------
+# AGENDAMENTO
+# O teste de nível tem hora marcada, como a experimental da escola
+# esportiva — mas dura menos e muitas vezes é online.
+# ---------------------------------------------------------------------
+scheduling:
+  enabled: true
+  default_duration_min: 45
+  slot_step_min: 30
+  min_advance_min: 120
+
+# ---------------------------------------------------------------------
+# REGISTRO DE ATENDIMENTO COM VALOR
+# A receita aqui é mensalidade de contrato, não atendimento avulso
+# executado e repetido. Ligar isto encheria a tela de um número que não
+# significa nada neste ramo.
+# ---------------------------------------------------------------------
+services:
+  enabled: false
+
+lead_sources:
+  - whatsapp
+  - instagram
+  - indicacao
+  - presencial
+  - site
+  - empresa_parceira
+  - campanha
+  - outro
+
+dna_sections:
+  - key: cursos
+    label: "Cursos e turmas"
+    required: true
+    fields:
+      - { key: lista, type: list, required: true, label: "Cursos oferecidos", help: "Quais cursos você oferece. Escreva o nome exato de cada um" }
+      - { key: modalidades, type: list, required: true, label: "Modalidades", help: "Como a aula acontece. Ex.: presencial, online ao vivo, gravado, híbrido" }
+      - { key: niveis, type: text, required: true, label: "Níveis", help: "Os níveis ou módulos, do começo ao fim. Ex.: básico 1 a 4, intermediário 1 a 4" }
+      - { key: carga_horaria, type: text, required: true, label: "Carga horária", help: "Quantas horas tem cada curso ou módulo" }
+      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos meses leva do começo ao fim, e quantas aulas por semana" }
+      - { key: grade_horarios, type: schedule, required: true, label: "Grade de horários", help: "Os horários de cada turma" }
+      - { key: proximas_turmas, type: text, required: true, label: "Próximas turmas", help: "Quando começa a próxima turma de cada curso. A data é o que destrava quem adiou" }
+      - { key: vagas_por_turma, type: text, label: "Vagas por turma", help: "Quantos alunos cabem por turma" }
+  - key: pricing
+    label: "Valores e pagamento"
+    required: true
+    fields:
+      - { key: range, type: money_range, required: true, label: "Faixa de valores", help: "A faixa de mensalidade dos seus cursos. Ex.: de R$ 250 a R$ 480" }
+      - { key: matricula, type: text, label: "Taxa de matrícula", help: "Tem taxa de matrícula? Quanto?" }
+      - { key: material_didatico, type: text, required: true, label: "Material didático", help: "O livro, a plataforma ou o kit estão inclusos? Se não, quanto custam? É o custo que mais gera briga quando não é dito na venda" }
+      - { key: formas_pagamento, type: list, required: true, label: "Formas de pagamento", help: "Como o aluno pode pagar. Ex.: Pix, boleto mensal, cartão em 12x" }
+      - { key: desconto_a_vista, type: text, label: "Desconto à vista", help: "Existe desconto para pagamento do curso inteiro? Qual?" }
+      - { key: politica_reajuste, type: text, label: "Reajuste", help: "A mensalidade muda durante o curso? Quando e por quê?" }
+  - key: contrato
+    label: "Contrato, trancamento e cancelamento"
+    required: true
+    fields:
+      - { key: fidelidade, type: text, required: true, label: "Fidelidade", help: "O contrato prende por quantos meses? Escreva 'não tem' se não houver" }
+      - { key: multa_rescisao, type: text, required: true, label: "Multa de rescisão", help: "Quanto o aluno paga se desistir no meio. Escreva exatamente como está no contrato" }
+      - { key: politica_trancamento, type: text, required: true, label: "Trancamento", help: "Pode trancar? Por quanto tempo, quantas vezes e o que acontece com o que já foi cursado" }
+      - { key: transferencia_turma, type: text, label: "Troca de turma", help: "O aluno pode trocar de horário ou de turma no meio? Como" }
+      - { key: aproveitamento, type: text, label: "Aproveitamento de estudos", help: "Quem já estudou antes pode pular módulo? Como isso é avaliado" }
+  - key: certificacao
+    label: "Certificado e reconhecimento"
+    required: true
+    fields:
+      - { key: emite_certificado, type: boolean, required: true, label: "Emite certificado?", help: "Marque se o aluno recebe certificado ao concluir" }
+      - { key: tipo, type: text, required: true, label: "Tipo de certificado", help: "Declaração de conclusão, certificado de curso livre ou diploma técnico. Escreva exatamente o que está impresso" }
+      - { key: reconhecimento, type: text, required: true, label: "Reconhecimento", help: "Curso livre NÃO tem reconhecimento do MEC e não precisa ter. Técnico é autorizado pelo Conselho Estadual e registrado no SISTEC. Escreva a verdade do seu caso — é a pergunta que mais chega e a mentira que mais volta" }
+      - { key: exigencias, type: text, label: "O que exige para certificar", help: "Frequência mínima, nota, prova final ou projeto" }
+  - key: teste_nivel
+    label: "Teste de nível"
+    required: true
+    fields:
+      - { key: oferece, type: boolean, required: true, label: "Oferece?", help: "Marque se você faz teste de nível antes da matrícula" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona", help: "O que acontece no teste, quanto tempo dura e o que o aluno recebe depois" }
+      - { key: gratuito, type: boolean, label: "É gratuito?", help: "Marque se o teste de nível não é cobrado" }
+      - { key: online_ou_presencial, type: text, label: "Onde é feito", help: "Online, presencial ou os dois" }
+      - { key: aula_demonstrativa, type: boolean, label: "Tem aula demonstrativa?", help: "Marque se o interessado pode assistir a uma aula antes de decidir" }
+  - key: estrutura
+    label: "Professores e metodologia"
+    fields:
+      - { key: professores, type: text, label: "Professores", help: "Quem dá aula e a formação de cada um" }
+      - { key: metodologia, type: text, label: "Metodologia", help: "Como a aula acontece na prática. O que o aluno faz na primeira aula" }
+      - { key: alunos_por_turma, type: text, label: "Alunos por turma", help: "Quantos alunos em cada turma. Turma pequena é argumento forte quando é verdade" }
+      - { key: plataforma, type: text, label: "Plataforma ou laboratório", help: "Que ferramenta, sistema ou laboratório o aluno usa" }
+      - { key: reposicao, type: text, label: "Reposição de aula", help: "O aluno que faltou repõe? Como" }
+  - key: resultados
+    label: "Prova de resultado"
+    fields:
+      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo a escola existe e quantos alunos já formou" }
+      - { key: casos, type: text, label: "Casos de alunos", help: "O que alunos concretos conseguiram, com autorização deles. Isto substitui a promessa de emprego, que é proibida" }
+      - { key: aprovacoes, type: text, label: "Aprovações", help: "Se é preparatório: aprovações verificáveis, com prova e ano" }
+      - { key: parcerias_empresas, type: list, label: "Empresas parceiras", help: "Empresas que contratam ou enviam alunos" }
+  - key: regras
+    label: "Regras e exigências"
+    fields:
+      - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para cada curso" }
+      - { key: pre_requisito, type: text, label: "Pré-requisito", help: "Precisa saber algo antes de entrar? O quê" }
+      - { key: frequencia_minima, type: text, label: "Frequência mínima", help: "Quanto de presença o aluno precisa ter" }
+      - { key: entrada_turma_iniciada, type: text, label: "Entrar em turma já começada", help: "Dá para entrar depois que a turma começou? Até quando" }
+  - key: corporativo
+    label: "Turmas para empresa (in-company)"
+    fields:
+      - { key: atende, type: boolean, label: "Atende empresa?", help: "Marque se você monta turma fechada para empresa" }
+      - { key: minimo_alunos, type: text, label: "Mínimo de alunos", help: "Quantos alunos para abrir turma fechada" }
+      - { key: local, type: text, label: "Onde acontece", help: "Na empresa, na escola ou online" }
+      - { key: faturamento, type: text, label: "Como fatura", help: "Nota para a empresa, contrato, prazo de pagamento" }
+
+  - key: free_notes
+    label: "Outras informações importantes"
+    type: rich_text
+    # Entra no contexto marcado como não estruturado.
+    # Nunca pode ser fonte de preço, horário ou política.
+
+categories:
+  pricing:            "Mensalidade, matrícula e o material didático — que é o custo esquecido"
+  risk_free_entry:    "Teste de nível e aula demonstrativa"
+  availability:       "Grade, próximas turmas e entrar em turma já começada"
+  expertise_proof:    "Professores, metodologia e resultado de quem já saiu"
+  catalog:            "Cursos, níveis, carga horária e modalidades"
+  goal_matching:      "Objetivo e nível atual → a trilha certa"
+  objections:         "Caro, sem tempo, online não funciona, já tentei antes"
+  commitment_offer:   "Contrato, fidelidade, multa e desconto à vista"
+  reciprocity:        "Material, aula extra ou matrícula cortesia"
+  limits_and_ethics:  "Certificação, reconhecimento e o que NÃO se pode prometer"
+  retention:          "Aluno faltando, trancamento, evasão e o próximo nível"
+  ecosystem:          "Turma in-company, empresas parceiras e intercâmbio"
+
+# ---------------------------------------------------------------------
+# ORQUESTRADOR DE ESTRATÉGIA — qual escola de venda governa cada situação
+# NESTE segmento.
+#
+# `pricing` aqui é `consultiva_spin` e NÃO `oferta_valor` como na academia,
+# pelo mesmo motivo que separou salão de barbearia: o preço do curso não é
+# um número, é uma TRILHA. Depende de quantos módulos faltam para o
+# objetivo dele, e isso só se sabe depois do teste de nível. Cotar por
+# mensagem é vender a trilha errada e criar o cancelamento do segundo mês.
+#
+# `commitment_offer` é `indecisao_jolt` e não `fechamento_classico`: quem
+# adia matrícula quase nunca discorda do curso — ele tem medo de não
+# terminar, e repetir o argumento para quem já concordou é o movimento que
+# o JOLT mede como piora do desfecho.
+# ---------------------------------------------------------------------
+strategy_map:
+  pricing:             consultiva_spin
+  risk_free_entry:     persuasao_cialdini
+  availability:        fechamento_classico
+  expertise_proof:     persuasao_cialdini
+  catalog:             consultiva_spin
+  goal_matching:       consultiva_spin
+  objections:          negociacao_voss
+  commitment_offer:    indecisao_jolt
+  reciprocity:         relacionamento_carnegie
+  limits_and_ethics:   relacionamento_carnegie
+  retention:           cadencia_blount
+  ecosystem:           relacionamento_carnegie
+
+cadences:
+  - key: pos_teste
+    applies_to: trial_followup
+    steps:
+      - { offset_days: 1, intent: "Devolver o resultado do teste e o que ele significa" }
+      - { offset_days: 3, intent: "Apresentar a trilha e a turma que serve ao horário dele" }
+      - { offset_days: 7, intent: "Última chamada com a data de início da turma" }
+    stop_on: [converted, opted_out, lost]
+
+  - key: pos_proposta
+    applies_to: proposal_followup
+    steps:
+      - { offset_days: 2, intent: "Confirmar que chegou e tirar a dúvida da trilha" }
+      - { offset_days: 5, intent: "Tratar a condição de pagamento" }
+      - { offset_days: 10, intent: "Perguntar o que falta para começar — e aceitar o não" }
+    stop_on: [converted, opted_out, lost]
+
+  # A CADÊNCIA QUE PROTEGE A RECEITA JÁ VENDIDA.
+  # Contrato de 12 meses só vale 12 meses se o aluno chegar lá. Os toques
+  # são de acompanhamento, nunca de cobrança — cobrar quem está faltando
+  # acelera o cancelamento em vez de evitá-lo.
+  - key: acompanhamento
+    applies_to: onboarding
+    steps:
+      - { offset_days: 7, intent: "Como foi a primeira semana. Uma pergunta, sobre a aula" }
+      - { offset_days: 30, intent: "Primeiro mês: o que já consegue fazer que não conseguia" }
+      - { offset_days: 120, intent: "Meio do caminho: reconhecer o avanço e projetar o fim" }
+    stop_on: [opted_out, lost]
+
+  - key: retomada
+    applies_to: reactivation
+    steps:
+      - { offset_days: 30, intent: "Chamar de volta com a data da próxima turma e o que já foi cursado" }
+      - { offset_days: 90, intent: "Novo ciclo de turmas: oferecer o retorno no nível onde parou" }
+    stop_on: [replied, converted, opted_out]
+    max_attempts: 3
+
+hard_rules:
+  - "Nunca prometer emprego, salário, aprovação ou fluência. Nem como certeza, nem como quase certeza."
+  - "Nunca dizer que o curso é reconhecido pelo MEC sem o campo de certificação afirmar isso. Curso livre não tem nem precisa ter reconhecimento do MEC, e dizer que tem é propaganda enganosa."
+  - "Nunca afirmar carga horária, duração, nível ou data de início de turma que não esteja no DNA."
+  - "Nunca omitir o custo do material didático quando ele é cobrado à parte."
+  - "Nunca afirmar multa, fidelidade ou regra de trancamento diferente do que está no contrato registrado no DNA."
+  - "Não prometer vaga em turma cheia nem abertura de turma que não está confirmada."
+
+kpis:
+  - taxa_conversao
+  - testes_de_nivel_agendados
+  - comparecimento_teste
+  - tempo_resposta_mediana
+  - evasao

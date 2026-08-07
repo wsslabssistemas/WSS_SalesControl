@@ -469,8 +469,64 @@ pesquisa séria de folclore repetido.
 
 - [ ] **Qualificação de compra (MEDDIC-lite)** — orçamento, processo de
       aprovação, critério de decisão e defensor interno. Já temos `decisor`.
-- [~] **Fila de segmentos**: ~~oficina~~ ✅ (10º) · ~~salão de beleza~~ ✅ (11º) ·
-      ~~casa de festa~~ ✅ (12º) · ~~pet~~ ✅ (13º) · curso (o último, e o de menor distância).
+- [x] **Fila de segmentos — FECHADA.** ~~oficina~~ ✅ (10º) · ~~salão de beleza~~ ✅ (11º) ·
+      ~~casa de festa~~ ✅ (12º) · ~~pet~~ ✅ (13º) · ~~curso~~ ✅ (14º, ago/2026).
+
+      **`curso` (14º) — idiomas, profissionalizante, preparatório, in-company.**
+      Era "o de menor distância" da fila, e por isso a checagem de cobertura
+      foi feita ANTES de escrever, contra as 239 entradas das treze
+      bibliotecas: `escola_esportiva` já cobre turma, horário, matrícula,
+      professor, decisão compartilhada e evasão — a camada **operacional** —
+      e **nenhuma das 239** falava de certificação, reconhecimento,
+      empregabilidade, teste de nível, carga horária, aproveitamento de
+      estudos, calendário de turmas ou turma de empresa.
+
+      **A diferença de fundo, que manda na biblioteca inteira:** aqui o
+      produto é uma **promessa de transformação futura**. A barbearia entrega
+      o corte na hora; o curso entrega em 6, 12 ou 24 meses. Daí três coisas:
+      1. **A prova não é a estrutura, é o resultado de quem já saiu.**
+      2. **O risco percebido não é o preço, é "e se eu não terminar?"** — e
+         quem já tentou antes e desistiu carrega isso na primeira mensagem,
+         sem dizer. Virou entrada própria, com escola `consultiva_spin`
+         (diagnosticar a desistência anterior), e é a objeção que quase
+         ninguém trata porque chega disfarçada de conversa fiada.
+      3. **A promessa fácil é a mais cara.** As duas entradas que definem o
+         segmento são de `limits_and_ethics` e as duas são RECUSA:
+         *"é reconhecido pelo MEC?"* e *"com esse curso eu consigo emprego?"*.
+         São as perguntas que mais chegam e as duas mentiras mais comuns do
+         ramo — o equivalente ao "conta zero" do solar. Curso livre **não tem
+         e não precisa ter** reconhecimento do MEC (o MEC reconhece graduação
+         e pós; técnico é o Conselho Estadual, via SISTEC), e dizer que tem
+         para vender é propaganda enganosa que o aluno descobre no primeiro
+         concurso — já com o curso pago.
+
+      Três decisões de estrutura que valem registro:
+      - **`pricing` é `consultiva_spin`, não `oferta_valor`** como na
+        academia — pelo mesmo motivo que separou salão de barbearia: o preço
+        do curso não é um número, é uma **trilha**, e só o teste de nível diz
+        quantos módulos faltam. Cotar por mensagem vende a trilha errada e
+        cria o cancelamento do segundo mês.
+      - **`matriculado` é `won` e NÃO é terminal.** A conversão é a matrícula
+        (é ali que o dinheiro entra), mas etapa terminal desliga o motor — a
+        armadilha que já custou a recompra da barbearia. Aqui seria pior: a
+        evasão acontece **depois** da matrícula, e é ela que decide se o
+        contrato de 12 meses vira receita de 12 meses ou de 3. `trancado`
+        também é não-terminal, porque quem trancou é o lead mais barato que
+        existe.
+      - **Ganhou o bloco de qualificação do M3**, que o próprio M3 tinha
+        reservado a segmentos com processo de compra. Curso entra pelos dois
+        lados: no B2C não é decisão instantânea (contrato de 6 a 24 meses,
+        financiamento, quase sempre uma segunda pessoa), e o in-company é B2B
+        puro, com RH, gestor e verba de treinamento.
+
+      Entregue: manifesto (**14/14 válidos**), **23 entradas nas 12
+      categorias**, `Escola de Curso Demo` + DNA (46 campos, 18 obrigatórios),
+      7 casos no `retrieval_check` (**59/59**, 96,6% dos 1.390 gatilhos) e o
+      exercício do curso montando **8 situações distintas** para o segmento.
+      **Provado com IA** (4 casos, R$ 1,04): as duas recusas funcionaram —
+      o motor negou o MEC explicando o que o certificado de curso livre
+      realmente comprova, e recusou a promessa de emprego trocando-a por
+      carga horária e caso verificável. Nenhum fato inventado.
       **Imobiliária DESCARTADA (ago/2026)**, por dúvida do fundador que se
       confirmou: os fatos que governam a resposta são de imóveis de terceiros,
       não da empresa, e já vivem num CRM que a imobiliária tem. Seríamos o

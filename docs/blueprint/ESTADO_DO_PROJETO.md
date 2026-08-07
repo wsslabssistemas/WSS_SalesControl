@@ -67,10 +67,11 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
   biblioteca do segmento da empresa.
 
-### Segmentos — 13 completos, 239 entradas curadas
+### Segmentos — 14 completos, 262 entradas curadas
 | Segmento | Biblioteca | Módulos |
 |---|---|---|
 | `academia` | 23 | — |
+| `curso` (idiomas, profissionalizante, preparatório, in-company) | 23 | — |
 | `energia_solar` (fotovoltaica + **híbrido com bateria**) | 23 | prospecção + licitações |
 | `industria` (têxtil/feltro, calçado, moveleira, metal-mecânica, embalagens, autopeças, implementos) | 20 | prospecção + licitações |
 | `barbearia` | 19 | — |
@@ -172,7 +173,7 @@ Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador
 trocar no seletor do topo do painel.
 
 ### Infra
-- Migrations `0001`–`0037` aplicadas. RLS em tudo com `tenant_id`.
+- Migrations `0001`–`0046` aplicadas. RLS em tudo com `tenant_id`.
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
