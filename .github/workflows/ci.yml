@@ -70,3 +70,8 @@ jobs:
       # responde, e o defeito so aparece na taxa de renovacao tres meses depois.
       - name: Janelas de renovacao
         run: node packages/db/tests/renovacao_test.mjs
+      # O placar mostra o desempenho de UMA PESSOA para os colegas dela. Errar
+      # aqui nao quebra tela: desmotiva gente, e ela nao tem como contestar um
+      # numero que o sistema afirma.
+      - name: Placar da equipe (o piso de amostra)
+        run: node packages/db/tests/placar_test.mjs
