@@ -38,6 +38,12 @@ export default async function EditarContatoPage({
   if (!data) notFound();
 
   const cfg = await getSkillFormConfig(tenant.skill_key);
+  const { data: mData } = await (await createClient())
+    .from("memberships").select("id, user:profiles(full_name, email)")
+    .eq("tenant_id", tenant.id).eq("status", "active");
+  const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const action = updateContact.bind(null, id);
   const contact = data as unknown as ContactValues;
 
@@ -50,6 +56,8 @@ export default async function EditarContatoPage({
         sources={cfg.sources}
         stages={cfg.stages}
         contract={cfg.contract}
+        membros={membros}
+        euId={membership!.membershipId}
         contact={contact}
         erro={erro}
         submitLabel="Salvar alterações"

@@ -28,9 +28,9 @@ type Interaction = { id: string; direction: string; content: string; occurred_at
 export default async function ResponderPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; customer?: string; salvo?: string }>;
+  searchParams: Promise<{ q?: string; customer?: string; salvo?: string; quem?: string }>;
 }) {
-  const { q = "", customer = "", salvo } = await searchParams;
+  const { q = "", customer = "", salvo, quem = "" } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -53,12 +53,21 @@ export default async function ResponderPage({
       .eq("source", "tenant")
       .eq("status", "active")
       .not("answer", "is", null),
-    supabase
-      .from("contacts")
-      .select("id, name, journey_stage, phone")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null)
-      .order("name"),
+    // BUSCA POR NOME, NÃO LISTA INTEIRA. Com 3.000 contatos um `<select>` é
+    // impossível de usar — e carregar os 3.000 a cada abertura da tela mais
+    // usada do produto deixa tudo lento para todo mundo. Com busca, traz 40;
+    // sem busca, traz os 300 primeiros só para quem tem base pequena
+    // continuar rolando a lista como antes.
+    (() => {
+      let base = supabase
+        .from("contacts")
+        .select("id, name, journey_stage, phone")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null);
+      const termo = quem.replace(/[,()%*]/g, "").trim();
+      if (termo) base = base.ilike("name", `%${termo}%`);
+      return base.order("name").limit(termo ? 40 : 300);
+    })(),
   ]);
 
   const entries = (entriesData as Entry[] | null) ?? [];
@@ -66,7 +75,17 @@ export default async function ResponderPage({
   const matches = q ? matchEntries(q, entries) : [];
   const categories = distinctCategories(entries);
 
-  const contact = customer ? contacts.find((c) => c.id === customer) ?? null : null;
+  // O CONTATO VINCULADO PODE NÃO ESTAR NA BUSCA. Se a pessoa filtrou por
+  // outro nome, o cliente já selecionado sairia da lista e a tela perderia
+  // jornada e histórico no meio do atendimento. Busca-se ele à parte.
+  let contact = customer ? contacts.find((c) => c.id === customer) ?? null : null;
+  if (customer && !contact) {
+    const { data: um } = await supabase
+      .from("contacts").select("id, name, journey_stage, phone")
+      .eq("id", customer).eq("tenant_id", tenant.id).is("deleted_at", null).maybeSingle();
+    contact = (um as ContactLite | null) ?? null;
+    if (contact) contacts.unshift(contact);
+  }
   let history: Interaction[] = [];
   if (contact) {
     const { data: h } = await supabase
@@ -187,14 +206,30 @@ export default async function ResponderPage({
           </p>
         )}
         <label className="label">Cliente (opcional — traz jornada e histórico)</label>
-        <select name="customer" defaultValue={customer}>
-          <option value="">— sem vincular —</option>
-          {contacts.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} · {stageLabel(c.journey_stage)}
-            </option>
-          ))}
-        </select>
+        <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
+          <input
+            name="quem"
+            defaultValue={quem}
+            placeholder="Digite o nome e aperte Enter"
+            className="grow"
+            style={{ minWidth: 180 }}
+          />
+          <select name="customer" defaultValue={customer} style={{ width: "auto", minWidth: 220 }}>
+            <option value="">— sem vincular —</option>
+            {contacts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} · {stageLabel(c.journey_stage)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="text-faint" style={{ fontSize: 12, margin: "6px 0 0" }}>
+          {quem
+            ? `Mostrando ${contacts.length} de quem tem "${quem}" no nome.`
+            : contacts.length >= 300
+              ? "Mostrando os 300 primeiros. Digite o nome acima para achar quem você quer."
+              : `${contacts.length} contato(s).`}
+        </p>
 
         <label className="label" style={{ marginTop: 14 }}>Mensagem do cliente</label>
         <textarea

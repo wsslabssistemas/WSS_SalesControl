@@ -2,6 +2,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { createContact } from "../actions";
 import { ContactForm } from "../ContactForm";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function NovoContatoPage({
   searchParams,
@@ -22,6 +23,12 @@ export default async function NovoContatoPage({
   }
 
   const cfg = await getSkillFormConfig(tenant.skill_key);
+  const { data: mData } = await (await createClient())
+    .from("memberships").select("id, user:profiles(full_name, email)")
+    .eq("tenant_id", tenant.id).eq("status", "active");
+  const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   return (
     <main style={{ maxWidth: 460 }}>
@@ -35,6 +42,8 @@ export default async function NovoContatoPage({
         sources={cfg.sources}
         stages={cfg.stages}
         contract={cfg.contract}
+        membros={membros}
+        euId={membership!.membershipId}
         erro={erro}
         submitLabel="Salvar contato"
       />

@@ -20,6 +20,7 @@ export type ContactValues = {
   next_action_note?: string | null;
   contract_start?: string | null;
   contract_end?: string | null;
+  owner_id?: string | null;
   custom?: Record<string, string> | null;
 };
 
@@ -45,6 +46,8 @@ export function ContactForm({
   erro,
   submitLabel,
   contract,
+  membros = [],
+  euId,
 }: {
   action: (formData: FormData) => void;
   fields: ContactField[];
@@ -52,6 +55,10 @@ export function ContactForm({
   stages: Stage[];
   /** Vigência: só aparece nos ramos que vendem período (manifesto). */
   contract?: { enabled?: boolean; label?: string } | null;
+  /** A equipe ativa. Vazia = empresa de uma pessoa só, e o campo nem aparece. */
+  membros?: { id: string; nome: string }[];
+  /** Quem está criando — vira o padrão, para o campo não nascer vazio. */
+  euId?: string;
   contact?: ContactValues;
   erro?: string;
   submitLabel: string;
@@ -88,6 +95,21 @@ export function ContactForm({
           ))}
         </select>
       </label>
+
+      {/* RESPONSÁVEL. Antes o dono era SEMPRE quem cadastrou, sem escolha —
+          e numa recepção com três pessoas isso põe a carteira inteira no nome
+          de quem digitou, não de quem vai atender. */}
+      {membros.length > 1 && (
+        <label style={lbl}>
+          Responsável
+          <select name="owner_id" defaultValue={contact?.owner_id ?? euId ?? ""} style={field}>
+            <option value="">— sem responsável —</option>
+            {membros.map((m) => (
+              <option key={m.id} value={m.id}>{m.nome}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label style={lbl}>
         Etapa

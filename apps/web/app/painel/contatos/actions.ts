@@ -18,6 +18,7 @@ type Parsed = {
   nextActionNote: string | null;
   contractStart: string | null;
   contractEnd: string | null;
+  ownerId: string | null;
   custom: Record<string, string>;
 };
 
@@ -40,6 +41,7 @@ function parse(formData: FormData): Parsed {
     nextActionNote: String(formData.get("next_action_note") ?? "").trim() || null,
     contractStart: String(formData.get("contract_start") ?? "").trim() || null,
     contractEnd: String(formData.get("contract_end") ?? "").trim() || null,
+    ownerId: String(formData.get("owner_id") ?? "").trim() || null,
     custom,
   };
 }
@@ -78,6 +80,9 @@ function rowFrom(p: Parsed): Record<string, unknown> {
   row.next_action_note = p.nextActionNote;
   row.contract_start = p.contractStart;
   row.contract_end = p.contractEnd;
+  // `undefined` não vai para o banco: em empresa de uma pessoa só o campo nem
+  // existe no formulário, e gravar `null` ali apagaria o dono a cada edição.
+  if (p.ownerId !== null) row.owner_id = p.ownerId;
   return row;
 }
 
@@ -116,7 +121,10 @@ export async function createContact(formData: FormData) {
 
   const { error } = await supabase.from("contacts").insert({
     tenant_id: tenant!.id,
-    owner_id: membership!.membershipId,
+    // Quem cadastra é o padrão, mas o formulário pode dizer outro — numa
+    // recepção com três pessoas, a carteira é de quem vai atender, não de
+    // quem digitou.
+    owner_id: p.ownerId ?? membership!.membershipId,
     ...rowFrom(p),
   });
 

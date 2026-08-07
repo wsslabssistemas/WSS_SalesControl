@@ -99,15 +99,82 @@ export default async function AutomacaoPage({
         )}
       </form>
 
-      <div className="card mt-24">
+      {/* O QUE FALTA PARA LIGAR, EM PORTUGUÊS.
+          Antes esta tela dizia só "quando estiver ligado" — e não dizia o que
+          é preciso para ligar, quem faz cada parte, nem quanto custa. Painel
+          que promete um botão sem dizer o caminho até ele vira promessa. */}
+      <div className="card mt-24" style={{ borderColor: "var(--border-brand)" }}>
+        <p className="eyebrow" style={{ marginBottom: 8 }}>Como funciona HOJE, sem automação</p>
+        <p style={{ marginTop: 0, fontSize: 14 }}>
+          O sistema já decide <strong>quem</strong> procurar e escreve <strong>o que</strong>{" "}
+          dizer — é a <a href="/painel/fila">Fila de envio</a>. O que ele não faz é
+          apertar o botão: você lê, ajusta e envia pelo WhatsApp com um clique.
+        </p>
+        <p className="text-dim" style={{ marginBottom: 0, fontSize: 14 }}>
+          <strong>Isso não é uma limitação temporária.</strong> Envio automático exige a
+          API oficial da Meta; qualquer atalho por provedor não oficial arrisca{" "}
+          <strong>banir o número da sua empresa</strong>, e o número é o ativo. Por isso
+          a fila existe: entrega quase tudo da automação sem esse risco.
+        </p>
+      </div>
+
+      <div className="card mt-16">
+        <p className="eyebrow" style={{ marginBottom: 8 }}>O que é preciso para ligar o envio automático</p>
+        <ol className="text-dim" style={{ margin: 0, paddingLeft: 20, fontSize: 14, lineHeight: 1.9 }}>
+          <li>
+            <strong>Conta Meta Business</strong> (business.facebook.com). Não precisa de
+            página do Facebook com conteúdo, mas precisa do portfólio de negócios. Se você
+            já tem Instagram profissional, provavelmente ele já existe.
+          </li>
+          <li>
+            <strong>Verificação da empresa</strong> na Meta — CNPJ, comprovante de endereço
+            e, às vezes, telefone fixo. É a etapa mais demorada: costuma levar dias.
+          </li>
+          <li>
+            <strong>Um número dedicado</strong> ao WhatsApp Business API. Ele{" "}
+            <strong>não pode</strong> estar em uso no WhatsApp comum — e migrar um número
+            que já tem conversas é caminho sem volta.
+          </li>
+          <li>
+            <strong>Modelos de mensagem aprovados</strong> pela Meta para falar com quem
+            não escreveu nas últimas 24 horas. Cada modelo passa por revisão.
+          </li>
+          <li>
+            <strong>Credenciais</strong>: ID da conta WhatsApp Business, ID do número e um
+            token permanente. É isso que a WSS Labs cadastra para a sua empresa.
+          </li>
+        </ol>
+        <p className="text-faint" style={{ fontSize: 13, marginTop: 12, marginBottom: 0 }}>
+          <strong>As credenciais não são digitadas aqui, e isso é decisão de segurança.</strong>{" "}
+          Token da Meta em campo de tela fica salvo no banco e visível para quem tem acesso
+          ao painel; o lugar certo dele é o cofre de variáveis do servidor. Quando você tiver
+          os três dados acima, mande para a WSS Labs — o cadastro é feito uma vez e não
+          aparece em tela nenhuma.
+        </p>
+      </div>
+
+      <div className="card mt-16">
+        <p className="eyebrow" style={{ marginBottom: 8 }}>Custo, para decidir com número</p>
+        <p className="text-dim" style={{ marginTop: 0, marginBottom: 0, fontSize: 14 }}>
+          A Meta cobra <strong>por conversa iniciada</strong> pela empresa, não por mensagem,
+          e o valor muda por país e por categoria (utilidade, marketing, serviço). Conversa
+          iniciada pelo cliente costuma ser gratuita numa janela de 24 horas. Some isso ao
+          custo de IA por resposta, que o seu painel já mede em{" "}
+          <a href="/painel/admin/cotas">Cota de IA</a> — o teto de gasto continua valendo
+          igual com a automação ligada.
+        </p>
+      </div>
+
+      <div className="card mt-16">
         <p className="eyebrow" style={{ marginBottom: 8 }}>Histórico de execuções</p>
         <p className="text-dim" style={{ margin: 0, fontSize: 14 }}>
           Cada execução (mensagens geradas, bloqueadas, tokens e créditos) aparece aqui
-          quando a versão automática estiver ligada. Enquanto o motor de IA não está
-          conectado, o modo fica em <strong>Desligado</strong> e nada é gerado — as
-          regras acima já ficam guardadas e valem no dia em que ligar.
+          quando o envio automático estiver ligado. Enquanto não estiver, o modo fica em{" "}
+          <strong>Desligado</strong> — e as regras acima já ficam guardadas e valem no dia
+          em que ligar.
         </p>
       </div>
+
     </main>
   );
 }

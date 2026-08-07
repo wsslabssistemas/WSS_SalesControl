@@ -185,17 +185,22 @@ export default function Tutorial() {
         })}
       </div>
 
-      {/* Teaser do curso */}
+      {/* O CURSO EXISTE — e o "em breve" que estava aqui mentia.
+          Cartaz de "em breve" para algo que ja esta no menu e pior que nao ter
+          cartaz: ensina a pessoa a nao procurar o que ja esta ali. */}
       <div className="card mt-24" style={{ borderColor: "var(--border-brand)" }}>
-        <div className="row" style={{ gap: 12 }}>
-          <span className="badge badge-brand">Em breve</span>
-          <strong>Curso de Vendas Avançadas</strong>
+        <div className="row" style={{ gap: 12, alignItems: "center" }}>
+          <span className="badge badge-success">No ar</span>
+          <strong>Curso de Vendas</strong>
         </div>
-        <p className="text-dim" style={{ marginTop: 10, marginBottom: 0, fontSize: 14 }}>
-          Este tutorial ensina o sistema. O curso vai além: forma qualquer pessoa a
-          ter cabeça de vendedor, com as técnicas dos grandes mestres aplicadas ao
-          seu dia a dia. Um aprofundamento à parte, para times que querem vender mais.
+        <p className="text-dim" style={{ marginTop: 10, marginBottom: 12, fontSize: 14 }}>
+          Este tutorial ensina o SISTEMA. O curso ensina a VENDER: 9 módulos, 45 lições
+          e 122 perguntas, com as técnicas dos grandes mestres aplicadas ao seu ramo —
+          o exemplo de cada lição sai da biblioteca da sua empresa, e o exercício usa os
+          fatos dela. As perguntas voltam em 2, 5, 12 e 30 dias, porque revisar espaçado
+          é o que faz a técnica ficar.
         </p>
+        <a href="/painel/curso" className="btn btn-sm btn-primary">Abrir o curso →</a>
       </div>
     </div>
   );
