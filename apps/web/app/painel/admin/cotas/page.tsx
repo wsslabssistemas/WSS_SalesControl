@@ -2,12 +2,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPlatformAdmin } from "@/lib/platform";
-import { limitesEfetivos, avaliarCota, type Limites } from "@/lib/cota";
-import { salvarLimiteGlobal, salvarLimiteDaEmpresa } from "./actions";
+import { computeEntitlements } from "@/lib/entitlements";
+import {
+  limitesEfetivos, avaliarCota, alertaDePerfil, custoProjetadoCents,
+  CENTAVOS_POR_RESPOSTA, PERFIS, type Limites, type PerfilKey,
+} from "@/lib/cota";
+import { salvarLimiteGlobal, salvarLimiteDaEmpresa, aplicarPerfil, seguirPadrao } from "./actions";
 
 export const metadata = { title: "Cota de IA" };
 
-type Tenant = { id: string; name: string; slug: string; skill_key: string };
+type Tenant = { id: string; name: string; slug: string; skill_key: string; settings: Record<string, unknown> | null };
 type Linha = { tenant_id: string | null } & Limites;
 type Uso = { tenant_id: string; feature: string; cost_cents: number | null; occurred_at: string };
 
@@ -28,7 +32,7 @@ export default async function CotasPage() {
   inicioDoMes.setHours(0, 0, 0, 0);
 
   const [{ data: tenantsData }, { data: limitesData }, { data: usoData }] = await Promise.all([
-    admin.from("tenants").select("id, name, slug, skill_key").order("name"),
+    admin.from("tenants").select("id, name, slug, skill_key, settings").order("name"),
     admin.from("ai_limits").select("tenant_id, respostas_mes, teto_mes_cents, prospeccao_dia, teto_global_mes_cents"),
     admin.from("usage_ledger").select("tenant_id, feature, cost_cents, occurred_at")
       .gte("occurred_at", inicioDoMes.toISOString()),
@@ -95,6 +99,13 @@ export default async function CotasPage() {
           </label>
           <button className="btn btn-primary btn-sm" type="submit">Salvar</button>
         </form>
+        <p className="text-faint" style={{ fontSize: 12, marginTop: 10, marginBottom: 0 }}>
+          A conta, para decidir com número: cada resposta com IA custa até{" "}
+          {reais(CENTAVOS_POR_RESPOSTA)} (o TETO medido, não a média).{" "}
+          {global?.respostas_mes
+            ? `${global.respostas_mes} respostas/mês = ${reais(custoProjetadoCents(global.respostas_mes))} por empresa.`
+            : "Sem cota de respostas, o único freio é o teto de dinheiro."}
+        </p>
       </div>
 
       {/* ------------------------------------------------------- POR EMPRESA */}
@@ -115,6 +126,12 @@ export default async function CotasPage() {
             custoGlobalNoMesCents: custoGlobal,
           };
           const veredito = avaliarCota("resposta", efetivo, consumo);
+          const ent = computeEntitlements([], t.settings);
+          const alerta = alertaDePerfil({
+            emTeste: ent.trialActive,
+            temRegraPropria: !!propria,
+            padraoRespostas: global?.respostas_mes ?? null,
+          });
           const pctResp = efetivo.respostas_mes
             ? Math.min(100, Math.round((consumo.respostasNoMes / efetivo.respostas_mes) * 100))
             : null;
@@ -145,6 +162,35 @@ export default async function CotasPage() {
                   {efetivo.teto_mes_cents !== null ? ` de ${reais(efetivo.teto_mes_cents)}` : " (sem teto)"}
                 </span>
                 {!propria && <span className="text-faint">segue o padrão do fabricante</span>}
+              </div>
+
+              {alerta && (
+                <div className="mt-8" style={{ fontSize: 13 }}>
+                  <span className="badge badge-warn">Perfil provavelmente errado</span>
+                  <p className="text-dim" style={{ marginTop: 6, marginBottom: 0 }}>{alerta}</p>
+                </div>
+              )}
+
+              <div className="row wrap mt-16" style={{ gap: 6, alignItems: "center" }}>
+                <span className="text-faint" style={{ fontSize: 12 }}>Perfil:</span>
+                {(Object.keys(PERFIS) as PerfilKey[]).map((k) => (
+                  <form key={k} action={aplicarPerfil}>
+                    <input type="hidden" name="tenant_id" value={t.id} />
+                    <input type="hidden" name="perfil" value={k} />
+                    <button className="btn btn-sm btn-ghost" type="submit">
+                      {PERFIS[k].rotulo}
+                      {PERFIS[k].respostas_mes !== null && (
+                        <span className="text-faint"> · {reais(PERFIS[k].teto_mes_cents!)}</span>
+                      )}
+                    </button>
+                  </form>
+                ))}
+                {propria && (
+                  <form action={seguirPadrao}>
+                    <input type="hidden" name="tenant_id" value={t.id} />
+                    <button className="btn btn-sm btn-ghost" type="submit">Voltar ao padrão</button>
+                  </form>
+                )}
               </div>
 
               <form action={salvarLimiteDaEmpresa} className="row wrap mt-16" style={{ gap: 10, alignItems: "flex-end" }}>

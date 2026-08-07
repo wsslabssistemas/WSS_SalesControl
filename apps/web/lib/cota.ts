@@ -157,6 +157,57 @@ export function avaliarCota(
 }
 
 /**
+ * O CUSTO POR RESPOSTA, MEDIDO — e é o TETO, não a média.
+ *
+ * A bateria de ago/2026 deu R$ 0,20 a R$ 0,26. Toda projeção desta tela usa o
+ * teto, porque projeção com média subestima exatamente no mês em que o
+ * consumo é alto — que é o único mês em que a projeção importa.
+ */
+export const CENTAVOS_POR_RESPOSTA = 26;
+
+export const custoProjetadoCents = (respostas: number) => respostas * CENTAVOS_POR_RESPOSTA;
+
+/**
+ * PERFIS DE COTA — porque "empresa em teste" e "empresa em operação" não são
+ * a mesma conta, e hoje as duas herdam o mesmo padrão.
+ *
+ * O padrão do fabricante é calibrado para TESTE: 50 respostas/mês existe para
+ * a pessoa sentir a diferença entre a IA e o manual sem custar caro. Uma
+ * empresa em operação real, com dois ou três atendentes, passa disso na
+ * primeira semana — e cai no manual sem entender por quê, achando que quebrou.
+ *
+ * `operacao` é derivado, não chutado: 600 respostas/mês ≈ 27 por dia útil, o
+ * que a 26 centavos dá R$ 156/mês. O número não é uma recomendação de gasto —
+ * é o que 27 atendimentos por dia custam. A decisão de bancar é de quem paga.
+ */
+export const PERFIS = {
+  teste: { rotulo: "Empresa em teste", respostas_mes: 50, teto_mes_cents: 1300, prospeccao_dia: 20 },
+  operacao: { rotulo: "Operação real", respostas_mes: 600, teto_mes_cents: 15600, prospeccao_dia: 40 },
+  sem_teto: { rotulo: "Sem teto", respostas_mes: null, teto_mes_cents: null, prospeccao_dia: null },
+} as const;
+
+export type PerfilKey = keyof typeof PERFIS;
+
+/**
+ * O ALARME QUE EVITA O SILÊNCIO.
+ *
+ * Empresa fora do teste herdando o padrão do fabricante é a combinação que
+ * falha calada: nada quebra, nada avisa, e um dia o vendedor aperta "gerar com
+ * IA" e não acontece mais nada. Esta é a mesma classe de defeito que a trava de
+ * DNA desarmada — falha na direção que PARECE segura, e por isso ninguém
+ * procura. Aqui ela vira um aviso na tela de quem pode consertar.
+ */
+export function alertaDePerfil(args: {
+  emTeste: boolean;
+  temRegraPropria: boolean;
+  padraoRespostas: number | null;
+}): string | null {
+  if (args.emTeste || args.temRegraPropria) return null;
+  if (args.padraoRespostas === null) return null;
+  return `Esta empresa não está em teste e está herdando o padrão do fabricante (${args.padraoRespostas} respostas/mês), que é calibrado para teste. Em operação real ela cai no modo manual em poucos dias.`;
+}
+
+/**
  * Aviso de fim de cota — para a tela falar ANTES de acabar.
  *
  * Cota que só avisa quando acaba é indistinguível de defeito: o vendedor

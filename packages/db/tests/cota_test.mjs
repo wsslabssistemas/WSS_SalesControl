@@ -10,7 +10,7 @@
  * que o fundador decidiu, e o produto NUNCA para de funcionar quando o teto é
  * atingido.
  *
- * ESPERADO: 17/17.
+ * ESPERADO: 23/23.
  *
  *   node packages/db/tests/cota_test.mjs
  */
@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const { avaliarCota, limitesEfetivos, avisoDeCota } = await import(
+const { avaliarCota, limitesEfetivos, avisoDeCota, alertaDePerfil, custoProjetadoCents, PERFIS } = await import(
   pathToFileURL(path.join(ROOT, "apps/web/lib/cota.ts")).href
 );
 
@@ -153,5 +153,41 @@ verifica("aviso não aparece cedo demais", avisoDeCota(GLOBAL, c({ respostasNoMe
 verifica("aviso aparece a partir de 80%", typeof avisoDeCota(GLOBAL, c({ respostasNoMes: 40 })), "string");
 verifica("aviso some quando vira bloqueio", avisoDeCota(GLOBAL, c({ respostasNoMes: 50 })), null);
 
-console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 17/17");
+// ---------------------------------------------------------------------------
+// O ALARME DO PERFIL ERRADO. Empresa fora do teste herdando o padrão de teste é
+// a combinação que falha CALADA: nada quebra, nada avisa, e um dia o botão para
+// de responder. Mesma classe da trava de DNA desarmada — falha na direção que
+// PARECE segura, e por isso ninguém procura.
+// ---------------------------------------------------------------------------
+verifica(
+  "empresa fora do teste herdando padrão de teste dispara alarme",
+  typeof alertaDePerfil({ emTeste: false, temRegraPropria: false, padraoRespostas: 50 }),
+  "string",
+);
+verifica(
+  "empresa em teste não dispara alarme",
+  alertaDePerfil({ emTeste: true, temRegraPropria: false, padraoRespostas: 50 }),
+  null,
+);
+verifica(
+  "empresa com regra própria não dispara alarme",
+  alertaDePerfil({ emTeste: false, temRegraPropria: true, padraoRespostas: 50 }),
+  null,
+);
+
+// A projeção usa o TETO medido (26 centavos), nunca a média: projeção com média
+// subestima justo no mês de consumo alto, que é o único em que ela importa.
+verifica("projeção usa o teto medido do custo por resposta", custoProjetadoCents(600), 15600);
+verifica(
+  "o perfil de operação bate com a própria projeção",
+  PERFIS.operacao.teto_mes_cents,
+  custoProjetadoCents(PERFIS.operacao.respostas_mes),
+);
+verifica(
+  "o perfil de teste bate com a própria projeção",
+  PERFIS.teste.teto_mes_cents,
+  custoProjetadoCents(PERFIS.teste.respostas_mes),
+);
+
+console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 23/23");
 process.exit(falhas ? 1 : 0);
