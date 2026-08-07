@@ -1,5 +1,5 @@
 # ESTADO DO PROJETO — COS (WSS Kairós)
-**Última atualização:** 1º de agosto de 2026
+**Última atualização:** 7 de agosto de 2026
 **Fabricante:** WSS Labs · **Fundador:** William
 
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
@@ -208,6 +208,19 @@ trocar no seletor do topo do painel.
 
 ---
 
+## 2.9 ⚠ A REGRA QUE CUSTOU UMA CONVERSA INTEIRA — `git push`
+
+**Commit não é entrega. O fundador testa no deploy da Vercel, que builda do
+GitHub.** Em ago/2026 eu acumulei **19 commits sem push** e ele passou uma
+conversa inteira reportando como ausentes coisas que estavam prontas — dashboard
+clicável, aparência, fila, próxima ação. Do lado dele, o produto simplesmente
+não tinha mudado.
+
+**Depois de cada entrega: `git push origin main`.** E ao ouvir "isso não está
+aí", a primeira coisa a conferir é `git status -sb` — antes de reabrir o código.
+
+---
+
 ## 3. Pendências — o quadro inteiro (ago/2026)
 
 > Esta seção foi reescrita porque tinha apodrecido: dizia "0 desfechos" com 846
@@ -219,16 +232,16 @@ trocar no seletor do topo do painel.
 
 ### 3.1 Depende do fundador — não dá para eu fazer
 
-| O quê | Por que só ele | Custo dele |
-|---|---|---|
-| **Be Fitness: perfil de cota** | O número é decisão de caixa. `/painel/admin/cotas` → "Operação real" | 1 clique |
-| **Be Fitness: agenda** | Sem regra de disponibilidade **o motor não fecha horário** — diz "vou confirmar". Numa academia, onde quase toda conversa quer agendar visita, é metade do produto desligada. O DNA tem o horário como TEXTO; converter no chute seria inventar compromisso | ~10 min |
-| **Be Fitness: papel dos recepcionistas** | 2 vínculos ativos, **nenhum `agent`**. Sem isso não há carteira por vendedor nem métrica por pessoa | ~5 min |
-| **Be Fitness: ICP de prospecção** | Hoje está com CNAE de instalação elétrica e a palavra "climatização" — resíduo de teste. Ver 3.4: para academia, prospecção é **convênio corporativo** | ~5 min |
-| **WSS Labs: 6 campos de DNA** | Preço, duração do teste, o que acontece ao fim, prazo de implantação, exportação/retenção de dados e contrato. Enquanto vazios **o motor escala** — comportamento correto, e a prova de que a trava vale na própria casa | decisão |
-| **Revisão de `industria`** | A especialista (Feltros Bandeirantes). Kit pronto em `revisao/` | dela |
-| **Meta Business** | Exige login, documento e aceite em nome dele. Só quando a automação descongelar | — |
-| **Google Agenda mão dupla** | OAuth. O `.ics` de leitura já funciona | — |
+| O quê | Por que só ele |
+|---|---|
+| **Be Fitness: agenda** | Sem regra de disponibilidade **o motor não fecha horário** — diz "vou confirmar". O DNA tem o horário como TEXTO; converter no chute seria inventar compromisso. ~10 min |
+| **Be Fitness: papel dos recepcionistas** | Cadastrar os três como `agent` em Equipe. Sem isso não há carteira por vendedor nem placar. ~5 min |
+| **Be Fitness: ICP de prospecção** | Está com CNAE de instalação elétrica e "climatização" — resíduo de teste. Para academia o alvo é **convênio corporativo** (ver 3.4) |
+| **WSS Labs: 6 campos de DNA** | Preço, duração do teste, o que acontece ao fim, prazo de implantação, exportação/retenção e contrato. Enquanto vazios **o motor escala** — comportamento correto, e a prova de que a trava vale na própria casa |
+| **Revisão de `industria`** | A especialista (Feltros Bandeirantes). Kit pronto em `revisao/` |
+| **Meta Business** | Cinco requisitos listados em `/painel/automacao`. Exige login, CNPJ e aceite em nome dele |
+| **Google Agenda mão dupla** | OAuth. O `.ics` de leitura já funciona |
+| **Domínio** | Apontar o Kairós para o domínio da WSS Labs |
 
 ### 3.2 Congelado por decisão — não reabrir sem motivo novo
 
@@ -239,14 +252,18 @@ trocar no seletor do topo do painel.
 
 ### 3.3 Fila técnica — comigo
 
-1. **Filtro de prospecção por cidade + segmento** (Porto Alegre / academias).
-2. **Fila de envio de um toque via `wa.me`**, sem Meta: o motor decide *quem* e
-   *o quê*, a pessoa clica e envia.
-3. **M2 — escola × desfecho.** DESTRAVADO: os 846 desfechos do piloto existem.
-   Mas a regra que o fundador impôs vale — **segmentar por ORIGEM e declarar o
-   n** antes de qualquer leitura. Convênio tem 15% de perda contra 46% do
-   WhatsApp; somar as duas mede coisas diferentes.
-4. **Carga em massa de contatos com controle de custo** (ver 3.5).
+**A fila de 7 itens de ago/2026 foi toda entregue** (placar, atribuição em
+lote, etapa no Responder, aparência+Sobre, proximidade, tutorial, fila `wa.me`),
+e com ela o roteiro do "Kairós vende o Kairós" fechou. O que resta:
+
+1. **M2 — escola × desfecho.** Destravado: os 846 desfechos do piloto existem.
+   Mas a regra do fundador vale — **segmentar por ORIGEM e declarar o n** antes
+   de qualquer leitura. Convênio tem 15% de perda contra 46% do WhatsApp.
+2. **Carga dos 3.000 contatos com controle de custo** (ver 3.5).
+3. **Volume da prospecção** — a fonte pública devolve ~20 por chamada.
+4. **Auditoria adiada com motivo**: telefone em E.164 (só com envio por
+   WhatsApp), dinheiro como string no DNA (junto com o primeiro relatório que
+   precise), `embedding` sem índice ANN (interage mal com RLS).
 
 ### 3.4 Descoberto conversando (ago/2026) — prospecção em B2C local
 
@@ -539,6 +556,13 @@ node packages/db/tests/demo_dna_check.mjs # DNA de demonstração × manifestos
 node packages/db/tests/retrieval_check.mjs # escolha de técnica: 22/22 (precisa do banco)
 node packages/db/tests/repescagem_test.mjs # espaçamento do curso: 13/13 (sem banco)
 node packages/db/tests/acentuacao_check.mjs # acento na prosa curada (sem banco)
+node packages/db/tests/cota_test.mjs       # cota de IA e teto: 23/23
+node packages/db/tests/renovacao_test.mjs  # janelas 60/30/7: 11/11
+node packages/db/tests/placar_test.mjs     # o piso de amostra: 12/12
+node packages/db/tests/importacao_test.mjs # colunas e data pt-BR: 19/19
+node packages/db/tests/cnae_test.mjs       # alvos de prospecção: 9/9
+node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
+node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql
 node scripts/seed-skills.mjs              # recarrega manifestos no banco

@@ -7,7 +7,34 @@
 
 ---
 
-## Onde estamos (2 de agosto de 2026)
+## Onde estamos (7 de agosto de 2026) — leia isto primeiro
+
+**O roteiro do `COS_Kairos_Vende_Kairos.md` FECHOU.** Os seis itens estão no ar:
+Skill `software_b2b`, tenant WSS Labs, cota de IA com teto que suspende sozinho,
+prospecção por cidade e ramo, fila de envio `wa.me` e preço sugerido.
+
+**A fila de segmentos também fechou**: 15 segmentos, 285 entradas curadas.
+
+**O que a conversa de 6–7/ago entregou**, tudo vindo de uso real na Be Fitness:
+próxima ação com data (`0049`), vigência e renovação em três janelas (`0050`),
+`perdido` deixou de ser terminal nos 15 manifestos (com `lost` no núcleo),
+motor religado após a matrícula, dashboard clicável, placar da equipe com o
+piso de amostra, atribuição de carteira em lote, etapa no Responder, aparência
+por empresa, página Sobre, proximidade na prospecção, busca por nome no
+Responder, responsável no cadastro, guia da automação e tutorial atualizado.
+
+**O erro da conversa, registrado para não repetir:** 19 commits ficaram sem
+`push` enquanto o fundador testava no deploy. Ele passou uma conversa inteira
+reportando como ausentes coisas prontas. **Commit não é entrega.**
+
+**O que fazer agora**, em ordem: (1) as ações do fundador na §3.1 do
+`ESTADO_DO_PROJETO.md` — agenda e papéis da Be Fitness são 15 minutos e
+destravam o motor; (2) o M2, com dado segmentado por origem; (3) convidar a
+primeira empresa externa, que é o único jeito de sair do N=1.
+
+---
+
+## Onde estávamos (2 de agosto de 2026)
 
 - **9 segmentos, 166 entradas curadas.** A `energia_solar` recebeu a **primeira
   correção vinda de especialista do ramo** (contato do fundador, integrador):

@@ -217,3 +217,8 @@ Adiar com motivo escrito é decisão; adiar sem, é esquecimento.
 - Erros: aponte, corrija, siga. Sem rodeio e sem se desculpar demais.
 - Prefira a correção estrutural à correção de prompt.
 - O repositório é a verdade. O Supabase é só onde ela é executada.
+- **`git push` depois de cada entrega.** Ele testa no deploy da Vercel, que
+  builda do GitHub — commit local é invisível para ele. Em ago/2026 isso custou
+  uma conversa inteira: 19 commits parados, e ele reportando como ausentes
+  coisas prontas. Ao ouvir "isso não está aí", confira `git status -sb` antes
+  de reabrir o código.
