@@ -53,3 +53,8 @@ jobs:
       # — só chega ao cliente pagante. Roda no CI porque é texto puro.
       - name: Acento na biblioteca e nos manifestos
         run: node packages/db/tests/acentuacao_check.mjs
+      # A COTA DE IA. E a unica peca cujo defeito aparece como CONTA no fim do
+      # mes, nao como tela quebrada: cota que nao bloqueia se parece exatamente
+      # com cota que bloqueia. Roda no CI porque e funcao pura.
+      - name: Cota de IA e teto de gasto
+        run: node packages/db/tests/cota_test.mjs

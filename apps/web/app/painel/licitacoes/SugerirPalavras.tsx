@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { sugerirPalavras } from "./ia-actions";
 import type { Sugestao } from "@/lib/licitacoes";
 
 export default function SugerirPalavras({ atuais }: { atuais: string[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
   const [termos, setTermos] = useState<Sugestao[] | null>(null);
   const [escolhidos, setEscolhidos] = useState<string[]>([]);
   const [copiado, setCopiado] = useState(false);
@@ -14,12 +16,14 @@ export default function SugerirPalavras({ atuais }: { atuais: string[] }) {
   const run = async () => {
     setLoading(true);
     setError(null);
+    setLimite(null);
     setTermos(null);
     setEscolhidos([]);
     setCopiado(false);
     try {
       const res = await sugerirPalavras();
       if (res.ok) setTermos(res.termos);
+      else if ("limite" in res) setLimite(res.mensagem);
       else setError(res.error);
     } catch (e) {
       setError("Falha: " + (e instanceof Error ? e.message : String(e)));
@@ -48,6 +52,7 @@ export default function SugerirPalavras({ atuais }: { atuais: string[] }) {
         </button>
       </div>
 
+      {limite && <AvisoDeCota mensagem={limite} />}
       {error && <p className="badge badge-danger mt-16">{error}</p>}
 
       {termos && (

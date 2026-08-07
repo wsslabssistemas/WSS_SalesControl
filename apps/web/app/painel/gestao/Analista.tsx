@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { perguntarGestao } from "./ia-actions";
 
 const ATALHOS = [
@@ -16,6 +17,7 @@ export default function Analista({ dias }: { dias: number }) {
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
   const ask = async (texto: string) => {
@@ -26,11 +28,13 @@ export default function Analista({ dias }: { dias: number }) {
     }
     setLoading(true);
     setError(null);
+    setLimite(null);
     setAnswer(null);
     setCopiado(false);
     try {
       const res = await perguntarGestao(t, dias);
       if (res.ok) setAnswer(res.answer);
+      else if ("limite" in res) setLimite(res.mensagem);
       else setError(res.error);
     } catch (e) {
       setError("Falha ao chamar o motor: " + (e instanceof Error ? e.message : String(e)));
@@ -72,6 +76,7 @@ export default function Analista({ dias }: { dias: number }) {
         ))}
       </div>
 
+      {limite && <AvisoDeCota mensagem={limite} />}
       {error && <p className="badge badge-danger mt-16">{error}</p>}
 
       {answer && (

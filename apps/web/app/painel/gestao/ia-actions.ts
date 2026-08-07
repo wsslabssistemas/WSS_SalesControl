@@ -7,8 +7,14 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
+import { verificarCota } from "@/lib/cota-db";
 
-export type AskResult = { ok: true; answer: string } | { ok: false; error: string };
+// `limite` separado de `error` pelo mesmo motivo do Responder: teto atingido
+// não é falha do produto, e mostrar como falha faz a empresa achar que quebrou.
+export type AskResult =
+  | { ok: true; answer: string }
+  | { ok: false; error: string }
+  | { ok: false; limite: true; mensagem: string };
 
 type Contact = { id: string; name: string; journey_stage: string; source: string | null; owner_id: string | null; created_at: string };
 type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string; outcome: string | null };
@@ -30,6 +36,12 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
   if (!["owner", "admin", "manager"].includes(membership!.role)) {
     return { ok: false, error: "Esta área é do dono e dos gestores." };
   }
+
+  // O Analista não consome a cota de ATENDIMENTOS — bloquear o relatório de
+  // gestão porque o vendedor usou o Responder seria cobrar de uma função o
+  // consumo de outra. Mas responde aos tetos de dinheiro: dinheiro é dinheiro.
+  const cota = await verificarCota(tenant.id, "analise");
+  if (!cota.permitido) return { ok: false, limite: true, mensagem: cota.mensagem! };
 
   try {
     const supabase = await createClient();

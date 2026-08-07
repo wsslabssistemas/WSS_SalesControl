@@ -11,13 +11,19 @@ import { resolveSchool, loadSchools, schoolsBlock, type StrategyMap } from "@/li
 import { checkRequiredFacts } from "@/lib/facts";
 import { lerQualificacao, blocoParaPrompt } from "@/lib/qualificacao";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
+import { verificarCota } from "@/lib/cota-db";
 import { revalidatePath } from "next/cache";
 import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
 import { escolherOpcoes, descreverVaga } from "@/lib/scheduling";
 
 export type GerarResult =
   | { ok: true; data: AiAnswer }
-  | { ok: false; error: string };
+  | { ok: false; error: string }
+  // COTA ATINGIDA NÃO É ERRO — e a diferença não é cosmética. Se o teto
+  // aparecesse em vermelho como falha, a empresa em teste concluiria que o
+  // sistema quebrou e sumiria, que é exatamente o oposto do que o teto existe
+  // para fazer. O produto não parou: o cockpit manual custa zero e continua.
+  | { ok: false; limite: true; mensagem: string };
 
 export type AiAnswer = {
   resposta_sugerida: string;
@@ -69,6 +75,10 @@ export async function gerarResposta(input: {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
+
+  // O PORTÃO, ANTES DE QUALQUER TOKEN. Verificar depois seria medir o prejuízo.
+  const cota = await verificarCota(tenant.id, "resposta");
+  if (!cota.permitido) return { ok: false, limite: true, mensagem: cota.mensagem! };
 
   try {
   const supabase = await createClient();
@@ -335,6 +345,10 @@ export async function gerarAbordagem(contactId: string): Promise<GerarResult> {
   const tenant = membership?.tenant;
   if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
   if (!contactId) return { ok: false, error: "Selecione o contato." };
+
+  // Prospecção tem cota PRÓPRIA e DIÁRIA: aqui o risco não é o mês, é o lote.
+  const cota = await verificarCota(tenant.id, "prospeccao");
+  if (!cota.permitido) return { ok: false, limite: true, mensagem: cota.mensagem! };
 
   try {
     const supabase = await createClient();

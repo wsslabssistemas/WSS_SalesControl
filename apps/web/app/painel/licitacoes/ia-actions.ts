@@ -7,8 +7,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { measureTerms, type Sugestao } from "@/lib/licitacoes";
+import { verificarCota } from "@/lib/cota-db";
 
-export type SugestaoResult = { ok: true; termos: Sugestao[] } | { ok: false; error: string };
+export type SugestaoResult =
+  | { ok: true; termos: Sugestao[] }
+  | { ok: false; error: string }
+  | { ok: false; limite: true; mensagem: string };
 
 const schema = z.object({
   termos: z
@@ -42,6 +46,11 @@ export async function sugerirPalavras(): Promise<SugestaoResult> {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) return { ok: false, error: "Sem empresa vinculada." };
+
+  // Assistente de licitações: sem cota de contagem própria, mas dentro dos
+  // tetos de dinheiro — da empresa e do fabricante.
+  const cota = await verificarCota(tenant.id, "analise");
+  if (!cota.permitido) return { ok: false, limite: true, mensagem: cota.mensagem! };
 
   try {
     const supabase = await createClient();

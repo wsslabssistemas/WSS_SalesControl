@@ -61,7 +61,15 @@ técnica que falta**. A maior lacuna é o **follow-up**: em serviços técnicos,
   Cada edital diz **por que apareceu** — qual palavra o trouxe e se ela está no
   objeto ou só na lista de itens, que abre sob demanda com o item destacado.
 - **Painel do fabricante** — cross-tenant, custo de IA, margem, **Acesso e
-  planos** (teste grátis e liberação de módulos por empresa).
+  planos** (teste grátis e liberação de módulos por empresa) e **Cota de IA**
+  (o teto que age sozinho).
+- **Cota de IA e teto de gasto** (`0047`) — cota mensal de atendimentos com IA
+  por empresa, teto de dinheiro por empresa e **teto global do fabricante**,
+  todos com suspensão automática até virar o mês. Quando o teto é atingido a IA
+  para e o **cockpit manual continua ilimitado e sem custo**: nenhuma empresa
+  fica sem produto. Era o item que o `COS_Kairos_Vende_Kairos.md` marca como
+  "vem antes de qualquer convite" — sem ele, sucesso comercial vira prejuízo, e
+  é o único erro daquela lista que não dá para corrigir depois de acontecer.
 - **Curso completo** — 9 módulos, 45 lições, 122 perguntas, 267 minutos, com
   **repescagem espaçada** (`course_review`: as perguntas voltam em 2 → 5 → 12 →
   30 dias por acerto seguido; errar zera). A teoria é uma só; o exemplo vem da
@@ -173,7 +181,7 @@ Empresas de demonstração existem para todos (`demo-*`), vinculadas ao fundador
 trocar no seletor do topo do painel.
 
 ### Infra
-- Migrations `0001`–`0046` aplicadas. RLS em tudo com `tenant_id`.
+- Migrations `0001`–`0047` aplicadas. RLS em tudo com `tenant_id`.
 - `scripts/seed-skills.mjs` · `scripts/seed-knowledge.mjs` ·
   `scripts/criar-tenant-demo.mjs`.
 - `SUPABASE_SERVICE_ROLE_KEY` em `apps/web/.env.local` (dá para semear e migrar
@@ -226,13 +234,13 @@ trocar no seletor do topo do painel.
 4. **Google Agenda mão dupla** (criar/mover evento). Exige OAuth e ação do
    fundador. O `.ics` de leitura já existe e funciona.
 5. **Kairós vender a si mesmo** — desenhado em `COS_Kairos_Vende_Kairos.md`
-   (ago/2026), respondendo às perguntas do fundador. Em resumo: vira a Skill
-   `software_b2b`; o mapeamento **já existe** (Oportunidades por CNAE,
-   filtrado por cidade e segmento — começar por Porto Alegre/academias); o
-   envio fica em **fila de um toque via `wa.me`**, sem Meta; e **nada disso
-   pode ser convidado antes de a cota de IA por empresa existir** — 30
-   empresas testando de graça custam ~R$ 690/mês do bolso do fundador, e só
-   trava estrutural segura isso.
+   (ago/2026). Vira a Skill `software_b2b`; o mapeamento **já existe**
+   (Oportunidades por CNAE, filtrado por cidade e segmento — começar por Porto
+   Alegre/academias); o envio fica em **fila de um toque via `wa.me`**, sem
+   Meta. **A cota de IA, que era o pré-requisito de tudo isso, está no ar
+   (`0047`)** — o portão que impedia convite virou trava de verdade. Falta a
+   Skill, o tenant WSS Labs com DNA próprio, o filtro de prospecção por cidade
+   e a fila de envio.
 6. **Volume da prospecção** — hoje é amostra (~20–80). Opções: exportação paga
    (~R$0,01/empresa) ou base própria do dump da Receita.
 7. Fila de segmentos novos: salão de beleza, pet, imobiliária, oficina, curso,

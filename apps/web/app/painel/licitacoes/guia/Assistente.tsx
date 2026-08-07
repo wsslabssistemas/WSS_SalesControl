@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { perguntarLicitacoes } from "./actions";
 
 const SUGESTOES = [
@@ -15,6 +16,7 @@ export default function Assistente() {
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
 
   const ask = async (question: string) => {
     const text = question.trim();
@@ -24,10 +26,12 @@ export default function Assistente() {
     }
     setLoading(true);
     setError(null);
+    setLimite(null);
     setAnswer(null);
     try {
       const res = await perguntarLicitacoes(text);
       if (res.ok) setAnswer(res.answer);
+      else if ("limite" in res) setLimite(res.mensagem);
       else setError(res.error);
     } catch (e) {
       setError("Falha ao chamar o motor: " + (e instanceof Error ? e.message : String(e)));
@@ -57,6 +61,7 @@ export default function Assistente() {
         ))}
       </div>
 
+      {limite && <AvisoDeCota mensagem={limite} />}
       {error && <p className="badge badge-danger mt-16">{error}</p>}
       {answer && (
         <div className="card mt-16" style={{ background: "var(--bg-elev)" }}>

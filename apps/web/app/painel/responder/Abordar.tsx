@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { gerarAbordagem, saveInteraction, type AiAnswer } from "./ai-actions";
 import { CopyButton } from "./CopyButton";
 
@@ -13,17 +14,20 @@ export default function Abordar({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
   const [data, setData] = useState<AiAnswer | null>(null);
   const [saved, setSaved] = useState(false);
 
   const run = async () => {
     setLoading(true);
     setError(null);
+    setLimite(null);
     setData(null);
     setSaved(false);
     try {
       const res = await gerarAbordagem(contactId);
       if (res.ok) setData(res.data);
+      else if ("limite" in res) setLimite(res.mensagem);
       else setError(res.error);
     } catch (e) {
       setError("Falha ao chamar o motor: " + (e instanceof Error ? e.message : String(e)));
@@ -47,6 +51,7 @@ export default function Abordar({
         </button>
       </div>
 
+      {limite && <AvisoDeCota mensagem={limite} />}
       {error && <p className="badge badge-danger mt-16">{error}</p>}
 
       {data && (

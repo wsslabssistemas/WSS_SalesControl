@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { gerarResposta, applyStage, saveInteraction, setOutcome, type AiAnswer } from "./ai-actions";
 import { marcarCompromisso } from "../agenda/horarios-actions";
 import { CopyButton } from "./CopyButton";
@@ -32,6 +33,7 @@ export default function GerarIA({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limite, setLimite] = useState<string | null>(null);
   const [data, setData] = useState<AiAnswer | null>(null);
   const [applied, setApplied] = useState(false);
   const [usedMessage, setUsedMessage] = useState("");
@@ -52,6 +54,7 @@ export default function GerarIA({
     }
     setLoading(true);
     setError(null);
+    setLimite(null);
     setData(null);
     setApplied(false);
     setSaved(false);
@@ -62,6 +65,7 @@ export default function GerarIA({
     try {
       const res = await gerarResposta({ contactId, message: msg });
       if (res.ok) setData(res.data);
+      else if ("limite" in res) setLimite(res.mensagem);
       else setError(res.error);
     } catch (e) {
       setError("Falha ao chamar o motor: " + (e instanceof Error ? e.message : String(e)));
@@ -83,6 +87,7 @@ export default function GerarIA({
         {loading ? "Gerando resposta…" : "✨ Gerar com IA"}
       </button>
 
+      {limite && <AvisoDeCota mensagem={limite} />}
       {error && <p className="badge badge-danger mt-16">{error}</p>}
 
       {data && (

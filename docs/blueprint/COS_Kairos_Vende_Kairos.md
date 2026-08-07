@@ -115,6 +115,51 @@ N abordagens por dia, nunca por lote.
 fundador decidiu, e o produto nunca para de funcionar quando o teto é
 atingido.*
 
+### ✅ FEITO (ago/2026) — migration `0047` + `lib/cota.ts` + `/painel/admin/cotas`
+
+Os quatro itens acima estão no ar. O que vale registrar do caminho:
+
+- **A linha de política nasce com a migration.** Se o teto só existisse depois
+  de alguém abrir a tela e configurar, "esqueceu" e "sem teto" seriam a mesma
+  coisa — e isso é intenção com nome bonito, não trava. Os padrões são
+  derivados, não chutados: 50 respostas/mês (já decidido aqui), R$ 13,00 de
+  teto por empresa (50 × R$ 0,26, o **teto** medido do custo por resposta, não
+  a média), R$ 130,00 de teto global (dez empresas na cota cheia) e 20
+  abordagens/dia. O único número que é escolha de caixa é o global — e a tela
+  existe para trocá-lo sem migration.
+- **A verificação acontece ANTES da chamada.** Verificar depois é medir o
+  prejuízo: o token já foi gasto.
+- **A contagem vem do `usage_ledger`**, não de um contador próprio — é o mesmo
+  número que o painel do fabricante mostra. Contador paralelo diverge em
+  silêncio, e divergência numa trava de custo só aparece no extrato.
+- **A leitura é por RPC (`ai_usage_summary`), e isso não é preciosismo.** O
+  PostgREST corta em 1.000 linhas sem avisar — a armadilha que já sumiu com 53
+  interações na canonização das técnicas. Somar centavos no cliente daria, para
+  toda empresa ativa, um gasto **menor** que o real: plausível, silencioso e
+  exatamente do lado errado. Numa trava de custo, ler menos é o pior defeito
+  possível, porque ela para de travar justo quando começa a importar.
+- **Bloqueio não é erro, e a separação é de TIPO.** `{ ok: false, limite: true }`
+  ao lado de `{ ok: false, error }`. O compilador apontou os cinco
+  consumidores de uma vez, e a tela mostra um cartão azul de limite em vez do
+  vermelho de falha. Se o teto aparecesse como falha, a empresa em teste
+  concluiria que o sistema quebrou e sumiria — o oposto do que o teto existe
+  para fazer.
+- **Os bolsos não se misturam.** Dinheiro vale para todo uso; a contagem é por
+  uso. Cota de atendimento esgotada não derruba a prospecção, rajada de
+  prospecção não cala o Responder, e o Analista de Gestão não consome a cota de
+  atendimentos — mas responde aos tetos de dinheiro.
+- **O teto global não é sobrescrevível por empresa.** Deixar uma empresa
+  levantar o teto de todos seria desligar a trava pelo lado de dentro.
+- **Campo vazio ≠ zero.** Vazio herda o padrão; **zero bloqueia na hora**,
+  porque qualquer consumo já é ≥ 0. A tela diz isso em letra grande, e o
+  formulário apaga a linha quando tudo fica vazio — "segue o padrão" porque
+  não existe regra, não porque a regra é vazia.
+
+**Provado contra o banco, não contra mock:** com o teto global abaixo do gasto
+real do mês, os três usos passaram a BLOQUEAR por `teto_fabricante`; com a cota
+de respostas da empresa abaixo do consumo dela, só `resposta` bloqueou e
+prospecção e análise seguiram liberadas. Testes: `cota_test.mjs`, 17/17, no CI.
+
 ---
 
 ## 5. WhatsApp e Meta — a resposta honesta
@@ -157,7 +202,9 @@ do Meta, a fila vira automática sem reescrever nada.
    para PME. Custa curadoria, não código.
 2. **Tenant WSS Labs** com DNA próprio: preço, módulos, o que o teste
    inclui, o que o produto não faz.
-3. **Cota de IA por empresa + teto de gasto que suspende sozinho.**
+3. ~~**Cota de IA por empresa + teto de gasto que suspende sozinho.**~~
+   ✅ **FEITO (ago/2026)** — detalhe na §4. **O portão está de pé: daqui em
+   diante convidar empresa para testar não é mais uma aposta no caixa.**
 4. **Filtro de prospecção por cidade + segmento**, começando em Porto
    Alegre / academias.
 5. **Fila de envio com um toque** (`wa.me`), sem Meta.
