@@ -241,7 +241,27 @@ do Meta, a fila vira automática sem reescrever nada.
    encontradas**, 20 trazidas por chamada (o teto conhecido da fonte pública, já
    registrado como pendência de volume). O ICP da WSS Labs está gravado.
    `cnae_test.mjs` 9/9, no CI.
-5. **Fila de envio com um toque** (`wa.me`), sem Meta.
+5. ~~**Fila de envio com um toque** (`wa.me`), sem Meta.~~ ✅ **FEITO
+   (ago/2026)** — `/painel/fila`.
+   **Uma fila, não quatro telas.** O produto sabia de quatro motivos para falar
+   com alguém — combinado com data, cadência de follow-up, renovação e recompra
+   — e cada um morava num lugar. Quatro listas fazem o vendedor escolher por
+   qual começar, e escolher é o trabalho que ele não faz todo dia.
+   **A ordem não é por data, é por custo de furar:** combinado primeiro (o
+   cliente lembra que marcou), depois renovação (receita já vendida saindo pela
+   porta), depois follow-up e recompra. E **um contato aparece uma vez só**,
+   pelo motivo de maior prioridade — senão quem está atrasado em tudo receberia
+   quatro mensagens no mesmo dia, que é a forma mais rápida de ser bloqueado.
+   **A geração é sob demanda, uma por clique**, e isso é decisão de custo:
+   gerar a fila inteira transformaria uma tela aberta por engano em dezenas de
+   reais. Conta como ATENDIMENTO na cota, não como prospecção — falar com quem
+   já é cliente é o produto principal.
+   **O toque NÃO usa o prompt de abordagem fria.** Aqui a pessoa já nos
+   conhece, e reusar aquele prompt produziria "vi que vocês trabalham com X"
+   para quem já é aluno — o tipo de erro que faz o vendedor parar de confiar na
+   ferramenta na primeira semana. A trava anti-invenção roda igual: toque
+   proativo é onde inventar é mais tentador, porque não há pergunta do cliente
+   para ancorar a resposta.
 6. **Score de potencial → preço sugerido** — já existe em
    `/painel/admin/precos`, e passa a receber dado real conforme os testes
    rodarem.

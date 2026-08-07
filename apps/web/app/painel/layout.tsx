@@ -29,6 +29,10 @@ export default async function PainelLayout({
     { href: "/painel", label: "Início" },
     { href: "/painel/responder", label: "Responder" },
     { href: "/painel/contatos", label: "Contatos" },
+    // A FILA vem antes do Follow-up: ela junta os quatro motivos numa lista
+    // só e já traz a mensagem pronta. O Follow-up continua, porque é a visão
+    // por cadência — quem quer entender a régua vai lá.
+    { href: "/painel/fila", label: "Fila de envio" },
     { href: "/painel/followup", label: "Follow-up" },
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
