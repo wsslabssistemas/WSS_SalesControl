@@ -103,6 +103,12 @@ const stage = z.object({
   goal: z.string().optional(),
   terminal: z.boolean().optional(),
   won: z.boolean().optional(), // etapa que conta como conversão (matrícula)
+  // Etapa de PERDA. Não é redundante com `terminal`: desde ago/2026 `perdido`
+  // é NÃO-terminal, para que quem apenas parou de responder continue
+  // alcançável por reativação. `lost` é o que impede essa mesma etapa de cair
+  // na lista de RECOMPRA — que é para quem já comprou — e de ser contada como
+  // "em aberto".
+  lost: z.boolean().optional(),
   phases: z.array(phase).optional(),
 });
 

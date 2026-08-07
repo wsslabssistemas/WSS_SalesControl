@@ -6,6 +6,7 @@ import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics"
 import { hasAIKey } from "@/lib/ai";
 import { brl } from "@/lib/money";
 import Analista from "./Analista";
+import { stagesForaDeJogo } from "@/lib/recurrence";
 
 export const metadata = { title: "Gestão" };
 
@@ -50,7 +51,7 @@ export default async function GestaoPage({
 
   const { stages } = await getSkillFormConfig(tenant.skill_key);
   const wonKeys = new Set(stages.filter((s) => s.won).map((s) => s.key));
-  const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
+  const terminalKeys = stagesForaDeJogo(stages);
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
 
   const startISO = new Date(Date.now() - dias * 86400000).toISOString();

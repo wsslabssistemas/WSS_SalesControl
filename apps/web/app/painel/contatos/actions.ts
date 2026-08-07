@@ -16,6 +16,8 @@ type Parsed = {
   /** A data que o CLIENTE marcou, e o que foi combinado nas palavras de quem atendeu. */
   nextActionAt: string | null;
   nextActionNote: string | null;
+  contractStart: string | null;
+  contractEnd: string | null;
   custom: Record<string, string>;
 };
 
@@ -36,6 +38,8 @@ function parse(formData: FormData): Parsed {
     stageStart: String(formData.get("stage_start") ?? "").trim() || null,
     nextActionAt: String(formData.get("next_action_at") ?? "").trim() || null,
     nextActionNote: String(formData.get("next_action_note") ?? "").trim() || null,
+    contractStart: String(formData.get("contract_start") ?? "").trim() || null,
+    contractEnd: String(formData.get("contract_end") ?? "").trim() || null,
     custom,
   };
 }
@@ -72,6 +76,8 @@ function rowFrom(p: Parsed): Record<string, unknown> {
   // um lembrete cancelado ficaria cobrando para sempre.
   row.next_action_at = p.nextActionAt;
   row.next_action_note = p.nextActionNote;
+  row.contract_start = p.contractStart;
+  row.contract_end = p.contractEnd;
   return row;
 }
 

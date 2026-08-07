@@ -62,9 +62,24 @@ journey:
       label: "Contrato fechado"
       terminal: true
       won: true
+    # PERDIDO DEIXOU DE SER TERMINAL (ago/2026, decisão do fundador).
+    #
+    # O piloto real mediu: 459 desfechos de "perdeu por SILÊNCIO" contra 59 de
+    # "perdeu por DECISÃO". Quase 8 para 1. Etapa terminal desliga o motor —
+    # sem follow-up e sem reativação —, então marcar como perdido quem apenas
+    # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
+    #
+    # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
     - key: perdido
-      label: "Perdido"
+      label: "Parou de responder"
+      lost: true
+      goal: "Sumiu sem dizer não. Não recebe recompra — recebe REATIVAÇÃO, com ângulo novo, depois de 60 a 90 dias."
+    - key: recusou
+      label: "Disse não"
       terminal: true
+      lost: true
+      goal: "Recusou de forma explícita. Aqui a conversa encerra de verdade."
 
 contact_fields:
   - key: porte

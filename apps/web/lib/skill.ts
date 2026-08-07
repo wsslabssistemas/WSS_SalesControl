@@ -16,6 +16,7 @@ export type Stage = {
   label: string;
   terminal?: boolean;
   won?: boolean;
+  lost?: boolean;
   phases?: Phase[];
   /** Cadência de follow-up que governa esta etapa (chave em `cadences`). */
   cadence?: string;
@@ -41,6 +42,10 @@ export async function getSkillFormConfig(skillKey: string) {
       cadences?: Cadence[];
       scheduling?: SchedulingConfig;
       services?: { enabled?: boolean; label?: string; item_label?: string };
+      // Vigência de contrato: nem todo ramo tem. Academia, curso, escola
+      // esportiva e software vendem PERÍODO; barbearia vende corte. O núcleo
+      // sabe o que é "contrato com vigência" — não o que é matrícula (Lei 1).
+      contract?: { enabled?: boolean; label?: string };
     } | null) ?? {};
 
   return {
@@ -56,5 +61,8 @@ export async function getSkillFormConfig(skillKey: string) {
     scheduling: m.scheduling ?? null,
     // Registro de atendimento com valor: só em segmento de serviço repetido.
     services: m.services ?? null,
+    // Quem vende período mostra início/vencimento no cadastro e recebe as
+    // três janelas de renovação (`lib/renovacao.ts`).
+    contract: m.contract ?? null,
   };
 }

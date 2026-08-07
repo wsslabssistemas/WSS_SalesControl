@@ -37,18 +37,42 @@ function startOfDay(d: Date): Date {
 }
 
 /**
- * Quem NÃO recebe recompra: as etapas finais que não são conquista.
+ * Quem NÃO recebe recompra: as etapas finais que não são conquista, MAIS as
+ * etapas de perda.
  *
  * Uma etapa `won` também é final — mas é o cliente conquistado, exatamente
  * quem deve voltar. Tratar as duas igual apagava da lista justamente a
  * carteira ativa (era o caso da barbearia, cujo negócio é recompra).
- * `terminal` e `won` são vocabulário do núcleo, não de mercado — a Lei 1
- * continua de pé.
+ *
+ * `lost` ENTROU EM ago/2026, e não é redundante com `terminal`. Quando
+ * `perdido` deixou de ser terminal — para que quem apenas parou de responder
+ * continuasse alcançável —, ele passou a entrar na lista de RECOMPRA, que é
+ * outra coisa: recompra é para quem já comprou. Um lead que nunca converteu
+ * apareceria em "hora de chamar de volta", e a `hard_rule` da academia é
+ * explícita: nunca dizer "voltar" a quem nunca foi aluno. Perda se trata com
+ * REATIVAÇÃO, com ângulo novo — nunca com o ciclo de recompra.
+ *
+ * `terminal`, `won` e `lost` são vocabulário do NÚCLEO, não de mercado: a
+ * Lei 1 continua de pé.
  */
 export function stagesWithoutRecurrence(
-  stages: { key: string; terminal?: boolean; won?: boolean }[],
+  stages: { key: string; terminal?: boolean; won?: boolean; lost?: boolean }[],
 ): Set<string> {
-  return new Set(stages.filter((s) => s.terminal && !s.won).map((s) => s.key));
+  return new Set(stages.filter((s) => (s.terminal && !s.won) || s.lost).map((s) => s.key));
+}
+
+/**
+ * Quem já saiu de jogo: etapa final OU etapa de perda.
+ *
+ * É o que "em aberto" deve contar, e a distinção nasceu do mesmo lugar: com
+ * `perdido` não-terminal, contar só `terminal` colocaria 135 leads perdidos
+ * dentro do número de "em aberto" da tela inicial. Número inflado não parece
+ * defeito — parece um mês bom.
+ */
+export function stagesForaDeJogo(
+  stages: { key: string; terminal?: boolean; lost?: boolean }[],
+): Set<string> {
+  return new Set(stages.filter((s) => s.terminal || s.lost).map((s) => s.key));
 }
 
 /** Próxima data igual ou posterior a `from` que caia no dia da semana pedido. */

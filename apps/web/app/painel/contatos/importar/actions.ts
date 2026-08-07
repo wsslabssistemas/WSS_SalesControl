@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
-import { parseCsv, detectColumns } from "@/lib/csv";
+import { parseCsv, detectColumns, parseDataBR } from "@/lib/csv";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -25,7 +25,7 @@ export async function importContacts(formData: FormData) {
     redirect("/painel/contatos/importar?erro=Arquivo+vazio");
   }
 
-  const { nameIdx, phoneIdx, hasHeader, nameLabel, phoneLabel, adivinhou } = detectColumns(rows[0]);
+  const { nameIdx, phoneIdx, hasHeader, nameLabel, phoneLabel, adivinhou, startIdx, endIdx } = detectColumns(rows[0]);
   const dataRows = hasHeader ? rows.slice(1) : rows;
 
   const supabase = await createClient();
@@ -65,6 +65,10 @@ export async function importContacts(formData: FormData) {
       phone,
       source: origem,
       journey_stage: initialStage,
+      // Vigência, quando a planilha traz. Data em pt-BR é convertida com
+      // cuidado: `new Date("03/08/2026")` no JavaScript é 8 de MARÇO.
+      contract_start: startIdx >= 0 ? parseDataBR(r[startIdx] ?? "") : null,
+      contract_end: endIdx >= 0 ? parseDataBR(r[endIdx] ?? "") : null,
     });
   }
 

@@ -49,6 +49,36 @@ const strip = (s: string) =>
 
 const NAME_H = ["nome", "name", "contato", "cliente", "lead", "aluno", "paciente", "razao social"];
 const PHONE_H = ["telefone", "fone", "celular", "phone", "whatsapp", "wpp", "tel", "cel", "numero"];
+// Vigência do contrato. `fim` antes de `inicio` na busca não importa aqui
+// porque as listas não se cruzam — mas "vencimento" e "validade" são as
+// palavras que a planilha de academia usa de verdade, e sem elas a coluna
+// existiria na planilha e seria descartada em silêncio.
+const START_H = ["inicio", "data inicio", "matricula", "adesao", "comeco", "contratacao"];
+const END_H = ["vencimento", "validade", "fim", "data fim", "termino", "expira", "renovacao"];
+
+/** Índice da primeira coluna cujo cabeçalho contém uma das palavras. */
+function acha(h: string[], palavras: string[]): number {
+  return h.findIndex((c) => palavras.some((p) => c.includes(p)));
+}
+
+/**
+ * DATA EM PT-BR, e o motivo de existir: `new Date("03/08/2026")` no JavaScript
+ * é 8 de MARÇO, não 3 de agosto. Numa planilha brasileira inteira isso vira
+ * vencimento errado em silêncio — e o alerta de renovação dispara no mês
+ * errado, que é pior que não disparar.
+ */
+export function parseDataBR(v: string): string | null {
+  const t = (v ?? "").trim();
+  if (!t) return null;
+  const br = t.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (br) {
+    const [, d, m, a] = br;
+    const ano = a.length === 2 ? `20${a}` : a;
+    return `${ano}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return iso ? `${iso[1]}-${iso[2]}-${iso[3]}` : null;
+}
 
 /**
  * Descobre as colunas de nome e telefone pelo cabeçalho.
@@ -74,6 +104,9 @@ export function detectColumns(header: string[]): {
   nameLabel: string;
   phoneLabel: string;
   adivinhou: { nome: boolean; telefone: boolean };
+  /** -1 quando a planilha não traz. Vigência é opcional. */
+  startIdx: number;
+  endIdx: number;
 } {
   const h = header.map(strip);
   const nameIdx = h.findIndex((c) => NAME_H.some((n) => c.includes(n)));
@@ -88,5 +121,7 @@ export function detectColumns(header: string[]): {
     nameLabel: achou ? (header[ni] ?? "").trim() : "1ª coluna",
     phoneLabel: achou ? (header[pi] ?? "").trim() : "2ª coluna",
     adivinhou: { nome: nameIdx < 0, telefone: phoneIdx < 0 },
+    startIdx: acha(h, START_H),
+    endIdx: acha(h, END_H),
   };
 }

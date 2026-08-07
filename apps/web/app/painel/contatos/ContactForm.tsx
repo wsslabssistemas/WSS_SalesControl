@@ -18,6 +18,8 @@ export type ContactValues = {
   journey_stage?: string | null;
   next_action_at?: string | null;
   next_action_note?: string | null;
+  contract_start?: string | null;
+  contract_end?: string | null;
   custom?: Record<string, string> | null;
 };
 
@@ -42,11 +44,14 @@ export function ContactForm({
   contact,
   erro,
   submitLabel,
+  contract,
 }: {
   action: (formData: FormData) => void;
   fields: ContactField[];
   sources: string[];
   stages: Stage[];
+  /** Vigência: só aparece nos ramos que vendem período (manifesto). */
+  contract?: { enabled?: boolean; label?: string } | null;
   contact?: ContactValues;
   erro?: string;
   submitLabel: string;
@@ -134,6 +139,27 @@ export function ContactForm({
           &quot;voltar dia 3&quot; — que não diz nada um mês depois.
         </span>
       </label>
+
+      {contract?.enabled && (
+        <>
+          {/* VIGÊNCIA. O vencimento não é burocracia de cadastro: é o que
+              dispara as três janelas de renovação. E o INÍCIO importa tanto
+              quanto — "é cliente há 14 meses" é o argumento da conversa; a
+              data de vencimento sozinha só serve para cobrar. */}
+          <label style={lbl}>
+            Início {contract.label ? `(${contract.label.toLowerCase()})` : ""}
+            <input type="date" name="contract_start" defaultValue={contact?.contract_start ?? ""} style={field} />
+          </label>
+          <label style={lbl}>
+            Vencimento
+            <input type="date" name="contract_end" defaultValue={contact?.contract_end ?? ""} style={field} />
+            <span style={{ fontSize: 12, opacity: 0.55 }}>
+              A partir daqui o sistema avisa em 60, 30 e 7 dias. O primeiro aviso
+              fala do RESULTADO, não de renovação.
+            </span>
+          </label>
+        </>
+      )}
 
       {fields.map((f) => (
         <label key={f.key} style={lbl}>

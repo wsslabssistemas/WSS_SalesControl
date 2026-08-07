@@ -29,7 +29,7 @@ export default async function EditarContatoPage({
   const supabase = await createClient();
   const { data } = await supabase
     .from("contacts")
-    .select("name, phone, source, journey_stage, custom, next_action_at, next_action_note")
+    .select("name, phone, source, journey_stage, custom, next_action_at, next_action_note, contract_start, contract_end")
     .eq("id", id)
     .eq("tenant_id", tenant.id)
     .is("deleted_at", null)
@@ -49,6 +49,7 @@ export default async function EditarContatoPage({
         fields={cfg.fields}
         sources={cfg.sources}
         stages={cfg.stages}
+        contract={cfg.contract}
         contact={contact}
         erro={erro}
         submitLabel="Salvar alterações"

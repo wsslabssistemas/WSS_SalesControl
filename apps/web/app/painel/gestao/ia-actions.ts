@@ -8,6 +8,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
+import { stagesForaDeJogo } from "@/lib/recurrence";
 
 // `limite` separado de `error` pelo mesmo motivo do Responder: teto atingido
 // não é falha do produto, e mostrar como falha faz a empresa achar que quebrou.
@@ -47,7 +48,7 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
     const supabase = await createClient();
     const { stages } = await getSkillFormConfig(tenant.skill_key);
     const wonKeys = new Set(stages.filter((s) => s.won).map((s) => s.key));
-    const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
+    const terminalKeys = stagesForaDeJogo(stages);
     const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
 
     const startISO = new Date(Date.now() - dias * 86400000).toISOString();

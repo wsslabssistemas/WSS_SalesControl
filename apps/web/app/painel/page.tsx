@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts, computeCooling } from "@/lib/agenda";
-import { computeDue, labelDia, stagesWithoutRecurrence } from "@/lib/recurrence";
+import { computeDue, labelDia, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
 import { whatsappNumber } from "@/lib/phone";
+import { computeRenovacoes } from "@/lib/renovacao";
 
 type Contact = {
   id: string;
@@ -16,6 +17,7 @@ type Contact = {
   custom: Record<string, unknown> | null;
   next_action_at: string | null;
   next_action_note: string | null;
+  contract_end: string | null;
 };
 type Ix = { contact_id: string | null; occurred_at: string; outcome: string | null };
 
@@ -59,7 +61,7 @@ export default async function PainelHome({
   const [{ data: contactsData }, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
     supabase
       .from("contacts")
-      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note")
+      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note, contract_end")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
     supabase
@@ -92,8 +94,11 @@ export default async function PainelHome({
   const contacts = (contactsData as Contact[] | null) ?? [];
   const ix = (ixData as Ix[] | null) ?? [];
 
-  const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
-  const emAberto = contacts.filter((c) => !terminalKeys.has(c.journey_stage)).length;
+  // FORA DE JOGO = terminal OU perda. Contar só `terminal` colocaria os 135
+  // leads que pararam de responder dentro de "em aberto" — e número inflado
+  // não parece defeito, parece um mês bom.
+  const foraDeJogo = stagesForaDeJogo(stages);
+  const emAberto = contacts.filter((c) => !foraDeJogo.has(c.journey_stage)).length;
 
   // Última interação por contato (para "esfriando").
   const lastByContact: Record<string, string> = {};
@@ -117,16 +122,19 @@ export default async function PainelHome({
   // furado é pior que combinado esquecido: o cliente lembra que marcou.
   const hojeISO = new Date().toISOString().slice(0, 10);
   const proximas = contacts
-    .filter((c) => c.next_action_at && c.next_action_at <= hojeISO && !terminalKeys.has(c.journey_stage))
+    .filter((c) => c.next_action_at && c.next_action_at <= hojeISO && !foraDeJogo.has(c.journey_stage))
     .map((c) => ({
       ...c,
       atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at!)) / 86400000),
     }))
     .sort((a, b) => b.atraso - a.atraso);
 
+  // RENOVAÇÃO: quem entra numa das três janelas (60/30/7) ou já venceu.
+  const renovacoes = computeRenovacoes(contacts, foraDeJogo);
+
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
   const perStage = stages
-    .filter((s) => !s.terminal)
+    .filter((s) => !s.terminal && !s.lost)
     .map((s) => ({ label: s.label, key: s.key, n: contacts.filter((c) => c.journey_stage === s.key).length }));
 
   const waLink = (phone: string | null) => {
@@ -237,6 +245,47 @@ export default async function PainelHome({
               <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
                 <Link href="/painel?ver=retornos#retornos" className="btn btn-sm btn-ghost">
                   Ver os outros {retornos.length - 8} no ponto de voltar →
+                </Link>
+              </li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      {/* RENOVAÇÃO — vem logo depois do combinado, e antes de esfriando: é
+          receita JÁ VENDIDA prestes a sair pela porta, e reconquistar custa
+          muito mais que renovar. O primeiro toque fala do RESULTADO, não de
+          renovação: quem só aparece para cobrar assinatura ensina o cliente a
+          lembrar do produto como despesa. */}
+      {renovacoes.length > 0 && (
+        <section id="renovacao" style={{ marginTop: 32 }}>
+          <div className="between" style={{ alignItems: "baseline" }}>
+            <h2 style={{ fontSize: 15, margin: 0 }}>Contratos a vencer</h2>
+            <span className="text-faint" style={{ fontSize: 13 }}>60, 30 e 7 dias antes</span>
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
+            {(ver === "renovacao" ? renovacoes : renovacoes.slice(0, 8)).map((r) => {
+              const wa = waLink(r.phone);
+              return (
+                <li key={r.contactId} className="row wrap" style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
+                  <span className={r.vencido ? "badge badge-danger" : r.janela === "condicao" ? "badge badge-warn" : "badge badge-brand"} style={{ minWidth: 62, justifyContent: "center" }}>
+                    {r.vencido ? "venceu" : `${r.diasParaVencer}d`}
+                  </span>
+                  <Link href={`/painel/contatos/${r.contactId}`} className="grow" style={{ minWidth: 120 }}>{r.name}</Link>
+                  <span className="text-faint" style={{ fontSize: 13 }}>{r.titulo}</span>
+                  {wa && (
+                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  <Link href={`/painel/responder?customer=${r.contactId}`} className="btn btn-sm btn-ghost">Responder</Link>
+                </li>
+              );
+            })}
+            {renovacoes.length > 8 && ver !== "renovacao" && (
+              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
+                <Link href="/painel?ver=renovacao#renovacao" className="btn btn-sm btn-ghost">
+                  Ver os outros {renovacoes.length - 8} a vencer →
                 </Link>
               </li>
             )}

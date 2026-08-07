@@ -10,7 +10,7 @@
  * O defeito real que originou este teste: `nome` casava por igualdade EXATA,
  * então `Nome Completo` não era reconhecido e o índice caía para a coluna 0.
  *
- * ESPERADO: 12/12.
+ * ESPERADO: 19/19.
  *
  *   node packages/db/tests/importacao_test.mjs
  */
@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const { detectColumns, parseCsv, detectDelimiter } = await import(
+const { detectColumns, parseCsv, detectDelimiter, parseDataBR } = await import(
   pathToFileURL(path.join(ROOT, "apps/web/lib/csv.ts")).href
 );
 
@@ -69,5 +69,23 @@ verifica("Excel-BR: separador ponto-e-vírgula + linhas", (() => {
   return [linhas.length, linhas[1][0], linhas[1][1]];
 })(), [3, "João Silva", "51 99999-9999"]);
 
-console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 12/12");
+// --------------------------------------------------- VIGÊNCIA DO CONTRATO
+// `new Date("03/08/2026")` no JavaScript é 8 de MARÇO, não 3 de agosto. Numa
+// planilha brasileira inteira isso vira vencimento errado em SILÊNCIO, e o
+// alerta de renovação dispara no mês errado — pior que não disparar.
+verifica("data pt-BR não vira mês trocado", parseDataBR("03/08/2026"), "2026-08-03");
+verifica("ano com dois dígitos", parseDataBR("03/08/26"), "2026-08-03");
+verifica("ISO passa direto", parseDataBR("2026-08-03"), "2026-08-03");
+verifica("vazio é vazio, não hoje", parseDataBR(""), null);
+verifica("lixo não vira data", parseDataBR("a combinar"), null);
+
+const vig = detectColumns(["nome", "telefone", "Data de matrícula", "Vencimento"]);
+verifica("acha início e vencimento", [vig.startIdx, vig.endIdx], [2, 3]);
+verifica(
+  "sem vigência na planilha devolve -1",
+  (() => { const d = detectColumns(["nome", "telefone"]); return [d.startIdx, d.endIdx]; })(),
+  [-1, -1],
+);
+
+console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 19/19");
 process.exit(falhas ? 1 : 0);

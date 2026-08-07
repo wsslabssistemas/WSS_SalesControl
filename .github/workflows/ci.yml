@@ -66,3 +66,7 @@ jobs:
       # nenhuma" e indistinguivel de "o codigo esta errado".
       - name: Catalogo de alvos da prospeccao
         run: node packages/db/tests/cnae_test.mjs
+      # Renovacao errada nao quebra tela: o contato acontece, o cliente
+      # responde, e o defeito so aparece na taxa de renovacao tres meses depois.
+      - name: Janelas de renovacao
+        run: node packages/db/tests/renovacao_test.mjs

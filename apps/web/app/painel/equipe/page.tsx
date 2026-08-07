@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { changeRole } from "./actions";
+import { stagesForaDeJogo } from "@/lib/recurrence";
 
 type Member = {
   id: string;
@@ -32,7 +33,7 @@ export default async function EquipePage({
 
   const { stages } = await getSkillFormConfig(tenant.skill_key);
   const wonKeys = new Set(stages.filter((s) => s.won).map((s) => s.key));
-  const terminalKeys = new Set(stages.filter((s) => s.terminal).map((s) => s.key));
+  const terminalKeys = stagesForaDeJogo(stages);
 
   const supabase = await createClient();
   const { data: members } = await supabase

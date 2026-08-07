@@ -34,6 +34,7 @@ export default async function NovoContatoPage({
         fields={cfg.fields}
         sources={cfg.sources}
         stages={cfg.stages}
+        contract={cfg.contract}
         erro={erro}
         submitLabel="Salvar contato"
       />
