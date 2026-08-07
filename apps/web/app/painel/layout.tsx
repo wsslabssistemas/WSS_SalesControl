@@ -3,7 +3,9 @@ import Link from "next/link";
 import { requireUser, getActiveTenant, listMemberships } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/platform";
 import { loadEntitlements, MODULES } from "@/lib/entitlements";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME, MAKER } from "@/lib/brand";
+import { carregarAparencia } from "@/lib/aparencia-db";
+import { variaveisDaMarca } from "@/lib/aparencia";
 import PainelNav from "./PainelNav";
 import TenantSwitcher from "./TenantSwitcher";
 import { signOut } from "./actions";
@@ -23,6 +25,13 @@ export default async function PainelLayout({
   const ent = membership?.tenant
     ? await loadEntitlements(membership.tenant.id, membership.tenant.skill_key)
     : null;
+
+  // APARÊNCIA DA EMPRESA. Num produto multi-empresa, o vendedor ver a marca da
+  // PRÓPRIA casa muda a percepção de "sistema de terceiro que me obrigaram a
+  // usar" para "nosso sistema" — e adoção em PME morre por essa distância, não
+  // por falta de recurso.
+  const aparencia = membership?.tenant ? await carregarAparencia(membership.tenant.id) : { cor: null, logoUrl: null };
+  const marca = variaveisDaMarca(aparencia) as React.CSSProperties;
   const moduleNav = (ent?.unlocked ?? []).map((m) => ({ href: MODULES[m].href, label: MODULES[m].label }));
 
   const nav = [
@@ -43,15 +52,21 @@ export default async function PainelLayout({
     { href: "/painel/dna", label: "DNA" },
     { href: "/painel/automacao", label: "Automação" },
     { href: "/painel/tutorial", label: "Tutorial" },
+    ...(showManager ? [{ href: "/painel/aparencia", label: "Aparência" }] : []),
     ...(showAdmin ? [{ href: "/painel/admin", label: "Fabricante" }] : []),
   ];
 
   return (
-    <>
+    <div style={marca}>
       <header className="appbar">
         <Link href="/painel" className="brand-lockup">
-          <Image src="/icons/icon-192.png" alt="" width={30} height={30} priority />
-          <span>{BRAND_NAME}</span>
+          {aparencia.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={aparencia.logoUrl} alt="" height={30} style={{ height: 30, width: "auto", maxWidth: 120, objectFit: "contain" }} />
+          ) : (
+            <Image src="/icons/icon-192.png" alt="" width={30} height={30} priority />
+          )}
+          <span>{membership?.tenant?.name ?? BRAND_NAME}</span>
         </Link>
         <PainelNav items={nav} />
         <div className="row" style={{ marginLeft: "auto", gap: 14 }}>
@@ -74,6 +89,15 @@ export default async function PainelLayout({
       <div className="container" style={{ padding: "28px 1.25rem 64px" }}>
         {children}
       </div>
-    </>
+
+      {/* O RODAPÉ NÃO É PERSONALIZÁVEL, e é decisão. Marca branca completa
+          esconderia o fabricante — e o fabricante é quem responde pela LGPD,
+          por quem vê o dado e por quem conserta quando quebra. Esconder isso
+          não é personalização: é confundir o cliente do cliente sobre com quem
+          ele está falando. */}
+      <footer className="container" style={{ padding: "0 1.25rem 32px", fontSize: 12, opacity: 0.5 }}>
+        {BRAND_NAME} — feito por <Link href="/painel/sobre">{MAKER}</Link>
+      </footer>
+    </div>
   );
 }

@@ -75,3 +75,7 @@ jobs:
       # numero que o sistema afirma.
       - name: Placar da equipe (o piso de amostra)
         run: node packages/db/tests/placar_test.mjs
+      # Cor vai para `style` inline e logo para `src`: campo livre nos dois e
+      # injecao. E nao da erro na tela de quem configurou — da na de quem usa.
+      - name: Aparencia por empresa (o que e aceito)
+        run: node packages/db/tests/aparencia_test.mjs
