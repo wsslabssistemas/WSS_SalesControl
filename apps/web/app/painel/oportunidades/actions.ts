@@ -33,6 +33,11 @@ export async function saveIcp(formData: FormData) {
   const extras = parseLines(formData.get("cnaes"));
   const cnaes = [...new Set([...cnaesDosAlvos(alvos), ...extras])];
   const municipios = parseLines(formData.get("municipios"));
+  // CEP da própria empresa: é o ponto de partida da ordenação por
+  // proximidade. Guardado fora do `icp` porque não é perfil de cliente — é
+  // fato da casa, e serve a outras telas depois.
+  const cepCru = String(formData.get("cep") ?? "").replace(/\D/g, "");
+  const cep = cepCru.length === 8 ? cepCru : null;
 
   const supabase = await createClient();
   const { data: t } = await supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle();
@@ -40,7 +45,7 @@ export async function saveIcp(formData: FormData) {
 
   await supabase
     .from("tenants")
-    .update({ settings: { ...settings, icp: { cnaes, municipios, extras, updated_at: new Date().toISOString() } } })
+    .update({ settings: { ...settings, cep, icp: { cnaes, municipios, extras, updated_at: new Date().toISOString() } } })
     .eq("id", tenant.id);
 
   redirect("/painel/oportunidades?ok=1");

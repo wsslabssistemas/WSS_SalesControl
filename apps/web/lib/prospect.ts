@@ -181,3 +181,52 @@ export async function getCompanyDetail(cnpj: string): Promise<CompanyDetail | nu
     situacao: str("descricao_situacao_cadastral") ?? str("situacao_cadastral"),
   };
 }
+
+
+/** Concorrência limitada — rajada derruba API pública (a lição do PNCP). */
+async function mapLimit<T, R>(itens: T[], limite: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(itens.length);
+  let i = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limite, itens.length) }, async () => {
+      while (i < itens.length) {
+        const k = i++;
+        out[k] = await fn(itens[k]);
+      }
+    }),
+  );
+  return out;
+}
+
+export type EnderecoDaEmpresa = {
+  cnpj: string;
+  bairro: string | null;
+  cep: string | null;
+  municipio: string | null;
+};
+
+/**
+ * Busca endereço de várias empresas de uma vez.
+ *
+ * POR QUE ISTO É UMA SEGUNDA ETAPA E NÃO PARTE DA BUSCA: a busca pública NÃO
+ * devolve endereço — só cnpj, razão social e situação (verificado em ago/2026).
+ * O endereço só existe no enriquecimento, uma chamada por CNPJ.
+ *
+ * `teto` existe para o custo de tempo não virar tela travada: 120 chamadas com
+ * concorrência 5 já são dezenas de segundos, e ninguém espera isso olhando uma
+ * lista. Falha de uma empresa NÃO derruba o lote — volta sem endereço, e a
+ * tela mostra "—" em vez de sumir com a empresa.
+ */
+export async function enderecosDe(cnpjs: string[], teto = 40): Promise<Map<string, EnderecoDaEmpresa>> {
+  const alvos = cnpjs.slice(0, teto);
+  const linhas = await mapLimit(alvos, 5, async (cnpj) => {
+    const j = await fetchReceita(cnpj);
+    return {
+      cnpj,
+      bairro: j?.bairro ? String(j.bairro) : null,
+      cep: j?.cep ? String(j.cep) : null,
+      municipio: j?.municipio ? String(j.municipio) : null,
+    } as EnderecoDaEmpresa;
+  });
+  return new Map(linhas.map((l) => [l.cnpj, l]));
+}

@@ -79,3 +79,7 @@ jobs:
       # injecao. E nao da erro na tela de quem configurou — da na de quem usa.
       - name: Aparencia por empresa (o que e aceito)
         run: node packages/db/tests/aparencia_test.mjs
+      # Aqui a tentacao e prometer precisao que o dado nao tem: a fonte publica
+      # nao devolve coordenada, entao "raio de 3 km" seria invencao.
+      - name: Proximidade na prospeccao
+        run: node packages/db/tests/proximidade_test.mjs
