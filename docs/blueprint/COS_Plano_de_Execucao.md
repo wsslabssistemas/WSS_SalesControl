@@ -86,7 +86,7 @@ importantes e **não são agora**:
 | Congelado | Por quê |
 |---|---|
 | ~~**Migrar os dados da Be Fitness do Base44**~~ | **DESCONGELADO e FEITO (ago/2026).** O motivo original ("valor de aprendizado baixo") deixou de valer quando a empresa externa virou incerta: sem ela, o piloto passou a ser a única fonte de uso real. E ele trouxe mais do que se esperava — ver abaixo. |
-| **Automação (WhatsApp Cloud API + motor proativo agendado)** | Decisão do fundador: automatizar antes de provar que a resposta manual é boa é otimizar a coisa errada. Depende de conta Meta e amarra o produto num canal antes da hora. |
+| ~~**Automação (WhatsApp Cloud API + motor proativo agendado)**~~ | **DESCONGELADA PARA A BE FITNESS em 8/ago/2026**, por decisão do fundador — e só para ela. O motivo original ("automatizar antes de provar que a resposta manual é boa") deixou de valer: o cockpit manual rodou, o piloto entrou e a tese se sustentou. A verificação da Meta sai no **CNPJ da Be Fitness**, que é o único que existe. Para o Kairós vender a si mesmo, o remetente segue indefinido. Ver §7. |
 | ~~**M2 — ligar desfecho a escola**~~ | **DESTRAVADO em ago/2026.** O piloto do Base44 entrou: 273 contatos e 2.105 interações da Be Fitness, com **846 desfechos registrados**. Deixou de ser bloqueio de dado. |
 | **Volume da prospecção (base própria da Receita)** | Custo e esforço altos para um gargalo que hoje não é o gargalo. |
 
@@ -521,7 +521,7 @@ pesquisa séria de folclore repetido.
 
 ### 6. Depois disso
 
-- [ ] **Qualificação de compra (MEDDIC-lite)** — orçamento, processo de
+- [x] **Qualificação de compra (MEDDIC-lite)** — FEITO (`lib/qualificacao.ts`, `qualificacao_test.mjs` 12/12 no CI). O checkbox ficou aberto por engano. — orçamento, processo de
       aprovação, critério de decisão e defensor interno. Já temos `decisor`.
 - [x] **Fila de segmentos — FECHADA.** ~~oficina~~ ✅ (10º) · ~~salão de beleza~~ ✅ (11º) ·
       ~~casa de festa~~ ✅ (12º) · ~~pet~~ ✅ (13º) · ~~curso~~ ✅ (14º, ago/2026).
@@ -664,3 +664,73 @@ para usar. Enquanto não acontecer, o produto é uma hipótese bem construída.
 Com a automação congelada, o caminho mais curto para essa prova é o cockpit
 manual: copiar e colar funciona, e é suficiente para uma primeira empresa
 externa usar de verdade.
+
+---
+
+## 7. Automação da Be Fitness (descongelada em 8/ago/2026)
+
+**A decisão:** automatizar a Be Fitness pela **API oficial da Meta**, verificada
+no CNPJ da academia. O Kairós vendendo o Kairós fica para depois, porque **não
+existe CNPJ da WSS Labs** — e é isso, não preferência técnica, que separa os
+dois casos.
+
+### Sobre n8n (e ferramentas do tipo)
+
+Perguntado pelo fundador. A resposta curta: **n8n não é um canal de WhatsApp.**
+É um orquestrador — ele agenda e encadeia passos. Para falar com o WhatsApp,
+o nó dele chama ou a Cloud API oficial (mesma conta Meta, mesmo CNPJ, mesma
+burocracia) ou um provedor não-oficial (mesmo risco de banimento). **Ele não
+contorna a pergunta que importa; só a move de lugar.**
+
+E há um custo próprio, que é o que decide contra: n8n seria um **terceiro
+sistema**, com lógica de negócio morando num fluxo visual que **não está no Git,
+não tem teste e não conhece** a trava anti-invenção, a cota de IA, a RLS nem a
+biblioteca curada. O `CLAUDE.md` diz que o repositório é a verdade; metade das
+regras num fluxo que só existe dentro de uma ferramenta é o oposto disso.
+
+Para o pedaço que o n8n de fato resolve — **agendar o motor proativo** — a
+stack já decidiu **Inngest**, que roda com o mesmo código, no mesmo repositório,
+com os mesmos testes.
+
+*Onde ele seria legítimo:* cola de integração pontual que o fundador queira
+montar sozinho, sem código, fora do caminho crítico. Não para o motor.
+
+### O que já está pronto (sem credencial nenhuma)
+
+- **`lib/envio.ts`** — a porta única. O canal troca sem mexer em tela.
+- **`lib/whatsapp-webhook.ts` + a rota no catch-all Hono** — recebe mensagem,
+  confere assinatura, acha a empresa pelo `phone_number_id` **no nosso
+  cadastro**, casa o contato nos quatro formatos de telefone da base, cadastra
+  quem é novo e grava como `customer_message`. `webhook_test.mjs` 41/41.
+- **`0052`** — `external_id` com índice único parcial: a Meta reenvia, e sem
+  isso a mensagem contaria duas vezes na métrica que cobra.
+- **E.164 brasileiro**, com o bug de DDD 55 corrigido.
+
+### ⚠ O que a janela de 24 horas revelou, e que muda o trabalho
+
+Responder quem escreveu nas últimas 24h é **texto livre e sem cobrança**.
+Fora disso, só **modelo aprovado pela Meta**, e cobrado.
+
+O Responder quase sempre cabe na janela. **A fila, não** — ela existe
+justamente para falar com quem parou de falar. Follow-up, recompra e renovação
+são, por definição, fora da janela.
+
+**Ou seja: o coração do produto é o caso que exige modelo aprovado.** Isso não
+é código, é cadastro na Meta, e cada modelo é revisado por eles. Os quatro que
+a fila precisa correspondem aos quatro motivos dela: combinado, renovação,
+follow-up e recompra.
+
+### O que falta, e de quem é
+
+| O quê | De quem |
+|---|---|
+| Conta Meta Business no CNPJ da Be Fitness + número dedicado | Fundador |
+| `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` na Vercel | Fundador |
+| Gravar o `phone_number_id` em `tenants.settings.whatsapp` | Eu, com o número em mãos |
+| Submeter os 4 modelos de mensagem | Fundador (texto por mim) |
+| Enviar pelo canal oficial a partir da fila | Eu, depois da credencial |
+| Motor proativo agendado (Inngest) | Eu — não depende da Meta |
+
+**A primeira mensagem pelo canal oficial vai para o número do próprio fundador.**
+O provedor da Cloud API está escrito contra a documentação e nunca foi
+executado contra a API real.
