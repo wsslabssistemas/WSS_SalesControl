@@ -5,6 +5,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts, computeCooling } from "@/lib/agenda";
 import { computeDue, labelDia, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
 import { linkDeWhatsApp } from "@/lib/envio";
+import { lerTudo } from "@/lib/paginado";
 import { computeRenovacoes } from "@/lib/renovacao";
 
 type Contact = {
@@ -58,12 +59,23 @@ export default async function PainelHome({
   const supabase = await createClient();
 
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-  const [{ data: contactsData }, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
-    supabase
-      .from("contacts")
-      .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note, contract_end")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
+  // PAGINADO porque os números desta tela são CONTAGENS: `contacts.length` é o
+  // total exibido e o funil conta por etapa sobre este mesmo array. O corte
+  // silencioso do PostgREST em 1.000 linhas não deixaria a tela quebrada — ela
+  // mostraria "1.000 contatos" e um funil proporcionalmente errado, com toda a
+  // aparência de estar certo. Com 273 contatos isso nunca apareceu; com 9 mil,
+  // seria o primeiro número que o fundador olharia de manhã.
+  const [contactsData, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
+    lerTudo<Contact>(
+      (de, ate) => supabase
+        .from("contacts")
+        .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note, contract_end")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .order("id")
+        .range(de, ate),
+      { rotulo: "contatos do painel" },
+    ),
     supabase
       .from("memberships")
       .select("id", { count: "exact", head: true })
@@ -91,7 +103,7 @@ export default async function PainelHome({
   const dnaIncompleto = dnaSections.length > 0 && dnaFilled < dnaSections.length;
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
-  const contacts = (contactsData as Contact[] | null) ?? [];
+  const contacts = contactsData;
   const ix = (ixData as Ix[] | null) ?? [];
 
   // FORA DE JOGO = terminal OU perda. Contar só `terminal` colocaria os 135

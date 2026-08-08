@@ -7,6 +7,7 @@ import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/rec
 import { computeRenovacoes } from "@/lib/renovacao";
 import { montarFila, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
 import { paraE164BR } from "@/lib/phone";
+import { lerTudo } from "@/lib/paginado";
 import { ItemDaFila } from "./ItemDaFila";
 
 export const metadata = { title: "Fila de envio" };
@@ -51,18 +52,36 @@ export default async function FilaPage({
   const { stages, cadences, recurrence } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
-  const [{ data: cData }, { data: ixData }, { data: mData }] = await Promise.all([
-    supabase
-      .from("contacts")
-      .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action_note, contract_end, custom")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
-    supabase
-      .from("interactions")
-      .select("contact_id, occurred_at")
-      .eq("tenant_id", tenant.id)
-      .order("occurred_at", { ascending: false })
-      .limit(3000),
+  // LEITURA PAGINADA, e não é otimização — é correção.
+  //
+  // Estas duas consultas não tinham `.range()`, e o PostgREST corta em 1.000
+  // linhas SEM AVISAR. Com 273 contatos ninguém via; com os 9 mil que vão
+  // entrar, a fila passaria a calcular sobre 1.000 contatos ARBITRÁRIOS (não
+  // há ordenação declarada) e a lista do dia sairia errada com cara de certa.
+  //
+  // O `limit(3000)` das interações era a mesma doença com número maior: quem
+  // tivesse o último contato mais antigo que a 3.000ª interação apareceria
+  // como "nunca contatado", e entraria na fila indevidamente.
+  const [cData, ixData, { data: mData }] = await Promise.all([
+    lerTudo<Contact>(
+      (de, ate) => supabase
+        .from("contacts")
+        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action_note, contract_end, custom")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .order("id")
+        .range(de, ate),
+      { rotulo: "contatos da fila" },
+    ),
+    lerTudo<{ contact_id: string | null; occurred_at: string }>(
+      (de, ate) => supabase
+        .from("interactions")
+        .select("contact_id, occurred_at")
+        .eq("tenant_id", tenant.id)
+        .order("occurred_at", { ascending: false })
+        .range(de, ate),
+      { rotulo: "interações da fila" },
+    ),
     supabase
       .from("memberships")
       .select("id, user:profiles(full_name, email)")
@@ -70,13 +89,13 @@ export default async function FilaPage({
       .eq("status", "active"),
   ]);
 
-  const todos = (cData as Contact[] | null) ?? [];
+  const todos = cData;
   const contatos = resp ? todos.filter((c) => c.owner_id === resp) : todos;
   const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
     .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }));
 
   const ultimo: Record<string, string> = {};
-  for (const i of ((ixData as { contact_id: string | null; occurred_at: string }[] | null) ?? [])) {
+  for (const i of ixData) {
     if (i.contact_id && !ultimo[i.contact_id]) ultimo[i.contact_id] = i.occurred_at;
   }
 
