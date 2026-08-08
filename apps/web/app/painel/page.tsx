@@ -4,7 +4,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts, computeCooling } from "@/lib/agenda";
 import { computeDue, labelDia, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
-import { whatsappNumber } from "@/lib/phone";
+import { linkDeWhatsApp } from "@/lib/envio";
 import { computeRenovacoes } from "@/lib/renovacao";
 
 type Contact = {
@@ -137,10 +137,7 @@ export default async function PainelHome({
     .filter((s) => !s.terminal && !s.lost)
     .map((s) => ({ label: s.label, key: s.key, n: contacts.filter((c) => c.journey_stage === s.key).length }));
 
-  const waLink = (phone: string | null) => {
-    const wa = whatsappNumber(phone);
-    return wa ? `https://wa.me/${wa}` : null;
-  };
+  const waLink = (phone: string | null) => linkDeWhatsApp(phone);
 
   return (
     <main>

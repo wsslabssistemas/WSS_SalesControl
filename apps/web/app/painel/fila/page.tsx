@@ -6,7 +6,7 @@ import { computeDueTouches } from "@/lib/cadence";
 import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
 import { computeRenovacoes } from "@/lib/renovacao";
 import { montarFila, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
-import { whatsappNumber } from "@/lib/phone";
+import { paraE164BR } from "@/lib/phone";
 import { ItemDaFila } from "./ItemDaFila";
 
 export const metadata = { title: "Fila de envio" };
@@ -176,17 +176,21 @@ export default async function FilaPage({
               (o cliente lembra que marcou), depois renovação (receita já
               vendida), depois follow-up e recompra. */}
           <ul style={{ listStyle: "none", padding: 0, marginTop: 8 }}>
-            {fila.slice(0, 40).map((f) => (
-              <ItemDaFila
-                key={f.contactId}
-                contactId={f.contactId}
-                nome={f.name}
-                numero={whatsappNumber(f.phone)}
-                motivo={f.motivo}
-                intencao={f.intencao}
-                atraso={f.atraso}
-              />
-            ))}
+            {fila.slice(0, 40).map((f) => {
+              const num = paraE164BR(f.phone);
+              return (
+                <ItemDaFila
+                  key={f.contactId}
+                  contactId={f.contactId}
+                  nome={f.name}
+                  numero={num.ok ? num.digitos : null}
+                  ajusteNoNumero={num.ok ? num.ajuste : null}
+                  motivo={f.motivo}
+                  intencao={f.intencao}
+                  atraso={f.atraso}
+                />
+              );
+            })}
           </ul>
           {fila.length > 40 && (
             <p className="text-faint" style={{ fontSize: 13, textAlign: "center" }}>

@@ -3,15 +3,15 @@ import { getActiveTenant } from "@/lib/auth";
 import { loadEntitlements } from "@/lib/entitlements";
 import { getCompanyDetail } from "@/lib/prospect";
 import { addOpportunity } from "../actions";
+import { linkDeWhatsApp } from "@/lib/envio";
 
 export const metadata = { title: "Empresa" };
 
-function waLink(phone: string | null): string | null {
-  if (!phone) return null;
-  const d = phone.replace(/\D/g, "");
-  if (!d) return null;
-  return `https://wa.me/${d.startsWith("55") ? d : "55" + d}`;
-}
+// A versão anterior desta função decidia por `d.startsWith("55")` e
+// CORROMPIA número de DDD 55 (Santa Maria/RS): o celular 55 98765-4321 era
+// lido como "já tem código de país" e virava um número truncado. Agora usa a
+// mesma regra de todo o resto — ver `lib/phone.ts`.
+const waLink = (phone: string | null) => linkDeWhatsApp(phone);
 
 function fmtPhone(phone: string | null): string {
   if (!phone) return "—";

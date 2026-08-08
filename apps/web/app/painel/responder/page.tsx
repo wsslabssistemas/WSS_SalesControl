@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries, distinctCategories } from "@/lib/match";
-import { displayPhone, whatsappNumber } from "@/lib/phone";
+import { displayPhone } from "@/lib/phone";
+import { linkDeWhatsApp } from "@/lib/envio";
 import JourneyBar from "@/components/JourneyBar";
 import { hasAIKey } from "@/lib/ai";
 import { CopyButton } from "./CopyButton";
@@ -99,7 +100,7 @@ export default async function ResponderPage({
   }
 
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
-  const wa = contact ? whatsappNumber(contact.phone) : null;
+  const wa = contact ? linkDeWhatsApp(contact.phone) : null;
   // Prospecção: o contato nunca nos escreveu — somos nós que iniciamos.
   const primeiroContato = !!contact && !history.some((h) => h.direction === "inbound");
 
@@ -125,7 +126,7 @@ export default async function ResponderPage({
             </div>
             <div className="row" style={{ gap: 12 }}>
               {wa ? (
-                <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
+                <a className="btn btn-sm" href={wa} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
                   WhatsApp
                 </a>
               ) : (

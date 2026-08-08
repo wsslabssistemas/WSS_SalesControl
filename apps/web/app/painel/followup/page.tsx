@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeDueTouches } from "@/lib/cadence";
-import { whatsappNumber } from "@/lib/phone";
+import { linkDeWhatsApp } from "@/lib/envio";
 
 export const metadata = { title: "Follow-up" };
 
@@ -67,10 +67,7 @@ export default async function FollowUpPage({
   const pendentes = computeDueTouches(alvo, ultimoToque, stages, cadences);
 
   const nomeDe = (id: string | null) => membros.find((m) => m.id === id)?.nome ?? "Sem responsável";
-  const waLink = (phone: string | null) => {
-    const wa = whatsappNumber(phone);
-    return wa ? `https://wa.me/${wa}` : null;
-  };
+  const waLink = (phone: string | null) => linkDeWhatsApp(phone);
 
   const atrasadosGraves = pendentes.filter((p) => p.overdueDays >= 7).length;
 

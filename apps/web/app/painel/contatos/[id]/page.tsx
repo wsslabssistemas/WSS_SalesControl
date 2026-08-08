@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { displayPhone, whatsappNumber } from "@/lib/phone";
+import { displayPhone } from "@/lib/phone";
+import { linkDeWhatsApp } from "@/lib/envio";
 import JourneyBar from "@/components/JourneyBar";
 import { deleteContact, moveStage, updateStageStart } from "../actions";
 import { registrarAtendimento, excluirAtendimento } from "../../atendimentos/actions";
@@ -94,7 +95,7 @@ export default async function ContatoDetalhe({
   const stageLabel = stages.find((s) => s.key === c.journey_stage)?.label ?? c.journey_stage;
   const del = deleteContact.bind(null, id);
   const move = moveStage.bind(null, id);
-  const wa = whatsappNumber(c.phone);
+  const wa = linkDeWhatsApp(c.phone);
 
   const rows: { label: string; value: string }[] = [
     { label: "Telefone", value: displayPhone(c.phone) },
@@ -117,7 +118,7 @@ export default async function ContatoDetalhe({
         </div>
         <div className="row" style={{ gap: 12 }}>
           {wa && (
-            <a className="btn btn-sm" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
+            <a className="btn btn-sm" href={wa} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "#0b2e13", border: "none" }}>
               WhatsApp
             </a>
           )}

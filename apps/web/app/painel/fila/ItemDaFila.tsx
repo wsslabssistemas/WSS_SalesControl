@@ -23,6 +23,7 @@ export function ItemDaFila({
   contactId,
   nome,
   numero,
+  ajusteNoNumero,
   motivo,
   intencao,
   atraso,
@@ -30,6 +31,14 @@ export function ItemDaFila({
   contactId: string;
   nome: string;
   numero: string | null;
+  /**
+   * Preenchido quando o telefone guardado precisou ser INTERPRETADO para
+   * virar E.164 — hoje, na prática, o celular antigo que ganhou o nono
+   * dígito. Na base da Be Fitness isso é 39% dos contatos, e é justamente
+   * por ser tanta gente que o aviso não pode ficar só no log: quem clica
+   * precisa ver o que foi deduzido ANTES de a mensagem sair.
+   */
+  ajusteNoNumero?: string | null;
   motivo: MotivoDaFila;
   intencao: string;
   atraso: number;
@@ -107,6 +116,11 @@ export function ItemDaFila({
           ) : (
             <>
               <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: 14 }}>{texto}</p>
+              {link && ajusteNoNumero && (
+                <p className="badge badge-warn" style={{ marginTop: 10, whiteSpace: "normal", textAlign: "left" }}>
+                  {ajusteNoNumero}
+                </p>
+              )}
               <div className="row wrap" style={{ gap: 8, marginTop: 12, alignItems: "center" }}>
                 {link ? (
                   <a
@@ -120,7 +134,7 @@ export function ItemDaFila({
                   </a>
                 ) : (
                   <span className="text-faint" style={{ fontSize: 12 }}>
-                    Sem telefone cadastrado — copie e envie por onde falar com ele.
+                    Sem telefone válido — copie e envie por onde falar com ele.
                   </span>
                 )}
                 <form

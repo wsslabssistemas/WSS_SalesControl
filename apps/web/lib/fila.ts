@@ -86,3 +86,8 @@ export function linkDeEnvio(numeroE164Digits: string | null, texto: string): str
   if (!numeroE164Digits) return null;
   return `https://wa.me/${numeroE164Digits}?text=${encodeURIComponent(texto)}`;
 }
+// NOTA: esta função recebe o número JÁ derivado (`lib/phone.ts` → `paraE164BR`)
+// e por isso continua burra de propósito — quem sabe converter é um lugar só.
+// Quando o canal virar API oficial, quem muda é `lib/envio.ts`; esta linha
+// segue igual, porque link para humano clicar não deixa de existir: ele é o
+// que sobra quando a janela de 24 horas fecha.
