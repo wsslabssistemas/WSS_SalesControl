@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 async function requireAdmin() {
   const m = await getActiveTenant();
@@ -33,21 +34,48 @@ export async function inviteMember(formData: FormData) {
   // mandava para o painel, e a pessoa usava o sistema **sem nunca ter definido
   // senha** — no dia seguinte não entrava mais, porque o link do convite é de
   // uso único. Do lado dela, o sistema parava de funcionar sem explicação.
+  // A origem tem que ser ABSOLUTA. Vazia, o Supabase recusa o `redirectTo` e
+  // o convite inteiro falha — por isso o cabeçalho entra como último recurso,
+  // em vez de deixar montar "/auth/callback" solto.
+  const h = await headers();
   const site =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    (h.get("host") ? `https://${h.get("host")}` : "");
+  const destino = `${site}/auth/callback?type=invite`;
+
   const { data, error } = await admin.auth.admin.generateLink({
     type: "invite",
     email,
-    options: { redirectTo: `${site}/auth/callback?type=invite` },
+    options: { redirectTo: destino },
   });
+
   if (!error && data?.user) {
     userId = data.user.id;
     link = data.properties?.action_link ?? null;
   } else {
-    // Já tem conta: só vincula.
+    // JÁ TEM CONTA — e aqui estava o defeito que o fundador viu.
+    //
+    // `generateLink({type:"invite"})` só funciona para e-mail que ainda não
+    // existe. Na segunda tentativa com a mesma pessoa ele falha, o código
+    // vinculava a membership e seguia SEM LINK NENHUM: a tela dizia que deu
+    // certo e não havia nada para mandar. Como a primeira tentativa já cria a
+    // conta, bastava convidar alguém duas vezes para cair aqui para sempre.
+    //
+    // A saída é gerar um link de RECUPERAÇÃO: ele leva à mesma tela de criar
+    // senha e serve tanto para quem nunca definiu uma quanto para quem
+    // esqueceu. Do lado de quem recebe, é o mesmo convite.
     const { data: uid } = await admin.rpc("get_user_id_by_email", { p_email: email });
     userId = (uid as string | null) ?? null;
+
+    if (userId) {
+      const { data: rec } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo: `${site}/auth/callback?type=recovery` },
+      });
+      link = rec?.properties?.action_link ?? null;
+    }
   }
 
   if (!userId) {
