@@ -155,11 +155,18 @@ contract:
 # (`availability_rules` da empresa), não uma grade de atendimento. Todo
 # horário aberto é válido, porque nenhum deles está disputado.
 # ---------------------------------------------------------------------
+#
+# `offer_by_turno` é a consequência direta disso. Como a janela é o
+# funcionamento inteiro (06:30 às 22:00 na Be Fitness), oferecer a hora
+# exata fazia o motor propor 6h30 da manhã para todo mundo — o primeiro
+# horário livre do dia. Turno é como a pessoa responde de verdade:
+# "quinta de manhã ou quinta à noite?".
 scheduling:
   enabled: true
   default_duration_min: 60
   slot_step_min: 60
   min_advance_min: 120
+  offer_by_turno: true
 
 lead_sources:
   - whatsapp

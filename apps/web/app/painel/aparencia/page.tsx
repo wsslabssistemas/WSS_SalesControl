@@ -34,7 +34,7 @@ export default async function AparenciaPage({
       {erro && <p className="badge badge-danger mt-16">{erro}</p>}
 
       {isAdmin ? (
-        <form action={salvarAparencia} className="card mt-16 stack" style={{ gap: 16 }}>
+        <form action={salvarAparencia} encType="multipart/form-data" className="card mt-16 stack" style={{ gap: 16 }}>
           <label className="text-dim" style={{ fontSize: 13 }}>
             <span style={{ display: "block", marginBottom: 6 }}>Cor da marca</span>
             <div className="row" style={{ gap: 10, alignItems: "center" }}>
@@ -47,11 +47,12 @@ export default async function AparenciaPage({
           </label>
 
           <label className="text-dim" style={{ fontSize: 13 }}>
-            <span style={{ display: "block", marginBottom: 6 }}>Logo (endereço https)</span>
-            <input name="logo_url" defaultValue={a.logoUrl ?? ""} placeholder="https://suaempresa.com.br/logo.png" />
+            <span style={{ display: "block", marginBottom: 6 }}>Logo</span>
+            <input type="file" name="logo_arquivo" accept="image/png,image/jpeg,image/webp" />
             <span className="text-faint" style={{ display: "block", fontSize: 12, marginTop: 6 }}>
-              Precisa ser <code>https://</code>. Endereço <code>http://</code> é bloqueado
-              pelo navegador e a logo sumiria sem aviso nenhum.
+              Escolha o arquivo no seu computador ou celular. PNG, JPG ou WEBP, até 512 KB.
+              Fundo transparente (PNG) fica melhor no cabeçalho.
+              {a.logoUrl && " Enviar um arquivo novo substitui o atual."}
             </span>
           </label>
 
@@ -60,8 +61,27 @@ export default async function AparenciaPage({
               <span className="text-faint" style={{ fontSize: 12 }}>Hoje:</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={a.logoUrl} alt="Logo atual" style={{ height: 32, width: "auto", maxWidth: 140, objectFit: "contain" }} />
+              <label className="text-faint row" style={{ fontSize: 12, gap: 5, alignItems: "center" }}>
+                <input type="checkbox" name="remover" value="1" />
+                remover a logo
+              </label>
             </div>
           )}
+
+          <details>
+            <summary className="text-faint" style={{ fontSize: 12, cursor: "pointer" }}>
+              Já tenho a logo publicada num site
+            </summary>
+            <div style={{ marginTop: 8 }}>
+              <input name="logo_url" defaultValue="" placeholder="https://suaempresa.com.br/logo.png" />
+              <span className="text-faint" style={{ display: "block", fontSize: 12, marginTop: 6 }}>
+                Precisa apontar direto para o arquivo, terminando em <code>.png</code> ou{" "}
+                <code>.jpg</code>. Link de Instagram, Google Drive ou Canva devolve uma
+                página, não a imagem — com eles use o envio de arquivo acima. Se você
+                enviar um arquivo, ele tem preferência sobre este campo.
+              </span>
+            </div>
+          </details>
 
           <button type="submit" className="btn btn-primary" style={{ justifySelf: "start" }}>Salvar</button>
         </form>

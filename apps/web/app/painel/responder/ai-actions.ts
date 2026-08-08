@@ -13,8 +13,7 @@ import { lerQualificacao, blocoParaPrompt } from "@/lib/qualificacao";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
 import { revalidatePath } from "next/cache";
-import { buscarVagas, marcarCompromisso } from "../agenda/horarios-actions";
-import { escolherOpcoes, descreverVaga } from "@/lib/scheduling";
+import { opcoesDeHorario, marcarCompromisso } from "../agenda/horarios-actions";
 
 export type GerarResult =
   | { ok: true; data: AiAnswer }
@@ -192,10 +191,10 @@ export async function gerarResposta(input: {
   // alguém quer marcar — e no modo automático a venda não fecha.
   let horarios = "";
   try {
-    const vagas = await buscarVagas({ membershipId: donoDoContato, limite: 40 });
-    if (vagas.length) {
-      horarios = escolherOpcoes(vagas, 4).map(descreverVaga).join(" | ");
-    }
+    // O formato (hora exata ou turno) vem do manifesto do ramo — ver
+    // `opcoesDeHorario`. Aqui só interessa que sejam opções reais.
+    const opcoes = await opcoesDeHorario(4, donoDoContato);
+    if (opcoes.length) horarios = opcoes.join(" | ");
   } catch {
     // agenda é complemento; se falhar, o motor segue sem oferecer horário
   }

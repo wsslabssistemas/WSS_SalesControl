@@ -49,10 +49,21 @@ export async function buscarVagas(input: {
   });
 }
 
-/** As 2 ou 3 melhores opções, já em texto — para o motor oferecer. */
+/**
+ * As 2 ou 3 melhores opções, já em texto — para o motor oferecer.
+ *
+ * Quem decide se sai hora ou turno é o MANIFESTO, não esta função: é dado do
+ * ramo, e o núcleo não pode saber que academia é acesso livre e barbearia
+ * não. Por isso a config é lida aqui e repassada às duas funções puras.
+ */
 export async function opcoesDeHorario(quantas = 3, membershipId?: string | null): Promise<string[]> {
+  const membership = await getActiveTenant();
+  if (!membership?.tenant) return [];
+  const { scheduling } = await getSkillFormConfig(membership.tenant.skill_key);
+  const porTurno = scheduling?.offer_by_turno === true;
+
   const vagas = await buscarVagas({ membershipId, limite: 40 });
-  return escolherOpcoes(vagas, quantas).map(descreverVaga);
+  return escolherOpcoes(vagas, quantas, porTurno).map((v) => descreverVaga(v, porTurno));
 }
 
 /** Marca o compromisso, recusando se o horário já tiver sido tomado. */

@@ -50,6 +50,63 @@ export function logoValida(v: string | null | undefined): string | null {
   }
 }
 
+/**
+ * OS FORMATOS QUE ACEITAMOS NO ENVIO DE ARQUIVO.
+ *
+ * A mesma lista está no bucket (`0051`), de propósito: o bucket é a defesa
+ * real — ele recusa mesmo que alguém poste direto na API do Storage sem
+ * passar por esta tela. A daqui existe para o dono da academia receber uma
+ * frase em português em vez de um erro de servidor.
+ *
+ * SVG está fora e o motivo é segurança, não capricho: SVG é XML e aceita
+ * `<script>` dentro. Nenhuma logo de academia precisa de vetor.
+ */
+export const LOGO_TIPOS = ["image/png", "image/jpeg", "image/webp"] as const;
+export const LOGO_TAMANHO_MAX = 524288; // 512 KB — igual ao limite do bucket
+
+const EXTENSAO: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+
+/**
+ * Confere um arquivo enviado ANTES de gastar rede com ele.
+ *
+ * Devolve a extensão quando serve, ou a frase do problema quando não serve.
+ * Recusa que não diz o motivo faz a pessoa tentar o mesmo arquivo de novo.
+ */
+export function checarLogoArquivo(
+  tipo: string,
+  tamanho: number,
+): { ok: true; extensao: string } | { ok: false; erro: string } {
+  if (!(LOGO_TIPOS as readonly string[]).includes(tipo)) {
+    return { ok: false, erro: "A logo precisa ser PNG, JPG ou WEBP." };
+  }
+  if (tamanho <= 0) {
+    return { ok: false, erro: "O arquivo chegou vazio. Tente enviar de novo." };
+  }
+  if (tamanho > LOGO_TAMANHO_MAX) {
+    const kb = Math.round(tamanho / 1024);
+    return { ok: false, erro: `A logo tem ${kb} KB e o limite é 512 KB. Reduza a imagem e envie de novo.` };
+  }
+  return { ok: true, extensao: EXTENSAO[tipo] };
+}
+
+/**
+ * O caminho dentro do bucket. A PRIMEIRA PASTA É O `tenant_id`, e não é
+ * organização: é a chave que as policies do `0051` leem para decidir quem
+ * pode escrever. Mudar este formato sem mudar a policy abre a logo de uma
+ * empresa para outra.
+ *
+ * O nome carrega o instante do envio porque a logo é servida por CDN pública:
+ * regravar o mesmo nome deixaria a logo antiga no cache, e o cliente veria a
+ * troca "não funcionar" por horas.
+ */
+export function caminhoDaLogo(tenantId: string, extensao: string, agora = Date.now()): string {
+  return `${tenantId}/logo-${agora}.${extensao}`;
+}
+
 export function lerAparencia(settings: Record<string, unknown> | null | undefined): Aparencia {
   const a = (settings?.aparencia ?? {}) as Record<string, unknown>;
   return {

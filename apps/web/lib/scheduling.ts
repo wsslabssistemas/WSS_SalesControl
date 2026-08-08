@@ -42,7 +42,41 @@ export type SchedulingConfig = {
   slot_step_min?: number;
   /** Antecedência mínima para marcar (evita oferecer daqui a 5 minutos). */
   min_advance_min?: number;
+  /**
+   * OFERECER TURNO EM VEZ DE HORA.
+   *
+   * Existe porque nem todo negócio que agenda disputa horário. Onde o acesso
+   * é livre — academia — não há vaga nem lotação, e o que se combina é o DIA.
+   * Oferecer "quinta às 6h30" ali é pior de duas maneiras: sugere uma
+   * precisão que não existe e, como a janela começa quando a porta abre, o
+   * motor acabava propondo 6h30 da manhã para todo mundo.
+   *
+   * Com turno o motor pergunta "quinta de manhã ou quinta à noite?" — que é
+   * como a pessoa realmente responde. Onde a cadeira É disputada (barbearia,
+   * clínica, salão) isto fica desligado: lá a hora exata é o produto.
+   */
+  offer_by_turno?: boolean;
 };
+
+/**
+ * Os três turnos, pelo relógio e não pelo ramo — a Lei 1 vale aqui: "manhã"
+ * é hora do dia, não vocabulário de mercado.
+ *
+ * Os cortes (12h e 18h) são os que as pessoas usam falando, e é assim que a
+ * resposta do cliente vai chegar.
+ */
+export const TURNOS = [
+  { chave: "manha", label: "de manhã", ate: 12 },
+  { chave: "tarde", label: "à tarde", ate: 18 },
+  { chave: "noite", label: "à noite", ate: 24 },
+] as const;
+
+export type TurnoChave = (typeof TURNOS)[number]["chave"];
+
+export function turnoDe(d: Date): (typeof TURNOS)[number] {
+  const h = d.getHours();
+  return TURNOS.find((t) => h < t.ate) ?? TURNOS[TURNOS.length - 1];
+}
 
 function hhmmParaMinutos(t: string): number {
   const [h, m] = t.split(":").map(Number);
@@ -136,11 +170,16 @@ export function calcularVagas(input: {
 
 const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
-/** "sábado, 09/08 às 10h" — como a pessoa fala, não como o banco guarda. */
-export function descreverVaga(v: Vaga | Date): string {
+/**
+ * "sábado, 09/08 às 10h" — como a pessoa fala, não como o banco guarda.
+ * Com `porTurno`, "sábado, 09/08 de manhã": o dia é o combinado e a hora
+ * exata não é promessa.
+ */
+export function descreverVaga(v: Vaga | Date, porTurno = false): string {
   const d = v instanceof Date ? v : v.inicio;
   const dia = DIAS[d.getDay()];
   const data = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+  if (porTurno) return `${dia}, ${data} ${turnoDe(d).label}`;
   const h = d.getHours();
   const min = d.getMinutes();
   const hora = min === 0 ? `${h}h` : `${h}h${String(min).padStart(2, "0")}`;
@@ -151,25 +190,45 @@ export function descreverVaga(v: Vaga | Date): string {
  * Poucas opções convertem melhor que muitas: espalha as vagas ao longo dos
  * dias para oferecer alternativas realmente diferentes, não três horários
  * seguidos da mesma manhã.
+ *
+ * `porTurno` muda a UNIDADE da variedade, não só o texto. Sem ele a chave é
+ * o dia e o motor pega a primeira vaga de cada um — que numa janela de
+ * 06:30 às 22:00 é sempre 06:30, três dias seguidos. Com ele a chave é
+ * dia+turno, e as opções passam a ser realmente diferentes: quinta de manhã,
+ * quinta à noite, sexta de manhã. Um turno por dia vem primeiro, para que
+ * três opções não caiam todas na mesma quinta-feira.
  */
-export function escolherOpcoes(vagas: Vaga[], quantas = 3): Vaga[] {
-  const porDia = new Map<string, Vaga[]>();
+export function escolherOpcoes(vagas: Vaga[], quantas = 3, porTurno = false): Vaga[] {
+  const chaveDe = (v: Vaga) =>
+    porTurno ? `${v.inicio.toDateString()}|${turnoDe(v.inicio).chave}` : v.inicio.toDateString();
+
+  const grupos = new Map<string, Vaga>();
   for (const v of vagas) {
-    const chave = v.inicio.toDateString();
-    if (!porDia.has(chave)) porDia.set(chave, []);
-    porDia.get(chave)!.push(v);
+    const k = chaveDe(v);
+    if (!grupos.has(k)) grupos.set(k, v); // a primeira vaga representa o grupo
   }
+
   const escolhidas: Vaga[] = [];
-  for (const lista of porDia.values()) {
+  const diasUsados = new Set<string>();
+
+  // 1ª passada: no máximo um por DIA, para variar de data antes de variar
+  // de turno. Oferecer três turnos da mesma quinta esconde que sexta existe.
+  for (const v of grupos.values()) {
     if (escolhidas.length >= quantas) break;
-    escolhidas.push(lista[0]);
+    const dia = v.inicio.toDateString();
+    if (diasUsados.has(dia)) continue;
+    diasUsados.add(dia);
+    escolhidas.push(v);
   }
-  // Se só há um dia disponível, completa com horários daquele dia.
+
+  // 2ª passada: só se ainda faltar, aí sim repetindo o dia em outro turno.
   if (escolhidas.length < quantas) {
-    for (const v of vagas) {
+    for (const v of grupos.values()) {
       if (escolhidas.length >= quantas) break;
       if (!escolhidas.includes(v)) escolhidas.push(v);
     }
   }
+
+  escolhidas.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
   return escolhidas.slice(0, quantas);
 }
