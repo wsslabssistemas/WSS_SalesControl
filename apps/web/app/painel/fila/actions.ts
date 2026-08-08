@@ -186,14 +186,34 @@ export async function marcarEnviado(formData: FormData) {
   if (!contactId) return;
 
   const supabase = await createClient();
-  await supabase.from("interactions").insert({
+  // `input_kind` é o PAPEL da interação e tem lista fechada no banco
+  // (`customer_message | agent_briefing | system_initiated`). O toque da fila
+  // é iniciado por nós, sem o cliente ter escrito: é `system_initiated`.
+  //
+  // Aqui estava um bug ao vivo: gravava `input_kind: "fila"`, que o CHECK
+  // recusa — e como o erro não era conferido, a tela dizia "enviado" e NADA
+  // era gravado. Justamente o que o comentário acima existe para evitar: sem
+  // registro a cadência não anda, o "esfriando" não zera, a pessoa volta para
+  // a fila amanhã e o vendedor conclui que a fila não funciona.
+  //
+  // O MEIO tem coluna própria (`channel`) — confundir papel com meio foi o
+  // que criou o valor inválido. Kind é o que a interação É; channel é por onde
+  // ela passou.
+  const { error } = await supabase.from("interactions").insert({
     tenant_id: tenant.id,
     contact_id: contactId,
     direction: "outbound",
-    input_kind: "fila",
+    input_kind: "system_initiated",
+    channel: "whatsapp",
     content: texto || "(toque da fila, sem texto registrado)",
     occurred_at: new Date().toISOString(),
   });
+  if (error) {
+    // Falha aqui NÃO pode ser silenciosa. É a diferença entre "a fila repetiu
+    // o contato" e "a fila está quebrada", e só a segunda alguém conserta.
+    console.error(`[fila] falha ao registrar envio de ${contactId}: ${error.message}`);
+    throw new Error(`Não consegui registrar o envio: ${error.message}`);
+  }
   revalidatePath("/painel/fila");
   revalidatePath("/painel");
 }

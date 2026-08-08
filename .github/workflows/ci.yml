@@ -92,3 +92,9 @@ jobs:
       # 06:30" e uma resposta perfeitamente valida e completamente inutil.
       - name: Turno em vez de hora
         run: node packages/db/tests/turno_test.mjs
+      # O webhook e o UNICO endereco do produto que qualquer um na internet
+      # pode chamar, e ele ESCREVE no historico de um cliente pagante. Guarda
+      # a assinatura (inclusive: sem segredo configurado, RECUSA em vez de
+      # liberar) e a janela de 24h, que decide o que pode ser dito.
+      - name: Webhook do WhatsApp (assinatura e janela de 24h)
+        run: node packages/db/tests/webhook_test.mjs

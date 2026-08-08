@@ -173,3 +173,40 @@ export function whatsappNumber(phone: string | null | undefined): string | null 
   const r = paraE164BR(phone);
   return r.ok ? r.digitos : null;
 }
+
+/**
+ * O CAMINHO DE VOLTA: da Meta para o cadastro.
+ *
+ * Quando uma mensagem chega, a Meta diz quem mandou em E.164 completo
+ * (`5551982512270`). O cadastro, porém, guarda o que a recepção digitou — e na
+ * base real da Be Fitness isso aparece em QUATRO formatos: 13 dígitos, 11, 12
+ * (celular antigo com país) e 10 (celular antigo sem país).
+ *
+ * Procurar só pelo E.164 acharia 56% dos contatos. Os outros 44% ganhariam um
+ * contato DUPLICADO a cada mensagem recebida — e duplicata em CRM não é
+ * incômodo: ela parte o histórico em dois, então a pessoa aparece na fila como
+ * se nunca tivesse conversado, e o vendedor manda a primeira mensagem para
+ * quem já é aluno.
+ *
+ * Esta função devolve todas as formas em que o MESMO telefone pode estar
+ * gravado, para a busca ser um `in (...)` só.
+ */
+export function variantesArmazenadas(e164digits: string): string[] {
+  const d = (e164digits ?? "").replace(/\D/g, "");
+  if (!d.startsWith("55") || (d.length !== 13 && d.length !== 12)) return d ? [d] : [];
+
+  const resto = d.slice(2);              // DDD + assinante
+  const ddd = resto.slice(0, 2);
+  const assinante = resto.slice(2);
+  const fora = new Set<string>([d, resto]);
+
+  // Celular atual (9 dígitos começando em 9) também pode estar gravado no
+  // formato antigo, sem o nono dígito — é como está 39% da base.
+  if (assinante.length === 9 && assinante.startsWith("9")) {
+    const antigo = assinante.slice(1);
+    fora.add(`55${ddd}${antigo}`);
+    fora.add(`${ddd}${antigo}`);
+  }
+
+  return [...fora];
+}
