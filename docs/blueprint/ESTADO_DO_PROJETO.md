@@ -5,6 +5,9 @@
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
 > sem repetir discussões encerradas. **Leia antes de propor qualquer coisa.**
 >
+> **Entregando a Be Fitness? Vá direto ao `BE_FITNESS_CHECKLIST.md`** — ele é o
+> único arquivo com o que falta no piloto, sem o resto do projeto em volta.
+>
 > Ordem: este arquivo → **`COS_Plano_de_Execucao.md` (a fila de trabalho e o que
 > está congelado)** → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
 > `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `COS_Escolas_de_Venda.md` (que
