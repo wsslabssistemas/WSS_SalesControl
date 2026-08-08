@@ -174,11 +174,13 @@ desfazer sem perceber.
 Três itens, todos com motivo registrado para **não** terem sido feitos ainda.
 Adiar com motivo escrito é decisão; adiar sem, é esquecimento.
 
-- **P1 — Telefone não está em E.164.** Hoje normaliza só dígitos, o que já pega
-  duplicidade — que era o problema real. E.164 de verdade precisa de biblioteca
-  de telefonia; normalizar no chute **corrompe número de cliente**, e número
-  corrompido não se recupera. Fazer quando houver envio por WhatsApp, que exige
-  o formato — ou seja, junto com a automação, hoje congelada.
+- ~~**P1 — Telefone não está em E.164.**~~ **Fechado em ago/2026**, junto com a
+  camada de envio — que era exatamente o gatilho combinado. Destravou por
+  **escopo**: um país só, com as regras da Anatel, que são fechadas, então o
+  comprimento desambigua sem biblioteca de telefonia e sem chute. A regra que
+  preservou a preocupação original: `paraE164BR` **deriva e nunca grava**, então
+  derivação errada faz mensagem não sair em vez de destruir cadastro.
+  Ver `ESTADO_DO_PROJETO.md` §3.6.
 - **P2 — Dinheiro como string de exibição no DNA** (`"R$ 169,00"`), o que impede
   análise por faixa de preço. Correção: inteiro em centavos + moeda, como já faz
   `lib/money.ts`. Mexe no editor, nos seeds, no prompt e no dado já gravado das

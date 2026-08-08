@@ -230,6 +230,27 @@ aí", a primeira coisa a conferir é `git status -sb` — antes de reabrir o có
 > A fila executável e o que está **congelado por decisão** moram em
 > `COS_Plano_de_Execucao.md`.
 
+### 3.0 ⚠ O BLOQUEIO DA BE FITNESS QUE NINGUÉM TINHA VISTO (8/ago/2026)
+
+O fundador disse que quer focar em **aumentar a taxa de renovação**. Conferido
+no banco na mesma hora, e o resultado muda a prioridade:
+
+| Dos 273 contatos da Be Fitness | |
+|---|---|
+| com `contract_end` (data de vencimento) | **0** |
+| com `owner_id` (responsável) | **0** |
+
+**A tela de Renovação lê `contract_end`. Com zero preenchido ela abre vazia** —
+e as três janelas (60/30/7) do `0050` não têm o que disparar. O placar por
+vendedor e a carteira leem `owner_id`, mesma história. O piloto do Base44 não
+tinha esses campos, então a importação não teve o que trazer.
+
+O importador **já reconhece** as colunas de vigência e converte data pt-BR
+corretamente (`03/08/2026` vira 3 de agosto, não 8 de março —
+`importacao_test.mjs`). **O que falta é a planilha**, que o fundador vai mandar.
+É o item de maior retorno da lista inteira: é ele que transforma o produto de
+"responde bem" em "aumenta renovação".
+
 ### 3.1 Depende do fundador — não dá para eu fazer
 
 | O quê | Por que só ele |
@@ -261,9 +282,53 @@ e com ela o roteiro do "Kairós vende o Kairós" fechou. O que resta:
    de qualquer leitura. Convênio tem 15% de perda contra 46% do WhatsApp.
 2. **Carga dos 3.000 contatos com controle de custo** (ver 3.5).
 3. **Volume da prospecção** — a fonte pública devolve ~20 por chamada.
-4. **Auditoria adiada com motivo**: telefone em E.164 (só com envio por
-   WhatsApp), dinheiro como string no DNA (junto com o primeiro relatório que
-   precise), `embedding` sem índice ANN (interage mal com RLS).
+4. ~~**Telefone em E.164**~~ — **FEITO em 8/ago/2026**, junto com a camada de
+   envio, que era o gatilho combinado. Detalhe na seção 3.6.
+5. **Auditoria ainda adiada com motivo**: dinheiro como string no DNA (junto
+   com o primeiro relatório que precise), `embedding` sem índice ANN (interage
+   mal com RLS).
+
+### 3.6 A camada de envio e o E.164 (8/ago/2026)
+
+O fundador pediu a camada de envio antes de escolher o canal — decisão certa,
+porque a escolha do canal ficou mais difícil, não menos: **ele não tem CNPJ da
+WSS Labs, só da Be Fitness.** A verificação da Meta sairia no CNPJ da academia,
+o que resolve o piloto e não resolve o produto (o Kairós vendendo o Kairós
+precisaria de outro remetente).
+
+`lib/envio.ts` é a porta única. Antes disso, seis telas montavam `wa.me` cada
+uma do seu jeito. **Ela não finge que os dois modos são iguais**: o resultado
+diz o MODO — `humano` (link para alguém clicar) ou `automatico` (id do
+provedor). Achatar num `enviar()` que devolve `true` esconderia a diferença que
+mais importa hoje: quem aperta enviar é uma pessoa.
+
+O provedor da Cloud API está escrito contra a documentação e **nunca foi
+executado contra a API real**. Fica desligado por padrão (`WHATSAPP_CANAL`).
+Quando houver credencial, a primeira mensagem vai para o próprio número.
+
+**E.164 destravado por escopo, não por pressa.** O motivo do adiamento era
+"normalizar no chute corrompe número de cliente". O que mudou: um país só, com
+as regras da Anatel, que são fechadas — celular é DDD + 9 dígitos começando em
+9, fixo é DDD + 8 começando em 2-5, e a lista de DDDs é finita. O **comprimento
+desambigua sozinho**.
+
+**A regra que mantém o motivo do adiamento válido:** `paraE164BR` **deriva e
+nunca grava**. `contacts.phone` continua sendo o que a pessoa digitou. Se a
+derivação errar, o pior é uma mensagem não sair — não um cadastro destruído.
+Falhar ≠ corromper.
+
+**Bug de corrupção que estava no ar:** `oportunidades` decidia por
+`d.startsWith("55")`, e **DDD 55 é Santa Maria/RS**. O celular 55 98765-4321
+era lido como "já tem código de país" e virava número truncado — em silêncio, e
+no estado da primeira empresa real do produto.
+
+**Medido na base real** (`scripts/diagnostico-telefones.mjs`, leitura paginada
+porque o PostgREST corta em 1.000 linhas sem avisar): dos 273 contatos, **154
+saem direto, 107 (39%) são celular antigo sem o nono dígito, 12 não têm
+conserto**. Como 39% dependem de uma **interpretação**, o aviso aparece na fila
+para quem vai clicar, não só no log. O diagnóstico achou dois casos que ninguém
+tinha visto: um contato com o DDD digitado duas vezes e um número francês na
+base.
 
 ### 3.4 Descoberto conversando (ago/2026) — prospecção em B2C local
 
@@ -562,6 +627,8 @@ node packages/db/tests/placar_test.mjs     # o piso de amostra: 12/12
 node packages/db/tests/importacao_test.mjs # colunas e data pt-BR: 19/19
 node packages/db/tests/cnae_test.mjs       # alvos de prospecção: 9/9
 node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
+node packages/db/tests/telefone_test.mjs   # E.164 brasileiro: 30/30
+node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql
@@ -573,6 +640,11 @@ cd apps/web && npm run build              # build limpo
 Levar a biblioteca para quem vive o ramo revisar (gera em `revisao/`):
 ```bash
 node scripts/kit-revisao.mjs industria     # .html para ler, .csv para responder
+```
+
+Antes de qualquer importação grande de contatos (não escreve nada):
+```bash
+node scripts/diagnostico-telefones.mjs be-fitness  # quantos telefones saem, quantos não
 ```
 
 A prova do motor com IA (custa tokens, ~R$ 0,25 por resposta):

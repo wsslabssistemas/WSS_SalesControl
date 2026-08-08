@@ -28,9 +28,36 @@ Responder, responsável no cadastro, guia da automação e tutorial atualizado.
 reportando como ausentes coisas prontas. **Commit não é entrega.**
 
 **O que fazer agora**, em ordem: (1) as ações do fundador na §3.1 do
-`ESTADO_DO_PROJETO.md` — agenda e papéis da Be Fitness são 15 minutos e
-destravam o motor; (2) o M2, com dado segmentado por origem; (3) convidar a
+`ESTADO_DO_PROJETO.md`; (2) o M2, com dado segmentado por origem; (3) convidar a
 primeira empresa externa, que é o único jeito de sair do N=1.
+
+---
+
+## A noite de 7 para 8 de agosto de 2026
+
+O fundador foi dormir e pediu para eu adiantar o que não dependesse dele.
+
+**Entregue:**
+- **Agenda da academia.** O diagnóstico antigo ("falta regra de
+  disponibilidade") era raso: o manifesto `academia` não tinha bloco
+  `scheduling:` nenhum, e a agenda estava desligada **no ramo inteiro**.
+  Cadastrar horário não teria resolvido. Ligada, com a janela vinda do
+  `weekly_hours` do DNA.
+- **Turno em vez de hora** (`offer_by_turno`), decisão dele. Com a janela de
+  06:30 às 22:00 o motor oferecia "06:30" três dias seguidos — resposta
+  válida e inútil. `turno_test.mjs` 16/16.
+- **Logo por arquivo** (`0051`). A tela pedia endereço https, o que presume
+  hospedagem que academia de bairro não tem. E o save **mentia**: nunca
+  conferia o erro do update, então dizia "salva" para gravação que não
+  aconteceu.
+- **Camada de envio + E.164** — ver §3.6 do `ESTADO_DO_PROJETO.md`. Achou um
+  bug de corrupção de número no ar (DDD 55).
+- **Documentação conferida.** `COS_Mapa_de_Segmentos.md` estava congelado em
+  julho ("8 manifestos, 145 entradas") e é lido por toda conversa nova.
+
+**O achado que muda a prioridade:** os 273 contatos da Be Fitness têm **zero
+data de vencimento e zero responsável**. A tela de Renovação — o que ele disse
+querer priorizar — abre vazia. Ver §3.0 do `ESTADO_DO_PROJETO.md`.
 
 ---
 

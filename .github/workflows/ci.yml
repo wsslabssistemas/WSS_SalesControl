@@ -83,3 +83,12 @@ jobs:
       # nao devolve coordenada, entao "raio de 3 km" seria invencao.
       - name: Proximidade na prospeccao
         run: node packages/db/tests/proximidade_test.mjs
+      # O UNICO teste cujo defeito sai da empresa e chega em quem nao pediu
+      # nada: E.164 errado manda mensagem PARA OUTRA PESSOA. Guarda o caso do
+      # DDD 55 (Santa Maria/RS), que a regra antiga corrompia em silencio.
+      - name: E.164 brasileiro (o numero que a mensagem procura)
+        run: node packages/db/tests/telefone_test.mjs
+      # Oferecer horario nao levanta excecao quando esta errado: "06:30, 06:30,
+      # 06:30" e uma resposta perfeitamente valida e completamente inutil.
+      - name: Turno em vez de hora
+        run: node packages/db/tests/turno_test.mjs
