@@ -27,7 +27,20 @@ export async function inviteMember(formData: FormData) {
   let link: string | null = null;
 
   // Convida: cria a conta (se nova) e gera o link para a pessoa definir a senha.
-  const { data, error } = await admin.auth.admin.generateLink({ type: "invite", email });
+  //
+  // `redirectTo` COM `type=invite` é o que leva a pessoa para a tela de criar
+  // senha. Sem ele o link caía no destino padrão do Supabase, o callback
+  // mandava para o painel, e a pessoa usava o sistema **sem nunca ter definido
+  // senha** — no dia seguinte não entrava mais, porque o link do convite é de
+  // uso único. Do lado dela, o sistema parava de funcionar sem explicação.
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { redirectTo: `${site}/auth/callback?type=invite` },
+  });
   if (!error && data?.user) {
     userId = data.user.id;
     link = data.properties?.action_link ?? null;

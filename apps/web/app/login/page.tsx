@@ -6,9 +6,21 @@ import { BRAND_NAME, MAKER } from "@/lib/brand";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; aviso?: string }>;
 }) {
-  const { erro } = await searchParams;
+  const { erro, aviso } = await searchParams;
+
+  // O BOTAO DO GOOGLE SO APARECE SE O PROVEDOR ESTIVER LIGADO.
+  //
+  // Ele ficou visivel com o provedor desligado no Supabase, e o vendedor da Be
+  // Fitness clicou nele: recebeu `Unsupported provider: provider is not
+  // enabled` — texto de biblioteca, em ingles, numa tela de entrada. Do lado
+  // dele o sistema estava quebrado.
+  //
+  // Botao que sempre falha e pior que botao ausente: ele promete um caminho
+  // que nao existe e esconde o caminho que existe. Enquanto ninguem ligar o
+  // Google (que exige projeto no Google Cloud), a entrada e por e-mail e senha.
+  const googleLigado = process.env.GOOGLE_OAUTH_ATIVO === "1";
 
   return (
     <main
@@ -31,17 +43,21 @@ export default async function LoginPage({
             Acesse o painel da sua empresa.
           </p>
 
-          <form action={signInWithGoogle}>
-            <button type="submit" className="btn btn-block">
-              <GoogleGlyph /> Entrar com Google
-            </button>
-          </form>
+          {googleLigado && (
+            <>
+              <form action={signInWithGoogle}>
+                <button type="submit" className="btn btn-block">
+                  <GoogleGlyph /> Entrar com Google
+                </button>
+              </form>
 
-          <div className="row" style={{ gap: 12, margin: "18px 0", color: "var(--text-faint)", fontSize: 12 }}>
-            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
-            ou
-            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
-          </div>
+              <div className="row" style={{ gap: 12, margin: "18px 0", color: "var(--text-faint)", fontSize: 12 }}>
+                <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+                ou
+                <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+              </div>
+            </>
+          )}
 
           <form action={login}>
             <label className="label" htmlFor="email">E-mail</label>
@@ -53,9 +69,27 @@ export default async function LoginPage({
             </button>
           </form>
 
+          {/* ESQUECI MINHA SENHA — nao existia, e sem ela um convite usado uma
+              vez deixava a pessoa para sempre do lado de fora, dependendo do
+              dono da conta para reconvidar.
+              Pagina propria em vez de botao aqui: o e-mail digitado no form de
+              cima nao chega a outro form sem JavaScript, e a primeira versao
+              disto mandava um campo VAZIO — falharia sempre, com cara de
+              "pedi e nao chegou". */}
+          <p style={{ marginTop: 14, textAlign: "center" }}>
+            <Link href="/recuperar" className="text-dim" style={{ fontSize: 12 }}>
+              Esqueci minha senha
+            </Link>
+          </p>
+
           {erro && (
             <p className="badge badge-danger" style={{ marginTop: 16, width: "100%", justifyContent: "center" }}>
               {erro}
+            </p>
+          )}
+          {aviso && (
+            <p className="badge badge-success" style={{ marginTop: 16, width: "100%", justifyContent: "center" }}>
+              {aviso}
             </p>
           )}
         </div>
