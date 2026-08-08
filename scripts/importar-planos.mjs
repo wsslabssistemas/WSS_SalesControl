@@ -179,12 +179,45 @@ if (!APLICAR) {
 
 // ---------------------------------------------------------------------
 let criados = 0, atualizados = 0, falhas = 0;
+const recusados = [];
 
 for (let i = 0; i < plano.criar.length; i += 200) {
   const lote = plano.criar.slice(i, i + 200);
   const { error } = await db.from("contacts").insert(lote);
-  if (error) { console.error(`  ✗ lote ${i}: ${error.message}`); falhas += lote.length; }
-  else criados += lote.length;
+  if (!error) { criados += lote.length; continue; }
+
+  // UM LOTE É TUDO OU NADA. Uma linha recusada derruba as outras 199, e a
+  // primeira versão disto contou 200 falhas para um problema de 1 — o número
+  // no relatório passou a mentir sobre o tamanho do estrago.
+  // Na falha do lote, refaz linha a linha para separar quem realmente não
+  // entrou de quem só estava na carona.
+  for (const linha of lote) {
+    const { error: e1 } = await db.from("contacts").insert(linha);
+    if (!e1) { criados++; continue; }
+
+    // TELEFONE COMPARTILHADO (casal, mãe e filho). Enquanto o `0053` não
+    // rodar, o índice único recusa a segunda pessoa. Ela entra SEM telefone,
+    // com o número guardado em `custom`, porque a alternativa é pior:
+    // deixá-la de fora faz um aluno pagante sumir da renovação em silêncio.
+    // Sem telefone ela aparece na fila com o aviso "sem telefone válido" —
+    // uma falha visível, que alguém conserta.
+    if (/ux_contacts_tenant_phone|duplicate key/i.test(e1.message)) {
+      const { error: e2 } = await db.from("contacts").insert({
+        ...linha,
+        phone: null,
+        custom: { ...linha.custom, telefone_compartilhado: linha.phone },
+      });
+      if (!e2) { criados++; recusados.push({ nome: linha.name, telefone: linha.phone }); continue; }
+    }
+    console.error(`  ✗ ${linha.name}: ${e1.message}`);
+    falhas++;
+  }
+}
+
+if (recusados.length) {
+  console.log(`\n  ⚠ ${recusados.length} entraram SEM telefone — o número já pertence a outra pessoa:`);
+  for (const r of recusados) console.log(`      ${r.nome}  (${r.telefone})`);
+  console.log(`  Rode a migration 0053 e depois o script de novo para devolver o telefone a eles.`);
 }
 
 for (const a of plano.atualizar) {

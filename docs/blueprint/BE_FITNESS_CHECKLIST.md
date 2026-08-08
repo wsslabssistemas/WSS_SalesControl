@@ -71,11 +71,42 @@ transformaria 9.151 pessoas em alunas.
 | # | O quê | Quem | Estado |
 |---|---|---|---|
 | 1 | **Subir o teto global de IA** | Fundador | `/painel/admin/cotas` → campo **"Teto GLOBAL (R$/mês)"**. Está R$ 130, **menor que o teto da própria Be Fitness (R$ 156)** — a IA para para todo mundo antes de a cota dela acabar. |
-| 2 | **Importar os 327 planos** | Assistente | Script pronto e simulado. Aguarda o "pode aplicar". |
-| 3 | **Dividir a carteira** entre os três | Assistente | Depois do item 2 — dividir antes seria dividir 273 em vez de 600. |
-| 4 | **Vendedor entrar** | Fundador | Só na segunda; a equipe não trabalha no fim de semana. |
+| 2 | **Rodar a migration `0053`** | Fundador | SQL Editor do Supabase. Devolve o telefone a 8 alunos que entraram sem — ver "telefone compartilhado" abaixo. |
+| 3 | **Vendedor entrar** | Fundador | Segunda-feira, quando a equipe voltar. |
+| 4 | **Remover `teste-a@exemplo.com`** | Fundador | Conta de teste com papel `owner` sobre dado de cliente real. |
 
-Depois destes quatro, a Be Fitness está completa no manual.
+### ✅ Fechados em 8/ago/2026
+
+- **Importação dos planos.** 324 contatos criados, 44 atualizados, 0 falhas.
+  **328 contatos com data de vencimento** conferidos no banco.
+- **Carteira dividida** entre João, Nycolas e Luciana: 199 cada, equilibrada
+  também em planos (119/106/103). Rodízio sobre a lista ordenada por nome —
+  determinístico, dá para conferir e repetir.
+- **Renovação acendeu sozinha**, sem programar nada: ela é derivada de
+  `contract_end`. **88 toques devidos hoje** — 5 venceram sem ninguém falar
+  (um há 67 dias), 17 na janela de 7 dias, 32 na de 30 e 34 na de 60.
+- Equipe cadastrada, logo e cor no painel.
+
+Depois dos quatro acima, a Be Fitness está completa no manual.
+
+### ⚠ Telefone compartilhado — o que a importação descobriu
+
+324 inserções falharam de primeira no índice único `(tenant_id, phone)`. A causa
+não era dado sujo: **12 telefones pertencem a duas pessoas diferentes, e as duas
+são alunas pagantes** — casais e famílias (Fabiana e Francisco Lagoas; Esther
+Arndt e Volmar Rosa da Costa). Em academia de bairro isso é rotina.
+
+O índice afirmava "um telefone, uma pessoa", e isso é **falso no mundo que o
+produto modela**. A `0053` troca a chave de identidade para o **código do
+sistema da academia**, que é o identificador de verdade, e deixa o telefone
+indexado sem ser único.
+
+Enquanto ela não roda, 8 pessoas entraram **sem telefone**, com o número
+guardado em `custom.telefone_compartilhado`. Elas aparecem na fila com o aviso
+"sem telefone válido" — falha visível, que alguém conserta. Deixá-las de fora
+seria pior: aluno pagante sumindo da renovação em silêncio.
+
+Depois da migration, rodar o importador de novo devolve o telefone a elas.
 
 ---
 
@@ -113,9 +144,13 @@ Depois destes quatro, a Be Fitness está completa no manual.
 O sistema da academia não expõe API (pedido feito ao fornecedor em ago/2026).
 Até haver, a atualização é por planilha:
 
-1. Exportar o relatório de mensalidades (de preferência em CSV de verdade).
-2. `node scripts/importar-planos.mjs <arquivo> --tenant be-fitness` — simula.
-3. Conferir os números e rodar de novo com `--aplicar`.
+1. Baixar o relatório de mensalidades do sistema da academia (sai em PDF; o
+   botão "exportar CSV" também devolve PDF).
+2. `python scripts/extrair-relatorio-academia.py <arquivo.pdf> planos.csv`
+   — lê por COORDENADA, não por texto corrido, e **falha se a contagem não
+   bater com o total que o rodapé do relatório declara**.
+3. `node scripts/importar-planos.mjs planos.csv --tenant be-fitness` — simula.
+4. Conferir os números e rodar de novo com `--aplicar`.
 
 O script **preserva etapa e histórico** de quem já existe: só acrescenta plano
 e vigência. Sobrescrever a jornada apagaria os 846 desfechos do piloto, que são
