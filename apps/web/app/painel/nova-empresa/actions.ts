@@ -11,8 +11,15 @@ import { DIAS_DE_TESTE } from "@/lib/teste";
 // `: never` explícito. Sem ele o TypeScript não sabe que esta função nunca
 // retorna (o `redirect` do Next lança), e passa a achar que o código depois de
 // `if (!tenant) erro(...)` roda com `tenant` nulo.
-const erro: (m: string) => never = (m) =>
-  redirect(`/painel/nova-empresa?erro=${encodeURIComponent(m)}`);
+// O QUE ELA DIGITOU VOLTA COM ELA. Sem isto o formulário reaparece em branco,
+// e "o sistema apagou o que eu escrevi" é indistinguível de "o sistema não fez
+// nada" — foi assim que a primeira usuária externa descreveu a falha.
+const erro: (m: string, dados?: { nome?: string; cidade?: string }) => never = (m, dados) => {
+  const q = new URLSearchParams({ erro: m });
+  if (dados?.nome) q.set("nome", dados.nome);
+  if (dados?.cidade) q.set("cidade", dados.cidade);
+  redirect(`/painel/nova-empresa?${q}`);
+};
 
 /** "Solar do Vale" → "solar-do-vale". Sem acento, sem símbolo, sem espaço. */
 function paraSlug(nome: string): string {
@@ -45,8 +52,8 @@ export async function criarEmpresa(formData: FormData) {
   const skillKey = String(formData.get("skill_key") ?? "").trim();
   const cidade = String(formData.get("cidade") ?? "").trim();
 
-  if (!nome) erro("Diga o nome da empresa.");
-  if (!skillKey) erro("Escolha o ramo.");
+  if (!nome) erro("Diga o nome da empresa.", { cidade });
+  if (!skillKey) erro("Escolha o ramo da sua empresa na lista.", { nome, cidade });
 
   const admin = createAdminClient();
 
@@ -55,7 +62,7 @@ export async function criarEmpresa(formData: FormData) {
   // que é o sintoma mais confuso possível para quem acabou de entrar.
   const { data: skill } = await admin
     .from("skills").select("key").eq("key", skillKey).eq("status", "published").maybeSingle();
-  if (!skill) erro("Esse ramo não está disponível.");
+  if (!skill) erro("Esse ramo não está disponível.", { nome, cidade });
 
   // Slug único: nome repetido é comum ("Barbearia do João" existe em toda
   // cidade). Sufixo numérico em vez de recusar — recusar faria a pessoa
@@ -93,7 +100,7 @@ export async function criarEmpresa(formData: FormData) {
     .select("id")
     .maybeSingle();
 
-  if (eT || !tenant) erro(`Não consegui criar a empresa: ${eT?.message ?? "erro desconhecido"}`);
+  if (eT || !tenant) erro(`Não consegui criar a empresa: ${eT?.message ?? "erro desconhecido"}`, { nome, cidade });
 
   // O criador é o DONO. Papel vem daqui, nunca do formulário.
   const { error: eM } = await admin.from("memberships").insert({
@@ -124,18 +131,34 @@ export async function criarEmpresa(formData: FormData) {
   redirect("/painel/onboarding?bem-vindo=1");
 }
 
-/** Os ramos disponíveis, para a tela de criação. */
+/**
+ * Os ramos disponíveis, para a tela de criação.
+ *
+ * ⚠ COM `service_role`, E ESTE É O BUG QUE ESTA FUNÇÃO JÁ TEVE.
+ *
+ * A RLS de `skills` exige vínculo em `tenant_skills` — quem ainda NÃO tem
+ * empresa não enxerga ramo nenhum. Lida com o cliente do usuário, esta função
+ * devolvia ZERO linhas exatamente para o único público que a chama: quem está
+ * criando a primeira empresa.
+ *
+ * O efeito não parecia um erro. A tela abria, pedia nome e cidade, mostrava a
+ * lista de ramos VAZIA, e o botão devolvia "Escolha o ramo" — para uma escolha
+ * que não existia na tela. A primeira pessoa de fora do produto travou aqui e
+ * descreveu como "coloquei o nome e ele continuou pedindo o nome".
+ *
+ * O `manifest` NÃO é lido aqui de propósito: ele carrega a biblioteca de
+ * estratégia do segmento, que é o ativo da casa (`0006`). Para esta tela
+ * bastam a chave e o nome.
+ */
 export async function listarRamos() {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("skills")
-    .select("key, name, manifest")
+    .select("key, name")
     .eq("status", "published")
     .order("name");
 
-  return ((data as { key: string; name: string; manifest: Record<string, unknown> }[] | null) ?? []).map((s) => {
-    const m = s.manifest ?? {};
-    const vocab = (m.vocabulary as Record<string, string> | undefined) ?? {};
+  return ((data as { key: string; name: string }[] | null) ?? []).map((s) => {
     // O `name` do manifesto já traz a cobertura entre parênteses — "Oficina
     // Mecânica (automotiva, elétrica, funilaria e pneus)". É o que faz a
     // pessoa se reconhecer: ninguém procura "sob medida", procura
@@ -146,7 +169,6 @@ export async function listarRamos() {
       key: s.key,
       name: (titulo ?? s.name).trim(),
       cobertura: (cobertura ?? "").trim(),
-      conversion: vocab.conversion ?? "",
     };
   });
 }
