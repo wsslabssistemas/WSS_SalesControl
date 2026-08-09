@@ -75,6 +75,22 @@ export async function criarEmpresa(formData: FormData) {
     slug = `${base}-${i}`;
   }
 
+  // O PERFIL VEM ANTES DE TUDO — e esta ordem é a correção de um bug que
+  // derrubou os DOIS primeiros clientes externos.
+  //
+  // `memberships.user_id` referencia `profiles(id)`, NÃO `auth.users(id)`. E
+  // criar conta no Supabase não cria perfil. Com o upsert depois do vínculo,
+  // o insert de `memberships` batia na chave estrangeira e a empresa ficava
+  // ÓRFÃ: criada, sem dono, invisível para quem acabou de criá-la.
+  //
+  // O convite (`equipe/actions.ts`) nunca sofreu disso porque já fazia o
+  // upsert antes. Quem se cadastra sozinho não tinha essa sorte.
+  const { error: eP } = await admin.from("profiles").upsert(
+    { id: user.id, email: user.email, full_name: user.user_metadata?.full_name ?? null },
+    { onConflict: "id" },
+  );
+  if (eP) erro(`Não consegui preparar seu perfil: ${eP.message}`, { nome, cidade });
+
   const fimDoTeste = new Date(Date.now() + DIAS_DE_TESTE * 86400000).toISOString();
 
   const { data: tenant, error: eT } = await admin
@@ -109,12 +125,14 @@ export async function criarEmpresa(formData: FormData) {
     role: "owner",
     status: "active",
   });
-  if (eM) erro(`Empresa criada, mas não consegui te vincular: ${eM.message}`);
-
-  await admin.from("profiles").upsert(
-    { id: user.id, email: user.email, full_name: user.user_metadata?.full_name ?? null },
-    { onConflict: "id" },
-  );
+  if (eM) {
+    // DESFAZ A EMPRESA. Sem isto, a tentativa seguinte cria "empresa-2",
+    // "empresa-3"… e o banco acumula empresas órfãs que ninguém consegue
+    // acessar nem apagar pela tela. Aconteceu com os dois primeiros clientes
+    // externos antes desta linha existir.
+    await admin.from("tenants").delete().eq("id", tenant.id);
+    erro(`Não consegui criar a empresa (vínculo): ${eM.message}. Tente de novo.`, { nome, cidade });
+  }
 
   // PORTA ÚNICA para instalar a Skill: grava `tenants.skill_key` E o vínculo
   // em `tenant_skills`. A RLS de `skills` depende do vínculo — gravar só a
@@ -123,7 +141,11 @@ export async function criarEmpresa(formData: FormData) {
     p_tenant: tenant.id,
     p_skill_key: skillKey,
   });
-  if (eS) erro(`Empresa criada, mas o ramo não foi instalado: ${eS.message}`);
+  if (eS) {
+    await admin.from("memberships").delete().eq("tenant_id", tenant.id);
+    await admin.from("tenants").delete().eq("id", tenant.id);
+    erro(`Não consegui instalar o ramo: ${eS.message}. Tente de novo.`, { nome, cidade });
+  }
 
   // Deixa a empresa nova como a ativa — quem tem mais de uma cairia na antiga.
   (await cookies()).set(TENANT_COOKIE, tenant.id, { path: "/", httpOnly: false, sameSite: "lax" });
