@@ -24,13 +24,22 @@ export default async function CriarContaPage({
         <div className="card" style={{ padding: "26px 24px" }}>
           <h1 style={{ fontSize: 20 }}>Criar conta</h1>
           <p className="text-dim" style={{ fontSize: 14, marginTop: 4, marginBottom: 22 }}>
-            30 dias para usar tudo, sem cartão. No próximo passo você diz qual é
-            a sua empresa e o ramo dela.
+            30 dias para usar tudo, sem cartão. Primeiro os seus dados; a
+            empresa e o ramo dela vêm na tela seguinte.
           </p>
 
           <form action={criarConta}>
+            {/* EXEMPLO NO LUGAR DE PERGUNTA. "Como podemos te chamar" e uma
+                pergunta, e pergunta se le por cima — o fundador leu esta tela e
+                perguntou "e o meu nome ou o nome da empresa?". A primeira
+                cliente externa provavelmente digitou o nome da EMPRESA aqui
+                ("coloquei o nome da empresa", foi como ela descreveu).
+                Um exemplo com cara de nome de pessoa nao deixa duvida. */}
             <label className="label" htmlFor="nome">Seu nome</label>
-            <input id="nome" name="nome" type="text" required autoComplete="name" placeholder="Como podemos te chamar" />
+            <input id="nome" name="nome" type="text" required autoComplete="name" placeholder="Ex.: Maria Silva" />
+            <span className="text-faint" style={{ display: "block", fontSize: 12, marginTop: 6 }}>
+              Seu nome, não o da empresa — ela vem na próxima tela.
+            </span>
 
             <label className="label" htmlFor="email" style={{ marginTop: 16 }}>E-mail</label>
             <input id="email" name="email" type="email" required autoComplete="email" placeholder="voce@empresa.com" />
