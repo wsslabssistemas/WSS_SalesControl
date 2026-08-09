@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { finishOnboarding } from "./actions";
+import { rotuloDaColuna } from "@/lib/rotulos";
 
 type FieldDef = { key: string; label?: string; help?: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
 type SectionDef = { key: string; label: string; required?: boolean; type?: string; fields?: FieldDef[] };
@@ -73,14 +74,23 @@ export default function OnboardingWizard({
         <div className="stack" style={{ gap: 6 }}>
           {rows.length > 0 && (
             <div className="row text-faint" style={{ gap: 6, fontSize: 11 }}>
-              {cols.map((c) => <span key={c} style={{ flex: 1 }}>{c}</span>)}
+              {cols.map((c) => <span key={c} style={{ flex: 1 }}>{rotuloDaColuna(c)}</span>)}
               <span style={{ width: 30 }} />
             </div>
           )}
           {rows.map((row, i) => (
             <div key={i} className="row" style={{ gap: 6 }}>
               {cols.map((c) => (
-                <input key={c} className="input" style={{ flex: 1 }} value={row[c] ?? ""} onChange={(e) => setField(sec, f.key, rows.map((r, idx) => (idx === i ? { ...r, [c]: e.target.value } : r)))} />
+                <input
+                  key={c} className="input" style={{ flex: 1 }}
+                  // O rotulo tambem vai no placeholder e no aria-label: numa
+                  // tabela de 4 colunas o cabecalho sai da vista assim que a
+                  // pessoa rola, e ela fica preenchendo caixa sem saber qual e.
+                  placeholder={rotuloDaColuna(c)}
+                  aria-label={rotuloDaColuna(c)}
+                  value={row[c] ?? ""}
+                  onChange={(e) => setField(sec, f.key, rows.map((r, idx) => (idx === i ? { ...r, [c]: e.target.value } : r)))}
+                />
               ))}
               <button type="button" className="btn btn-sm btn-ghost" style={{ width: 30 }} onClick={() => setField(sec, f.key, rows.filter((_, idx) => idx !== i))}>✕</button>
             </div>

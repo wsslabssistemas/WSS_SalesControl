@@ -103,3 +103,10 @@ jobs:
       # acabou quando a IA para. Ai ela nao negocia — some.
       - name: Teste gratis (avisos 7/3/1 e a trava no fim)
         run: node packages/db/tests/teste_gratis_test.mjs
+      # Coluna de tabela do DNA chegava CRUA na tela: o cliente novo via
+      # "o_que_faz" acima da caixa de texto. Mesma classe do next_objective —
+      # campo que PARECE chave de maquina e nao e, porque alguem le. O teste
+      # guarda a COBERTURA: segmento novo com coluna nova falha aqui, nao na
+      # tela de quem esta avaliando o produto.
+      - name: Rotulo das colunas do DNA
+        run: node packages/db/tests/rotulos_test.mjs
