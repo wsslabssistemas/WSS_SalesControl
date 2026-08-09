@@ -310,31 +310,31 @@ dna_sections:
       - { key: marcas_inversor, type: list, label: "Marcas de inversor", help: "As marcas de inversor que você trabalha" }
       # Híbrido com bateria (BESS) — ver benchmark `onda_do_hibrido`.
       - { key: marcas_bateria, type: list, label: "Marcas de bateria", help: "Se você trabalha com sistema híbrido, quais baterias" }
-      - { key: autonomia_backup, type: text, label: "Autonomia do backup", help: "Quanto tempo o sistema com bateria sustenta, e o que ele alimenta. Ex.: 6h nas cargas essenciais" }
+      - { key: autonomia_backup, type: text, label: "Autonomia do backup", help: "Quanto tempo o sistema com bateria sustenta, e o que ele alimenta. Ex.: 6h nas cargas essenciais", options: ["Não trabalho com bateria", "Até 4h nas cargas essenciais", "4 a 8h nas cargas essenciais", "8 a 12h nas cargas essenciais", "Dimensiono caso a caso"] }
       - { key: telhados_atendidos, type: list, required: true, label: "Telhados que atende", help: "Ex.: cerâmico, metálico, fibrocimento, laje, solo" }
   - key: precos
     label: "Preço e pagamento"
     required: true
     fields:
-      - { key: como_cobra, type: text, required: true, label: "Como você cobra", help: "Ex.: projeto fechado por kWp instalado, definido após a análise da conta" }
+      - { key: como_cobra, type: text, required: true, label: "Como você cobra", help: "Ex.: projeto fechado por kWp instalado, definido após a análise da conta", options: ["Projeto fechado, por kWp instalado", "Projeto fechado, valor único", "Por etapa (projeto, material, instalação)", "Material e mão de obra separados"] }
       - { key: faixa, type: money_range, label: "Faixa de investimento", help: "A faixa dos projetos que você costuma fazer. Ex.: de R$ 15 mil a R$ 90 mil" }
       - { key: formas_pagamento, type: list, required: true, label: "Formas de pagamento", help: "Ex.: Pix, cartão em 12x, financiamento bancário" }
-      - { key: financiamento, type: text, label: "Financiamento", help: "Com quais bancos ou linhas você trabalha e como funciona a aprovação" }
+      - { key: financiamento, type: text, label: "Financiamento", help: "Com quais bancos ou linhas você trabalha e como funciona a aprovação", options: ["Não trabalho com financiamento", "Banco parceiro, eu encaminho", "Várias linhas, comparo para o cliente", "O cliente busca por conta", "Cartão ou parcelamento próprio"] }
       - { key: o_que_inclui, type: text, required: true, label: "O que está incluso", help: "Ex.: kit, estrutura, proteções, projeto com ART, mão de obra e homologação" }
   - key: execucao
     label: "Prazos e execução"
     required: true
     fields:
-      - { key: prazo_visita, type: text, required: true, label: "Prazo da visita técnica", help: "Em quanto tempo você vai até o local" }
-      - { key: prazo_proposta, type: text, required: true, label: "Prazo da proposta", help: "Quanto tempo até entregar a proposta com simulação" }
-      - { key: prazo_instalacao, type: text, required: true, label: "Prazo da instalação", help: "Da aprovação até o sistema montado. Ex.: 2 a 5 dias no telhado" }
-      - { key: prazo_homologacao, type: text, required: true, label: "Prazo de homologação", help: "Quanto costuma levar na SUA concessionária — é o prazo dela, não o seu" }
+      - { key: prazo_visita, type: text, required: true, label: "Prazo da visita técnica", help: "Em quanto tempo você vai até o local", options: ["No mesmo dia", "Em até 2 dias", "Em até 3 dias", "Em até 1 semana", "Depende da distância"] }
+      - { key: prazo_proposta, type: text, required: true, label: "Prazo da proposta", help: "Quanto tempo até entregar a proposta com simulação", options: ["No mesmo dia", "Em até 2 dias", "Em até 3 dias", "Em até 1 semana", "Depende da complexidade"] }
+      - { key: prazo_instalacao, type: text, required: true, label: "Prazo da instalação", help: "Da aprovação até o sistema montado. Ex.: 2 a 5 dias no telhado", options: ["1 dia", "2 a 3 dias", "3 a 5 dias", "1 semana", "Mais de 1 semana", "Depende do porte"] }
+      - { key: prazo_homologacao, type: text, required: true, label: "Prazo de homologação", help: "Quanto costuma levar na SUA concessionária — é o prazo dela, não o seu", options: ["Até 30 dias", "30 a 60 dias", "60 a 90 dias", "Mais de 90 dias", "Varia muito na minha concessionária"] }
       # Campos abertos por correção de especialista (ago/2026). Ele quebrou o
       # "prazo de homologação" em três relógios que o cliente sente separados,
       # e que o vendedor precisa saber de cor para não prometer errado.
-      - { key: prazo_analise_projeto, type: text, required: true, label: "Prazo da análise do projeto", help: "Da protocolação ao parecer de acesso. Costuma ser de 10 a 30 dias" }
-      - { key: prazo_vistoria, type: text, required: true, label: "Prazo da vistoria", help: "Depois de solicitada. O limite regulatório é de 5 dias úteis" }
-      - { key: prazo_kit, type: text, required: true, label: "Prazo de entrega do kit", help: "Do pedido ao material na obra. Costuma ser de 10 a 20 dias" }
+      - { key: prazo_analise_projeto, type: text, required: true, label: "Prazo da análise do projeto", help: "Da protocolação ao parecer de acesso. Costuma ser de 10 a 30 dias", options: ["Até 10 dias", "10 a 20 dias", "20 a 30 dias", "Mais de 30 dias"] }
+      - { key: prazo_vistoria, type: text, required: true, label: "Prazo da vistoria", help: "Depois de solicitada. O limite regulatório é de 5 dias úteis", options: ["Até 5 dias úteis", "5 a 10 dias", "10 a 15 dias", "Mais de 15 dias"] }
+      - { key: prazo_kit, type: text, required: true, label: "Prazo de entrega do kit", help: "Do pedido ao material na obra. Costuma ser de 10 a 20 dias", options: ["Até 10 dias", "10 a 15 dias", "15 a 20 dias", "20 a 30 dias", "Depende do fornecedor"] }
       - { key: limite_fast_track, type: text, label: "Limite de aprovação simplificada", help: "Até que potência a concessionária aprova sem análise de fluxo. Ex.: até 7,5 kW em consumo local" }
       - { key: homologa_antes, type: boolean, label: "Você homologa antes de o cliente comprar o kit?", help: "Protege o cliente de comprar material que a concessionária pode limitar" }
       - { key: distribuidoras, type: list, label: "Concessionárias que você homologa", help: "Ex.: RGE, CEEE Equatorial, CPFL" }
@@ -342,8 +342,8 @@ dna_sections:
     label: "Garantias"
     required: true
     fields:
-      - { key: modulo, type: text, required: true, label: "Garantia do módulo", help: "Separe desempenho e produto. Ex.: 25 anos de desempenho, 12 de produto" }
-      - { key: inversor, type: text, required: true, label: "Garantia do inversor", help: "Ex.: 10 anos, com extensão opcional" }
+      - { key: modulo, type: text, required: true, label: "Garantia do módulo", help: "Separe desempenho e produto. Ex.: 25 anos de desempenho, 12 de produto", options: ["25 anos de desempenho, 12 de produto", "25 anos de desempenho, 10 de produto", "30 anos de desempenho, 15 de produto", "Varia por fabricante"] }
+      - { key: inversor, type: text, required: true, label: "Garantia do inversor", help: "Ex.: 10 anos, com extensão opcional", options: ["5 anos", "7 anos", "10 anos", "12 anos", "10 anos com extensão opcional", "Varia por fabricante"] }
       - { key: instalacao, type: text, required: true, label: "Garantia da instalação", help: "A sua garantia de mão de obra e de estanqueidade do telhado" }
       - { key: seguro, type: text, label: "Seguro", help: "Se oferece seguro do sistema e o que ele cobre" }
   - key: pos_venda

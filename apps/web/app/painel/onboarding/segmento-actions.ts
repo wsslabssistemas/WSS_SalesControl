@@ -59,8 +59,21 @@ export async function installSkill(skillKey: string): Promise<{ ok: boolean; err
     return { ok: false, error: "Só um administrador escolhe o segmento." };
   }
 
+  // ⚠ A CONFERÊNCIA DO SEGMENTO USA `service_role`, e o motivo é o mesmo que
+  // já quebrou esta tela duas vezes: a policy `skills_read_installed` só deixa
+  // o usuário ver a Skill JÁ INSTALADA na empresa dele.
+  //
+  // Ou seja: com o cliente do usuário, perguntar "o segmento X existe?" volta
+  // NULO para todo segmento que não é o atual — que são exatamente os únicos
+  // que alguém tentaria instalar. A tela listava os 15 ramos (isso foi
+  // corrigido antes) e recusava TODOS com "Segmento não disponível".
+  //
+  // O que autoriza a troca continua sendo o papel, conferido acima com o
+  // cliente do usuário. O `service_role` aqui só responde se o segmento
+  // existe no catálogo — que é dado de PRODUTO, igual em toda empresa.
+  const admin = createAdminClient();
   const supabase = await createClient();
-  const { data: skill } = await supabase
+  const { data: skill } = await admin
     .from("skills")
     .select("key")
     .eq("key", skillKey)
