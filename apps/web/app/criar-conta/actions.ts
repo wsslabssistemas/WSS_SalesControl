@@ -53,10 +53,11 @@ export async function criarConta(formData: FormData) {
   // senha que ela acabou de criar não funcionando ainda — parece sistema
   // quebrado e é só um e-mail não confirmado.
   if (!data.session) {
-    redirect(
-      "/login?aviso=" +
-        encodeURIComponent("Conta criada. Confirme o e-mail que enviamos e depois entre por aqui."),
-    );
+    // TELA PRÓPRIA, não um aviso na tela de login. Mandada para o login com um
+    // badge em cima do formulário, a pessoa não via — e ficava tentando entrar
+    // com uma senha que "não funcionava", quando faltava um clique no e-mail
+    // dela. Parece sistema quebrado e é só um passo não contado.
+    redirect("/confirme-email");
   }
 
   redirect("/painel/nova-empresa");
