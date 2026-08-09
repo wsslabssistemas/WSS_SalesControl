@@ -263,7 +263,7 @@ dna_sections:
     required: true
     fields:
       - { key: lote_minimo, type: text, required: true, label: "Lote mínimo", help: "Quantidade mínima de produção. Ex.: 500 metros por cor" }
-      - { key: prazo_producao, type: text, required: true, label: "Prazo de produção", help: "Da confirmação do pedido até ficar pronto. Ex.: 20 dias úteis" }
+      - { key: prazo_producao, type: text, required: true, label: "Prazo de produção", help: "Da confirmação do pedido até ficar pronto", options: ["Até 7 dias", "10 a 15 dias", "15 a 20 dias", "20 a 30 dias", "Mais de 30 dias", "Varia por produto"] }
       - { key: capacidade, type: text, label: "Capacidade", help: "Quanto você produz por mês — o que dá para assumir sem atrasar" }
       - { key: desenvolvimento, type: text, label: "Desenvolvimento sob especificação", help: "Se você desenvolve item exclusivo para o cliente e como funciona" }
   - key: comercial
@@ -271,16 +271,16 @@ dna_sections:
     required: true
     fields:
       - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo", help: "Valor mínimo do pedido. Ex.: R$ 3.000" }
-      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições. Ex.: 28/42/56 dias para cliente com cadastro aprovado" }
+      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições para cliente com cadastro aprovado", options: ["À vista", "Antecipado para cliente novo", "28 dias", "28/42/56 dias", "30/60 dias", "30/60/90 dias", "Boleto na entrega"] }
       - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando o preço melhora. Ex.: acima de 1.000 unidades" }
-      - { key: frete, type: text, label: "Frete", help: "Quem paga, e a partir de que valor ou volume" }
+      - { key: frete, type: text, label: "Frete", help: "Quem paga, e a partir de que valor ou volume", options: ["FOB — por conta do cliente", "CIF — por nossa conta", "CIF acima de um valor de pedido", "Combinado a cada pedido", "Não trabalhamos com CIF"] }
   - key: canal
     label: "Como você vende"
     required: true
     fields:
-      - { key: forma_de_venda, type: text, required: true, label: "Forma de venda", help: "Representante, venda direta ou os dois — e como o cliente é atendido" }
+      - { key: forma_de_venda, type: text, required: true, label: "Forma de venda", help: "Como o cliente é atendido", options: ["Venda direta da fábrica", "Por representantes", "Direta e por representantes", "Por distribuidores", "Não trabalhamos com representantes"] }
       - { key: regioes, type: text, required: true, label: "Regiões atendidas", help: "Onde você já entrega hoje" }
-      - { key: exclusividade, type: text, label: "Política de exclusividade", help: "Se protege território ou cliente, e em que condição" }
+      - { key: exclusividade, type: text, label: "Política de exclusividade", help: "Se protege território ou cliente, e em que condição", options: ["Não damos exclusividade", "Por região, com volume mínimo", "Por cliente atendido", "Analisamos caso a caso", "Nunca precisou acontecer"] }
       - { key: apoio_ao_cliente, type: text, label: "Apoio a quem revende", help: "Catálogo, mostruário, material de vitrine, treinamento" }
   - key: diferencial
     label: "Diferencial"

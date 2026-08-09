@@ -45,6 +45,79 @@ export default function OnboardingWizard({
 
   function renderField(sec: string, f: FieldDef) {
     const val = sectionObj(sec)[f.key];
+
+    // ---------------------------------------------------------------
+    // ALTERNATIVAS PARA CLICAR — o pedido do fundador, e a razão dele:
+    // "cada pergunta tem que vir com alternativas para selecionar e uma
+    //  opção para escrever caso nenhuma seja a melhor".
+    //
+    // Não é preguiça de quem responde: caixa vazia é uma decisão em branco,
+    // e vinte decisões em branco seguidas sem saber se acertou é o que faz a
+    // pessoa fechar a aba no meio do cadastro. Alternativa transforma
+    // "inventar uma resposta" em "reconhecer a minha".
+    //
+    // TRÊS REGRAS QUE PROTEGEM A TRAVA ANTI-INVENÇÃO:
+    //
+    // 1. NADA VEM PRÉ-SELECIONADO. O DNA vira o que o motor AFIRMA ao
+    //    cliente final. Uma opção marcada por padrão seria um fato inventado
+    //    entrando por descuido — e o descuido aqui é invisível.
+    // 2. "NÃO SEI AINDA" É SEMPRE UMA SAÍDA, e ela deixa o campo VAZIO. Sem
+    //    ela, quem não sabe escolhe a opção mais próxima, e aproximação
+    //    vira fato afirmado. Campo vazio faz o motor ESCALAR, que é o
+    //    comportamento certo.
+    // 3. "OUTRO" ESCREVE LIVRE. A lista é o caminho comum do ramo, nunca
+    //    uma cerca: empresa que não cabe nela precisa caber assim mesmo.
+    // ---------------------------------------------------------------
+    if (Array.isArray(f.options) && f.options.length > 0) {
+      const escolhido = typeof val === "string" ? val : "";
+      const naLista = f.options.includes(escolhido);
+      const escrevendo = escolhido !== "" && !naLista;
+
+      return (
+        <div className="stack" style={{ gap: 8 }}>
+          <div className="row wrap" style={{ gap: 6 }}>
+            {f.options.map((op) => (
+              <button
+                key={op}
+                type="button"
+                className={escolhido === op ? "btn btn-sm btn-primary" : "btn btn-sm"}
+                onClick={() => setField(sec, f.key, escolhido === op ? "" : op)}
+              >
+                {op}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={escrevendo ? "btn btn-sm btn-primary" : "btn btn-sm"}
+              onClick={() => setField(sec, f.key, escrevendo ? "" : " ")}
+            >
+              Outro…
+            </button>
+            {escolhido !== "" && (
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => setField(sec, f.key, "")}
+                title="Deixa em branco — o sistema prefere não saber a afirmar errado"
+              >
+                não sei ainda
+              </button>
+            )}
+          </div>
+
+          {escrevendo && (
+            <input
+              className="input"
+              autoFocus
+              value={escolhido.trimStart()}
+              placeholder="Escreva do seu jeito"
+              onChange={(e) => setField(sec, f.key, e.target.value)}
+            />
+          )}
+        </div>
+      );
+    }
+
     if (f.type === "boolean") {
       return (
         <label className="row" style={{ gap: 8 }}>
