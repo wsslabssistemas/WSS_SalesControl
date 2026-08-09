@@ -82,6 +82,18 @@ export default async function LoginPage({
             </Link>
           </p>
 
+          {/* A PORTA DE ENTRADA. Sem este link, a unica forma de existir aqui
+              era alguem de dentro convidar — e era por isso que o fabricante
+              precisava criar a empresa do cliente na mao antes de ele chegar. */}
+          <div className="row" style={{ gap: 12, margin: "18px 0 0", color: "var(--text-faint)", fontSize: 12 }}>
+            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+            ainda não tem conta?
+            <span className="grow" style={{ height: 1, background: "var(--border)" }} />
+          </div>
+          <Link href="/criar-conta" className="btn btn-block" style={{ marginTop: 14 }}>
+            Criar conta e testar 30 dias
+          </Link>
+
           {erro && (
             <p className="badge badge-danger" style={{ marginTop: 16, width: "100%", justifyContent: "center" }}>
               {erro}

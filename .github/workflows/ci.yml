@@ -98,3 +98,8 @@ jobs:
       # liberar) e a janela de 24h, que decide o que pode ser dito.
       - name: Webhook do WhatsApp (assinatura e janela de 24h)
         run: node packages/db/tests/webhook_test.mjs
+      # Aviso que nao aparece se parece com aviso que ainda nao chegou a hora:
+      # a tela funciona, ninguem ve erro, e a pessoa so descobre que o teste
+      # acabou quando a IA para. Ai ela nao negocia — some.
+      - name: Teste gratis (avisos 7/3/1 e a trava no fim)
+        run: node packages/db/tests/teste_gratis_test.mjs

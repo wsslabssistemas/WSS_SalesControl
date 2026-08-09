@@ -50,7 +50,10 @@ export default async function PainelHome({
     return (
       <main>
         <h1>Início</h1>
-        <p className="text-dim">Seu usuário ainda não está vinculado a uma empresa.</p>
+        <p className="text-dim">
+          Você ainda não tem empresa aqui.{" "}
+          <Link href="/painel/nova-empresa">Criar a minha agora →</Link>
+        </p>
       </main>
     );
   }

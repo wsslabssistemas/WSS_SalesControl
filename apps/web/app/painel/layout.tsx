@@ -5,6 +5,7 @@ import { isPlatformAdmin } from "@/lib/platform";
 import { loadEntitlements, MODULES } from "@/lib/entitlements";
 import { BRAND_NAME, MAKER } from "@/lib/brand";
 import { carregarAparencia } from "@/lib/aparencia-db";
+import { estadoDoTeste } from "@/lib/teste";
 import { variaveisDaMarca } from "@/lib/aparencia";
 import PainelNav from "./PainelNav";
 import TenantSwitcher from "./TenantSwitcher";
@@ -32,6 +33,9 @@ export default async function PainelLayout({
   // por falta de recurso.
   const aparencia = membership?.tenant ? await carregarAparencia(membership.tenant.id) : { cor: null, logoUrl: null };
   const marca = variaveisDaMarca(aparencia) as React.CSSProperties;
+  // O estado do teste vem da data crua, nao do booleano `trialActive`: e a
+  // data que diz se falta uma semana, um dia, ou se ja acabou.
+  const teste = estadoDoTeste(ent?.trialEndsAt ?? null);
   const moduleNav = (ent?.unlocked ?? []).map((m) => ({ href: MODULES[m].href, label: MODULES[m].label }));
 
   const nav = [
@@ -81,9 +85,33 @@ export default async function PainelLayout({
           </form>
         </div>
       </header>
-      {ent?.trialActive && (
+      {/* O AVISO DO TESTE. Antes ele so dizia "X dias restantes" e SUMIA quando
+          o teste acabava — a pessoa perdia a IA sem nenhuma tela explicando, e
+          quem nao entende que perdeu nao negocia: some. Agora ele tem tres
+          estados, e o do fim e o mais importante dos tres. */}
+      {teste.fase === "tranquilo" && (
         <div style={{ background: "var(--brand-gradient-soft)", borderBottom: "1px solid var(--border-brand)", textAlign: "center", fontSize: 13, padding: "7px 12px" }}>
-          Teste grátis · <strong>{ent.trialDaysLeft} dia{ent.trialDaysLeft === 1 ? "" : "s"}</strong> restante{ent.trialDaysLeft === 1 ? "" : "s"} — todos os recursos liberados.
+          Teste grátis · <strong>{teste.diasRestantes} dia{teste.diasRestantes === 1 ? "" : "s"}</strong> restante{teste.diasRestantes === 1 ? "" : "s"} — todos os recursos liberados.
+        </div>
+      )}
+      {teste.fase === "avisando" && (
+        <div style={{
+          background: teste.urgente ? "var(--danger-soft, rgba(220,60,60,.12))" : "var(--warn-soft, rgba(220,160,40,.12))",
+          borderBottom: `1px solid ${teste.urgente ? "var(--danger)" : "var(--warn)"}`,
+          textAlign: "center", fontSize: 13, padding: "8px 12px",
+        }}>
+          {teste.texto}{" "}
+          <Link href="/painel/contratar" style={{ fontWeight: 600 }}>Ver planos →</Link>
+        </div>
+      )}
+      {teste.fase === "encerrado" && (
+        <div style={{
+          background: "var(--danger-soft, rgba(220,60,60,.12))",
+          borderBottom: "1px solid var(--danger)",
+          textAlign: "center", fontSize: 13, padding: "8px 12px",
+        }}>
+          {teste.texto}{" "}
+          <Link href="/painel/contratar" style={{ fontWeight: 600 }}>Contratar →</Link>
         </div>
       )}
       <div className="container" style={{ padding: "28px 1.25rem 64px" }}>

@@ -32,6 +32,10 @@ const isModule = (k: string): k is ModuleKey => k in MODULES;
 export type Entitlements = {
   trialActive: boolean;
   trialDaysLeft: number | null;
+  /** A data crua do fim do teste. Quem precisa saber "falta pouco?" ou "já
+   *  acabou?" usa `lib/teste.ts` sobre ela — o booleano acima só diz se está
+   *  valendo agora, e some justamente quando o aviso mais importa. */
+  trialEndsAt: string | null;
   offered: ModuleKey[]; // aplicável ao segmento (manifesto + override do tenant)
   unlocked: ModuleKey[]; // offered ∩ (teste ativo ∪ comprado)
   has: (m: ModuleKey) => boolean;
@@ -61,6 +65,7 @@ export function computeEntitlements(
   return {
     trialActive,
     trialDaysLeft,
+    trialEndsAt,
     offered,
     unlocked,
     has: (m) => unlocked.includes(m),

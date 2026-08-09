@@ -8,7 +8,8 @@ export async function definirSenha(formData: FormData) {
   const senha = String(formData.get("senha") ?? "");
   const repetida = String(formData.get("repetida") ?? "");
 
-  const erro = (m: string) => redirect(`/definir-senha?erro=${encodeURIComponent(m)}`);
+  const erro: (m: string) => never = (m) =>
+    redirect(`/definir-senha?erro=${encodeURIComponent(m)}`);
 
   if (senha.length < SENHA_MINIMA) erro(`A senha precisa de pelo menos ${SENHA_MINIMA} caracteres.`);
   if (senha !== repetida) erro("As duas senhas não são iguais.");
