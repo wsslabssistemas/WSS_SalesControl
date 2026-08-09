@@ -129,7 +129,7 @@ foi uma cópia dele e ficou meses desatualizada — dizendo "ainda não existe
 aplicação" enquanto o produto estava no ar.
 
 O mínimo para se situar (confira no `ESTADO_DO_PROJETO.md` antes de usar como
-verdade): aplicação Next.js no ar em `wss-kairos.vercel.app`, migrations
+verdade): aplicação Next.js no ar em `kairos.wsslabs.com.br`, migrations
 `0001`–`0050` aplicadas, **15 segmentos com 285 entradas curadas**, motor com IA
 e trava anti-invenção estrutural, e um módulo de curso com 45 lições.
 

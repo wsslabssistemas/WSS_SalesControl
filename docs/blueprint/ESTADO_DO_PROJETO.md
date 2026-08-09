@@ -434,6 +434,20 @@ tempo entre o contato e o primeiro toque de retomada.
   `tenants.skill_key` faz o painel abrir **sem etapas e sem origens**. Use
   sempre a RPC `install_skill(tenant, skill_key)`. Já derrubou a Barbearia Demo
   e as 5 demos criadas depois.
+  **E pegou de novo em 9/ago/2026, do outro lado da mesma regra.** A tela de
+  criar empresa listava os ramos com o cliente do USUÁRIO — e quem está criando
+  a PRIMEIRA empresa não tem vínculo, então a lista vinha com **zero linhas**.
+  A primeira pessoa de fora do produto (Feltros Bandeirantes) travou ali: viu
+  nome e cidade, um vazio onde deviam estar os 15 ramos, e o servidor
+  respondendo *"escolha o ramo"* para uma escolha que não existia na tela.
+  Ela descreveu como *"coloquei o nome e ele continuou pedindo o nome"*.
+  **Catálogo de segmento é dado de produto, não de tenant: leia com
+  `service_role`** — e só `key` e `name`, porque o `manifest` carrega a
+  biblioteca de estratégia (`0006`).
+  A lição de método: os logs da Vercel não ajudaram (1 requisição em 24h) e
+  "nenhum erro de runtime" não provava nada. Quem resolveu foi rodar a operação
+  inteira contra o banco real e depois comparar o **mesmo SELECT com os dois
+  clientes**.
 - **Unicidade de `skills` é `(key, version)`**, não `key`.
 - **PNCP derruba rajadas** — 28 chamadas simultâneas, 24 falham. Use `getJson`
   (retry) + `mapLimit`. `tam_pagina` até 100 funciona; paginação funciona;
@@ -607,7 +621,7 @@ tempo entre o contato e o primeiro toque de retomada.
 ## 5. Como o fundador trabalha
 
 - Merge direto na `main`, sem PR. CI valida os manifestos a cada push.
-- Ele **testa no deploy** (`wss-kairos.vercel.app`) e reporta com precisão —
+- Ele **testa no deploy** (`kairos.wsslabs.com.br`) e reporta com precisão —
   vários bugs reais vieram dele. Leve a sério e **verifique no código**.
 - Quer honestidade sobre limites, não otimismo. Diga o que falta.
 - Peça o que exige ação dele (chaves, contas, OAuth) só quando indispensável.
