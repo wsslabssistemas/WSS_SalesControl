@@ -3,6 +3,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SENHA_MINIMA } from "@/lib/senha";
+import { headers } from "next/headers";
+
+/** A origem absoluta do site. Vazia faz o Supabase recusar o `emailRedirectTo`. */
+async function origemDoSite(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  const h = await headers();
+  return h.get("host") ? `https://${h.get("host")}` : "";
+}
 
 const erro: (m: string) => never = (m) =>
   redirect(`/criar-conta?erro=${encodeURIComponent(m)}`);
@@ -30,10 +39,22 @@ export async function criarConta(formData: FormData) {
   if (senha.length < SENHA_MINIMA) erro(`A senha precisa de pelo menos ${SENHA_MINIMA} caracteres.`);
 
   const supabase = await createClient();
+  // `emailRedirectTo` É OBRIGATÓRIO AQUI, e faltava.
+  //
+  // Sem ele, o link do e-mail de confirmação volta para a "Site URL" padrão do
+  // Supabase — a raiz do site — em vez de passar pelo nosso `/auth/callback`.
+  // A pessoa clica em confirmar, cai na página inicial e continua deslogada,
+  // sem entender o que aconteceu. O reenvio (`/confirme-email`) já mandava
+  // certo; o cadastro original, não. Duas portas para o mesmo e-mail e só uma
+  // apontando para o lugar certo.
+  const site = await origemDoSite();
   const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,
-    options: { data: { full_name: nome } },
+    options: {
+      data: { full_name: nome },
+      ...(site ? { emailRedirectTo: `${site}/auth/callback?type=signup` } : {}),
+    },
   });
 
   if (error) {

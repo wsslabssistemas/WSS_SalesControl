@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -13,9 +14,17 @@ export type SegmentOption = {
   capabilities: string[];
 };
 
-/** Segmentos publicados. O catálogo é dado (manifestos), não código. */
+/**
+ * Segmentos publicados. O catálogo é dado (manifestos), não código.
+ *
+ * ⚠ COM `service_role`, PELO MESMO MOTIVO DA TELA DE CRIAR EMPRESA.
+ * A policy `skills_read_installed` só deixa o usuário ver a Skill JÁ instalada
+ * na empresa dele. Lida com o cliente do usuário, esta função devolvia UMA
+ * linha — a própria — e a tela de trocar de segmento mostrava só a opção que a
+ * pessoa já tem. Um seletor com uma opção não parece defeito; parece decisão.
+ */
 export async function listSegments(): Promise<SegmentOption[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from("skills")
     .select("key, name, manifest")

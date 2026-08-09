@@ -38,7 +38,13 @@ export default async function PainelLayout({
   const teste = estadoDoTeste(ent?.trialEndsAt ?? null);
   const moduleNav = (ent?.unlocked ?? []).map((m) => ({ href: MODULES[m].href, label: MODULES[m].label }));
 
-  const nav = [
+  // SEM EMPRESA, A NAVEGACAO E UMA SO. Mostrar Responder, Contatos, Funil e
+  // Agenda para quem ainda nao criou empresa oferece dez portas que respondem
+  // todas "sem empresa vinculada" — e faz a pessoa procurar o defeito em vez
+  // de fazer a unica coisa que falta.
+  const nav = !membership?.tenant
+    ? [{ href: "/painel/nova-empresa", label: "Criar minha empresa" }]
+    : [
     { href: "/painel", label: "Início" },
     { href: "/painel/responder", label: "Responder" },
     { href: "/painel/contatos", label: "Contatos" },
@@ -59,6 +65,7 @@ export default async function PainelLayout({
     ...(showManager ? [{ href: "/painel/aparencia", label: "Aparência" }] : []),
     ...(showAdmin ? [{ href: "/painel/admin", label: "Fabricante" }] : []),
   ];
+
 
   return (
     <div style={marca}>

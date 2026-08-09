@@ -26,9 +26,14 @@ export default function Home() {
             <Image src="/icons/icon-192.png" alt="" width={32} height={32} priority />
             <span>{BRAND_NAME}</span>
           </span>
-          <Link href="/login" className="btn btn-sm btn-ghost">
-            Entrar
-          </Link>
+          <div className="row" style={{ gap: 8 }}>
+            <Link href="/login" className="btn btn-sm btn-ghost">
+              Entrar
+            </Link>
+            <Link href="/criar-conta" className="btn btn-sm btn-primary">
+              Criar conta
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -56,14 +61,24 @@ export default function Home() {
           e os fatos da sua empresa, trabalhando por você.
         </p>
 
+        {/* A CHAMADA PRINCIPAL E CRIAR CONTA, nao entrar. Quem chega no
+            dominio pela primeira vez nao tem conta — oferecer so "acessar o
+            painel" e pedir que a pessoa deduza que existe um cadastro em
+            algum lugar.
+            O botao "Status da API" saiu daqui: e link de desenvolvedor numa
+            pagina de venda, e nao ha motivo para apontar um endpoint interno
+            para quem esta avaliando o produto. */}
         <div className="row" style={{ justifyContent: "center", marginTop: 28, gap: 12 }}>
-          <Link href="/login" className="btn btn-primary">
-            Acessar o painel
+          <Link href="/criar-conta" className="btn btn-primary">
+            Criar conta · 30 dias grátis
           </Link>
-          <a href="/api/health" className="btn btn-ghost">
-            Status da API
-          </a>
+          <Link href="/login" className="btn btn-ghost">
+            Já tenho conta
+          </Link>
         </div>
+        <p className="text-faint" style={{ fontSize: 13, marginTop: 12 }}>
+          Sem cartão. Você escolhe o ramo e o sistema se molda a ele.
+        </p>
       </section>
 
       <section className="container" style={{ paddingBottom: 80, maxWidth: 900 }}>
