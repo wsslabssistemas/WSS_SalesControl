@@ -7,6 +7,7 @@ import { SENHA_MINIMA } from "@/lib/senha";
 export async function definirSenha(formData: FormData) {
   const senha = String(formData.get("senha") ?? "");
   const repetida = String(formData.get("repetida") ?? "");
+  const nome = String(formData.get("nome") ?? "").trim();
 
   const erro: (m: string) => never = (m) =>
     redirect(`/definir-senha?erro=${encodeURIComponent(m)}`);
@@ -26,8 +27,24 @@ export async function definirSenha(formData: FormData) {
     erro("Seu link de acesso expirou ou já foi usado. Peça um convite novo para quem te adicionou.");
   }
 
-  const { error } = await supabase.auth.updateUser({ password: senha });
+  const { error } = await supabase.auth.updateUser({
+    password: senha,
+    // O NOME VEM DAQUI, e antes não vinha de lugar nenhum.
+    //
+    // Quem é convidado nunca teve onde dizer como se chama: o convite só pede
+    // o e-mail de quem convida. O perfil ficava com `full_name` nulo, e a tela
+    // de Equipe mostrava a linha em branco — três das cinco pessoas da Be
+    // Fitness estavam assim.
+    ...(nome ? { data: { full_name: nome } } : {}),
+  });
   if (error) erro(error.message);
+
+  // O gatilho do `0054` só preenche o perfil na CRIAÇÃO do usuário. Quem já
+  // existia precisa da atualização explícita, senão o nome fica só no
+  // metadado da conta e a tela de Equipe continua em branco.
+  if (nome && user) {
+    await supabase.from("profiles").update({ full_name: nome }).eq("id", user.id);
+  }
 
   redirect("/painel");
 }

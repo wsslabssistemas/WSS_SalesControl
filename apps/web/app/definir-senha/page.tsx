@@ -53,7 +53,21 @@ export default async function DefinirSenhaPage({
               </p>
 
               <form action={definirSenha}>
-                <label className="label" htmlFor="senha">Senha</label>
+                {/* O NOME, que faltava. Quem é convidado nunca teve onde dizer
+                    como se chama — o convite só pede o e-mail. O perfil ficava
+                    nulo e a tela de Equipe mostrava a linha em branco. */}
+                <label className="label" htmlFor="nome">Seu nome</label>
+                <input
+                  id="nome" name="nome" type="text" autoComplete="name"
+                  defaultValue={typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name !== user.email
+                    ? user.user_metadata.full_name : ""}
+                  placeholder="Ex.: Maria Silva"
+                />
+                <span className="text-faint" style={{ display: "block", fontSize: 12, marginTop: 6 }}>
+                  É como você vai aparecer para o resto da equipe.
+                </span>
+
+                <label className="label" htmlFor="senha" style={{ marginTop: 16 }}>Senha</label>
                 <input
                   id="senha" name="senha" type="password" required
                   minLength={SENHA_MINIMA} autoComplete="new-password" placeholder="••••••••"
