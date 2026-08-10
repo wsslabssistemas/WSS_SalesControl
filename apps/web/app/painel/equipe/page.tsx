@@ -6,6 +6,7 @@ import { changeRole } from "./actions";
 import { stagesForaDeJogo } from "@/lib/recurrence";
 import { computePlacar } from "@/lib/placar";
 import { PlacarDaEquipe } from "./Placar";
+import LinkDoConvite from "./LinkDoConvite";
 
 type Member = {
   id: string;
@@ -147,7 +148,7 @@ export default async function EquipePage({
             <span className="badge badge-success" style={{ marginRight: 8 }}>Convite gerado</span>
             Envie este link para a pessoa (WhatsApp, e-mail) — ela define a própria senha:
           </p>
-          <input readOnly value={inviteLink} style={{ fontSize: 12 }} />
+          <LinkDoConvite link={inviteLink} />
         </div>
       )}
       {sp.ok && <p className="badge badge-success mt-16">Membro vinculado.</p>}
