@@ -8,7 +8,7 @@
 > segmentos e o Kairós vendendo o Kairós estão fora daqui de propósito — cada
 > item que não é para agora é ruído para quem está tentando entregar.
 >
-> Atualizado: 8 de agosto de 2026.
+> Atualizado: 10 de agosto de 2026.
 
 ---
 
@@ -66,28 +66,46 @@ transformaria 9.151 pessoas em alunas.
 
 ---
 
-## ❌ O que falta
+## ❌ O que falta — 10 de agosto de 2026
 
-| # | O quê | Quem | Estado |
-|---|---|---|---|
-| 1 | **Subir o teto global de IA** | Fundador | `/painel/admin/cotas` → campo **"Teto GLOBAL (R$/mês)"**. Está R$ 130, **menor que o teto da própria Be Fitness (R$ 156)** — a IA para para todo mundo antes de a cota dela acabar. |
-| 2 | **Rodar a migration `0053`** | Fundador | SQL Editor do Supabase. Devolve o telefone a 8 alunos que entraram sem — ver "telefone compartilhado" abaixo. |
-| 3 | **Vendedor entrar** | Fundador | Segunda-feira, quando a equipe voltar. |
-| 4 | **Remover `teste-a@exemplo.com`** | Fundador | Conta de teste com papel `owner` sobre dado de cliente real. |
+### Suas, e somam poucos minutos
 
-### ✅ Fechados em 8/ago/2026
+| # | O quê | Onde |
+|---|---|---|
+| 1 | **Subir o teto global de IA** | Aba **Fabricante**, primeiro bloco. Está **R$ 130** e o teto só da Be Fitness é R$ 156 — o global aperta antes, e a IA para para todo mundo. |
+| 2 | **Trocar o Site URL no Supabase** | Authentication → URL Configuration → a caixa de cima. Está `wss-kairos.vercel.app`; deve ser `kairos.wsslabs.com.br`. É o endereço que sai **dentro dos e-mails**. |
+| 3 | **Decidir sobre `teste-a@exemplo.com`** | É `owner` da Be Fitness, com acesso a 597 cadastros reais. Se você usa para testar dentro dela, fica; se não, eu removo só esse vínculo. |
+| 4 | **A equipe usar** | João, Nycolas e Luciana estão cadastrados e com 199 contatos cada. |
 
-- **Importação dos planos.** 324 contatos criados, 44 atualizados, 0 falhas.
-  **328 contatos com data de vencimento** conferidos no banco.
-- **Carteira dividida** entre João, Nycolas e Luciana: 199 cada, equilibrada
-  também em planos (119/106/103). Rodízio sobre a lista ordenada por nome —
-  determinístico, dá para conferir e repetir.
-- **Renovação acendeu sozinha**, sem programar nada: ela é derivada de
-  `contract_end`. **88 toques devidos hoje** — 5 venceram sem ninguém falar
-  (um há 67 dias), 17 na janela de 7 dias, 32 na de 30 e 34 na de 60.
-- Equipe cadastrada, logo e cor no painel.
+### Minhas, e dependem de você
 
-Depois dos quatro acima, a Be Fitness está completa no manual.
+| O quê | Espera |
+|---|---|
+| Ligar os botões de assinatura | Os links de assinatura do Mercado Pago |
+| Construir o cálculo de preço por porte e segmento | Você fechar a base de preço |
+| Preencher o DNA do Kairós | Suas respostas de preço, prazo de implantação e exportação de dados |
+| Aplicar a revisão da Feltros na biblioteca de indústria | Nada — posso fazer quando quiser |
+| Motor proativo agendado (Inngest) | Nada — não depende da Meta |
+
+---
+
+## ⚠ O número que importa mais que a lista
+
+**`decisions` = 0.** Em toda a plataforma, **nenhuma resposta com IA foi gerada para um cliente real** — nem na Be Fitness, nem na Darvil.
+
+O sistema está carregado, dividido, configurado e com 88 renovações devidas esperando. Mas ninguém apertou o botão ainda.
+
+Isso não é uma pendência de construção. É a única coisa que decide se o produto presta, e nenhuma linha de código a resolve.
+
+---
+
+## As outras duas empresas (10/ago/2026)
+
+| Empresa | Ramo | Estado |
+|---|---|---|
+| **Darvil Serviços de Engenharia** (Luis) | energia solar | Entrou. **DNA vazio** — 23 campos com sugestão esperando. Teste até 08/09. |
+| **Feltros Bandeirantes** (Jeniffer) | indústria | Conta confirmada, **ainda não criou a empresa**. O caminho que a travou está corrigido. |
+| Empresa teste (fundador) | software | Descartável — avise quando puder apagar. |
 
 ### ⚠ Telefone compartilhado — o que a importação descobriu
 
