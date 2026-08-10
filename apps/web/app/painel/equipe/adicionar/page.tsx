@@ -46,6 +46,17 @@ export default async function AdicionarMembroPage({
       </p>
 
       <form action={inviteMember} style={{ display: "grid", gap: 14, marginTop: 20 }}>
+        {/* O NOME VEM PRIMEIRO, e quem preenche e QUEM CONVIDA.
+            Antes so se pedia o e-mail, e o nome dependia de a pessoa
+            convidada preencher depois — o que quase ninguem faz. O resultado
+            era a tela de Equipe listando "lulmbrd@gmail.com" em vez de
+            "Luciana", e o dono da empresa sem saber quem e quem na propria
+            equipe. Quem sabe o nome e quem esta convidando; perguntar ao
+            convidado e perguntar a pessoa errada, na hora errada. */}
+        <label style={{ fontSize: 13, opacity: 0.85 }}>
+          Nome da pessoa
+          <input name="nome" type="text" required style={field} placeholder="Ex.: Luciana Bard" />
+        </label>
         <label style={{ fontSize: 13, opacity: 0.85 }}>
           E-mail
           <input name="email" type="email" required style={field} />

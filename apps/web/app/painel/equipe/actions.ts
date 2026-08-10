@@ -20,8 +20,10 @@ const ROLES = ["owner", "admin", "manager", "agent"];
 export async function inviteMember(formData: FormData) {
   const m = await requireAdmin();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const nome = String(formData.get("nome") ?? "").trim();
   const role = ROLES.includes(String(formData.get("role"))) ? String(formData.get("role")) : "agent";
   if (!email) redirect("/painel/equipe/adicionar?erro=Informe+o+e-mail");
+  if (!nome) redirect("/painel/equipe/adicionar?erro=" + encodeURIComponent("Diga o nome da pessoa — é como ela vai aparecer para a equipe."));
 
   const admin = createAdminClient();
   let userId: string | null = null;
@@ -84,7 +86,23 @@ export async function inviteMember(formData: FormData) {
     );
   }
 
-  await admin.from("profiles").upsert({ id: userId, email }, { onConflict: "id" });
+  // O NOME ENTRA AQUI, vindo de quem convidou. Sem ele o perfil nascia sem
+  // nome e a tela de Equipe listava o e-mail — três das cinco pessoas da Be
+  // Fitness ficaram assim, e o dono não sabia quem era quem na própria equipe.
+  //
+  // MAS O NOME DA PRÓPRIA PESSOA VENCE. Ela também pode escrevê-lo ao criar a
+  // senha, e ali é ela dizendo como se chama — "Luciana Bard Machado" não pode
+  // ser rebaixado para "Luciana" só porque alguém reenviou o convite. Por isso
+  // este upsert só preenche quando o perfil ainda NÃO tem nome.
+  const { data: perfil } = await admin
+    .from("profiles").select("full_name").eq("id", userId).maybeSingle();
+  const jaTemNome = typeof perfil?.full_name === "string" && perfil.full_name.trim() !== ""
+    && perfil.full_name !== email;
+
+  await admin.from("profiles").upsert(
+    { id: userId, email, ...(jaTemNome ? {} : { full_name: nome }) },
+    { onConflict: "id" },
+  );
   await admin.from("memberships").upsert(
     { user_id: userId, tenant_id: m.tenant!.id, role, status: "active" },
     { onConflict: "user_id,tenant_id" },
