@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { finishOnboarding } from "./actions";
 import { rotuloDaColuna } from "@/lib/rotulos";
+import CampoComSugestoes from "./CampoComSugestoes";
 
 type FieldDef = { key: string; label?: string; help?: string; type: string; columns?: string[]; options?: string[]; required?: boolean };
 type SectionDef = { key: string; label: string; required?: boolean; type?: string; fields?: FieldDef[] };
@@ -68,53 +69,20 @@ export default function OnboardingWizard({
     // 3. "OUTRO" ESCREVE LIVRE. A lista é o caminho comum do ramo, nunca
     //    uma cerca: empresa que não cabe nela precisa caber assim mesmo.
     // ---------------------------------------------------------------
+    // SUGESTÕES QUE ABREM AO CLICAR NA CAIXA — ver `CampoComSugestoes`.
+    //
+    // A primeira versão eram botões ACIMA do campo. O fundador corrigiu: ele
+    // quer clicar na caixa e a lista aparecer. E a forma dele é melhor por um
+    // motivo prático — sugestão longa vira botão do tamanho da tela, e numa
+    // lista que abre o tamanho deixa de importar.
     if (Array.isArray(f.options) && f.options.length > 0) {
-      const escolhido = typeof val === "string" ? val : "";
-      const naLista = f.options.includes(escolhido);
-      const escrevendo = escolhido !== "" && !naLista;
-
       return (
-        <div className="stack" style={{ gap: 8 }}>
-          <div className="row wrap" style={{ gap: 6 }}>
-            {f.options.map((op) => (
-              <button
-                key={op}
-                type="button"
-                className={escolhido === op ? "btn btn-sm btn-primary" : "btn btn-sm"}
-                onClick={() => setField(sec, f.key, escolhido === op ? "" : op)}
-              >
-                {op}
-              </button>
-            ))}
-            <button
-              type="button"
-              className={escrevendo ? "btn btn-sm btn-primary" : "btn btn-sm"}
-              onClick={() => setField(sec, f.key, escrevendo ? "" : " ")}
-            >
-              Outro…
-            </button>
-            {escolhido !== "" && (
-              <button
-                type="button"
-                className="btn btn-sm btn-ghost"
-                onClick={() => setField(sec, f.key, "")}
-                title="Deixa em branco — o sistema prefere não saber a afirmar errado"
-              >
-                não sei ainda
-              </button>
-            )}
-          </div>
-
-          {escrevendo && (
-            <input
-              className="input"
-              autoFocus
-              value={escolhido.trimStart()}
-              placeholder="Escreva do seu jeito"
-              onChange={(e) => setField(sec, f.key, e.target.value)}
-            />
-          )}
-        </div>
+        <CampoComSugestoes
+          value={typeof val === "string" ? val : ""}
+          onChange={(v) => setField(sec, f.key, v)}
+          options={f.options}
+          multiline={f.type === "rich_text"}
+        />
       );
     }
 

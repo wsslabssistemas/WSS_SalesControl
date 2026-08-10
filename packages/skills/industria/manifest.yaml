@@ -255,39 +255,39 @@ dna_sections:
     required: true
     fields:
       - { key: linhas, type: list, required: true, label: "Linhas que você fabrica", help: "As famílias de produto. Ex.: feltro agulhado, manta acústica" }
-      - { key: especificacao, type: text, required: true, label: "Especificação técnica", help: "O que o comprador técnico pergunta: composição, gramatura, medidas, resistência" }
+      - { key: especificacao, type: text, required: true, label: "Especificação técnica", help: "O que o comprador técnico pergunta: composição, gramatura, medidas, resistência", options: ["Gramatura, composição e espessura de cada item, na ficha técnica que acompanha o orçamento", "Gramatura, composição, largura e resistência — informo no orçamento e no laudo", "Ficha técnica por produto, com a aplicação recomendada para cada um"] }
       - { key: aplicacoes, type: list, label: "Aplicações", help: "Onde o produto é usado. Ex.: estofado, calçado, isolamento industrial" }
       - { key: certificacoes, type: list, label: "Certificações e laudos", help: "Normas, ensaios e certificados que você tem" }
   - key: producao
     label: "Produção e prazo"
     required: true
     fields:
-      - { key: lote_minimo, type: text, required: true, label: "Lote mínimo", help: "Quantidade mínima de produção. Ex.: 500 metros por cor" }
+      - { key: lote_minimo, type: text, required: true, label: "Lote mínimo", help: "Quantidade mínima de produção. Ex.: 500 metros por cor", options: ["Não trabalho com lote mínimo", "Lote mínimo por item, varia conforme o produto", "Mínimo por rolo ou fardo fechado", "Mínimo em metros ou quilos, definido por linha"] }
       - { key: prazo_producao, type: text, required: true, label: "Prazo de produção", help: "Da confirmação do pedido até ficar pronto", options: ["Até 7 dias", "10 a 15 dias", "15 a 20 dias", "20 a 30 dias", "Mais de 30 dias", "Varia por produto"] }
-      - { key: capacidade, type: text, label: "Capacidade", help: "Quanto você produz por mês — o que dá para assumir sem atrasar" }
-      - { key: desenvolvimento, type: text, label: "Desenvolvimento sob especificação", help: "Se você desenvolve item exclusivo para o cliente e como funciona" }
+      - { key: capacidade, type: text, label: "Capacidade", help: "Quanto você produz por mês — o que dá para assumir sem atrasar", options: ["Produção sob pedido, sem estoque parado", "Mantenho estoque das linhas de giro e produzo o resto sob pedido", "Produção mensal definida, com agenda de fabricação"] }
+      - { key: desenvolvimento, type: text, label: "Desenvolvimento sob especificação", help: "Se você desenvolve item exclusivo para o cliente e como funciona", options: ["Sim, desenvolvo sob especificação do cliente", "Sim, a partir de um volume mínimo", "Só adapto o que já está em linha", "Não, trabalho apenas com a linha própria"] }
   - key: comercial
     label: "Condições comerciais"
     required: true
     fields:
       - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo", help: "Valor mínimo do pedido. Ex.: R$ 3.000" }
       - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições para cliente com cadastro aprovado", options: ["À vista", "Antecipado para cliente novo", "28 dias", "28/42/56 dias", "30/60 dias", "30/60/90 dias", "Boleto na entrega"] }
-      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando o preço melhora. Ex.: acima de 1.000 unidades" }
+      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando o preço melhora. Ex.: acima de 1.000 unidades", options: ["Desconto por volume, em faixas", "Desconto por prazo de pagamento a vista", "Tabela fixa, sem desconto", "Negociado caso a caso, conforme o pedido"] }
       - { key: frete, type: text, label: "Frete", help: "Quem paga, e a partir de que valor ou volume", options: ["FOB — por conta do cliente", "CIF — por nossa conta", "CIF acima de um valor de pedido", "Combinado a cada pedido", "Não trabalhamos com CIF"] }
   - key: canal
     label: "Como você vende"
     required: true
     fields:
       - { key: forma_de_venda, type: text, required: true, label: "Forma de venda", help: "Como o cliente é atendido", options: ["Venda direta da fábrica", "Por representantes", "Direta e por representantes", "Por distribuidores", "Não trabalhamos com representantes"] }
-      - { key: regioes, type: text, required: true, label: "Regiões atendidas", help: "Onde você já entrega hoje" }
+      - { key: regioes, type: text, required: true, label: "Regiões atendidas", help: "Onde você já entrega hoje", options: ["Todo o Brasil", "Sul e Sudeste", "Apenas o meu estado", "Todo o Brasil, e também exporto"] }
       - { key: exclusividade, type: text, label: "Política de exclusividade", help: "Se protege território ou cliente, e em que condição", options: ["Não damos exclusividade", "Por região, com volume mínimo", "Por cliente atendido", "Analisamos caso a caso", "Nunca precisou acontecer"] }
-      - { key: apoio_ao_cliente, type: text, label: "Apoio a quem revende", help: "Catálogo, mostruário, material de vitrine, treinamento" }
+      - { key: apoio_ao_cliente, type: text, label: "Apoio a quem revende", help: "Catálogo, mostruário, material de vitrine, treinamento", options: ["Envio amostras e ficha técnica", "Amostras, ficha técnica e apoio na especificação", "Visita técnica junto do cliente quando necessário", "Não tenho programa formal de apoio"] }
   - key: diferencial
     label: "Diferencial"
     fields:
-      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "O que você resolve que o fornecedor atual dele não resolve" }
-      - { key: tempo_de_fabrica, type: text, label: "Tempo de fábrica", help: "Desde quando produz, e para quem já produziu" }
-      - { key: assistencia, type: text, label: "Pós-venda", help: "Como funciona troca, defeito de lote e assistência" }
+      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "O que você resolve que o fornecedor atual dele não resolve", options: ["Prazo cumprido e material constante entre lotes", "Apoio técnico na especificação, não só preço", "Atendimento direto da fábrica, sem intermediário", "Regularidade de fornecimento mesmo em pico de demanda"] }
+      - { key: tempo_de_fabrica, type: text, label: "Tempo de fábrica", help: "Desde quando produz, e para quem já produziu", options: ["Menos de 5 anos", "5 a 10 anos", "10 a 20 anos", "20 a 50 anos", "Mais de 50 anos"] }
+      - { key: assistencia, type: text, label: "Pós-venda", help: "Como funciona troca, defeito de lote e assistência", options: ["Analiso o caso e reponho o lote com defeito", "Analiso tecnicamente e dou parecer antes de repor", "Troco o material e busco a causa junto com o cliente", "Não tenho processo formal de pós-venda"] }
 
   - key: free_notes
     label: "Outras informações importantes"
