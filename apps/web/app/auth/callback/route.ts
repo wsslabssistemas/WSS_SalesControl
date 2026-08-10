@@ -40,12 +40,21 @@ export async function GET(request: Request) {
     );
   }
 
-  // O Supabase manda o erro na query quando o link expirou ou já foi usado —
-  // e "link expirado" é a causa mais comum de alguém não conseguir entrar.
-  // Repassar o texto dele é melhor que um "falha no login" genérico, que não
-  // diz a quem recebeu o convite que basta pedir outro.
+  // O Supabase manda o erro na query quando o link expirou ou já foi usado.
   const erro = searchParams.get("error_description") ?? searchParams.get("error");
-  return NextResponse.redirect(
-    `${origin}/login?erro=${encodeURIComponent(erro ?? "Não consegui completar o acesso. Peça um convite novo.")}`,
-  );
+  if (erro) {
+    return NextResponse.redirect(`${origin}/login?erro=${encodeURIComponent(erro)}`);
+  }
+
+  // SEM `code` E SEM ERRO = A SESSÃO VEIO NO FRAGMENTO.
+  //
+  // O `/auth/v1/verify` do Supabase devolve `#access_token=…`, e fragmento não
+  // chega ao servidor. Daqui não dá para ler — só o browser vê. Passamos a
+  // bola para uma página client-side, e o fragmento SOBREVIVE ao
+  // redirecionamento porque o destino não traz um próprio.
+  //
+  // Era aqui que todo convite e toda recuperação de senha morriam: sem `code`,
+  // esta rota mandava para o login com "não consegui completar o acesso" — uma
+  // mensagem verdadeira e inútil, porque o problema não era da pessoa.
+  return NextResponse.redirect(`${origin}/auth/sessao${tipo ? `?type=${tipo}` : ""}`);
 }

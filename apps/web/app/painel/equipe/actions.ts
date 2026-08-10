@@ -44,17 +44,30 @@ export async function inviteMember(formData: FormData) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
     (h.get("host") ? `https://${h.get("host")}` : "");
-  const destino = `${site}/auth/callback?type=invite`;
-
+  // O LINK É MONTADO POR NÓS, com o `hashed_token` — e NÃO é o `action_link`
+  // que o Supabase devolve.
+  //
+  // O `action_link` aponta para o `/auth/v1/verify` deles, que devolve a
+  // sessão no FRAGMENTO da URL (`#access_token=…`). Fragmento não chega ao
+  // servidor, e o nosso callback é uma rota de servidor: todo convite e toda
+  // recuperação morriam ali, mandando a pessoa para o login com "não consegui
+  // completar o acesso". Medido com `curl`: o `Location` vem com `#`, sem
+  // `code`.
+  //
+  // Com `token_hash`, `/auth/confirmar` troca o token por sessão no servidor,
+  // gravando os cookies pelo caminho normal.
   const { data, error } = await admin.auth.admin.generateLink({
     type: "invite",
     email,
-    options: { redirectTo: destino },
+    options: { redirectTo: `${site}/auth/confirmar` },
   });
+
+  const montar = (hash: string | undefined, tipo: string) =>
+    hash ? `${site}/auth/confirmar?token_hash=${hash}&type=${tipo}` : null;
 
   if (!error && data?.user) {
     userId = data.user.id;
-    link = data.properties?.action_link ?? null;
+    link = montar(data.properties?.hashed_token, "invite");
   } else {
     // JÁ TEM CONTA — e aqui estava o defeito que o fundador viu.
     //
@@ -74,9 +87,9 @@ export async function inviteMember(formData: FormData) {
       const { data: rec } = await admin.auth.admin.generateLink({
         type: "recovery",
         email,
-        options: { redirectTo: `${site}/auth/callback?type=recovery` },
+        options: { redirectTo: `${site}/auth/confirmar` },
       });
-      link = rec?.properties?.action_link ?? null;
+      link = montar(rec?.properties?.hashed_token, "recovery");
     }
   }
 
