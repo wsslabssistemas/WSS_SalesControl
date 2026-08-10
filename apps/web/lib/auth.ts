@@ -46,13 +46,33 @@ export async function getActiveTenant(): Promise<ActiveTenant | null> {
 /**
  * Todas as empresas do usuário. Uma pessoa pode ter vínculo com mais de uma
  * (rede de unidades, consultor, o próprio fabricante demonstrando segmentos).
- * RLS garante que só vêm os vínculos ativos dela.
+ *
+ * ⚠ O FILTRO POR `user_id` É OBRIGATÓRIO, e faltava.
+ *
+ * O comentário antigo dizia "RLS garante que só vêm os vínculos ativos dela" —
+ * e isso é FALSO. A policy `memberships_select` é `is_member_of(tenant_id)`:
+ * ela deixa ver TODOS os vínculos de qualquer empresa da qual você participa,
+ * não só o seu. É o que a tela de Equipe precisa para listar os colegas.
+ *
+ * Sem o filtro, esta função devolvia UMA LINHA POR MEMBRO. O seletor de
+ * empresa do fundador mostrava "Be Fitness" CINCO VEZES — uma para cada
+ * pessoa da equipe dele.
+ *
+ * A lição, e o motivo de o filtro ficar aqui mesmo com RLS ligada: RLS
+ * responde "o que você PODE ver", nunca "o que esta tela QUER ver". Confiar
+ * nela como filtro de negócio é confiar numa resposta para outra pergunta.
  */
 export async function listMemberships(): Promise<ActiveTenant[]> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const { data } = await supabase
     .from("memberships")
     .select("id, role, tenant:tenants(id, name, slug, skill_key)")
+    .eq("user_id", user.id)
     .eq("status", "active");
 
   // to-one no runtime; o supabase-js infere array sem tipos gerados → unknown.
