@@ -4,6 +4,7 @@
  *
  *   node scripts/provar-motor.mjs            # a bateria toda
  *   node scripts/provar-motor.mjs industria  # só um segmento
+ *   node scripts/provar-motor.mjs --comparar # Sonnet x Haiku, lado a lado
  *
  * ⚠ ESPELHO: o prompt aqui é uma cópia do de
  * `apps/web/app/painel/responder/ai-actions.ts`. Mudou lá, mude aqui — senão
@@ -33,9 +34,50 @@ function readEnv() {
 }
 const env = readEnv();
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const modelo = createAnthropic({ apiKey: (env.AI_API_KEY ?? "").trim() })(env.AI_MODEL ?? "claude-sonnet-5");
+const anthropic = createAnthropic({ apiKey: (env.AI_API_KEY ?? "").trim() });
 
-const custo = (i, o) => Math.round(((i / 1e6) * 3 + (o / 1e6) * 15) * 5.5 * 100);
+/**
+ * ⚠ PREÇO POR MODELO, EM DÓLAR POR MILHÃO DE TOKENS — e o número da Sonnet
+ * tem data de validade.
+ *
+ * A Sonnet 5 está em preço de lançamento (US$ 2 / US$ 10) **até 31/ago/2026**;
+ * depois vai para US$ 3 / US$ 15. O `AI_IN_PER_M`/`AI_OUT_PER_M` do
+ * `lib/ai.ts` está em 3/15, então **o `usage_ledger` está registrando ~50% a
+ * mais do que a conta real de hoje** — o que é o erro seguro (superestimar
+ * gasto), mas atrapalha na hora de decidir teto.
+ */
+const PRECOS = {
+  "claude-sonnet-5": { in: 2, out: 10, nota: "preço de lançamento até 31/ago; depois 3/15" },
+  "claude-haiku-4-5": { in: 1, out: 5, nota: "" },
+  "claude-opus-5": { in: 5, out: 25, nota: "" },
+};
+const USD_BRL = Number(env.USD_BRL ?? 5.5);
+const custoDe = (modelo, i, o) => {
+  const p = PRECOS[modelo] ?? PRECOS["claude-sonnet-5"];
+  return Math.round(((i / 1e6) * p.in + (o / 1e6) * p.out) * USD_BRL * 100);
+};
+const custo = (i, o) => custoDe(env.AI_MODEL ?? "claude-sonnet-5", i, o);
+
+/**
+ * MODO COMPARAÇÃO — `--comparar` roda CADA caso em dois modelos e imprime as
+ * duas respostas uma embaixo da outra.
+ *
+ * Por que existe: a pergunta "dá para usar um modelo mais barato?" não se
+ * responde por intuição, e a intuição erra nos dois sentidos. Este
+ * repositório já pagou para aprender isso — o classificador de acentos foi
+ * MEDIDO em 82% por validação cruzada **antes** de rodar, e reprovado; medir
+ * antes saiu mais barato que descobrir depois em 200 KB de curadoria.
+ *
+ * O que a comparação NÃO mede, e é bom saber: a trava anti-invenção é
+ * ESTRUTURAL (`checkRequiredFacts` roda fora do modelo), então ela vale igual
+ * nos dois. O que muda entre modelos é o que nenhum teste automático julga —
+ * tom, aplicação da técnica e português. Por isso a saída é para leitura
+ * humana, com as duas lado a lado, e não um número.
+ */
+const COMPARAR = process.argv.includes("--comparar");
+const MODELOS = COMPARAR
+  ? [env.AI_MODEL ?? "claude-sonnet-5", "claude-haiku-4-5"]
+  : [env.AI_MODEL ?? "claude-sonnet-5"];
 
 // --- casamento (espelho de lib/match.ts) -----------------------------------
 const STOP = new Set(
@@ -134,10 +176,11 @@ const CASOS = [
   { slug: "wss-labs", msg: "Quanto custa por mes? Quantos dias tem o teste gratis?" },
 ];
 
-const filtro = process.argv[2];
+const filtro = process.argv.slice(2).find((a) => !a.startsWith("--"));
 const alvos = filtro ? CASOS.filter((c) => c.slug.includes(filtro)) : CASOS;
 
 let totalCusto = 0;
+const porModelo = {};
 for (const [i, caso] of alvos.entries()) {
   const { data: tenant } = await db.from("tenants").select("id, name, skill_key").eq("slug", caso.slug).maybeSingle();
   const [{ data: skill }, { data: dna }, { data: seed }] = await Promise.all([
@@ -221,28 +264,52 @@ MENSAGEM DO CLIENTE (responda a isto):
 
 Analise e gere a melhor resposta agora.`;
 
-  const res = await generateObject({ model: modelo, schema, system, prompt });
-  const u = res.usage ?? {};
-  const tin = u.inputTokens ?? u.promptTokens ?? 0;
-  const tout = u.outputTokens ?? u.completionTokens ?? 0;
-  const c = custo(tin, tout);
-  totalCusto += c;
-  const r = res.object;
-  // A trava tem a palavra final — espelho do que a action faz.
-  if (travou) r.escalar = true;
-  r.faltam_fatos = [...new Set([...faltando, ...(r.faltam_fatos ?? [])])];
-
   console.log(`\n${"=".repeat(78)}`);
   console.log(`[${i + 1}/${alvos.length}] ${tenant.name} (${tenant.skill_key})`);
   console.log(`CLIENTE: "${caso.msg}"`);
   console.log(`entradas usadas: ${usadas.map((e, k) => `${e.category}/${escolas[k]}`).join(", ")}`);
-  console.log(`${"-".repeat(78)}`);
-  console.log(`ESCALAR: ${r.escalar}${r.faltam_fatos.length ? `  (faltam: ${r.faltam_fatos.join("; ")})` : ""}`);
-  console.log(`\nRESPOSTA:\n${r.resposta_sugerida}`);
-  console.log(`\nTÉCNICA: ${r.tecnica}`);
-  console.log(`EXPLICAÇÃO: ${r.explicacao}`);
-  console.log(`OBJETIVO: ${r.objetivo} | PRÓXIMO: ${r.proximo_passo}`);
-  console.log(`ETAPA: ${r.etapa_jornada} | EMOÇÃO: ${r.emocao}`);
-  console.log(`tokens ${tin} in / ${tout} out — R$ ${(c / 100).toFixed(2)}`);
+
+  // MESMO PROMPT, MESMA BIBLIOTECA, MESMO DNA — só o modelo muda. Se o
+  // contexto variasse junto, a comparação mediria o contexto, não o modelo.
+  for (const nomeModelo of MODELOS) {
+    const res = await generateObject({
+      model: anthropic(nomeModelo), schema, system, prompt,
+    });
+    const u = res.usage ?? {};
+    const tin = u.inputTokens ?? u.promptTokens ?? 0;
+    const tout = u.outputTokens ?? u.completionTokens ?? 0;
+    const c = custoDe(nomeModelo, tin, tout);
+    totalCusto += c;
+    porModelo[nomeModelo] = (porModelo[nomeModelo] ?? 0) + c;
+    const r = res.object;
+    // A trava tem a palavra final — espelho do que a action faz, e ela é
+    // ESTRUTURAL: vale igual em qualquer modelo. É por isso que trocar de
+    // modelo não arrisca invenção de preço — arrisca tom e técnica.
+    if (travou) r.escalar = true;
+    r.faltam_fatos = [...new Set([...faltando, ...(r.faltam_fatos ?? [])])];
+
+    console.log(`${"-".repeat(78)}`);
+    if (COMPARAR) console.log(`▶ ${nomeModelo}`);
+    console.log(`ESCALAR: ${r.escalar}${r.faltam_fatos.length ? `  (faltam: ${r.faltam_fatos.join("; ")})` : ""}`);
+    console.log(`\nRESPOSTA:\n${r.resposta_sugerida}`);
+    console.log(`\nTÉCNICA: ${r.tecnica}`);
+    console.log(`EXPLICAÇÃO: ${r.explicacao}`);
+    console.log(`OBJETIVO: ${r.objetivo} | PRÓXIMO: ${r.proximo_passo}`);
+    console.log(`ETAPA: ${r.etapa_jornada} | EMOÇÃO: ${r.emocao}`);
+    console.log(`tokens ${tin} in / ${tout} out — R$ ${(c / 100).toFixed(2)}`);
+  }
 }
 console.log(`\n${"=".repeat(78)}\nTOTAL: ${alvos.length} casos, R$ ${(totalCusto / 100).toFixed(2)}`);
+if (COMPARAR) {
+  console.log("\nPOR MODELO:");
+  for (const [m, c] of Object.entries(porModelo)) {
+    const media = c / alvos.length / 100;
+    const nota = PRECOS[m]?.nota;
+    console.log(`  ${m.padEnd(20)} R$ ${(c / 100).toFixed(2)}  ·  R$ ${media.toFixed(3)} por resposta${nota ? `  (${nota})` : ""}`);
+  }
+  console.log(
+    "\nO NÚMERO NÃO DECIDE SOZINHO. A trava anti-invenção é estrutural e vale nos\n" +
+    "dois; o que muda é tom, aplicação da técnica e português — leia as respostas\n" +
+    "lado a lado antes de trocar. A mensagem é o produto.",
+  );
+}
