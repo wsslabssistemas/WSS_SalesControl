@@ -1,5 +1,5 @@
 # ESTADO DO PROJETO — COS (WSS Kairós)
-**Última atualização:** 7 de agosto de 2026
+**Última atualização:** 10 de agosto de 2026
 **Fabricante:** WSS Labs · **Fundador:** William
 
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
@@ -12,6 +12,83 @@
 > está congelado)** → `COS_Tese_de_Mercado.md` (por que existe e para quem) →
 > `COS_Mapa_de_Segmentos.md` (o que cobrimos) → `COS_Escolas_de_Venda.md` (que
 > técnica usamos e o que falta) → `../../CLAUDE.md` (as três leis).
+
+---
+
+## 0. A ENTRADA DO PRODUTO — 9 e 10 de agosto de 2026
+
+> Dois dias inteiros num só assunto: **fazer uma pessoa de fora conseguir
+> entrar.** Vale ler antes de tudo, porque é a área que mais quebrou e a que
+> tem o padrão de defeito mais instrutivo do projeto.
+
+### O que passou a existir
+
+`/criar-conta` → `/painel/nova-empresa` (nome, cidade, ramo) → onboarding.
+A empresa nasce, a Skill do ramo é instalada e os 30 dias começam sozinhos.
+Antes disso a única porta era o fabricante criar a empresa do cliente na mão —
+o fundador chamou de **"ritmo anormal"**, e estava certo.
+
+Junto: `/confirme-email`, `/recuperar`, `/definir-senha` (com nome e senha),
+`/auth/confirmar`, `/auth/sessao`, e o link do convite com botão de copiar e de
+enviar no WhatsApp.
+
+### ⚠ O PADRÃO: todo defeito foi AUSÊNCIA DE SINAL, não erro
+
+Nenhum dos seis apareceu como exceção, log ou tela vermelha. Todos se
+apresentaram como sucesso, silêncio ou vazio — e por isso **todos foram
+descobertos por uma pessoa de fora tentando usar**, nunca por mim relendo o
+código.
+
+| Defeito | Como se apresentou |
+|---|---|
+| Lista de ramos vazia (RLS de `skills`) | Formulário normal, com um espaço em branco |
+| Perfil criado depois do vínculo | Empresa criada **e órfã** |
+| Sessão no fragmento da URL | "Não consegui completar o acesso" |
+| Conta que já existe | **Sucesso** sem sessão, e a tela pedia confirmação |
+| `listMemberships` sem filtro | "Be Fitness" cinco vezes no seletor |
+| `profiles_self` | Nome gravado, tela em branco |
+
+**A lição de método:** quando o sintoma é "não acontece nada", a causa quase
+nunca está onde o sintoma aparece. Reproduzir a operação contra o banco real e
+comparar o MESMO `select` com clientes diferentes achou três deles; ler o
+código de novo não achou nenhum.
+
+### A RLS de `skills` pegou TRÊS VEZES
+
+`skills_read_installed` só mostra a Skill **já instalada**. Com o cliente do
+usuário, qualquer pergunta sobre segmento não instalado volta **vazia** — sem
+erro. Pegou em `listarRamos`, em `listSegments` e em `installSkill`, com
+sintoma diferente a cada vez, e a segunda e a terceira estavam **no mesmo
+arquivo**.
+
+Corrigir ocorrência não fecha classe. Hoje existe
+`skills_client_check.mjs` no CI: um inventário dos 14 pontos que leem a tabela,
+classificados em `proprio` (Skill do tenant → cliente do usuário) e `catalogo`
+(segmento não instalado → **precisa** de `service_role`). Ponto novo falha até
+ser classificado.
+
+### O DNA deixou de ser caixa vazia
+
+Dos 380 campos de DNA dos 15 manifestos, **229 eram texto aberto e nenhum tinha
+alternativa**. Hoje **229 de 229** abrem sugestões ao clicar, com "nenhuma
+dessas — escrever" e "não sei ainda".
+
+Três regras que protegem a trava anti-invenção, e valem para qualquer campo
+novo: **nada vem pré-selecionado**; **"não sei ainda" esvazia** (aproximação
+vira fato afirmado, e campo vazio faz o motor escalar, que é o certo); e as
+opções são **formato do ramo**, nunca fato daquela empresa.
+
+`sugestoes_dna_check.mjs` no CI: segmento novo não nasce sendo caixa vazia.
+
+### O que ainda morde
+
+- **O e-mail nativo do Supabase é lento e limitado.** Foi ele que travou a
+  equipe da Be Fitness por horas. SMTP próprio resolve confirmação,
+  recuperação e convite de uma vez.
+- **Ordem de socorro:** quando alguém está travado, **destrave a pessoa
+  primeiro** (senha definida pelo admin leva 30 segundos) e conserte a causa
+  depois. Em 10/ago isso foi feito ao contrário e custou horas de uma
+  funcionária parada.
 
 ---
 

@@ -66,46 +66,48 @@ transformaria 9.151 pessoas em alunas.
 
 ---
 
-## ❌ O que falta — 10 de agosto de 2026
+## ❌ O que falta — 10 de agosto de 2026, fim do dia
 
-### Suas, e somam poucos minutos
+### Suas
 
 | # | O quê | Onde |
 |---|---|---|
-| 1 | **Subir o teto global de IA** | Aba **Fabricante**, primeiro bloco. Está **R$ 130** e o teto só da Be Fitness é R$ 156 — o global aperta antes, e a IA para para todo mundo. |
-| 2 | **Trocar o Site URL no Supabase** | Authentication → URL Configuration → a caixa de cima. Está `wss-kairos.vercel.app`; deve ser `kairos.wsslabs.com.br`. É o endereço que sai **dentro dos e-mails**. |
-| 3 | **Decidir sobre `teste-a@exemplo.com`** | É `owner` da Be Fitness, com acesso a 597 cadastros reais. Se você usa para testar dentro dela, fica; se não, eu removo só esse vínculo. |
-| 4 | **A equipe usar** | João, Nycolas e Luciana estão cadastrados e com 199 contatos cada. |
+| 1 | **Subir o teto global de IA** | Aba **Fabricante**, primeiro bloco. Está **R$ 130** e o teto só da Be Fitness é R$ 156 — o global aperta antes e a IA para para todo mundo. O freio POR EMPRESA já existe em Fabricante → Cota de IA. |
+| 2 | **SMTP próprio no Supabase** | O e-mail nativo é lento e limitado. Foi o que travou a equipe hoje. Resend ou Brevo, ~10 min. |
+| 3 | **Decidir sobre `teste-a@exemplo.com`** | É `owner` da Be Fitness, com acesso a 597 cadastros reais. |
+| 4 | **A equipe usar** | Os três estão com senha definida e acesso funcionando. |
 
-### Minhas, e dependem de você
+### Minhas, e o que cada uma espera
 
 | O quê | Espera |
 |---|---|
-| Ligar os botões de assinatura | Os links de assinatura do Mercado Pago |
-| Construir o cálculo de preço por porte e segmento | Você fechar a base de preço |
-| Preencher o DNA do Kairós | Suas respostas de preço, prazo de implantação e exportação de dados |
-| Aplicar a revisão da Feltros na biblioteca de indústria | Nada — posso fazer quando quiser |
+| Ligar os botões de assinatura | Links do Mercado Pago |
+| Cálculo de preço por porte e segmento | Você fechar a base de preço |
+| Completar o DNA do Kairós | Faixa de mensalidade, exportação de dados e contrato |
+| Aplicar a revisão da Feltros na biblioteca de indústria | Nada — posso fazer |
 | Motor proativo agendado (Inngest) | Nada — não depende da Meta |
+| DNA da Feltros | `scripts/dna-feltros.mjs` está pronto e falha até ela criar a empresa |
 
 ---
 
 ## ⚠ O número que importa mais que a lista
 
-**`decisions` = 0.** Em toda a plataforma, **nenhuma resposta com IA foi gerada para um cliente real** — nem na Be Fitness, nem na Darvil.
+**`decisions` = 0.** Em toda a plataforma, **nenhuma resposta com IA foi gerada
+para um cliente real**. O sistema está carregado, dividido, configurado, com 88
+renovações devidas esperando — e ninguém apertou o botão ainda.
 
-O sistema está carregado, dividido, configurado e com 88 renovações devidas esperando. Mas ninguém apertou o botão ainda.
-
-Isso não é uma pendência de construção. É a única coisa que decide se o produto presta, e nenhuma linha de código a resolve.
+Não é pendência de construção. É a única coisa que decide se o produto presta.
 
 ---
 
-## As outras duas empresas (10/ago/2026)
+## As três empresas reais
 
 | Empresa | Ramo | Estado |
 |---|---|---|
-| **Darvil Serviços de Engenharia** (Luis) | energia solar | Entrou. **DNA vazio** — 23 campos com sugestão esperando. Teste até 08/09. |
-| **Feltros Bandeirantes** (Jeniffer) | indústria | Conta confirmada, **ainda não criou a empresa**. O caminho que a travou está corrigido. |
-| Empresa teste (fundador) | software | Descartável — avise quando puder apagar. |
+| **Be Fitness** | academia | 597 contatos, 328 com vencimento, carteira dividida entre 3. Equipe com acesso. |
+| **Darvil Engenharia** (Luis) | energia solar | Entrou. **DNA vazio** — 23 campos com sugestão esperando. Teste até 08/09. |
+| **Feltros Bandeirantes** (Jeniffer) | indústria | Conta confirmada; **ainda não criou a empresa**. |
+| **WSS Kairós** | software_b2b | A do fabricante. Renomeada a partir de "WSS Labs". |
 
 ### ⚠ Telefone compartilhado — o que a importação descobriu
 

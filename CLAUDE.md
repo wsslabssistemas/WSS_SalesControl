@@ -211,6 +211,38 @@ Adiar com motivo escrito é decisão; adiar sem, é esquecimento.
 
 ---
 
+## A classe de defeito que mais custou (ago/2026)
+
+Seis defeitos seguidos na entrada do produto, e **nenhum apareceu como erro**.
+Todos se apresentaram como sucesso, silêncio ou lista vazia — e por isso todos
+foram descobertos por uma pessoa de fora tentando usar, nunca relendo código.
+
+- **RLS que devolve vazio não é erro.** `skills_read_installed` só mostra a
+  Skill instalada; com o cliente do usuário, perguntar sobre segmento não
+  instalado volta zero linhas, sem aviso. Pegou **três vezes**, com sintoma
+  diferente a cada uma. Guardado por `skills_client_check.mjs`.
+- **Sucesso pode significar fracasso.** O Supabase responde "ok, sem sessão"
+  quando o e-mail já tem conta — de propósito, para a tela não virar
+  verificador de cadastro. Ler isso como "precisa confirmar" mandou uma
+  vendedora esperar um e-mail que não existia.
+- **Ordem de chamada é invariante escondida.** `memberships.user_id` referencia
+  `profiles`, e criar conta não cria perfil. Corrigir a ordem resolve o caso; o
+  gatilho do `0054` resolve a classe.
+- **RLS não é filtro de negócio.** Ela responde "o que você PODE ver", nunca "o
+  que esta tela QUER ver". `listMemberships` sem `user_id` mostrava a mesma
+  empresa uma vez por membro.
+
+**Método que funcionou, e o que não funcionou:** reproduzir a operação contra o
+banco real e comparar o mesmo `select` com clientes diferentes achou metade
+deles. Reler o código não achou nenhum. Log de plataforma também não — a Vercel
+registrou uma requisição em 24 horas.
+
+**E a ordem do socorro:** quando uma pessoa está travada, destrave a pessoa
+primeiro e conserte a causa depois. Em 10/ago isso foi feito ao contrário e
+custou horas de uma funcionária parada enquanto a causa raiz era investigada.
+
+---
+
 ## Como trabalhar comigo
 
 - Antes de escrever código, diga o que vai fazer e por quê. Discordar é bem-vindo.
