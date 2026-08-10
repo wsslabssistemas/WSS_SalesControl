@@ -110,3 +110,11 @@ jobs:
       # tela de quem esta avaliando o produto.
       - name: Rotulo das colunas do DNA
         run: node packages/db/tests/rotulos_test.mjs
+      # A policy `skills_read_installed` so mostra a Skill JA INSTALADA. Com o
+      # cliente do usuario, perguntar sobre segmento nao instalado volta VAZIO
+      # — sem erro, sem aviso — e a tela decide errado em cima disso. Derrubou
+      # o produto TRES VEZES em 9/ago, sempre com sintoma diferente e sempre
+      # com a mesma causa. Este teste mantem o inventario: ponto novo lendo
+      # `skills` falha ate ser classificado.
+      - name: Quem le `skills`, e com qual cliente
+        run: node packages/db/tests/skills_client_check.mjs
