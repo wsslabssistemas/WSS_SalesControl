@@ -136,15 +136,15 @@ dna_sections:
     required: true
     fields:
       - { key: lista, type: list, required: true, label: "Lista", help: "Quais convênios você aceita. Escreva o nome exato" }
-      - { key: faixas_etarias, type: text, required: true, label: "Faixas etárias", help: "Idades que você atende. Ex.: a partir de 4 anos" }
+      - { key: faixas_etarias, type: text, required: true, label: "Faixas etárias", help: "Idades que você atende. Ex.: a partir de 4 anos", options: ["A partir de 3 anos", "A partir de 6 anos", "Crianças e adolescentes", "Todas as idades, em turmas separadas"] }
       - { key: grade_horarios, type: schedule, required: true, label: "Grade de horários", help: "Os horários de cada turma" }
-      - { key: vagas_por_turma, type: text, label: "Vagas por turma", help: "Quantos alunos cabem por turma" }
+      - { key: vagas_por_turma, type: text, label: "Vagas por turma", help: "Quantos alunos cabem por turma", options: ["Até 6 alunos", "Até 10 alunos", "Até 15 alunos", "Até 20 alunos", "Varia por turma e horário"] }
   - key: pricing
     label: "Planos e valores"
     required: true
     fields:
       - { key: range, type: money_range, required: true, label: "Faixa de valores", help: "A faixa de preço dos seus serviços. Ex.: de R$ 40 a R$ 90" }
-      - { key: matricula, type: text, label: "Taxa de matrícula", help: "Tem taxa de matrícula? Quanto?" }
+      - { key: matricula, type: text, label: "Taxa de matrícula", help: "Tem taxa de matrícula? Quanto?", options: ["Não cobro taxa de matrícula", "Cobro taxa de matrícula, uma vez por ano", "Cobro taxa de matrícula só para aluno novo", "Isento a taxa em campanha de início de turma"] }
       - { key: desconto_irmaos, type: boolean, label: "Desconto para irmãos", help: "Marque se você dá desconto para irmãos" }
       - { key: formas_pagamento, type: list, label: "Formas de pagamento", help: "Como o cliente pode pagar. Ex.: Pix, débito, crédito em 2x" }
   - key: experimental
@@ -152,21 +152,21 @@ dna_sections:
     required: true
     fields:
       - { key: oferece, type: boolean, required: true, label: "Oferece?", help: "Marque se você oferece esta condição" }
-      - { key: como_funciona, type: text, required: true, label: "Como funciona", help: "Explique como funciona a aula experimental" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona", help: "Explique como funciona a aula experimental", options: ["Aula experimental gratuita, na turma da idade dele", "Aula experimental gratuita, com agendamento", "Primeira aula com desconto, não gratuita", "Semana experimental completa"] }
       - { key: precisa_agendar, type: boolean, label: "Precisa agendar?", help: "Marque se a aula experimental precisa ser agendada" }
-      - { key: o_que_levar, type: text, label: "O que levar", help: "O que o aluno deve levar. Ex.: toalha, garrafa e touca" }
+      - { key: o_que_levar, type: text, label: "O que levar", help: "O que o aluno deve levar. Ex.: toalha, garrafa e touca", options: ["Roupa confortável e garrafa de água", "Toalha, garrafa de água e chinelo", "Toalha, garrafa, touca e óculos", "Só a roupa — o resto é nosso"] }
   - key: estrutura
     label: "Estrutura"
     fields:
       - { key: instalacoes, type: list, label: "Instalações", help: "O que você tem no espaço. Ex.: vestiário, estacionamento" }
-      - { key: professores, type: text, label: "Professores", help: "Quem dá aula e a formação de cada um" }
+      - { key: professores, type: text, label: "Professores", help: "Quem dá aula e a formação de cada um", options: ["Equipe formada na área, com registro no conselho", "Equipe própria, com formação e experiência no ramo", "Professores contratados por especialidade", "Sou eu quem dá as aulas"] }
       - { key: estacionamento, type: boolean, label: "Estacionamento", help: "Tem estacionamento? Onde o cliente deixa o carro?" }
   - key: regras
     label: "Regras e exigências"
     fields:
       - { key: atestado_medico, type: boolean, label: "Exige atestado médico?", help: "Marque se você exige atestado médico" }
-      - { key: uniforme, type: text, label: "Uniforme", help: "Precisa de uniforme? Qual e onde comprar" }
-      - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para participar" }
+      - { key: uniforme, type: text, label: "Uniforme", help: "Precisa de uniforme? Qual e onde comprar", options: ["Não é obrigatório", "Obrigatório, vendido aqui", "Obrigatório a partir de um nível", "Recomendado, mas não obrigatório"] }
+      - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para participar", options: ["A partir de 3 anos", "A partir de 6 anos", "A partir de 12 anos", "A partir de 16 anos", "Sem idade mínima"] }
 
   - key: free_notes
     label: "Outras informações importantes"

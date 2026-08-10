@@ -320,7 +320,7 @@ dna_sections:
       - { key: faixa, type: money_range, label: "Faixa de investimento", help: "A faixa dos projetos que você costuma fazer. Ex.: de R$ 15 mil a R$ 90 mil" }
       - { key: formas_pagamento, type: list, required: true, label: "Formas de pagamento", help: "Ex.: Pix, cartão em 12x, financiamento bancário" }
       - { key: financiamento, type: text, label: "Financiamento", help: "Com quais bancos ou linhas você trabalha e como funciona a aprovação", options: ["Não trabalho com financiamento", "Banco parceiro, eu encaminho", "Várias linhas, comparo para o cliente", "O cliente busca por conta", "Cartão ou parcelamento próprio"] }
-      - { key: o_que_inclui, type: text, required: true, label: "O que está incluso", help: "Ex.: kit, estrutura, proteções, projeto com ART, mão de obra e homologação" }
+      - { key: o_que_inclui, type: text, required: true, label: "O que está incluso", help: "Ex.: kit, estrutura, proteções, projeto com ART, mão de obra e homologação", options: ["Kit, estrutura, proteções, projeto com ART, mão de obra e homologação", "Kit e instalação; projeto e homologação cobrados à parte", "Projeto fechado, incluindo tudo até o sistema gerando", "Varia conforme o porte do projeto"] }
   - key: execucao
     label: "Prazos e execução"
     required: true
@@ -335,7 +335,7 @@ dna_sections:
       - { key: prazo_analise_projeto, type: text, required: true, label: "Prazo da análise do projeto", help: "Da protocolação ao parecer de acesso. Costuma ser de 10 a 30 dias", options: ["Até 10 dias", "10 a 20 dias", "20 a 30 dias", "Mais de 30 dias"] }
       - { key: prazo_vistoria, type: text, required: true, label: "Prazo da vistoria", help: "Depois de solicitada. O limite regulatório é de 5 dias úteis", options: ["Até 5 dias úteis", "5 a 10 dias", "10 a 15 dias", "Mais de 15 dias"] }
       - { key: prazo_kit, type: text, required: true, label: "Prazo de entrega do kit", help: "Do pedido ao material na obra. Costuma ser de 10 a 20 dias", options: ["Até 10 dias", "10 a 15 dias", "15 a 20 dias", "20 a 30 dias", "Depende do fornecedor"] }
-      - { key: limite_fast_track, type: text, label: "Limite de aprovação simplificada", help: "Até que potência a concessionária aprova sem análise de fluxo. Ex.: até 7,5 kW em consumo local" }
+      - { key: limite_fast_track, type: text, label: "Limite de aprovação simplificada", help: "Até que potência a concessionária aprova sem análise de fluxo. Ex.: até 7,5 kW em consumo local", options: ["Até 7,5 kW em consumo local", "Até 10 kW em consumo local", "Até 15 kW em consumo local", "Depende da concessionária da região"] }
       - { key: homologa_antes, type: boolean, label: "Você homologa antes de o cliente comprar o kit?", help: "Protege o cliente de comprar material que a concessionária pode limitar" }
       - { key: distribuidoras, type: list, label: "Concessionárias que você homologa", help: "Ex.: RGE, CEEE Equatorial, CPFL" }
   - key: garantias
@@ -344,26 +344,26 @@ dna_sections:
     fields:
       - { key: modulo, type: text, required: true, label: "Garantia do módulo", help: "Separe desempenho e produto. Ex.: 25 anos de desempenho, 12 de produto", options: ["25 anos de desempenho, 12 de produto", "25 anos de desempenho, 10 de produto", "30 anos de desempenho, 15 de produto", "Varia por fabricante"] }
       - { key: inversor, type: text, required: true, label: "Garantia do inversor", help: "Ex.: 10 anos, com extensão opcional", options: ["5 anos", "7 anos", "10 anos", "12 anos", "10 anos com extensão opcional", "Varia por fabricante"] }
-      - { key: instalacao, type: text, required: true, label: "Garantia da instalação", help: "A sua garantia de mão de obra e de estanqueidade do telhado" }
-      - { key: seguro, type: text, label: "Seguro", help: "Se oferece seguro do sistema e o que ele cobre" }
+      - { key: instalacao, type: text, required: true, label: "Garantia da instalação", help: "A sua garantia de mão de obra e de estanqueidade do telhado", options: ["1 ano de mão de obra e estanqueidade do telhado", "2 anos de mão de obra e estanqueidade", "5 anos de mão de obra e estrutura", "Garantia de mão de obra enquanto durar a do inversor"] }
+      - { key: seguro, type: text, label: "Seguro", help: "Se oferece seguro do sistema e o que ele cobre", options: ["Não ofereço seguro", "Ofereço seguro opcional do sistema", "Seguro incluso no primeiro ano", "Indico corretora parceira"] }
   - key: pos_venda
     label: "Depois da instalação"
     fields:
-      - { key: monitoramento, type: text, label: "Monitoramento", help: "Qual app, quem configura e quem avisa se a geração cair. Ativar e ensinar o app faz parte da entrega, não é extra" }
-      - { key: manutencao, type: text, label: "Limpeza e revisão", help: "Frequência, o que inclui e quanto custa. Mínimo de uma limpeza por ano, mais reaperto de estrutura, disjuntores e proteções" }
-      - { key: ampliacao, type: text, label: "Ampliação", help: "Como funciona aumentar o sistema depois" }
+      - { key: monitoramento, type: text, label: "Monitoramento", help: "Qual app, quem configura e quem avisa se a geração cair. Ativar e ensinar o app faz parte da entrega, não é extra", options: ["Aplicativo do inversor, configurado na entrega", "Aplicativo do inversor e acompanhamento no primeiro mês", "Monitoramento contínuo, com aviso se a geração cair", "Sem monitoramento incluso"] }
+      - { key: manutencao, type: text, label: "Limpeza e revisão", help: "Frequência, o que inclui e quanto custa. Mínimo de uma limpeza por ano, mais reaperto de estrutura, disjuntores e proteções", options: ["Uma limpeza por ano, cobrada à parte", "Duas limpezas por ano, cobradas à parte", "Primeira limpeza inclusa, as demais à parte", "Contrato anual de limpeza e revisão"] }
+      - { key: ampliacao, type: text, label: "Ampliação", help: "Como funciona aumentar o sistema depois", options: ["Projeto o sistema já pensando em ampliação futura", "Ampliação exige novo projeto e nova homologação", "Ampliação possível dentro do limite do inversor", "Avalio caso a caso"] }
   - key: atuacao
     label: "Onde você atende"
     required: true
     fields:
-      - { key: regiao, type: text, required: true, label: "Região atendida", help: "Cidades e raio de atendimento" }
+      - { key: regiao, type: text, required: true, label: "Região atendida", help: "Cidades e raio de atendimento", options: ["Minha cidade e região", "Até 100 km da minha base", "Todo o estado", "Atendo fora com custo de deslocamento"] }
       - { key: equipe_propria, type: boolean, label: "Equipe própria?", help: "Marque se a instalação é feita por equipe sua, sem terceirizar" }
-      - { key: responsavel_tecnico, type: text, label: "Responsável técnico", help: "Quem assina a ART. Ex.: engenheiro eletricista com CREA ativo" }
+      - { key: responsavel_tecnico, type: text, label: "Responsável técnico", help: "Quem assina a ART. Ex.: engenheiro eletricista com CREA ativo", options: ["Engenheiro eletricista com CREA ativo, da própria equipe", "Engenheiro parceiro que assina a ART", "Técnico com CFT ativo", "Sou eu, com registro no conselho"] }
   - key: diferencial
     label: "Diferencial"
     fields:
-      - { key: motivo_escolher, type: text, required: true, label: "Por que fechar com você", help: "O que você resolve que o concorrente barato não resolve" }
-      - { key: tempo_de_casa, type: text, label: "Tempo de mercado", help: "Desde quando instala e quantos sistemas já entregou" }
+      - { key: motivo_escolher, type: text, required: true, label: "Por que fechar com você", help: "O que você resolve que o concorrente barato não resolve", options: ["Dimensionamento pela média de 12 meses, não pelo mês que o cliente mandou", "Projeto e homologação feitos antes da compra do kit", "Equipe própria, sem terceirizar a instalação", "Acompanho a geração depois de entregue"] }
+      - { key: tempo_de_casa, type: text, label: "Tempo de mercado", help: "Desde quando instala e quantos sistemas já entregou", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
       - { key: obras_referencia, type: list, label: "Obras de referência", help: "Sistemas que o cliente pode ver ou sobre os quais pode perguntar" }
   - key: free_notes
     label: "Outras informações importantes"

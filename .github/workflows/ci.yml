@@ -118,3 +118,9 @@ jobs:
       # `skills` falha ate ser classificado.
       - name: Quem le `skills`, e com qual cliente
         run: node packages/db/tests/skills_client_check.mjs
+      # Caixa de texto vazia nao e so trabalho: e uma decisao em branco. Vinte
+      # decisoes em branco seguidas, sem saber se acertou, e o que faz alguem
+      # fechar a aba no meio do cadastro — e o DNA e o gargalo declarado do
+      # produto. Segmento novo nao pode nascer sendo caixa vazia.
+      - name: Sugestao em todo campo aberto do DNA
+        run: node packages/db/tests/sugestoes_dna_check.mjs

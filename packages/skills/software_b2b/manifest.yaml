@@ -219,63 +219,63 @@ dna_sections:
     label: "O produto"
     required: true
     fields:
-      - { key: o_que_e, type: text, required: true, label: "O que é, em uma frase", help: "Como você explica o produto para quem nunca ouviu falar. Sem jargão" }
-      - { key: para_quem, type: text, required: true, label: "Para quem serve", help: "Que tipo de empresa tira proveito, e a partir de que tamanho" }
+      - { key: o_que_e, type: text, required: true, label: "O que é, em uma frase", help: "Como você explica o produto para quem nunca ouviu falar. Sem jargão", options: ["Um sistema que responde o cliente com técnica de venda do seu ramo", "Uma ferramenta que organiza o atendimento e cobra o follow-up", "Um assistente que ajuda o vendedor a responder melhor", "Um sistema de acompanhamento comercial para PME"] }
+      - { key: para_quem, type: text, required: true, label: "Para quem serve", help: "Que tipo de empresa tira proveito, e a partir de que tamanho", options: ["Pequena e média empresa que atende por WhatsApp", "Empresa a partir de um vendedor", "Empresa com equipe comercial de 2 a 10 pessoas", "Qualquer negócio que perca venda por falta de follow-up"] }
       - { key: modulos, type: table, required: true, columns: [modulo, o_que_faz, incluso], label: "Módulos", help: "Cada módulo, o que ele faz e se está incluso ou é à parte" }
       - { key: o_que_nao_faz, type: list, required: true, label: "O que o produto NÃO faz", help: "A lista mais importante do cadastro. Sem ela o motor não consegue recusar, e prometer o que não existe é o jeito mais rápido de perder um cliente pagante" }
   - key: pricing
     label: "Preço e cobrança"
     required: true
     fields:
-      - { key: modelo, type: text, required: true, label: "Como cobra", help: "Por atendimento, por empresa, por usuário. Escreva do jeito que o cliente entende" }
+      - { key: modelo, type: text, required: true, label: "Como cobra", help: "Por atendimento, por empresa, por usuário. Escreva do jeito que o cliente entende", options: ["Por atendimento respondido, não por usuário", "Mensalidade fixa por empresa", "Por usuário", "Mensalidade com faixa de uso incluída"] }
       - { key: range, type: money_range, required: true, label: "Faixa de mensalidade", help: "A faixa real, do menor ao maior plano" }
-      - { key: o_que_conta, type: text, required: true, label: "O que conta como atendimento", help: "A definição exata. É o que evita briga na primeira fatura" }
-      - { key: modulos_a_parte, type: text, label: "Módulos cobrados à parte", help: "Quais custam além da mensalidade e quanto" }
+      - { key: o_que_conta, type: text, required: true, label: "O que conta como atendimento", help: "A definição exata. É o que evita briga na primeira fatura", options: ["Cada resposta gerada com IA", "Cada conversa atendida", "Cada mensagem enviada", "Uso ilimitado dentro do plano"] }
+      - { key: modulos_a_parte, type: text, label: "Módulos cobrados à parte", help: "Quais custam além da mensalidade e quanto", options: ["Não tenho módulos à parte", "Alguns módulos são cobrados à parte", "Tudo incluso no plano", "Depende do plano contratado"] }
       - { key: formas_pagamento, type: list, label: "Formas de pagamento", help: "Como o cliente pode pagar" }
-      - { key: implantacao_custa, type: text, label: "Implantação custa?", help: "Tem taxa de implantação ou setup? Quanto" }
+      - { key: implantacao_custa, type: text, label: "Implantação custa?", help: "Tem taxa de implantação ou setup? Quanto", options: ["Sem taxa de implantação", "Taxa de implantação cobrada uma vez", "Implantação incluída no primeiro pagamento", "Depende do porte da empresa"] }
   - key: teste
     label: "Teste grátis"
     required: true
     fields:
       - { key: oferece, type: boolean, required: true, label: "Oferece teste?", help: "Marque se existe período de teste" }
-      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos dias dura o teste" }
-      - { key: o_que_inclui, type: text, required: true, label: "O que inclui", help: "Tudo liberado ou parte? Quais módulos entram no teste" }
+      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos dias dura o teste", options: ["30 minutos", "45 minutos", "1 hora", "Varia por serviço"] }
+      - { key: o_que_inclui, type: text, required: true, label: "O que inclui", help: "Tudo liberado ou parte? Quais módulos entram no teste", options: ["Tudo liberado durante o teste", "O núcleo liberado; módulos à parte não entram", "Parte dos módulos, para demonstração", "Tudo liberado, com limite de uso"] }
       - { key: precisa_cartao, type: boolean, label: "Pede cartão?", help: "Marque se o teste exige cartão de crédito" }
-      - { key: o_que_acontece_depois, type: text, required: true, label: "O que acontece ao fim do teste", help: "O acesso para, vira plano pago, ou continua limitado? Diga na venda, não no dia" }
+      - { key: o_que_acontece_depois, type: text, required: true, label: "O que acontece ao fim do teste", help: "O acesso para, vira plano pago, ou continua limitado? Diga na venda, não no dia", options: ["A geração com IA para; os dados continuam e o modo manual segue", "O acesso fecha, e os dados ficam guardados", "Vira plano pago automaticamente", "Continua limitado, sem prazo"] }
   - key: implantacao
     label: "Implantação"
     required: true
     fields:
-      - { key: prazo, type: text, required: true, label: "Prazo até estar usando", help: "Quanto tempo entre o sim e o primeiro atendimento respondido pelo sistema" }
-      - { key: o_que_o_cliente_faz, type: text, required: true, label: "O que a empresa precisa fazer", help: "O trabalho que é DELE. Esconder isso é o que faz o cadastro parar pela metade" }
-      - { key: quem_faz, type: text, label: "Quem faz", help: "Você faz junto, ele faz sozinho, ou tem alguém dedicado" }
-      - { key: treinamento, type: text, label: "Treinamento da equipe", help: "Como a equipe aprende a usar, e quanto tempo leva" }
+      - { key: prazo, type: text, required: true, label: "Prazo até estar usando", help: "Quanto tempo entre o sim e o primeiro atendimento respondido pelo sistema", options: ["No mesmo dia", "Em até 3 dias", "Em até 1 semana", "Depende de a empresa preencher os próprios dados"] }
+      - { key: o_que_o_cliente_faz, type: text, required: true, label: "O que a empresa precisa fazer", help: "O trabalho que é DELE. Esconder isso é o que faz o cadastro parar pela metade", options: ["Preencher os fatos da empresa: preços, prazos e políticas", "Preencher os dados e importar a base de contatos", "Só importar os contatos", "Nada — fazemos tudo"] }
+      - { key: quem_faz, type: text, label: "Quem faz", help: "Você faz junto, ele faz sozinho, ou tem alguém dedicado", options: ["Faço junto, numa chamada", "O cliente faz sozinho, com o guia", "Tenho alguém dedicado à implantação", "Faço junto no início e ele segue sozinho"] }
+      - { key: treinamento, type: text, label: "Treinamento da equipe", help: "Como a equipe aprende a usar, e quanto tempo leva", options: ["Tutorial dentro do sistema", "Uma chamada de apresentação com a equipe", "Curso próprio dentro do produto", "Material escrito e vídeos"] }
   - key: dados
     label: "Dados, LGPD e saída"
     required: true
     fields:
-      - { key: onde_ficam, type: text, required: true, label: "Onde ficam os dados", help: "Provedor, país e o que isso significa na prática" }
-      - { key: quem_ve, type: text, required: true, label: "Quem consegue ver", help: "Quem, dentro da sua empresa, tem acesso ao dado do cliente — e em que situação" }
-      - { key: exportacao, type: text, required: true, label: "Consegue levar embora?", help: "O cliente exporta os dados dele? Em que formato e quando" }
-      - { key: se_cancelar, type: text, required: true, label: "O que acontece se cancelar", help: "Por quanto tempo o dado fica, o que é apagado e como se pede" }
+      - { key: onde_ficam, type: text, required: true, label: "Onde ficam os dados", help: "Provedor, país e o que isso significa na prática", options: ["Banco gerenciado, com isolamento por empresa", "Servidor no Brasil", "Servidor fora do Brasil, com conformidade declarada", "Nuvem, com backup diário"] }
+      - { key: quem_ve, type: text, required: true, label: "Quem consegue ver", help: "Quem, dentro da sua empresa, tem acesso ao dado do cliente — e em que situação", options: ["Só quem a própria empresa autoriza", "Nossa equipe vê consumo e custo, não o conteúdo", "Nossa equipe acessa só a pedido, para suporte", "Ninguém da nossa equipe acessa"] }
+      - { key: exportacao, type: text, required: true, label: "Consegue levar embora?", help: "O cliente exporta os dados dele? Em que formato e quando", options: ["O cliente exporta os dados em planilha, quando quiser", "Exportação sob pedido, em até alguns dias", "Exportação completa no cancelamento", "Não há exportação"] }
+      - { key: se_cancelar, type: text, required: true, label: "O que acontece se cancelar", help: "Por quanto tempo o dado fica, o que é apagado e como se pede", options: ["Os dados ficam guardados por um período e depois são apagados", "Apago tudo assim que o cliente pedir", "Os dados ficam disponíveis para exportação por um prazo", "Guardo apenas o exigido por lei"] }
   - key: contrato
     label: "Contrato"
     fields:
-      - { key: fidelidade, type: text, label: "Fidelidade", help: "Prende por quanto tempo? Escreva 'não tem' se não houver" }
-      - { key: cancelamento, type: text, label: "Como cancela", help: "O caminho real do cancelamento e o aviso prévio" }
-      - { key: reajuste, type: text, label: "Reajuste", help: "Quando e por qual índice" }
+      - { key: fidelidade, type: text, label: "Fidelidade", help: "Prende por quanto tempo? Escreva 'não tem' se não houver", options: ["Não tem fidelidade", "Contrato de 12 meses", "Desconto para quem assina 12 meses", "Mensal, cancela quando quiser"] }
+      - { key: cancelamento, type: text, label: "Como cancela", help: "O caminho real do cancelamento e o aviso prévio", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: reajuste, type: text, label: "Reajuste", help: "Quando e por qual índice", options: ["Reajuste anual pelo IPCA", "Reajuste anual, avisado com antecedência", "Sem reajuste no primeiro ano", "Preço fixo enquanto durar o contrato"] }
   - key: integracoes
     label: "Integrações"
     fields:
       - { key: quais, type: list, label: "O que integra hoje", help: "Só o que já funciona. Roadmap não entra aqui" }
       - { key: whatsapp, type: text, label: "WhatsApp", help: "Como funciona hoje, com honestidade: envio automático ou copiar e colar" }
-      - { key: importacao, type: text, label: "Importar dados existentes", help: "O que dá para trazer de planilha ou de outro sistema, e o que não dá" }
+      - { key: importacao, type: text, label: "Importar dados existentes", help: "O que dá para trazer de planilha ou de outro sistema, e o que não dá", options: ["Importo contatos de planilha", "Importo contatos e histórico de planilha", "Importo de outro sistema, quando há exportação", "Não importo — o cliente começa do zero"] }
       - { key: o_que_nao_integra, type: list, label: "O que NÃO integra", help: "Os pedidos que você recebe e não atende. Dizer cedo economiza a venda errada" }
   - key: prova
     label: "Prova"
     fields:
-      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo existe e quantas empresas usam" }
-      - { key: casos, type: text, label: "Casos", help: "O que empresas concretas conseguiram, com autorização. Número medido, nunca estimado" }
+      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo existe e quantas empresas usam", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
+      - { key: casos, type: text, label: "Casos", help: "O que empresas concretas conseguiram, com autorização. Número medido, nunca estimado", options: ["Tenho casos com número medido e autorização", "Tenho casos, mas ainda sem autorização para citar", "Estou com o primeiro cliente", "Ainda não tenho casos"] }
       - { key: segmentos_atendidos, type: list, label: "Segmentos atendidos", help: "Os ramos que já têm biblioteca pronta" }
 
   - key: free_notes

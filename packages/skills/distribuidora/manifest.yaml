@@ -177,22 +177,22 @@ dna_sections:
     required: true
     fields:
       - { key: pedido_minimo, type: money_range, required: true, label: "Pedido mínimo", help: "Valor mínimo para fazer um pedido. Ex.: R$ 500" }
-      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições de pagamento. Ex.: 30/60 dias para cliente cadastrado" }
-      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando você dá desconto. Ex.: 5% acima de R$ 3 mil" }
+      - { key: prazo_pagamento, type: text, required: true, label: "Prazo de pagamento", help: "Condições de pagamento. Ex.: 30/60 dias para cliente cadastrado", options: ["À vista", "28 dias", "30/60 dias", "30/60/90 dias", "Boleto na entrega", "Antecipado para cliente novo"] }
+      - { key: politica_desconto, type: text, label: "Política de desconto", help: "Quando você dá desconto. Ex.: 5% acima de R$ 3 mil", options: ["Desconto por volume, em faixas", "Desconto para pagamento à vista", "Tabela fixa, sem desconto", "Negociado caso a caso"] }
       - { key: tabela_por_volume, type: boolean, label: "Tabela por volume?", help: "Marque se o preço muda conforme a quantidade" }
   - key: logistica
     label: "Entrega"
     required: true
     fields:
-      - { key: regiao_atendida, type: text, required: true, label: "Região atendida", help: "Onde você entrega. Ex.: Porto Alegre e região metropolitana" }
-      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega", help: "Quanto tempo até entregar. Ex.: 15 dias úteis após aprovação" }
-      - { key: frete, type: text, label: "Frete", help: "Quem paga o frete e a partir de quanto é grátis" }
-      - { key: dias_de_rota, type: text, label: "Dias de rota", help: "Em que dias você entrega em cada região" }
+      - { key: regiao_atendida, type: text, required: true, label: "Região atendida", help: "Onde você entrega. Ex.: Porto Alegre e região metropolitana", options: ["A capital e a região metropolitana", "Todo o estado", "A região Sul", "Todo o Brasil"] }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega", help: "Quanto tempo até entregar. Ex.: 15 dias úteis após aprovação", options: ["No mesmo dia", "Em até 3 dias úteis", "Em até 1 semana", "15 dias úteis após aprovação", "Varia por item"] }
+      - { key: frete, type: text, label: "Frete", help: "Quem paga o frete e a partir de quanto é grátis", options: ["FOB — por conta do cliente", "CIF — por nossa conta", "Grátis acima de um valor de pedido", "Combinado a cada pedido"] }
+      - { key: dias_de_rota, type: text, label: "Dias de rota", help: "Em que dias você entrega em cada região", options: ["Rota fixa semanal por região", "Rota quinzenal por região", "Entrego conforme o pedido, sem rota fixa", "Entrego por transportadora, sem rota própria"] }
   - key: diferencial
     label: "Diferencial"
     fields:
-      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "Por que o cliente deveria trocar o fornecedor atual pelo seu" }
-      - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda" }
+      - { key: motivo_trocar, type: text, required: true, label: "Por que trocar de fornecedor", help: "Por que o cliente deveria trocar o fornecedor atual pelo seu", options: ["Regularidade de entrega e do que está em estoque", "Atendimento direto, sem intermediário", "Prazo de pagamento melhor para quem tem cadastro", "Mix mais completo, com menos fornecedores"] }
+      - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda", options: ["Atendimento por WhatsApp em horário comercial", "Atendimento por WhatsApp e telefone, com técnico responsável", "Suporte com prazo de resposta acordado em contrato", "Atendimento sob demanda, sem contrato de suporte"] }
 
   - key: free_notes
     label: "Outras informações importantes"

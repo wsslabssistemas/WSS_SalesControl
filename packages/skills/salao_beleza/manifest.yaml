@@ -201,28 +201,28 @@ dna_sections:
     required: true
     fields:
       - { key: range, type: money_range, required: true, label: "Faixa dos serviços", help: "Do mais simples ao mais caro. Ex.: de R$ 60 a R$ 600" }
-      - { key: como_cobra_quimica, type: text, required: true, label: "Como você cobra química", help: "Química varia por comprimento e volume. Escreva a régua: ex.: curto R$ 250, médio R$ 350, longo a partir de R$ 450, fechado após avaliação" }
-      - { key: varia_por_profissional, type: text, label: "O preço muda por profissional?", help: "Se há níveis (júnior, sênior, especialista), diga como funciona" }
-      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, débito, crédito em até 3x" }
+      - { key: como_cobra_quimica, type: text, required: true, label: "Como você cobra química", help: "Química varia por comprimento e volume. Escreva a régua: ex.: curto R$ 250, médio R$ 350, longo a partir de R$ 450, fechado após avaliação", options: ["Faixa por comprimento: curto, médio, longo e muito longo", "Faixa por comprimento e volume do cabelo", "Orçamento na avaliação, com o valor fechado antes de começar", "Valor por produto usado, definido na avaliação"] }
+      - { key: varia_por_profissional, type: text, label: "O preço muda por profissional?", help: "Se há níveis (júnior, sênior, especialista), diga como funciona", options: ["Mesmo preço para toda a equipe", "Preço diferente por nível do profissional", "Preço diferente só para o especialista", "A cliente escolhe o profissional, o preço acompanha"] }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, débito, crédito em até 3x", options: ["PIX, débito e crédito à vista", "PIX, débito e crédito em até 3x sem juros", "PIX, débito e crédito em até 6x sem juros", "PIX e dinheiro, com desconto à vista"] }
   - key: availability
     label: "Agenda e prazos"
     required: true
     fields:
       - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Ex.: Ter a Sex 9h-19h; Sáb 9h-17h" }
-      - { key: tempo_quimica, type: text, required: true, label: "Tempo dos serviços longos", help: "O que ocupa a cadeira. Ex.: progressiva 3 a 4h; mechas 4 a 5h" }
-      - { key: antecedencia, type: text, label: "Com quanto tempo costuma lotar", help: "Ex.: sábado fecha com 10 dias de antecedência" }
+      - { key: tempo_quimica, type: text, required: true, label: "Tempo dos serviços longos", help: "O que ocupa a cadeira. Ex.: progressiva 3 a 4h; mechas 4 a 5h", options: ["Progressiva 3 a 4h; mechas 4 a 5h", "Química leva de 3 a 5 horas", "Meio período para serviço longo", "Informo o tempo na avaliação"] }
+      - { key: antecedencia, type: text, label: "Com quanto tempo costuma lotar", help: "Ex.: sábado fecha com 10 dias de antecedência", options: ["Sábado fecha com 10 dias", "Fim de semana fecha com 1 semana", "Costuma ter horário na semana", "Depende do profissional"] }
   - key: risk_free_entry
     label: "Primeira vez e avaliação"
     required: true
     fields:
       - { key: avaliacao_gratuita, type: boolean, required: true, label: "A avaliação do cabelo é gratuita?", help: "Ver o cabelo antes de orçar química. É a porta de entrada mais forte do salão" }
-      - { key: o_que_inclui, type: text, label: "O que acontece na avaliação", help: "Ex.: olhamos o fio, conferimos o histórico, fazemos teste de mecha se precisar" }
-      - { key: primeira_vez, type: text, label: "Condição para quem vem pela primeira vez", help: "Se existe. Não invente — cliente que veio por desconto volta por desconto" }
+      - { key: o_que_inclui, type: text, label: "O que acontece na avaliação", help: "Ex.: olhamos o fio, conferimos o histórico, fazemos teste de mecha se precisar", options: ["Olhamos o fio, conferimos o histórico e fazemos teste de mecha se precisar", "Avaliação do fio e do histórico químico, com orçamento na hora", "Conversa sobre a expectativa e teste de mecha", "Avaliação rápida, sem teste"] }
+      - { key: primeira_vez, type: text, label: "Condição para quem vem pela primeira vez", help: "Se existe. Não invente — cliente que veio por desconto volta por desconto", options: ["Não tenho condição especial de primeira vez", "Primeira avaliação sem custo", "Desconto na primeira visita", "Cortesia simples de boas-vindas, sem desconto no serviço"] }
   - key: expertise_proof
     label: "Equipe e experiência"
     required: true
     fields:
-      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de salão", help: "Ex.: 9 anos no mesmo bairro" }
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de salão", help: "Ex.: 9 anos no mesmo bairro", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
       - { key: especialidades, type: list, label: "Especialidades da equipe", help: "Onde vocês são referência: loiros, cachos, coloração de fantasia" }
       - { key: profissionais, type: table, columns: [nome, especialidade, nivel], label: "Quem atende", help: "A cliente escolhe pessoa, não empresa. Deixe isso explícito" }
       - { key: formacoes, type: list, label: "Cursos e certificações", help: "Formação de marca, curso de colorimetria, etc." }
@@ -230,23 +230,23 @@ dna_sections:
     label: "Regras do salão"
     required: true
     fields:
-      - { key: sinal, type: text, required: true, label: "Política de sinal", help: "Para serviço longo. Ex.: 30% no PIX para química e alongamento, abatido no dia" }
-      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar sem perder o sinal. Seja claro e humano" }
-      - { key: atraso, type: text, label: "Atraso da cliente", help: "Ex.: acima de 20 minutos pode virar remarcação, porque atrasa quem vem depois" }
-      - { key: garantia_servico, type: text, label: "Se não ficar como combinado", help: "Prazo e condição para ajuste. Ex.: retoque de cor em até 7 dias, sem custo" }
+      - { key: sinal, type: text, required: true, label: "Política de sinal", help: "Para serviço longo. Ex.: 30% no PIX para química e alongamento, abatido no dia", options: ["30% no PIX para química e alongamento, abatido no dia", "50% para serviço longo", "Sinal fixo para serviço acima de um valor", "Não cobro sinal"] }
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar sem perder o sinal. Seja claro e humano", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: atraso, type: text, label: "Atraso da cliente", help: "Ex.: acima de 20 minutos pode virar remarcação, porque atrasa quem vem depois", options: ["Acima de 20 minutos pode virar remarcação", "Acima de 15 minutos, encaixo se der", "Atendo com o tempo que sobrar", "Não tenho regra formal de atraso"] }
+      - { key: garantia_servico, type: text, label: "Se não ficar como combinado", help: "Prazo e condição para ajuste. Ex.: retoque de cor em até 7 dias, sem custo", options: ["Retoque de cor em até 7 dias, sem custo", "Ajuste em até 5 dias, sem custo", "Ajuste em até 15 dias, sem custo", "Avalio caso a caso"] }
   - key: retention
     label: "Retorno e manutenção"
     required: true
     fields:
-      - { key: intervalo_retoque, type: text, required: true, label: "Intervalo de retoque que vocês recomendam", help: "Por serviço. Ex.: raiz a cada 30 dias; progressiva a cada 4 meses; unha a cada 15 dias" }
-      - { key: manutencao_casa, type: text, label: "Manutenção em casa", help: "O que a cliente precisa usar para o resultado durar. É o que sustenta a venda de produto" }
-      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo, com dois horários oferecidos" }
+      - { key: intervalo_retoque, type: text, required: true, label: "Intervalo de retoque que vocês recomendam", help: "Por serviço. Ex.: raiz a cada 30 dias; progressiva a cada 4 meses; unha a cada 15 dias", options: ["Raiz a cada 30 dias; progressiva a cada 4 meses", "Raiz a cada 21 dias", "Depende do serviço e do crescimento do fio", "Combino o retorno no dia do atendimento"] }
+      - { key: manutencao_casa, type: text, label: "Manutenção em casa", help: "O que a cliente precisa usar para o resultado durar. É o que sustenta a venda de produto", options: ["Shampoo e máscara adequados ao serviço, vendidos aqui", "Produtos sem sal e protetor térmico", "Indico os produtos, a cliente compra onde quiser", "Explico o cuidado, sem indicar marca"] }
+      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo, com dois horários oferecidos", options: ["Mensagem 3 dias antes do ciclo, com dois horários oferecidos", "Mensagem 1 semana antes, perguntando o melhor dia", "Mensagem no dia em que costuma dar o intervalo", "Hoje não faço isso de forma organizada"] }
   - key: ecosystem
     label: "Produtos e parcerias"
     fields:
       - { key: revenda, type: list, label: "Produtos que vocês vendem", help: "Home care é margem e é parte do resultado" }
       - { key: parceiros, type: list, label: "Parcerias", help: "Fotógrafo, maquiadora, cerimonialista, clínica de estética" }
-      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a cliente ganha por trazer alguém" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a cliente ganha por trazer alguém", options: ["Quem indica ganha desconto no próximo atendimento", "Quem indica e quem é indicado ganham desconto", "Quem indica ganha um serviço de cortesia", "Não tenho programa de indicação"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true

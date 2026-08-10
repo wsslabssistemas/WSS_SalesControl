@@ -209,61 +209,61 @@ dna_sections:
       - { key: items, type: table, columns: [servico, duracao, observacao], required: true, label: "Serviços que vocês fazem", help: "O sistema só fala do que estiver aqui" }
       - { key: nao_faz, type: list, label: "O que vocês NÃO fazem", help: "Ex.: não atendemos gato, não fazemos tosa de raça específica, não aceitamos cão reativo" }
       - { key: estrutura, type: list, label: "O que a casa tem", help: "Área externa, piscina, câmeras, ar-condicionado, separação por porte" }
-      - { key: capacidade, type: text, label: "Capacidade", help: "Quantos animais por dia na creche e quantas vagas no hotel. É o que esgota na alta temporada" }
+      - { key: capacidade, type: text, label: "Capacidade", help: "Quantos animais por dia na creche e quantas vagas no hotel. É o que esgota na alta temporada", options: ["Até 10 animais por dia", "De 10 a 25 por dia", "De 25 a 50 por dia", "Mais de 50 por dia"] }
   - key: pricing
     label: "Valores"
     required: true
     fields:
       # PORTE E PELAGEM mudam o preço do banho como comprimento muda o da
       # química. Régua, não número solto.
-      - { key: banho_por_porte, type: text, required: true, label: "Preço do banho por porte", help: "A régua. Ex.: mini R$ 55, pequeno R$ 65, médio R$ 85, grande R$ 110. Pelagem longa tem acréscimo" }
-      - { key: plano_creche, type: text, label: "Planos de creche", help: "Por frequência semanal. Ex.: 2x R$ 380/mês, 3x R$ 520, 5x R$ 750" }
-      - { key: diaria_hotel, type: text, label: "Diária do hotel", help: "Por porte, e se a diária conta por pernoite ou por período de 24h" }
-      - { key: alta_temporada, type: text, label: "Alta temporada", help: "Se tem acréscimo em feriado e férias, e quanto. Dizer antes evita conflito" }
-      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, cartão, e como funciona a cobrança do plano mensal" }
+      - { key: banho_por_porte, type: text, required: true, label: "Preço do banho por porte", help: "A régua. Ex.: mini R$ 55, pequeno R$ 65, médio R$ 85, grande R$ 110. Pelagem longa tem acréscimo", options: ["Faixa por porte: mini, pequeno, médio e grande", "Faixa por porte e por tipo de pelagem", "Valor único, independente do porte", "Orçamento por avaliação do animal"] }
+      - { key: plano_creche, type: text, label: "Planos de creche", help: "Por frequência semanal. Ex.: 2x R$ 380/mês, 3x R$ 520, 5x R$ 750", options: ["Planos por frequência semanal: 2x, 3x e 5x", "Plano mensal com frequência livre", "Diária avulsa, sem plano", "Planos mensais e diária avulsa"] }
+      - { key: diaria_hotel, type: text, label: "Diária do hotel", help: "Por porte, e se a diária conta por pernoite ou por período de 24h", options: ["Diária por porte, contada por pernoite", "Diária por porte, contada por período de 24h", "Diária única, independente do porte", "Não trabalho com hotel"] }
+      - { key: alta_temporada, type: text, label: "Alta temporada", help: "Se tem acréscimo em feriado e férias, e quanto. Dizer antes evita conflito", options: ["Acréscimo em feriados e férias", "Mesmo preço o ano inteiro", "Acréscimo só no fim de ano", "Acréscimo e estadia mínima em alta temporada"] }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: PIX, cartão, e como funciona a cobrança do plano mensal", options: ["PIX, débito e crédito à vista", "PIX, débito e crédito em até 3x sem juros", "PIX, débito e crédito em até 6x sem juros", "PIX e dinheiro, com desconto à vista"] }
   - key: availability
     label: "Agenda e vagas"
     required: true
     fields:
       - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Inclua o horário de entrega e retirada, que é o que mais gera dúvida" }
-      - { key: antecedencia_hotel, type: text, required: true, label: "Antecedência do hotel", help: "Com quanto tempo lota em feriado e férias. Ex.: fim de ano fecha com 60 dias" }
-      - { key: prazo_banho, type: text, label: "Tempo do banho e tosa", help: "Quanto o animal fica na casa. Ex.: 2 a 3 horas, ou por agendamento com hora marcada" }
+      - { key: antecedencia_hotel, type: text, required: true, label: "Antecedência do hotel", help: "Com quanto tempo lota em feriado e férias. Ex.: fim de ano fecha com 60 dias", options: ["Fim de ano fecha com 2 meses", "Feriados fecham com 1 mês", "Costuma ter vaga na semana", "Depende muito da época"] }
+      - { key: prazo_banho, type: text, label: "Tempo do banho e tosa", help: "Quanto o animal fica na casa. Ex.: 2 a 3 horas, ou por agendamento com hora marcada", options: ["2 a 3 horas", "3 a 4 horas", "Meio período", "Agendamento com hora marcada de entrada e saída"] }
   - key: risk_free_entry
     label: "Avaliação e adaptação"
     required: true
     fields:
       - { key: avaliacao_obrigatoria, type: boolean, required: true, label: "A avaliação comportamental é obrigatória?", help: "Para creche e hotel. É o que protege os outros animais e a sua responsabilidade" }
-      - { key: como_funciona, type: text, required: true, label: "Como funciona o dia de teste", help: "Duração, o que vocês observam e o que acontece se o cão não se adaptar" }
-      - { key: primeira_vez, type: text, label: "Condição de primeira vez", help: "Se existe. Ex.: dia de experimentação de creche sem custo" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona o dia de teste", help: "Duração, o que vocês observam e o que acontece se o cão não se adaptar", options: ["Uma aula ou sessão de experiência, sem compromisso", "Avaliação primeiro, e a partir dela montamos a proposta", "Conversa de diagnóstico e depois a experiência prática", "Agenda direta, sem etapa de avaliação"] }
+      - { key: primeira_vez, type: text, label: "Condição de primeira vez", help: "Se existe. Ex.: dia de experimentação de creche sem custo", options: ["Não tenho condição especial de primeira vez", "Primeira avaliação sem custo", "Desconto na primeira visita", "Cortesia simples de boas-vindas, sem desconto no serviço"] }
   - key: policies
     label: "Regras da casa"
     required: true
     fields:
       # Vacina é regra sanitária, não preferência. Fica destacada.
-      - { key: vacinas_exigidas, type: text, required: true, label: "Vacinas exigidas", help: "Quais, e com que antecedência. Ex.: V8/V10, antirrábica e gripe canina, com no mínimo 15 dias" }
-      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar. No hotel, a reserva de alta temporada costuma ter regra própria" }
-      - { key: emergencia, type: text, required: true, label: "Se acontecer alguma coisa", help: "Qual veterinário vocês acionam, quem autoriza e quem paga. É a pergunta que o tutor tem medo de fazer" }
-      - { key: nao_aceita, type: text, label: "Quando vocês recusam", help: "Cão reativo, fêmea no cio, animal doente, vacina vencida. Recusar bem escrito é confiança" }
+      - { key: vacinas_exigidas, type: text, required: true, label: "Vacinas exigidas", help: "Quais, e com que antecedência. Ex.: V8/V10, antirrábica e gripe canina, com no mínimo 15 dias", options: ["V8 ou V10, antirrábica e gripe canina, em dia", "V8 ou V10 e antirrábica, em dia", "Carteira de vacinação completa e vermífugo em dia", "Exijo a carteira e avalio caso a caso"] }
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e falta", help: "Prazo para desmarcar. No hotel, a reserva de alta temporada costuma ter regra própria", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: emergencia, type: text, required: true, label: "Se acontecer alguma coisa", help: "Qual veterinário vocês acionam, quem autoriza e quem paga. É a pergunta que o tutor tem medo de fazer", options: ["Levo ao veterinário parceiro e aviso o tutor na hora", "Aviso o tutor primeiro e sigo a orientação dele", "Tenho veterinário na casa", "Levo ao veterinário do próprio tutor, se ele indicar"] }
+      - { key: nao_aceita, type: text, label: "Quando vocês recusam", help: "Cão reativo, fêmea no cio, animal doente, vacina vencida. Recusar bem escrito é confiança", options: ["Animal doente, vacina vencida, fêmea no cio ou cão reativo", "Vacina vencida ou animal com sinal de doença", "Cão reativo com outros animais", "Avalio caso a caso no dia de teste"] }
   - key: expertise_proof
     label: "Equipe e cuidado"
     required: true
     fields:
-      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 7 anos no bairro" }
-      - { key: equipe, type: text, label: "Quem cuida", help: "Quantas pessoas, formação, e quantos animais por cuidador na creche" }
-      - { key: monitoramento, type: text, label: "Câmeras e relatório", help: "Se o tutor acompanha, como e com que frequência. É a entrega emocional do serviço" }
-      - { key: parceria_vet, type: text, label: "Veterinário de apoio", help: "Com quem vocês trabalham em caso de intercorrência" }
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 7 anos no bairro", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
+      - { key: equipe, type: text, label: "Quem cuida", help: "Quantas pessoas, formação, e quantos animais por cuidador na creche", options: ["Equipe própria", "Equipe própria para o principal e parceiros para o resto", "Trabalho sozinho", "Equipe terceirizada, coordenada por mim"] }
+      - { key: monitoramento, type: text, label: "Câmeras e relatório", help: "Se o tutor acompanha, como e com que frequência. É a entrega emocional do serviço", options: ["Câmeras que o tutor acompanha pelo aplicativo", "Fotos e vídeos no grupo ou no privado", "Relatório do dia por mensagem", "Sem monitoramento à distância"] }
+      - { key: parceria_vet, type: text, label: "Veterinário de apoio", help: "Com quem vocês trabalham em caso de intercorrência", options: ["Clínica veterinária parceira, próxima", "Veterinário que atende na casa quando preciso", "Uso o veterinário indicado pelo tutor", "Não tenho parceria formal"] }
   - key: retention
     label: "Frequência e retorno"
     required: true
     fields:
-      - { key: intervalo_banho, type: text, required: true, label: "Intervalo de banho recomendado", help: "Por pelagem. Ex.: pelo curto a cada 21 dias; pelo longo a cada 15" }
-      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo com dois horários" }
+      - { key: intervalo_banho, type: text, required: true, label: "Intervalo de banho recomendado", help: "Por pelagem. Ex.: pelo curto a cada 21 dias; pelo longo a cada 15", options: ["Pelo curto a cada 21 dias; pelo longo a cada 15", "A cada 15 dias", "A cada 30 dias", "Depende da pelagem e da rotina do animal"] }
+      - { key: lembrete, type: text, label: "Como vocês chamam de volta", help: "Ex.: mensagem 3 dias antes do ciclo com dois horários", options: ["Mensagem 3 dias antes do ciclo, com dois horários oferecidos", "Mensagem 1 semana antes, perguntando o melhor dia", "Mensagem no dia em que costuma dar o intervalo", "Hoje não faço isso de forma organizada"] }
   - key: ecosystem
     label: "Produtos e parcerias"
     fields:
       - { key: revenda, type: list, label: "O que vocês vendem", help: "Ração, antipulgas, brinquedo, acessório" }
       - { key: parceiros, type: list, label: "Parcerias", help: "Veterinário, adestrador, pet sitter, transporte" }
-      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que o tutor ganha por trazer alguém" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que o tutor ganha por trazer alguém", options: ["Quem indica ganha desconto no próximo atendimento", "Quem indica e quem é indicado ganham desconto", "Quem indica ganha um serviço de cortesia", "Não tenho programa de indicação"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true

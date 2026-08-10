@@ -153,12 +153,12 @@ dna_sections:
     fields:
       - { key: linhas, type: list, required: true, label: "Linhas de produto", help: "As linhas de produto que você trabalha" }
       - { key: marcas_representadas, type: list, label: "Marcas representadas", help: "Marcas que você representa ou revende" }
-      - { key: diferencial_tecnico, type: text, required: true, label: "Diferencial técnico", help: "Por que escolher você e não o concorrente. Seja concreto" }
+      - { key: diferencial_tecnico, type: text, required: true, label: "Diferencial técnico", help: "Por que escolher você e não o concorrente. Seja concreto", options: ["Equipe própria, sem terceirizar a instalação", "Projeto e execução na mesma casa", "Atendimento de manutenção com prazo acordado", "Especialização numa marca ou tecnologia específica"] }
   - key: atuacao
     label: "Área de atuação"
     required: true
     fields:
-      - { key: regiao, type: text, required: true, label: "Região atendida", help: "Onde você atende. Ex.: Porto Alegre e região metropolitana" }
+      - { key: regiao, type: text, required: true, label: "Região atendida", help: "Onde você atende. Ex.: Porto Alegre e região metropolitana", options: ["A capital e a região metropolitana", "Todo o estado", "Só a minha cidade", "Atendo fora da região com custo de deslocamento"] }
       - { key: atende_obra_nova, type: boolean, label: "Atende obra nova?", help: "Marque se você atende obra nova" }
       - { key: atende_retrofit, type: boolean, label: "Atende retrofit?", help: "Marque se você faz reforma e troca de sistema existente" }
   - key: comercial
@@ -166,25 +166,25 @@ dna_sections:
     required: true
     fields:
       - { key: ticket_medio, type: money_range, label: "Ticket médio", help: "O valor médio dos seus contratos. Ex.: de R$ 8 mil a R$ 40 mil" }
-      - { key: prazo_pagamento, type: text, label: "Prazo de pagamento", help: "Condições de pagamento. Ex.: 30/60 dias para cliente cadastrado" }
-      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega", help: "Quanto tempo até entregar. Ex.: 15 dias úteis após aprovação" }
-      - { key: garantia, type: text, required: true, label: "Garantia", help: "O que você garante depois do serviço. Ex.: Retoque grátis em até 7 dias" }
+      - { key: prazo_pagamento, type: text, label: "Prazo de pagamento", help: "Condições de pagamento. Ex.: 30/60 dias para cliente cadastrado", options: ["À vista", "28 dias", "30/60 dias", "30/60/90 dias", "Boleto na entrega", "Antecipado para cliente novo"] }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de entrega", help: "Quanto tempo até entregar. Ex.: 15 dias úteis após aprovação", options: ["No mesmo dia", "Em até 3 dias úteis", "Em até 1 semana", "15 dias úteis após aprovação", "Varia por item"] }
+      - { key: garantia, type: text, required: true, label: "Garantia", help: "O que você garante depois do serviço. Ex.: Retoque grátis em até 7 dias", options: ["1 ano no serviço e a do fabricante nas peças", "90 dias no serviço, como manda a lei", "1 ano no serviço e nas peças", "Garantia estendida mediante contrato de manutenção"] }
   - key: capacidade
     label: "Capacidade e credenciais"
     fields:
-      - { key: equipe_tecnica, type: text, label: "Equipe técnica", help: "Quantas pessoas e com que formação. Ex.: 4 técnicos e 1 engenheiro" }
+      - { key: equipe_tecnica, type: text, label: "Equipe técnica", help: "Quantas pessoas e com que formação. Ex.: 4 técnicos e 1 engenheiro", options: ["Equipe própria com técnicos e um responsável técnico", "Equipe própria pequena, com apoio de parceiros no pico", "Trabalho com equipe terceirizada que coordeno", "Sou eu e um ajudante"] }
       - { key: certificacoes, type: list, label: "Certificações", help: "Certificações e licenças que você possui" }
       - { key: obras_referencia, type: list, label: "Obras de referência", help: "Trabalhos importantes que já fez e pode citar" }
   - key: pos_venda
     label: "Pós-venda"
     fields:
       - { key: manutencao_contrato, type: boolean, label: "Contrato de manutenção", help: "Marque se você oferece contrato de manutenção" }
-      - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda" }
+      - { key: suporte, type: text, label: "Suporte", help: "Como funciona o atendimento depois da venda", options: ["Atendimento por WhatsApp em horário comercial", "Atendimento por WhatsApp e telefone, com técnico responsável", "Suporte com prazo de resposta acordado em contrato", "Atendimento sob demanda, sem contrato de suporte"] }
   - key: publico
     label: "Venda ao poder público"
     fields:
       - { key: cadastro_sicaf, type: boolean, label: "Cadastro no SICAF", help: "Marque se você já está cadastrado no SICAF (para vender ao governo)" }
-      - { key: porte_declarado, type: text, label: "Porte declarado", help: "Seu porte. Ex.: EPP — dá direito a vantagens em licitação" }
+      - { key: porte_declarado, type: text, label: "Porte declarado", help: "Seu porte. Ex.: EPP — dá direito a vantagens em licitação", options: ["MEI", "ME — microempresa", "EPP — empresa de pequeno porte", "Média empresa"] }
       - { key: atestados_capacidade, type: list, label: "Atestados de capacidade", help: "Atestados que comprovam que você já fez trabalho parecido" }
 
   - key: free_notes

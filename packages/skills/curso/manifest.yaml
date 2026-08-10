@@ -265,77 +265,77 @@ dna_sections:
     fields:
       - { key: lista, type: list, required: true, label: "Cursos oferecidos", help: "Quais cursos você oferece. Escreva o nome exato de cada um" }
       - { key: modalidades, type: list, required: true, label: "Modalidades", help: "Como a aula acontece. Ex.: presencial, online ao vivo, gravado, híbrido" }
-      - { key: niveis, type: text, required: true, label: "Níveis", help: "Os níveis ou módulos, do começo ao fim. Ex.: básico 1 a 4, intermediário 1 a 4" }
-      - { key: carga_horaria, type: text, required: true, label: "Carga horária", help: "Quantas horas tem cada curso ou módulo" }
-      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos meses leva do começo ao fim, e quantas aulas por semana" }
+      - { key: niveis, type: text, required: true, label: "Níveis", help: "Os níveis ou módulos, do começo ao fim. Ex.: básico 1 a 4, intermediário 1 a 4", options: ["Básico, intermediário e avançado", "Módulos numerados, do 1 ao final", "Nível único, sem divisão", "Trilhas por objetivo, não por nível"] }
+      - { key: carga_horaria, type: text, required: true, label: "Carga horária", help: "Quantas horas tem cada curso ou módulo", options: ["Até 40 horas", "De 40 a 100 horas", "De 100 a 200 horas", "Mais de 200 horas"] }
+      - { key: duracao, type: text, required: true, label: "Duração", help: "Quantos meses leva do começo ao fim, e quantas aulas por semana", options: ["30 minutos", "45 minutos", "1 hora", "Varia por serviço"] }
       - { key: grade_horarios, type: schedule, required: true, label: "Grade de horários", help: "Os horários de cada turma" }
-      - { key: proximas_turmas, type: text, required: true, label: "Próximas turmas", help: "Quando começa a próxima turma de cada curso. A data é o que destrava quem adiou" }
-      - { key: vagas_por_turma, type: text, label: "Vagas por turma", help: "Quantos alunos cabem por turma" }
+      - { key: proximas_turmas, type: text, required: true, label: "Próximas turmas", help: "Quando começa a próxima turma de cada curso. A data é o que destrava quem adiou", options: ["Turmas novas todo mês", "Turmas em janeiro, maio e agosto", "Turma nova quando fecha o mínimo de alunos", "Entrada contínua, sem data de turma"] }
+      - { key: vagas_por_turma, type: text, label: "Vagas por turma", help: "Quantos alunos cabem por turma", options: ["Até 6 alunos", "Até 10 alunos", "Até 15 alunos", "Até 20 alunos", "Varia por turma e horário"] }
   - key: pricing
     label: "Valores e pagamento"
     required: true
     fields:
       - { key: range, type: money_range, required: true, label: "Faixa de valores", help: "A faixa de mensalidade dos seus cursos. Ex.: de R$ 250 a R$ 480" }
-      - { key: matricula, type: text, label: "Taxa de matrícula", help: "Tem taxa de matrícula? Quanto?" }
-      - { key: material_didatico, type: text, required: true, label: "Material didático", help: "O livro, a plataforma ou o kit estão inclusos? Se não, quanto custam? É o custo que mais gera briga quando não é dito na venda" }
+      - { key: matricula, type: text, label: "Taxa de matrícula", help: "Tem taxa de matrícula? Quanto?", options: ["Não cobro taxa de matrícula", "Cobro taxa de matrícula, uma vez por ano", "Cobro taxa de matrícula só para aluno novo", "Isento a taxa em campanha de início de turma"] }
+      - { key: material_didatico, type: text, required: true, label: "Material didático", help: "O livro, a plataforma ou o kit estão inclusos? Se não, quanto custam? É o custo que mais gera briga quando não é dito na venda", options: ["Incluso na mensalidade", "Cobrado à parte, uma vez", "Plataforma inclusa, livro à parte", "O aluno usa material próprio"] }
       - { key: formas_pagamento, type: list, required: true, label: "Formas de pagamento", help: "Como o aluno pode pagar. Ex.: Pix, boleto mensal, cartão em 12x" }
-      - { key: desconto_a_vista, type: text, label: "Desconto à vista", help: "Existe desconto para pagamento do curso inteiro? Qual?" }
-      - { key: politica_reajuste, type: text, label: "Reajuste", help: "A mensalidade muda durante o curso? Quando e por quê?" }
+      - { key: desconto_a_vista, type: text, label: "Desconto à vista", help: "Existe desconto para pagamento do curso inteiro? Qual?", options: ["Desconto para o pagamento do curso inteiro", "Desconto para a matrícula antecipada", "Sem desconto à vista", "Desconto por indicação, não à vista"] }
+      - { key: politica_reajuste, type: text, label: "Reajuste", help: "A mensalidade muda durante o curso? Quando e por quê?", options: ["A mensalidade não muda durante o contrato", "Reajuste anual, pelo índice do contrato", "Reajuste na renovação de matrícula", "Depende do curso"] }
   - key: contrato
     label: "Contrato, trancamento e cancelamento"
     required: true
     fields:
-      - { key: fidelidade, type: text, required: true, label: "Fidelidade", help: "O contrato prende por quantos meses? Escreva 'não tem' se não houver" }
-      - { key: multa_rescisao, type: text, required: true, label: "Multa de rescisão", help: "Quanto o aluno paga se desistir no meio. Escreva exatamente como está no contrato" }
-      - { key: politica_trancamento, type: text, required: true, label: "Trancamento", help: "Pode trancar? Por quanto tempo, quantas vezes e o que acontece com o que já foi cursado" }
-      - { key: transferencia_turma, type: text, label: "Troca de turma", help: "O aluno pode trocar de horário ou de turma no meio? Como" }
-      - { key: aproveitamento, type: text, label: "Aproveitamento de estudos", help: "Quem já estudou antes pode pular módulo? Como isso é avaliado" }
+      - { key: fidelidade, type: text, required: true, label: "Fidelidade", help: "O contrato prende por quantos meses? Escreva 'não tem' se não houver", options: ["Não tem fidelidade", "Contrato pelo período do curso", "Contrato de 6 meses", "Contrato de 12 meses"] }
+      - { key: multa_rescisao, type: text, required: true, label: "Multa de rescisão", help: "Quanto o aluno paga se desistir no meio. Escreva exatamente como está no contrato", options: ["Não cobro multa", "Multa proporcional ao que falta do contrato", "Aviso prévio de 30 dias, sem multa", "Conforme está escrito no contrato"] }
+      - { key: politica_trancamento, type: text, required: true, label: "Trancamento", help: "Pode trancar? Por quanto tempo, quantas vezes e o que acontece com o que já foi cursado", options: ["Permito trancar uma vez, por tempo determinado", "Permito trancar, e o crédito fica guardado", "Permito só por motivo de saúde ou mudança", "Não permito trancamento"] }
+      - { key: transferencia_turma, type: text, label: "Troca de turma", help: "O aluno pode trocar de horário ou de turma no meio? Como", options: ["Pode trocar de turma se houver vaga", "Pode trocar uma vez por semestre", "Pode trocar mediante disponibilidade e aviso", "Não permito troca no meio do módulo"] }
+      - { key: aproveitamento, type: text, label: "Aproveitamento de estudos", help: "Quem já estudou antes pode pular módulo? Como isso é avaliado", options: ["Faço teste de nível e o aluno entra onde é o lugar dele", "Aceito comprovante de curso anterior", "Avalio caso a caso, com entrevista", "Todo aluno começa do início"] }
   - key: certificacao
     label: "Certificado e reconhecimento"
     required: true
     fields:
       - { key: emite_certificado, type: boolean, required: true, label: "Emite certificado?", help: "Marque se o aluno recebe certificado ao concluir" }
-      - { key: tipo, type: text, required: true, label: "Tipo de certificado", help: "Declaração de conclusão, certificado de curso livre ou diploma técnico. Escreva exatamente o que está impresso" }
-      - { key: reconhecimento, type: text, required: true, label: "Reconhecimento", help: "Curso livre NÃO tem reconhecimento do MEC e não precisa ter. Técnico é autorizado pelo Conselho Estadual e registrado no SISTEC. Escreva a verdade do seu caso — é a pergunta que mais chega e a mentira que mais volta" }
-      - { key: exigencias, type: text, label: "O que exige para certificar", help: "Frequência mínima, nota, prova final ou projeto" }
+      - { key: tipo, type: text, required: true, label: "Tipo de certificado", help: "Declaração de conclusão, certificado de curso livre ou diploma técnico. Escreva exatamente o que está impresso", options: ["Certificado de curso livre", "Declaração de conclusão", "Diploma técnico registrado no SISTEC", "Certificado de curso livre com carga horária"] }
+      - { key: reconhecimento, type: text, required: true, label: "Reconhecimento", help: "Curso livre NÃO tem reconhecimento do MEC e não precisa ter. Técnico é autorizado pelo Conselho Estadual e registrado no SISTEC. Escreva a verdade do seu caso — é a pergunta que mais chega e a mentira que mais volta", options: ["Curso livre — não tem nem precisa de reconhecimento do MEC", "Técnico, registrado no Conselho Estadual de Educação", "Certificação de uma entidade do setor", "Certificado próprio da escola"] }
+      - { key: exigencias, type: text, label: "O que exige para certificar", help: "Frequência mínima, nota, prova final ou projeto", options: ["Frequência mínima e aprovação na avaliação final", "Frequência mínima apenas", "Projeto final entregue", "Frequência e nota mínima em todas as etapas"] }
   - key: teste_nivel
     label: "Teste de nível"
     required: true
     fields:
       - { key: oferece, type: boolean, required: true, label: "Oferece?", help: "Marque se você faz teste de nível antes da matrícula" }
-      - { key: como_funciona, type: text, required: true, label: "Como funciona", help: "O que acontece no teste, quanto tempo dura e o que o aluno recebe depois" }
+      - { key: como_funciona, type: text, required: true, label: "Como funciona", help: "O que acontece no teste, quanto tempo dura e o que o aluno recebe depois", options: ["Uma aula ou sessão de experiência, sem compromisso", "Avaliação primeiro, e a partir dela montamos a proposta", "Conversa de diagnóstico e depois a experiência prática", "Agenda direta, sem etapa de avaliação"] }
       - { key: gratuito, type: boolean, label: "É gratuito?", help: "Marque se o teste de nível não é cobrado" }
-      - { key: online_ou_presencial, type: text, label: "Onde é feito", help: "Online, presencial ou os dois" }
+      - { key: online_ou_presencial, type: text, label: "Onde é feito", help: "Online, presencial ou os dois", options: ["Só presencial", "Só online, ao vivo", "Só online, gravado", "Presencial e online, o aluno escolhe"] }
       - { key: aula_demonstrativa, type: boolean, label: "Tem aula demonstrativa?", help: "Marque se o interessado pode assistir a uma aula antes de decidir" }
   - key: estrutura
     label: "Professores e metodologia"
     fields:
-      - { key: professores, type: text, label: "Professores", help: "Quem dá aula e a formação de cada um" }
-      - { key: metodologia, type: text, label: "Metodologia", help: "Como a aula acontece na prática. O que o aluno faz na primeira aula" }
-      - { key: alunos_por_turma, type: text, label: "Alunos por turma", help: "Quantos alunos em cada turma. Turma pequena é argumento forte quando é verdade" }
-      - { key: plataforma, type: text, label: "Plataforma ou laboratório", help: "Que ferramenta, sistema ou laboratório o aluno usa" }
-      - { key: reposicao, type: text, label: "Reposição de aula", help: "O aluno que faltou repõe? Como" }
+      - { key: professores, type: text, label: "Professores", help: "Quem dá aula e a formação de cada um", options: ["Equipe formada na área, com registro no conselho", "Equipe própria, com formação e experiência no ramo", "Professores contratados por especialidade", "Sou eu quem dá as aulas"] }
+      - { key: metodologia, type: text, label: "Metodologia", help: "Como a aula acontece na prática. O que o aluno faz na primeira aula", options: ["Aula prática desde o primeiro dia", "Teoria curta e prática guiada", "Aula expositiva com exercícios", "Projeto do começo ao fim do curso"] }
+      - { key: alunos_por_turma, type: text, label: "Alunos por turma", help: "Quantos alunos em cada turma. Turma pequena é argumento forte quando é verdade", options: ["Até 6 alunos", "Até 10 alunos", "Até 15 alunos", "Até 20 alunos", "Varia por turma e horário"] }
+      - { key: plataforma, type: text, label: "Plataforma ou laboratório", help: "Que ferramenta, sistema ou laboratório o aluno usa", options: ["Plataforma própria de estudo", "Plataforma do material didático", "Laboratório presencial equipado", "Sem plataforma — material impresso"] }
+      - { key: reposicao, type: text, label: "Reposição de aula", help: "O aluno que faltou repõe? Como", options: ["O aluno repõe em outra turma, se houver vaga", "Aula gravada disponível para quem faltou", "Reposição agendada com o professor", "Não há reposição"] }
   - key: resultados
     label: "Prova de resultado"
     fields:
-      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo a escola existe e quantos alunos já formou" }
-      - { key: casos, type: text, label: "Casos de alunos", help: "O que alunos concretos conseguiram, com autorização deles. Isto substitui a promessa de emprego, que é proibida" }
-      - { key: aprovacoes, type: text, label: "Aprovações", help: "Se é preparatório: aprovações verificáveis, com prova e ano" }
+      - { key: tempo_de_mercado, type: text, label: "Tempo de mercado", help: "Há quanto tempo a escola existe e quantos alunos já formou", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
+      - { key: casos, type: text, label: "Casos de alunos", help: "O que alunos concretos conseguiram, com autorização deles. Isto substitui a promessa de emprego, que é proibida", options: ["Tenho depoimentos de alunos, com autorização", "Tenho casos de alunos que conseguiram emprego na área", "Tenho aprovações verificáveis", "Ainda não tenho casos documentados"] }
+      - { key: aprovacoes, type: text, label: "Aprovações", help: "Se é preparatório: aprovações verificáveis, com prova e ano", options: ["Tenho aprovações verificáveis, com prova e ano", "Tenho, mas não organizadas para mostrar", "Não sou preparatório", "Ainda não tenho aprovações"] }
       - { key: parcerias_empresas, type: list, label: "Empresas parceiras", help: "Empresas que contratam ou enviam alunos" }
   - key: regras
     label: "Regras e exigências"
     fields:
-      - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para cada curso" }
-      - { key: pre_requisito, type: text, label: "Pré-requisito", help: "Precisa saber algo antes de entrar? O quê" }
-      - { key: frequencia_minima, type: text, label: "Frequência mínima", help: "Quanto de presença o aluno precisa ter" }
-      - { key: entrada_turma_iniciada, type: text, label: "Entrar em turma já começada", help: "Dá para entrar depois que a turma começou? Até quando" }
+      - { key: idade_minima, type: text, label: "Idade mínima", help: "Idade mínima para cada curso", options: ["A partir de 3 anos", "A partir de 6 anos", "A partir de 12 anos", "A partir de 16 anos", "Sem idade mínima"] }
+      - { key: pre_requisito, type: text, label: "Pré-requisito", help: "Precisa saber algo antes de entrar? O quê", options: ["Não há pré-requisito", "Precisa de teste de nível", "Precisa de escolaridade mínima", "Precisa de conhecimento prévio na área"] }
+      - { key: frequencia_minima, type: text, label: "Frequência mínima", help: "Quanto de presença o aluno precisa ter", options: ["75% de presença", "80% de presença", "Sem exigência de frequência", "Depende do curso"] }
+      - { key: entrada_turma_iniciada, type: text, label: "Entrar em turma já começada", help: "Dá para entrar depois que a turma começou? Até quando", options: ["Pode entrar nas primeiras semanas", "Pode entrar a qualquer momento, com nivelamento", "Só na abertura da turma", "Avalio caso a caso"] }
   - key: corporativo
     label: "Turmas para empresa (in-company)"
     fields:
       - { key: atende, type: boolean, label: "Atende empresa?", help: "Marque se você monta turma fechada para empresa" }
-      - { key: minimo_alunos, type: text, label: "Mínimo de alunos", help: "Quantos alunos para abrir turma fechada" }
-      - { key: local, type: text, label: "Onde acontece", help: "Na empresa, na escola ou online" }
-      - { key: faturamento, type: text, label: "Como fatura", help: "Nota para a empresa, contrato, prazo de pagamento" }
+      - { key: minimo_alunos, type: text, label: "Mínimo de alunos", help: "Quantos alunos para abrir turma fechada", options: ["A partir de 5 alunos", "A partir de 8 alunos", "A partir de 10 alunos", "Não faço turma fechada"] }
+      - { key: local, type: text, label: "Onde acontece", help: "Na empresa, na escola ou online", options: ["Na empresa do cliente", "Na escola", "Online", "Na empresa, na escola ou online"] }
+      - { key: faturamento, type: text, label: "Como fatura", help: "Nota para a empresa, contrato, prazo de pagamento", options: ["Nota para a empresa, com prazo combinado", "Nota para a empresa, pagamento antecipado", "Contrato com pagamento parcelado", "Depende do porte do contrato"] }
 
   - key: free_notes
     label: "Outras informações importantes"

@@ -204,8 +204,8 @@ dna_sections:
     label: "Oferta de entrada sem risco"
     fields:
       - { key: exists,   type: boolean, required: true, label: "Oferece?", help: "Marque se você oferece alguma condição especial para quem vem pela primeira vez" }
-      - { key: duration, type: text, label: "Duração", help: "Quanto tempo leva. Ex.: 40 minutos" }
-      - { key: gift,     type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água" }
+      - { key: duration, type: text, label: "Duração", help: "Quanto tempo leva. Ex.: 40 minutos", options: ["40 minutos", "1 hora", "Livre, dentro do horário de funcionamento"] }
+      - { key: gift,     type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água", options: ["Café e água", "Avaliação física de cortesia", "Garrafa ou camiseta da academia", "Não ofereço brinde"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
@@ -220,7 +220,7 @@ dna_sections:
   - key: policies
     label: "Políticas"
     fields:
-      - { key: cancellation, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança" }
+      - { key: cancellation, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança", options: ["Até 2 horas antes, sem cobrança", "Até 4 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
       - { key: partnerships, type: table, columns: [servico, profissional, valor], label: "Parcerias", help: "Parceiros que atuam no seu espaço ou que você indica" }
   - key: free_notes
     label: "Outras informações importantes"
@@ -233,7 +233,7 @@ dna_sections:
     # required_fact reciprocity.gift era caminho órfão e a entrada escalava
     # sempre — mesmo para quem tinha o brinde declarado. O DNA já a assumia.
     fields:
-      - { key: gift, type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água" }
+      - { key: gift, type: text, label: "Brinde de boas-vindas", help: "O que você oferece de cortesia. Ex.: Café e água", options: ["Garrafa de água e avaliação física", "Avaliação física de cortesia", "Camiseta da academia", "Não ofereço brinde"] }
   - key: commitment_offer
     label: "Plano que mais compensa"
     # Mesmo caso do reciprocity acima, achado em ago/2026 pelo library_check:
@@ -241,7 +241,7 @@ dna_sections:
     # não existia. Por estar em optional_facts, não escalava — simplesmente
     # nunca era preenchido, e o motor perdia o argumento de fidelidade.
     fields:
-      - { key: best_value, type: text, label: "Plano que mais compensa", help: "Qual plano vale mais a pena e por quê. Ex.: no anual sai R$ 129/mês contra R$ 169 do mensal" }
+      - { key: best_value, type: text, label: "Plano que mais compensa", help: "Qual plano vale mais a pena e por quê. Ex.: no anual sai R$ 129/mês contra R$ 169 do mensal", options: ["O anual, porque a mensalidade cai bastante em relação ao mensal", "O semestral, que equilibra preço e compromisso", "O trimestral, para quem ainda está criando o hábito", "Depende do objetivo do aluno"] }
 
 # ---------------------------------------------------------------------
 # AS 12 CATEGORIAS CANÔNICAS

@@ -190,7 +190,7 @@ dna_sections:
     required: true
     fields:
       - { key: weekly_hours,  type: schedule, required: true, label: "Horário de funcionamento", help: "Os dias e horários que você atende. Ex.: Seg a Sex 9h-19h; Sáb 8h-14h" }
-      - { key: booking_rule,  type: text, label: "Como agendar", help: "Precisa marcar antes ou atende por ordem de chegada? Ex.: Só com hora marcada" }
+      - { key: booking_rule,  type: text, label: "Como agendar", help: "Precisa marcar antes ou atende por ordem de chegada? Ex.: Só com hora marcada", options: ["Só com hora marcada", "Ordem de chegada", "Hora marcada, e encaixo quem chega", "Hora marcada no pico, chegada livre no resto"] }
   - key: catalog
     label: "Serviços oferecidos"
     required: true
@@ -200,7 +200,7 @@ dna_sections:
     label: "Oferta de entrada"
     fields:
       - { key: exists, type: boolean, required: true, label: "Oferece?", help: "Marque se você oferece alguma condição especial para quem vem pela primeira vez" }
-      - { key: offer,  type: text, label: "Qual é a oferta", help: "Descreva a condição de primeira visita. Ex.: Primeiro corte com 20% de desconto" }
+      - { key: offer,  type: text, label: "Qual é a oferta", help: "Descreva a condição de primeira visita. Ex.: Primeiro corte com 20% de desconto", options: ["Desconto no primeiro corte", "Um serviço de cortesia junto do primeiro corte", "Não tenho condição de primeira visita", "Cortesia simples de boas-vindas, sem desconto"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
@@ -215,8 +215,8 @@ dna_sections:
   - key: policies
     label: "Políticas"
     fields:
-      - { key: no_show,      type: text, label: "Política de falta", help: "O que acontece quando o cliente falta sem avisar. Ex.: Cobramos 50% na próxima" }
-      - { key: cancellation, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança" }
+      - { key: no_show,      type: text, label: "Política de falta", help: "O que acontece quando o cliente falta sem avisar. Ex.: Cobramos 50% na próxima", options: ["Cobro parte do valor na falta sem aviso", "Não cobro, mas o próximo horário fica sujeito a disponibilidade", "Duas faltas sem aviso e passo a exigir sinal", "Não tenho política formal de falta"] }
+      - { key: cancellation, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança", options: ["Até 2 horas antes, sem cobrança", "Até o dia anterior, sem cobrança", "Remarcando na hora, sem cobrança", "Cobro parte quando a falta é sem aviso"] }
   - key: free_notes
     label: "Outras informações importantes"
     type: rich_text

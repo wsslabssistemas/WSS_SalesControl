@@ -187,33 +187,33 @@ dna_sections:
     required: true
     fields:
       - { key: range, type: money_range, label: "Faixa de investimento", help: "A faixa típica dos seus projetos. Ex.: de R$ 3 mil a R$ 40 mil" }
-      - { key: como_cobra, type: text, required: true, label: "Como você cobra", help: "Por metro, por peça, por projeto fechado? Ex.: por metro linear, após medição" }
-      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: 30% na assinatura, 40% na produção, 30% na entrega" }
-      - { key: financiamento, type: text, label: "Financiamento", help: "Trabalha com financiamento ou parceiro de crédito? Qual?" }
+      - { key: como_cobra, type: text, required: true, label: "Como você cobra", help: "Por metro, por peça, por projeto fechado? Ex.: por metro linear, após medição", options: ["Por metro linear, após a medição", "Projeto fechado, com o valor definido na proposta", "Por peça", "Por metro quadrado de material"] }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: 30% na assinatura, 40% na produção, 30% na entrega", options: ["PIX, débito e crédito à vista", "PIX, débito e crédito em até 3x sem juros", "PIX, débito e crédito em até 6x sem juros", "PIX e dinheiro, com desconto à vista"] }
+      - { key: financiamento, type: text, label: "Financiamento", help: "Trabalha com financiamento ou parceiro de crédito? Qual?", options: ["Não trabalho com financiamento", "Parcelo direto, sem banco", "Tenho parceiro de crédito", "Aceito financiamento que o cliente trouxer"] }
   - key: availability
     label: "Prazos e agenda"
     required: true
     fields:
-      - { key: prazo_visita, type: text, required: true, label: "Prazo para a visita", help: "Em quanto tempo você consegue ir medir. Ex.: em até 3 dias úteis" }
-      - { key: prazo_orcamento, type: text, required: true, label: "Prazo do orçamento", help: "Quanto tempo depois da visita você entrega. Ex.: em até 48h" }
-      - { key: prazo_entrega, type: text, required: true, label: "Prazo de execução", help: "Da aprovação até a entrega. Ex.: 25 dias úteis para móveis" }
+      - { key: prazo_visita, type: text, required: true, label: "Prazo para a visita", help: "Em quanto tempo você consegue ir medir. Ex.: em até 3 dias úteis", options: ["Em até 2 dias úteis", "Em até 3 dias úteis", "Em até 1 semana", "Depende da distância"] }
+      - { key: prazo_orcamento, type: text, required: true, label: "Prazo do orçamento", help: "Quanto tempo depois da visita você entrega. Ex.: em até 48h", options: ["Em até 48 horas após a visita", "Em até 3 dias úteis", "Em até 1 semana", "Depende do tamanho do projeto"] }
+      - { key: prazo_entrega, type: text, required: true, label: "Prazo de execução", help: "Da aprovação até a entrega. Ex.: 25 dias úteis para móveis", options: ["No mesmo dia", "Em até 3 dias úteis", "Em até 1 semana", "15 dias úteis após aprovação", "Varia por item"] }
       - { key: weekly_hours, type: schedule, label: "Horário de atendimento", help: "Ex.: Seg a Sex 8h-18h; Sáb 8h-12h" }
   - key: risk_free_entry
     label: "Visita técnica"
     required: true
     fields:
       - { key: visita_gratuita, type: boolean, required: true, label: "A visita é gratuita?", help: "Marque se você não cobra pela visita de medição" }
-      - { key: valor_visita, type: text, label: "Valor da visita", help: "Se cobra, quanto e se abate no fechamento. Ex.: R$ 150, abatido no contrato" }
-      - { key: raio_atendimento, type: text, required: true, label: "Onde você atende", help: "Sua região. Ex.: Porto Alegre e até 40 km" }
-      - { key: o_que_leva, type: text, label: "O que acontece na visita", help: "Ex.: medimos, fotografamos e apresentamos materiais na hora" }
+      - { key: valor_visita, type: text, label: "Valor da visita", help: "Se cobra, quanto e se abate no fechamento. Ex.: R$ 150, abatido no contrato", options: ["A visita é gratuita", "Cobro a visita e abato no fechamento", "Cobro a visita, sem abatimento", "Gratuita dentro da minha região"] }
+      - { key: raio_atendimento, type: text, required: true, label: "Onde você atende", help: "Sua região. Ex.: Porto Alegre e até 40 km", options: ["Minha cidade e região", "Até 40 km da minha base", "Todo o estado", "Atendo fora com custo de deslocamento"] }
+      - { key: o_que_leva, type: text, label: "O que acontece na visita", help: "Ex.: medimos, fotografamos e apresentamos materiais na hora", options: ["Medimos, fotografamos e mostramos os materiais na hora", "Medimos e enviamos o projeto depois", "Medimos e já apresentamos uma prévia do projeto", "Conversa de escopo primeiro, medição depois"] }
   - key: expertise_proof
     label: "Experiência e garantia"
     required: true
     fields:
-      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Há quanto tempo você atua. Ex.: 15 anos" }
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Há quanto tempo você atua. Ex.: 15 anos", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
       - { key: obras_referencia, type: list, label: "Trabalhos de referência", help: "Projetos que você pode citar ou mostrar" }
-      - { key: garantia, type: text, required: true, label: "Garantia", help: "O que você garante e por quanto tempo. Ex.: 5 anos em ferragens" }
-      - { key: equipe, type: text, label: "Equipe", help: "Quem executa: equipe própria ou terceirizada?" }
+      - { key: garantia, type: text, required: true, label: "Garantia", help: "O que você garante e por quanto tempo. Ex.: 5 anos em ferragens", options: ["Retoque grátis em até 7 dias", "Retoque grátis em até 15 dias", "90 dias, como manda a lei", "1 ano no serviço executado"] }
+      - { key: equipe, type: text, label: "Equipe", help: "Quem executa: equipe própria ou terceirizada?", options: ["Equipe própria", "Equipe própria para o principal e parceiros para o resto", "Trabalho sozinho", "Equipe terceirizada, coordenada por mim"] }
   - key: differentials
     label: "Diferenciais"
     fields:
@@ -223,9 +223,9 @@ dna_sections:
   - key: policies
     label: "Regras do serviço"
     fields:
-      - { key: alteracao_escopo, type: text, label: "Mudança no projeto", help: "O que acontece se o cliente mudar depois de aprovado" }
-      - { key: cancelamento, type: text, label: "Cancelamento", help: "Regra de cancelamento e devolução de sinal" }
-      - { key: assistencia, type: text, label: "Assistência", help: "Como funciona o atendimento pós-entrega" }
+      - { key: alteracao_escopo, type: text, label: "Mudança no projeto", help: "O que acontece se o cliente mudar depois de aprovado", options: ["Refaço o orçamento e o prazo antes de seguir", "Aceito mudança até o início da produção", "Mudança após aprovação tem custo adicional", "Avalio caso a caso"] }
+      - { key: cancelamento, type: text, label: "Cancelamento", help: "Regra de cancelamento e devolução de sinal", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: assistencia, type: text, label: "Assistência", help: "Como funciona o atendimento pós-entrega", options: ["Atendo chamado de ajuste dentro da garantia", "Revisão de ajuste alguns meses após a entrega", "Atendimento sob demanda, cobrado", "Não tenho processo formal"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true

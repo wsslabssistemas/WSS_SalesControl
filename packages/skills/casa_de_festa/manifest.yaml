@@ -206,57 +206,57 @@ dna_sections:
     required: true
     fields:
       - { key: items, type: table, columns: [pacote, o_que_inclui, capacidade], required: true, label: "Pacotes que você vende", help: "O sistema só fala do que estiver aqui. Seja explícito no que inclui" }
-      - { key: capacidade, type: text, required: true, label: "Capacidade do espaço", help: "Mínimo e máximo de convidados. Ex.: de 40 a 150 pessoas" }
+      - { key: capacidade, type: text, required: true, label: "Capacidade do espaço", help: "Mínimo e máximo de convidados. Ex.: de 40 a 150 pessoas", options: ["De 30 a 80 convidados", "De 40 a 150 convidados", "De 80 a 250 convidados", "Mais de 250 convidados"] }
       - { key: nao_faz, type: list, label: "O que você NÃO faz", help: "Serviços que pedem e você não atende. Evita promessa errada" }
       - { key: estrutura, type: list, label: "O que o espaço tem", help: "Brinquedoteca, estacionamento, ar-condicionado, acessibilidade, área externa" }
   - key: pricing
     label: "Valores e regras de cobrança"
     required: true
     fields:
-      - { key: regime, type: text, required: true, label: "Como você trabalha", help: "Pacote fechado por convidado, espaço puro, ou os dois? É a primeira coisa que muda o preço" }
-      - { key: valor_por_convidado, type: text, label: "Valor por convidado", help: "Se o pacote é por pessoa. Diga o mínimo de convidados cobrado" }
-      - { key: valor_espaco, type: text, label: "Valor do espaço", help: "Se aluga o espaço puro, quanto e por quantas horas" }
+      - { key: regime, type: text, required: true, label: "Como você trabalha", help: "Pacote fechado por convidado, espaço puro, ou os dois? É a primeira coisa que muda o preço", options: ["Pacote fechado por convidado", "Aluguel do espaço puro", "Os dois: pacote ou espaço puro", "Pacote fechado, com itens opcionais à parte"] }
+      - { key: valor_por_convidado, type: text, label: "Valor por convidado", help: "Se o pacote é por pessoa. Diga o mínimo de convidados cobrado", options: ["Por pessoa, com mínimo de convidados cobrado", "Por pessoa, sem mínimo", "Faixas por quantidade de convidados", "Não trabalho por convidado"] }
+      - { key: valor_espaco, type: text, label: "Valor do espaço", help: "Se aluga o espaço puro, quanto e por quantas horas", options: ["Valor fechado por período de horas", "Valor por hora", "Valor diferente para sábado e meio de semana", "Não alugo o espaço puro"] }
       # OS EXTRAS SÃO O QUE ESTOURA O ORÇAMENTO — e o que vira reclamação
       # quando não foi dito antes. Por isso são campos separados e obrigatórios.
-      - { key: taxa_rolha, type: text, required: true, label: "Taxa de rolha", help: "Se o cliente pode levar bebida e quanto custa por garrafa. Se não permite, escreva isso" }
-      - { key: hora_extra, type: text, required: true, label: "Hora extra", help: "Quanto custa passar do horário e como é cobrada" }
-      - { key: convidado_extra, type: text, required: true, label: "Convidado além do contratado", help: "Como cobra quem chega a mais no dia" }
-      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: sinal de 30%, restante em até 4x até 7 dias antes do evento" }
+      - { key: taxa_rolha, type: text, required: true, label: "Taxa de rolha", help: "Se o cliente pode levar bebida e quanto custa por garrafa. Se não permite, escreva isso", options: ["Não permito bebida de fora", "Permito, com taxa por garrafa", "Permito sem taxa", "Permito só para bebida que não vendo"] }
+      - { key: hora_extra, type: text, required: true, label: "Hora extra", help: "Quanto custa passar do horário e como é cobrada", options: ["Valor fechado por hora extra", "Valor por hora, cobrado no dia", "Fração de 30 minutos", "Não permito hora extra"] }
+      - { key: convidado_extra, type: text, required: true, label: "Convidado além do contratado", help: "Como cobra quem chega a mais no dia", options: ["Cobro o valor por pessoa no acerto final", "Cobro com acréscimo quem não foi contratado", "Tolero uma margem e cobro acima dela", "Faço a contagem na entrada"] }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: sinal de 30%, restante em até 4x até 7 dias antes do evento", options: ["PIX, débito e crédito à vista", "PIX, débito e crédito em até 3x sem juros", "PIX, débito e crédito em até 6x sem juros", "PIX e dinheiro, com desconto à vista"] }
   - key: availability
     label: "Datas e agenda"
     required: true
     fields:
-      - { key: sinal, type: text, required: true, label: "Sinal que reserva a data", help: "Quanto e em quanto tempo. A data só sai do mercado depois disso" }
-      - { key: antecedencia, type: text, required: true, label: "Com quanta antecedência lota", help: "Ex.: sábado à tarde fecha com 3 meses; meio de semana tem data no mês" }
-      - { key: horarios, type: text, required: true, label: "Horários disponíveis", help: "Ex.: sábado 12h-17h ou 18h-23h; domingo 12h-17h" }
-      - { key: espera, type: text, label: "Lista de espera", help: "Como funciona quando a data pedida já está reservada" }
+      - { key: sinal, type: text, required: true, label: "Sinal que reserva a data", help: "Quanto e em quanto tempo. A data só sai do mercado depois disso", options: ["30% para reservar a data", "50% para reservar a data", "Valor fixo de sinal, independente do pacote", "A data só é reservada com o contrato assinado e o sinal pago"] }
+      - { key: antecedencia, type: text, required: true, label: "Com quanta antecedência lota", help: "Ex.: sábado à tarde fecha com 3 meses; meio de semana tem data no mês", options: ["Sábado à tarde fecha com 3 meses", "Datas de fim de semana fecham com 2 meses", "Meio de semana costuma ter data no mês", "Depende muito da época do ano"] }
+      - { key: horarios, type: text, required: true, label: "Horários disponíveis", help: "Ex.: sábado 12h-17h ou 18h-23h; domingo 12h-17h", options: ["Sábado 12h-17h ou 18h-23h", "Sábado e domingo, um evento por período", "Um evento por dia", "Horário combinado por evento"] }
+      - { key: espera, type: text, label: "Lista de espera", help: "Como funciona quando a data pedida já está reservada", options: ["Anoto e aviso se a data liberar", "Ofereço a data mais próxima disponível", "Não trabalho com lista de espera", "Anoto e ofereço uma segunda opção de data"] }
   - key: policies
     label: "Regras do contrato"
     required: true
     fields:
-      - { key: cancelamento, type: text, required: true, label: "Cancelamento e devolução do sinal", help: "Seja claro. É a pergunta que mais gera desconfiança" }
-      - { key: remarcacao, type: text, label: "Troca de data", help: "Se permite, com quanta antecedência e se o sinal acompanha" }
-      - { key: chuva, type: text, label: "Se o espaço tem área externa", help: "O que acontece se chover. Plano B declarado tira medo" }
-      - { key: fornecedor_externo, type: text, label: "Fornecedor de fora", help: "Pode entrar decoradora, fotógrafo e buffet de fora? Tem taxa ou credenciamento?" }
+      - { key: cancelamento, type: text, required: true, label: "Cancelamento e devolução do sinal", help: "Seja claro. É a pergunta que mais gera desconfiança", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: remarcacao, type: text, label: "Troca de data", help: "Se permite, com quanta antecedência e se o sinal acompanha", options: ["Permito uma vez, com antecedência, e o sinal acompanha", "Permito com antecedência mínima, mediante taxa", "Permito só por motivo de força maior", "Não permito troca de data"] }
+      - { key: chuva, type: text, label: "Se o espaço tem área externa", help: "O que acontece se chover. Plano B declarado tira medo", options: ["Todo o espaço é coberto", "Área externa com cobertura alternativa", "Área externa descoberta, com plano B interno", "Área externa descoberta, sem plano B"] }
+      - { key: fornecedor_externo, type: text, label: "Fornecedor de fora", help: "Pode entrar decoradora, fotógrafo e buffet de fora? Tem taxa ou credenciamento?", options: ["Pode entrar qualquer fornecedor, sem taxa", "Pode entrar, com credenciamento prévio", "Pode entrar, com taxa", "Só fornecedores da nossa lista"] }
   - key: expertise_proof
     label: "Experiência e prova"
     required: true
     fields:
-      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 11 anos e mais de 900 festas" }
-      - { key: eventos_por_mes, type: text, label: "Quantos eventos por mês", help: "Volume é prova concreta de operação" }
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de casa", help: "Ex.: 11 anos e mais de 900 festas", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
+      - { key: eventos_por_mes, type: text, label: "Quantos eventos por mês", help: "Volume é prova concreta de operação", options: ["Até 4 eventos por mês", "De 5 a 10 por mês", "De 10 a 20 por mês", "Mais de 20 por mês"] }
       - { key: depoimentos, type: list, label: "Clientes que aceitam conversar", help: "Vale mais que qualquer depoimento escrito" }
-      - { key: alvara, type: text, label: "Alvará e segurança", help: "Alvará, AVCB, seguro. Em espaço com criança isso pesa" }
+      - { key: alvara, type: text, label: "Alvará e segurança", help: "Alvará, AVCB, seguro. Em espaço com criança isso pesa", options: ["Alvará e AVCB em dia", "Alvará, AVCB e seguro de responsabilidade civil", "Alvará em dia, AVCB em renovação", "Posso apresentar a documentação na visita"] }
   - key: retention
     label: "O ano que vem"
     required: true
     fields:
-      - { key: antecedencia_contato, type: text, required: true, label: "Com quanta antecedência você chama de volta", help: "Data boa esgota. Ex.: 4 meses antes do aniversário, oferecendo o fim de semana mais próximo" }
-      - { key: condicao_retorno, type: text, label: "Condição para quem já fez festa aqui", help: "O que a família ganha por voltar. É a venda mais barata que existe" }
+      - { key: antecedencia_contato, type: text, required: true, label: "Com quanta antecedência você chama de volta", help: "Data boa esgota. Ex.: 4 meses antes do aniversário, oferecendo o fim de semana mais próximo", options: ["4 meses antes da data do aniversário", "3 meses antes", "2 meses antes", "Não faço isso de forma organizada"] }
+      - { key: condicao_retorno, type: text, label: "Condição para quem já fez festa aqui", help: "O que a família ganha por voltar. É a venda mais barata que existe", options: ["Desconto para quem já fez festa aqui", "Cortesia de um item do pacote", "Prioridade na escolha da data", "Não tenho condição especial de retorno"] }
   - key: ecosystem
     label: "Fornecedores e parcerias"
     fields:
       - { key: parceiros, type: list, label: "Parceiros que você indica", help: "Decoração, fotografia, animação, bolo, cerimonial" }
-      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a família ganha por indicar. Festa gera festa: os convidados são o público" }
+      - { key: indicacao, type: text, label: "Programa de indicação", help: "O que a família ganha por indicar. Festa gera festa: os convidados são o público", options: ["Quem indica ganha desconto no próximo atendimento", "Quem indica e quem é indicado ganham desconto", "Quem indica ganha um serviço de cortesia", "Não tenho programa de indicação"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true

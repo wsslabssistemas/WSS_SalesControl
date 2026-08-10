@@ -173,9 +173,9 @@ dna_sections:
     label: "Valores e formas de pagamento"
     required: true
     fields:
-      - { key: avaliacao_valor, type: text, required: true, label: "Valor da avaliação", help: "Quanto custa a primeira avaliação. Ex.: R$ 150, abatido no tratamento" }
+      - { key: avaliacao_valor, type: text, required: true, label: "Valor da avaliação", help: "Quanto custa a primeira avaliação. Ex.: R$ 150, abatido no tratamento", options: ["A avaliação é gratuita", "Cobro a avaliação e abato no tratamento", "Cobro a avaliação, sem abatimento", "Depende do procedimento"] }
       - { key: range, type: money_range, label: "Faixa de valores", help: "A faixa de preço dos seus serviços. Ex.: de R$ 40 a R$ 90" }
-      - { key: parcelamento, type: text, required: true, label: "Parcelamento", help: "Em quantas vezes dá para pagar. Ex.: Até 10x sem juros no cartão" }
+      - { key: parcelamento, type: text, required: true, label: "Parcelamento", help: "Em quantas vezes dá para pagar. Ex.: Até 10x sem juros no cartão", options: ["PIX, débito e crédito em até 6x sem juros", "PIX, débito e crédito em até 10x sem juros", "PIX e crédito, com desconto à vista", "PIX, cartão e boleto parcelado"] }
       - { key: formas_pagamento, type: list, label: "Formas de pagamento", help: "Como o cliente pode pagar. Ex.: Pix, débito, crédito em 2x" }
   - key: catalog
     label: "Procedimentos oferecidos"
@@ -187,13 +187,13 @@ dna_sections:
     required: true
     fields:
       - { key: weekly_hours, type: schedule, required: true, label: "Horário de funcionamento", help: "Os dias e horários que você atende. Ex.: Seg a Sex 9h-19h; Sáb 8h-14h" }
-      - { key: prazo_agendamento, type: text, label: "Prazo para agendar", help: "Quanto tempo demora até conseguir um horário. Ex.: Costuma ter vaga em 2 dias" }
+      - { key: prazo_agendamento, type: text, label: "Prazo para agendar", help: "Quanto tempo demora até conseguir um horário. Ex.: Costuma ter vaga em 2 dias", options: ["Costuma ter horário na mesma semana", "Costuma ter horário em 2 semanas", "Costuma ter horário no mês", "Depende do profissional escolhido"] }
   - key: expertise_proof
     label: "Equipe e credenciais"
     required: true
     fields:
       - { key: profissionais, type: table, columns: [nome, especialidade, registro], label: "Profissionais", help: "Quem atende, a especialidade e o registro profissional" }
-      - { key: tempo_de_casa, type: text, label: "Tempo de mercado", help: "Há quanto tempo você atua. Ex.: 12 anos no mercado" }
+      - { key: tempo_de_casa, type: text, label: "Tempo de mercado", help: "Há quanto tempo você atua. Ex.: 12 anos no mercado", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
       - { key: tecnologia, type: list, label: "Tecnologia e equipamentos", help: "Equipamentos e tecnologia que você usa e que são diferencial" }
   - key: convenios
     label: "Convênios e reembolso"
@@ -201,20 +201,20 @@ dna_sections:
     fields:
       - { key: aceita_convenio, type: boolean, required: true, label: "Aceita convênio?", help: "Marque se você atende por convênio" }
       - { key: lista, type: list, label: "Lista", help: "Quais convênios você aceita. Escreva o nome exato" }
-      - { key: reembolso, type: text, label: "Reembolso", help: "Como funciona o reembolso. Ex.: Emitimos nota para o cliente pedir ao plano" }
+      - { key: reembolso, type: text, label: "Reembolso", help: "Como funciona o reembolso. Ex.: Emitimos nota para o cliente pedir ao plano", options: ["Emito nota para o paciente pedir reembolso ao convênio", "Não trabalho com convênio nem reembolso", "Atendo por convênio direto, sem reembolso", "Depende do convênio"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
     fields:
       - { key: address, type: text, required: true, label: "Endereço", help: "Endereço completo com ponto de referência. Ex.: Rua X, 100 - ao lado do mercado" }
       - { key: whatsapp, type: text, label: "WhatsApp", help: "O número que o cliente usa para falar com você" }
-      - { key: estacionamento, type: text, label: "Estacionamento", help: "Tem estacionamento? Onde o cliente deixa o carro?" }
+      - { key: estacionamento, type: text, label: "Estacionamento", help: "Tem estacionamento? Onde o cliente deixa o carro?", options: ["Estacionamento próprio, gratuito", "Convênio com estacionamento ao lado", "Sem estacionamento, mas com vaga na rua", "Sem estacionamento próprio"] }
   - key: policies
     label: "Políticas"
     fields:
-      - { key: no_show, type: text, label: "Política de falta", help: "O que acontece quando o cliente falta sem avisar. Ex.: Cobramos 50% na próxima" }
-      - { key: cancelamento, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança" }
-      - { key: garantia, type: text, label: "Garantia", help: "O que você garante depois do serviço. Ex.: Retoque grátis em até 7 dias" }
+      - { key: no_show, type: text, label: "Política de falta", help: "O que acontece quando o cliente falta sem avisar. Ex.: Cobramos 50% na próxima", options: ["Cobro parte do valor quando falta sem avisar", "Não cobro, mas o horário seguinte fica sujeito a disponibilidade", "Cobro a consulta inteira na falta sem aviso", "Não tenho política formal de falta"] }
+      - { key: cancelamento, type: text, label: "Política de cancelamento", help: "Até quando dá para desmarcar sem custo. Ex.: Até 2h antes, sem cobrança", options: ["Até 2 horas antes, sem cobrança", "Até 24 horas antes, sem cobrança", "Até 48 horas antes, sem cobrança", "Remarcando na hora, sem cobrança"] }
+      - { key: garantia, type: text, label: "Garantia", help: "O que você garante depois do serviço. Ex.: Retoque grátis em até 7 dias", options: ["Retoque grátis em até 7 dias", "Retoque grátis em até 15 dias", "90 dias, como manda a lei", "1 ano no serviço executado"] }
   - key: differentials
     label: "Diferenciais"
     fields:

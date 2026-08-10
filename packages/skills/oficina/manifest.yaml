@@ -207,55 +207,55 @@ dna_sections:
     label: "Valores e pagamento"
     required: true
     fields:
-      - { key: hora_tecnica, type: text, required: true, label: "Valor da hora técnica", help: "É o que sustenta qualquer orçamento. Ex.: R$ 180/hora" }
-      - { key: diagnostico_valor, type: text, required: true, label: "Quanto custa o diagnóstico", help: "E se abate na aprovação. Ex.: R$ 150, abatido se o serviço for aprovado" }
+      - { key: hora_tecnica, type: text, required: true, label: "Valor da hora técnica", help: "É o que sustenta qualquer orçamento. Ex.: R$ 180/hora", options: ["Valor fechado por hora técnica", "Valor por hora, diferente por tipo de serviço", "Cobro por serviço, não por hora", "Tabela do fabricante"] }
+      - { key: diagnostico_valor, type: text, required: true, label: "Quanto custa o diagnóstico", help: "E se abate na aprovação. Ex.: R$ 150, abatido se o serviço for aprovado", options: ["Cobro o diagnóstico e abato se o serviço for aprovado", "Cobro o diagnóstico, sem abatimento", "Diagnóstico gratuito", "Depende da complexidade"] }
       - { key: range, type: money_range, label: "Faixa dos serviços mais comuns", help: "Ex.: de R$ 300 a R$ 4.000" }
-      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: à vista, PIX, cartão em até 6x sem juros" }
-      - { key: politica_peca, type: text, required: true, label: "Política de peça", help: "Você trabalha com original, paralela ou as duas? Como o cliente escolhe?" }
+      - { key: parcelamento, type: text, required: true, label: "Formas de pagamento", help: "Ex.: à vista, PIX, cartão em até 6x sem juros", options: ["PIX, débito e crédito à vista", "PIX, débito e crédito em até 3x sem juros", "PIX, débito e crédito em até 6x sem juros", "PIX e dinheiro, com desconto à vista"] }
+      - { key: politica_peca, type: text, required: true, label: "Política de peça", help: "Você trabalha com original, paralela ou as duas? Como o cliente escolhe?", options: ["Trabalho com original e paralela, e o cliente escolhe", "Só peça original", "Paralela de marca reconhecida, com garantia", "O cliente pode trazer a peça, sem garantia da peça"] }
   - key: availability
     label: "Prazos e agenda"
     required: true
     fields:
-      - { key: prazo_diagnostico, type: text, required: true, label: "Prazo do diagnóstico", help: "Do carro entrar até o orçamento sair. Ex.: no mesmo dia, se entrar até 10h" }
-      - { key: prazo_servico, type: text, required: true, label: "Prazo dos serviços comuns", help: "Ex.: revisão no dia; embreagem em 2 dias úteis" }
-      - { key: prazo_peca, type: text, required: true, label: "Prazo de peça que não é de estoque", help: "O que mais atrasa entrega. Ex.: 1 a 3 dias úteis na região" }
+      - { key: prazo_diagnostico, type: text, required: true, label: "Prazo do diagnóstico", help: "Do carro entrar até o orçamento sair. Ex.: no mesmo dia, se entrar até 10h", options: ["No mesmo dia, se o carro entrar de manhã", "Em até 24 horas", "Em até 2 dias úteis", "Depende da fila da oficina"] }
+      - { key: prazo_servico, type: text, required: true, label: "Prazo dos serviços comuns", help: "Ex.: revisão no dia; embreagem em 2 dias úteis", options: ["Revisão no dia; serviços maiores em 2 a 3 dias", "No mesmo dia para a maioria dos serviços", "De 1 a 3 dias úteis", "Informo o prazo junto do orçamento"] }
+      - { key: prazo_peca, type: text, required: true, label: "Prazo de peça que não é de estoque", help: "O que mais atrasa entrega. Ex.: 1 a 3 dias úteis na região", options: ["1 a 3 dias úteis na região", "Até 1 semana", "Depende do fornecedor e do modelo", "Trabalho com estoque das peças de giro"] }
       - { key: weekly_hours, type: schedule, label: "Horário de atendimento", help: "Ex.: Seg a Sex 8h-18h; Sáb 8h-12h" }
   - key: risk_free_entry
     label: "Porta de entrada"
     required: true
     fields:
       - { key: checagem_gratuita, type: boolean, required: true, label: "Faz checagem rápida gratuita?", help: "Ex.: conferir freio, pneu e níveis sem cobrar" }
-      - { key: o_que_inclui, type: text, label: "O que a checagem inclui", help: "Seja específico: é o que o cliente recebe antes de decidir" }
+      - { key: o_que_inclui, type: text, label: "O que a checagem inclui", help: "Seja específico: é o que o cliente recebe antes de decidir", options: ["Checagem de fluidos, freios, suspensão, pneus e bateria", "Checagem visual completa, com relatório do que precisa", "Checagem eletrônica com scanner, mais inspeção visual", "Só o item que o cliente relatou"] }
       - { key: leva_e_traz, type: boolean, label: "Tem leva e traz?", help: "Buscar e devolver o veículo. Pesa mais do que parece em cliente que trabalha" }
-      - { key: carro_reserva, type: text, label: "Carro reserva ou apoio", help: "Se oferece algo para quem fica sem carro" }
+      - { key: carro_reserva, type: text, label: "Carro reserva ou apoio", help: "Se oferece algo para quem fica sem carro", options: ["Não ofereço carro reserva", "Ofereço quando o serviço passa de um dia", "Tenho parceria com locadora", "Ofereço transporte até um ponto próximo"] }
   - key: expertise_proof
     label: "Experiência e garantia"
     required: true
     fields:
-      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Ex.: 12 anos no mesmo endereço" }
+      - { key: tempo_de_casa, type: text, required: true, label: "Tempo de mercado", help: "Ex.: 12 anos no mesmo endereço", options: ["Menos de 2 anos", "2 a 5 anos", "5 a 10 anos", "10 a 20 anos", "Mais de 20 anos"] }
       - { key: especialidades, type: list, label: "Suas especialidades", help: "Onde você é melhor que a oficina da esquina" }
       - { key: equipamentos, type: list, label: "Equipamentos de diagnóstico", help: "Scanner, alinhamento, banco de teste. É prova concreta, não adjetivo" }
-      - { key: garantia, type: text, required: true, label: "Garantia que você dá", help: "A lei garante 90 dias ao serviço. Se você dá mais, é diferencial — escreva aqui" }
+      - { key: garantia, type: text, required: true, label: "Garantia que você dá", help: "A lei garante 90 dias ao serviço. Se você dá mais, é diferencial — escreva aqui", options: ["Retoque grátis em até 7 dias", "Retoque grátis em até 15 dias", "90 dias, como manda a lei", "1 ano no serviço executado"] }
       - { key: certificacoes, type: list, label: "Certificações e cursos", help: "Autorizada de alguma marca, curso de injeção, etc." }
   - key: policies
     label: "Regras do serviço"
     required: true
     fields:
-      - { key: autorizacao, type: text, required: true, label: "Como funciona a autorização", help: "Nada é executado sem o cliente aprovar. Descreva como você registra isso" }
-      - { key: pecas_substituidas, type: text, required: true, label: "As peças trocadas", help: "A lei manda devolver ao cliente. Diga como você faz" }
-      - { key: veiculo_parado, type: text, label: "Veículo parado no pátio", help: "Regra e prazo para carro que o cliente não retira" }
-      - { key: orcamento_validade, type: text, label: "Validade do orçamento", help: "A lei dá 10 dias, salvo combinação diferente" }
+      - { key: autorizacao, type: text, required: true, label: "Como funciona a autorização", help: "Nada é executado sem o cliente aprovar. Descreva como você registra isso", options: ["Orçamento por escrito no WhatsApp, e só executo com o aceite", "Orçamento assinado presencialmente", "Autorização por telefone, registrada na ordem de serviço", "Orçamento por escrito e aprovação item a item"] }
+      - { key: pecas_substituidas, type: text, required: true, label: "As peças trocadas", help: "A lei manda devolver ao cliente. Diga como você faz", options: ["Devolvo todas as peças trocadas", "Devolvo, e mostro a peça antes de descartar", "Guardo por um período e descarto se o cliente não quiser", "Tiro foto da peça e mostro antes de descartar"] }
+      - { key: veiculo_parado, type: text, label: "Veículo parado no pátio", help: "Regra e prazo para carro que o cliente não retira", options: ["Aviso quando fica pronto e cobro diária após um prazo", "Não cobro estadia", "Cobro diária a partir de uma semana", "Combino caso a caso"] }
+      - { key: orcamento_validade, type: text, label: "Validade do orçamento", help: "A lei dá 10 dias, salvo combinação diferente", options: ["10 dias, como manda a lei", "15 dias", "30 dias", "Enquanto o preço da peça não mudar"] }
   - key: retention
     label: "Retorno e revisão"
     required: true
     fields:
-      - { key: intervalo_revisao, type: text, required: true, label: "Intervalo de revisão que você recomenda", help: "Em km e em meses. Ex.: 10 mil km ou 6 meses, o que vier primeiro" }
-      - { key: lembrete, type: text, label: "Como você avisa o cliente", help: "Ex.: mensagem 15 dias antes de vencer o prazo" }
+      - { key: intervalo_revisao, type: text, required: true, label: "Intervalo de revisão que você recomenda", help: "Em km e em meses. Ex.: 10 mil km ou 6 meses, o que vier primeiro", options: ["10 mil km ou 6 meses, o que vier primeiro", "10 mil km ou 1 ano", "Conforme o manual do fabricante", "Depende do uso do veículo"] }
+      - { key: lembrete, type: text, label: "Como você avisa o cliente", help: "Ex.: mensagem 15 dias antes de vencer o prazo", options: ["Mensagem 3 dias antes do ciclo, com dois horários oferecidos", "Mensagem 1 semana antes, perguntando o melhor dia", "Mensagem no dia em que costuma dar o intervalo", "Hoje não faço isso de forma organizada"] }
   - key: ecosystem
     label: "Parceiros"
     fields:
       - { key: parceiros, type: list, label: "Com quem você trabalha", help: "Autopeças, guincho, funilaria, seguradora, retífica" }
-      - { key: indicacao, type: text, label: "Como funciona a indicação", help: "O que você oferece a quem indica" }
+      - { key: indicacao, type: text, label: "Como funciona a indicação", help: "O que você oferece a quem indica", options: ["Quem indica ganha desconto no próximo atendimento", "Quem indica e quem é indicado ganham desconto", "Quem indica ganha um serviço de cortesia", "Não tenho programa de indicação"] }
   - key: location_contact
     label: "Endereço e contatos"
     required: true
