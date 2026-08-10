@@ -52,6 +52,49 @@ export type ItemDaFila = {
 };
 
 /**
+ * QUITAÇÃO — o toque só é devido se ninguém falou com a pessoa DEPOIS que ele
+ * venceu.
+ *
+ * ⚠ ESTA É A REGRA QUE FALTAVA NO `combinado`, e a falta dela é o que fez a
+ * Be Fitness ver a mesma aluna todo dia por um mês.
+ *
+ * As outras três origens já quitavam sozinhas, cada uma do seu jeito: a
+ * cadência compara o último contato com o vencimento do passo, e recompra e
+ * "esfriando" são calculadas A PARTIR do último contato, então avançam
+ * sozinhas. O `combinado` não: ele é uma DATA FIXA em `next_action_at`, e
+ * nada nunca a limpava. Uma vez vencida, a pessoa ficava na fila para sempre
+ * — no motivo de prioridade 1, que MASCARA todos os outros. Medido na base
+ * real: 233 dos 251 combinados vencidos, 74 deles com a pessoa já tendo
+ * respondido depois da data.
+ *
+ * O padrão é o da casa: não apareceu como erro nenhum. A lista simplesmente
+ * não encolhia.
+ *
+ * **Por que "qualquer interação" e não só a nossa.** O toque proativo existe
+ * para fazer a conversa acontecer. Se ela aconteceu — ele escreveu, nós
+ * respondemos, tanto faz quem começou — o motivo do toque foi cumprido, e
+ * cobrar de novo é o que o fundador descreveu: falar duas vezes com quem já
+ * respondeu. É também a regra que `computeDueTouches` já usava, então as
+ * quatro origens passam a quitar do MESMO jeito em vez de cada uma do seu.
+ *
+ * O que isto NÃO faz: apagar o combinado do banco. `next_action_at` continua
+ * sendo o que o vendedor escreveu. A quitação é derivada do histórico, então
+ * ela se corrige sozinha — e um registro de envio que falhe não destrói o
+ * compromisso, só adia a baixa. Falhar ≠ corromper, como em `paraE164BR`.
+ */
+export function quitado(
+  ultimoContatoISO: string | undefined,
+  vencimentoISO: string,
+): boolean {
+  if (!ultimoContatoISO) return false;
+  // Comparação por DIA. O vencimento vem como data (`2026-07-12`) e a
+  // interação como instante; comparar as strings cruas faria
+  // "2026-07-12T14:00" perder para "2026-07-12" e o toque continuaria devido
+  // no próprio dia em que foi feito.
+  return ultimoContatoISO.slice(0, 10) >= vencimentoISO.slice(0, 10);
+}
+
+/**
  * Junta as quatro origens numa fila só.
  *
  * UM CONTATO APARECE UMA VEZ, pelo motivo de MAIOR prioridade. Sem isso, quem
@@ -69,6 +112,133 @@ export function montarFila(itens: ItemDaFila[]): ItemDaFila[] {
     (a, b) => PESO[a.motivo] - PESO[b.motivo] || b.atraso - a.atraso || a.name.localeCompare(b.name, "pt-BR"),
   );
 }
+
+/**
+ * CONSTRÓI A FILA INTEIRA — as quatro origens, quitadas e deduplicadas.
+ *
+ * ⚠ POR QUE ISTO SAIU DA TELA E VIROU FUNÇÃO.
+ *
+ * A regra "uma pessoa, um motivo" existia — mas só dentro de `/painel/fila`,
+ * porque a montagem morava no componente. O Painel inicial montava CINCO
+ * listas próprias e independentes ("Você combinou de voltar", "Contratos a
+ * vencer", "Hora de chamar de volta", "Leads esfriando", "Para hoje"), sem
+ * nenhuma dedução entre elas. A mesma aluna aparecia em três delas ao mesmo
+ * tempo, e o vendedor não tinha como saber que era a mesma pessoa.
+ *
+ * Regra que ficou escrita: **fila é lógica, não é tela.** Lista de quem
+ * contatar que não passa por aqui vai divergir — e vai divergir em silêncio,
+ * porque duas listas erradas parecem duas listas.
+ *
+ * `phases` × `cadence` são a MESMA coisa declarada duas vezes no manifesto —
+ * `convertido` da academia tem 4 fases (7/30/60/90) e a cadência
+ * `pos_matricula` com os mesmos 4 passos. `computeDueTouches` lê a cadência e
+ * quita; o `computeAlerts` da agenda lê as fases e emite UMA LINHA POR FASE
+ * VENCIDA, sem quitação nenhuma — por isso 313 matriculadas geravam duas
+ * pendências cada. Aqui vale a cadência, uma só; a agenda continua sendo o
+ * calendário, não a fila de trabalho.
+ */
+export function construirFila(params: {
+  contatos: ContatoDaFila[];
+  /** Última interação por contato (QUALQUER direção), ISO. */
+  ultimoContato: Record<string, string>;
+  stages: EtapaDaFila[];
+  cadences: CadenciaDaFila[];
+  recurrence: unknown;
+  hojeISO: string;
+  deps: DepsDaFila;
+}): ItemDaFila[] {
+  const { contatos, ultimoContato, stages, cadences, recurrence, hojeISO, deps } = params;
+  const foraDeJogo = deps.stagesForaDeJogo(stages);
+  const itens: ItemDaFila[] = [];
+  const porId = new Map(contatos.map((c) => [c.id, c]));
+
+  // 1. COMBINADO — o compromisso que a PESSOA assumiu com o cliente.
+  for (const c of contatos) {
+    if (!c.next_action_at || c.next_action_at > hojeISO) continue;
+    if (foraDeJogo.has(c.journey_stage)) continue;
+    if (quitado(ultimoContato[c.id], c.next_action_at)) continue;
+    itens.push({
+      contactId: c.id, name: c.name, phone: c.phone, ownerId: c.owner_id,
+      motivo: "combinado",
+      intencao: c.next_action_note
+        ? `Retomar o que ficou combinado: ${c.next_action_note}`
+        : "Retomar o contato na data que foi combinada com ele.",
+      atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at)) / 86400000),
+    });
+  }
+
+  // 2. RENOVAÇÃO — receita já vendida saindo pela porta.
+  for (const r of deps.computeRenovacoes(contatos, foraDeJogo)) {
+    const c = porId.get(r.contactId);
+    if (!c) continue;
+    itens.push({
+      contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
+      motivo: "renovacao", intencao: r.intencao,
+      atraso: r.vencido ? Math.abs(r.diasParaVencer) : 0,
+    });
+  }
+
+  // 3. FOLLOW-UP — a cadência do ramo, que é a maior perda medida do piloto.
+  for (const t of deps.computeDueTouches(contatos, ultimoContato, stages, cadences)) {
+    itens.push({
+      contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
+      motivo: "followup",
+      intencao: t.semCadencia
+        ? "Sem cadência declarada para esta etapa: retome com um ângulo novo, sem cobrar o silêncio."
+        : `${t.intent} (toque ${t.stepNumber} de ${t.totalSteps})`,
+      atraso: t.overdueDays,
+    });
+  }
+
+  // 4. RECOMPRA — o ciclo do cliente conquistado.
+  for (const r of deps.computeDue(contatos, ultimoContato, recurrence, deps.stagesWithoutRecurrence(stages))) {
+    const c = porId.get(r.contactId);
+    if (!c) continue;
+    itens.push({
+      contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
+      motivo: "recompra",
+      intencao: `Está no ponto de voltar (ciclo de ${r.intervalDays} dias). Sugira uma data concreta, sem cobrar a ausência.`,
+      atraso: Math.max(0, r.overdueDays),
+    });
+  }
+
+  return montarFila(itens);
+}
+
+export type ContatoDaFila = {
+  id: string;
+  name: string;
+  phone: string | null;
+  owner_id: string | null;
+  journey_stage: string;
+  stage_entered_at: string;
+  next_action_at: string | null;
+  next_action_note: string | null;
+  contract_end: string | null;
+};
+
+type EtapaDaFila = { key: string; label: string; terminal?: boolean; won?: boolean; lost?: boolean };
+type CadenciaDaFila = { key: string };
+
+/**
+ * Os cálculos entram por PARÂMETRO, não por import.
+ *
+ * `lib/fila.ts` é o núcleo (Lei 1): ele não pode conhecer segmento, e também
+ * não precisa conhecer cadência, recorrência ou vigência — ele só sabe juntar
+ * e desempatar. Quem sabe calcular cada motivo continua no seu arquivo, e a
+ * tela injeta. O efeito colateral útil é que a fila fica testável sem banco e
+ * sem manifesto.
+ */
+export type DepsDaFila = {
+  stagesForaDeJogo: (s: EtapaDaFila[]) => Set<string>;
+  stagesWithoutRecurrence: (s: EtapaDaFila[]) => Set<string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  computeRenovacoes: (c: any, fora: Set<string>) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; semCadencia: boolean }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  computeDue: (c: any, ultimo: Record<string, string>, rec: any, excl: Set<string>) => { contactId: string; name: string; phone: string | null; intervalDays: number; overdueDays: number }[];
+};
 
 /**
  * O link de um toque.

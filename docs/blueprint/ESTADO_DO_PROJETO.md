@@ -701,6 +701,37 @@ tempo entre o contato e o primeiro toque de retomada.
   reimplementação "fiel" de `lib/match.ts`, com um comentário admitindo que
   divergiria. Divergiu na primeira mudança real. O Node lê TypeScript direto:
   o teste importa o arquivo do app.
+- **Toque que não QUITA fica devido para sempre — e o `combinado` não quitava.**
+  Descoberto pelo fundador conferindo a Be Fitness (10/ago): uma aluna já
+  matriculada no "Você combinou de voltar", **depois de já ter respondido**.
+  Três causas somadas, e a que ele suspeitou (a régua de 30/60/90) era só a
+  terceira:
+  1. `next_action_at` é **data fixa e nada a limpava**. Vencida uma vez, a
+     pessoa ficava na fila para sempre — no motivo de prioridade 1, que
+     **mascara os outros três**. Os outros já quitavam: a cadência compara o
+     último contato com o vencimento do passo, e recompra e "esfriando" são
+     calculadas A PARTIR do último contato. Medido: **233 de 251 combinados
+     vencidos, 74 com a pessoa já tendo respondido depois da data**.
+  2. A regra "uma pessoa, um motivo" existia, mas **só dentro de
+     `/painel/fila`** — a montagem morava no componente. O Painel inicial
+     montava **cinco listas próprias** sem dedução nenhuma.
+  3. **`phases` e `cadence` são a mesma régua declarada duas vezes** no
+     manifesto (`convertido` da academia: 4 fases 7/30/60/90 **e** a cadência
+     `pos_matricula` com os mesmos 4 passos). `computeDueTouches` lê a cadência
+     e quita; `computeAlerts` lia as fases e emitia **uma linha por fase
+     vencida, sem quitação** — 313 matriculadas × 2 fases passadas.
+
+  Hoje `construirFila` em `lib/fila.ts` é a fonte única, e a regra é uma só:
+  **o toque só é devido se ninguém falou com a pessoa depois que ele venceu**
+  — qualquer direção, porque o toque existe para a conversa acontecer, e se
+  ela aconteceu o motivo foi cumprido. **A quitação é derivada do histórico,
+  nunca gravada**: `next_action_at` continua sendo o que o vendedor escreveu,
+  então um envio que falhe adia a baixa em vez de destruir o compromisso —
+  mesma regra do `paraE164BR`. Guardado por `fila_test.mjs` (14/14, testado
+  quebrando a regra de propósito).
+  **Regra que fica: fila é lógica, não é tela.** Lista de quem contatar que
+  não passa por `construirFila` vai divergir — e em silêncio, porque duas
+  listas erradas parecem duas listas.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.
@@ -740,6 +771,7 @@ node packages/db/tests/cnae_test.mjs       # alvos de prospecção: 9/9
 node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
 node packages/db/tests/telefone_test.mjs   # E.164 brasileiro: 30/30
 node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
+node packages/db/tests/fila_test.mjs       # quitação do toque e "um motivo por pessoa": 14/14
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql

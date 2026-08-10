@@ -5,7 +5,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { computeDueTouches } from "@/lib/cadence";
 import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
 import { computeRenovacoes } from "@/lib/renovacao";
-import { montarFila, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
+import { construirFila, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
 import { paraE164BR } from "@/lib/phone";
 import { lerTudo } from "@/lib/paginado";
 import { ItemDaFila } from "./ItemDaFila";
@@ -99,57 +99,16 @@ export default async function FilaPage({
     if (i.contact_id && !ultimo[i.contact_id]) ultimo[i.contact_id] = i.occurred_at;
   }
 
-  const foraDeJogo = stagesForaDeJogo(stages);
   const hojeISO = new Date().toISOString().slice(0, 10);
-  const itens: Item[] = [];
 
-  // 1. COMBINADO — o compromisso que a PESSOA assumiu com o cliente.
-  for (const c of contatos) {
-    if (!c.next_action_at || c.next_action_at > hojeISO || foraDeJogo.has(c.journey_stage)) continue;
-    itens.push({
-      contactId: c.id, name: c.name, phone: c.phone, ownerId: c.owner_id,
-      motivo: "combinado",
-      intencao: c.next_action_note
-        ? `Retomar o que ficou combinado: ${c.next_action_note}`
-        : "Retomar o contato na data que foi combinada com ele.",
-      atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at)) / 86400000),
-    });
-  }
-
-  // 2. RENOVAÇÃO — receita já vendida saindo pela porta.
-  for (const r of computeRenovacoes(contatos, foraDeJogo)) {
-    const c = contatos.find((x) => x.id === r.contactId)!;
-    itens.push({
-      contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
-      motivo: "renovacao", intencao: r.intencao,
-      atraso: r.vencido ? Math.abs(r.diasParaVencer) : 0,
-    });
-  }
-
-  // 3. FOLLOW-UP — a cadência do ramo, que é a maior perda medida do piloto.
-  for (const t of computeDueTouches(contatos, ultimo, stages, cadences)) {
-    itens.push({
-      contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
-      motivo: "followup",
-      intencao: t.semCadencia
-        ? "Sem cadência declarada para esta etapa: retome com um ângulo novo, sem cobrar o silêncio."
-        : `${t.intent} (toque ${t.stepNumber} de ${t.totalSteps})`,
-      atraso: t.overdueDays,
-    });
-  }
-
-  // 4. RECOMPRA — o ciclo do cliente conquistado.
-  for (const r of computeDue(contatos, ultimo, recurrence, stagesWithoutRecurrence(stages))) {
-    const c = contatos.find((x) => x.id === r.contactId)!;
-    itens.push({
-      contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
-      motivo: "recompra",
-      intencao: `Está no ponto de voltar (ciclo de ${r.intervalDays} dias). Sugira uma data concreta, sem cobrar a ausência.`,
-      atraso: Math.max(0, r.overdueDays),
-    });
-  }
-
-  const fila = montarFila(itens);
+  // AS QUATRO ORIGENS MORAM EM `lib/fila.ts`, não aqui. Enquanto a montagem
+  // vivia nesta tela, o Painel inicial montava as SUAS cinco listas e a
+  // dedução "uma pessoa, um motivo" não valia lá — a mesma aluna aparecia em
+  // três lugares. Fila é lógica, não é tela.
+  const fila = construirFila({
+    contatos, ultimoContato: ultimo, stages, cadences, recurrence, hojeISO,
+    deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
+  });
   const porMotivo = (m: string) => fila.filter((f) => f.motivo === m).length;
 
   return (

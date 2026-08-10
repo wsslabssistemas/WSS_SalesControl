@@ -2,11 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { computeAlerts, computeCooling } from "@/lib/agenda";
-import { computeDue, labelDia, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
+import { computeCooling } from "@/lib/agenda";
+import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
+import { computeDueTouches } from "@/lib/cadence";
 import { linkDeWhatsApp } from "@/lib/envio";
 import { lerTudo } from "@/lib/paginado";
 import { computeRenovacoes } from "@/lib/renovacao";
+import { construirFila, ROTULO, PESO } from "@/lib/fila";
 
 type Contact = {
   id: string;
@@ -58,7 +60,7 @@ export default async function PainelHome({
     );
   }
 
-  const { stages, recurrence } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, recurrence, cadences } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -122,30 +124,31 @@ export default async function PainelHome({
     if (!lastByContact[i.contact_id]) lastByContact[i.contact_id] = i.occurred_at;
   }
 
-  const alerts = computeAlerts(contacts, stages);
-  const hoje = alerts.filter((a) => a.days <= 0);
   const cooling = computeCooling(contacts, lastByContact, stages);
-  // Segmentos de recompra: quem já está no ponto de voltar. A etapa de
-  // conquista continua na conta — é a carteira ativa que precisa voltar.
-  const retornos = computeDue(contacts, lastByContact, recurrence, stagesWithoutRecurrence(stages));
+  const hojeISO = new Date().toISOString().slice(0, 10);
+
+  // ⚠ UMA FILA, NÃO CINCO LISTAS.
+  //
+  // Esta tela montava cinco listas independentes — combinado, renovação,
+  // recompra, esfriando e "para hoje" — e nenhuma sabia da outra. A mesma
+  // aluna aparecia em TRÊS delas ao mesmo tempo (o fundador pegou: Ana
+  // Alicie, matriculada, no "Você combinou de voltar" depois de já ter
+  // respondido). O vendedor manda UMA mensagem por pessoa; cinco listas
+  // pedem cinco.
+  //
+  // A dedução "uma pessoa, um motivo" já existia — só que trancada dentro de
+  // `/painel/fila`. Agora as duas telas chamam a mesma `construirFila`, e o
+  // motivo aparece escrito na linha em vez de ficar implícito no título da
+  // seção em que a pessoa caiu.
+  const fila = construirFila({
+    contatos: contacts.map((c) => ({ ...c, next_action_note: c.next_action_note })),
+    ultimoContato: lastByContact, stages, cadences, recurrence, hojeISO,
+    deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
+  });
 
   // Resultados dos últimos 30 dias (do feedback registrado).
   const recentOutcomes = ix.filter((i) => i.outcome && i.occurred_at >= monthAgo);
   const outcomeCount = (k: string) => recentOutcomes.filter((i) => i.outcome === k).length;
-
-  // A PRÓXIMA AÇÃO QUE VENCE. Ordenada pela mais atrasada, porque combinado
-  // furado é pior que combinado esquecido: o cliente lembra que marcou.
-  const hojeISO = new Date().toISOString().slice(0, 10);
-  const proximas = contacts
-    .filter((c) => c.next_action_at && c.next_action_at <= hojeISO && !foraDeJogo.has(c.journey_stage))
-    .map((c) => ({
-      ...c,
-      atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at!)) / 86400000),
-    }))
-    .sort((a, b) => b.atraso - a.atraso);
-
-  // RENOVAÇÃO: quem entra numa das três janelas (60/30/7) ou já venceu.
-  const renovacoes = computeRenovacoes(contacts, foraDeJogo);
 
   const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
   const perStage = stages
@@ -188,9 +191,9 @@ export default async function PainelHome({
           <div className="stat-num">{emAberto}</div>
           <div className="stat-label">Em aberto</div>
         </Link>
-        <Link href="/painel/agenda" className="card card-hover" style={{ display: "block" }}>
-          <div className="stat-num" style={{ color: hoje.length ? "var(--warn)" : undefined }}>{hoje.length}</div>
-          <div className="stat-label">Toques hoje</div>
+        <Link href="/painel/fila" className="card card-hover" style={{ display: "block" }}>
+          <div className="stat-num" style={{ color: fila.length ? "var(--warn)" : undefined }}>{fila.length}</div>
+          <div className="stat-label">Para falar hoje</div>
         </Link>
         <Link href="/painel?ver=esfriando#esfriando" className="card card-hover" style={{ display: "block" }}>
           <div className="stat-num" style={{ color: cooling.length ? "var(--danger)" : undefined }}>{cooling.length}</div>
@@ -212,210 +215,71 @@ export default async function PainelHome({
         </section>
       )}
 
-      {/* Recompra: quem já está no ponto de voltar (segmentos com ciclo) */}
-      {retornos.length > 0 && (
-        <section id="retornos" style={{ marginTop: 32 }}>
-          <div className="between" style={{ alignItems: "baseline" }}>
-            <h2 style={{ fontSize: 15, margin: 0 }}>Hora de chamar de volta</h2>
-            <span className="text-faint" style={{ fontSize: 13 }}>pelo ciclo de cada cliente</span>
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {(ver === "retornos" ? retornos : retornos.slice(0, 8)).map((r) => {
-              const wa = waLink(r.phone);
-              const atrasado = r.overdueDays > 0;
-              return (
-                <li
-                  key={r.contactId}
-                  className="row wrap"
-                  style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}
-                >
-                  <span className={atrasado ? "badge badge-danger" : "badge badge-success"} style={{ minWidth: 62, justifyContent: "center" }}>
-                    {atrasado ? `+${r.overdueDays}d` : "no ponto"}
-                  </span>
-                  <Link href={`/painel/contatos/${r.contactId}`} className="grow" style={{ minWidth: 120 }}>
-                    {r.name}
-                  </Link>
-                  <span className="text-faint" style={{ whiteSpace: "nowrap", fontSize: 13 }}>
-                    {r.daysSince}d desde a última · ciclo {r.intervalDays}d
-                  </span>
-                  <span className="badge badge-brand" style={{ whiteSpace: "nowrap" }}>
-                    sugerir {r.suggested.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
-                    {r.preferredDay ? ` (${labelDia(r.preferredDay)})` : ""}
-                  </span>
-                  {wa && (
-                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
-                      WhatsApp
-                    </a>
-                  )}
-                  <Link href={`/painel/responder?customer=${r.contactId}`} className="btn btn-sm btn-ghost">
-                    Chamar
-                  </Link>
-                </li>
-              );
-            })}
-            {retornos.length > 8 && ver !== "retornos" && (
-              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                <Link href="/painel?ver=retornos#retornos" className="btn btn-sm btn-ghost">
-                  Ver os outros {retornos.length - 8} no ponto de voltar →
-                </Link>
-              </li>
-            )}
-          </ul>
-        </section>
-      )}
-
-      {/* RENOVAÇÃO — vem logo depois do combinado, e antes de esfriando: é
-          receita JÁ VENDIDA prestes a sair pela porta, e reconquistar custa
-          muito mais que renovar. O primeiro toque fala do RESULTADO, não de
-          renovação: quem só aparece para cobrar assinatura ensina o cliente a
-          lembrar do produto como despesa. */}
-      {renovacoes.length > 0 && (
-        <section id="renovacao" style={{ marginTop: 32 }}>
-          <div className="between" style={{ alignItems: "baseline" }}>
-            <h2 style={{ fontSize: 15, margin: 0 }}>Contratos a vencer</h2>
-            <span className="text-faint" style={{ fontSize: 13 }}>60, 30 e 7 dias antes</span>
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {(ver === "renovacao" ? renovacoes : renovacoes.slice(0, 8)).map((r) => {
-              const wa = waLink(r.phone);
-              return (
-                <li key={r.contactId} className="row wrap" style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
-                  <span className={r.vencido ? "badge badge-danger" : r.janela === "condicao" ? "badge badge-warn" : "badge badge-brand"} style={{ minWidth: 62, justifyContent: "center" }}>
-                    {r.vencido ? "venceu" : `${r.diasParaVencer}d`}
-                  </span>
-                  <Link href={`/painel/contatos/${r.contactId}`} className="grow" style={{ minWidth: 120 }}>{r.name}</Link>
-                  <span className="text-faint" style={{ fontSize: 13 }}>{r.titulo}</span>
-                  {wa && (
-                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
-                      WhatsApp
-                    </a>
-                  )}
-                  <Link href={`/painel/responder?customer=${r.contactId}`} className="btn btn-sm btn-ghost">Responder</Link>
-                </li>
-              );
-            })}
-            {renovacoes.length > 8 && ver !== "renovacao" && (
-              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                <Link href="/painel?ver=renovacao#renovacao" className="btn btn-sm btn-ghost">
-                  Ver os outros {renovacoes.length - 8} a vencer →
-                </Link>
-              </li>
-            )}
-          </ul>
-        </section>
-      )}
-
-      {/* A PRÓXIMA AÇÃO COMBINADA — vem antes de tudo, e o motivo é ordem de
-          prioridade real: cadência e "esfriando" são palpites do sistema sobre
-          quando falar; isto é um compromisso que o vendedor assumiu com o
-          cliente. Furar o combinado é pior que esquecer o palpite, porque o
-          cliente lembra que marcou. */}
-      {proximas.length > 0 && (
-        <section id="acoes" style={{ marginTop: 32 }}>
-          <div className="between" style={{ alignItems: "baseline" }}>
-            <h2 style={{ fontSize: 15, margin: 0 }}>Você combinou de voltar</h2>
-            <span className="text-faint" style={{ fontSize: 13 }}>data marcada com o cliente</span>
-          </div>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {(ver === "acoes" ? proximas : proximas.slice(0, 8)).map((c) => {
-              const wa = waLink(c.phone);
-              return (
-                <li key={c.id} className="row wrap" style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
-                  <span className={c.atraso > 0 ? "badge badge-danger" : "badge badge-brand"} style={{ minWidth: 62, justifyContent: "center" }}>
-                    {c.atraso > 0 ? `+${c.atraso}d` : "hoje"}
-                  </span>
-                  <Link href={`/painel/contatos/${c.id}`} className="grow" style={{ minWidth: 120 }}>{c.name}</Link>
-                  {c.next_action_note && (
-                    <span className="text-faint" style={{ fontSize: 13 }}>{c.next_action_note}</span>
-                  )}
-                  {wa && (
-                    <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
-                      WhatsApp
-                    </a>
-                  )}
-                  <Link href={`/painel/responder?customer=${c.id}`} className="btn btn-sm btn-ghost">Responder</Link>
-                </li>
-              );
-            })}
-            {proximas.length > 8 && ver !== "acoes" && (
-              <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                <Link href="/painel?ver=acoes#acoes" className="btn btn-sm btn-ghost">
-                  Ver os outros {proximas.length - 8} combinados →
-                </Link>
-              </li>
-            )}
-          </ul>
-        </section>
-      )}
-
-      {/* Leads esfriando — a fila de ação: quem você está prestes a perder */}
-      <section id="esfriando" style={{ marginTop: 32 }}>
+      {/* ⚠ UMA FILA, COM O MOTIVO ESCRITO NA LINHA.
+          Aqui havia cinco seções — combinado, renovação, recompra, esfriando
+          e "para hoje" — cada uma com a sua própria lista. Uma pessoa podia
+          estar em três, e nada na tela dizia que era a mesma. O vendedor
+          manda UMA mensagem por pessoa; a fila agora reflete isso.
+          O motivo virou coluna porque ele era o TÍTULO DA SEÇÃO: com tudo
+          numa lista só, sem a etiqueta ninguém saberia por que a pessoa está
+          ali — e "por que estou falando com essa pessoa" é metade da decisão. */}
+      <section id="fila" style={{ marginTop: 32 }}>
         <div className="between" style={{ alignItems: "baseline" }}>
-          <h2 style={{ fontSize: 15, margin: 0 }}>Leads esfriando</h2>
-          <span className="text-faint" style={{ fontSize: 13 }}>sem contato há 3 dias ou mais</span>
+          <h2 style={{ fontSize: 15, margin: 0 }}>Quem falar com hoje</h2>
+          <Link href="/painel/fila" style={{ fontSize: 13, opacity: 0.7 }}>abrir a fila →</Link>
         </div>
-        {cooling.length === 0 ? (
+        {fila.length === 0 ? (
           <p className="text-dim" style={{ fontSize: 14, marginTop: 10 }}>
-            Ninguém esfriando. Sua base está aquecida. 🔥
+            Ninguém pendente. Tudo em dia. 🎉
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {(ver === "esfriando" ? cooling : cooling.slice(0, 8)).map((c) => {
-              const wa = waLink(c.phone);
+            {(ver === "fila" ? fila : fila.slice(0, 8)).map((f) => {
+              const wa = waLink(f.phone);
               return (
                 <li
-                  key={c.contactId}
-                  className="row"
+                  key={f.contactId}
+                  className="row wrap"
                   style={{ gap: 10, padding: "9px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}
                 >
-                  <span className={c.days >= 7 ? "badge badge-danger" : "badge badge-warn"} style={{ minWidth: 44, justifyContent: "center" }}>
-                    {c.days}d
+                  <span
+                    className={f.atraso > 0 ? "badge badge-danger" : "badge badge-brand"}
+                    style={{ minWidth: 62, justifyContent: "center" }}
+                  >
+                    {f.atraso > 0 ? `+${f.atraso}d` : "hoje"}
                   </span>
-                  <Link href={`/painel/contatos/${c.contactId}`} className="grow">{c.name}</Link>
-                  <span className="text-faint" style={{ whiteSpace: "nowrap" }}>{c.stageLabel}</span>
+                  <Link href={`/painel/contatos/${f.contactId}`} className="grow" style={{ minWidth: 120 }}>
+                    {f.name}
+                  </Link>
+                  <span className={PESO[f.motivo] === 0 ? "badge badge-warn" : "badge"} style={{ whiteSpace: "nowrap" }}>
+                    {ROTULO[f.motivo]}
+                  </span>
                   {wa && (
                     <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ background: "#25D366", color: "#0b2e13", border: "none", padding: "3px 10px" }}>
                       WhatsApp
                     </a>
                   )}
-                  <Link href={`/painel/responder?customer=${c.contactId}`} className="btn btn-sm btn-ghost">
+                  <Link href={`/painel/responder?customer=${f.contactId}`} className="btn btn-sm btn-ghost">
                     Responder
                   </Link>
                 </li>
               );
             })}
-            {cooling.length > 8 && ver !== "esfriando" && (
+            {fila.length > 8 && ver !== "fila" && (
               <li style={{ fontSize: 13, paddingTop: 10, textAlign: "center" }}>
-                <Link href="/painel?ver=esfriando#esfriando" className="btn btn-sm btn-ghost">
-                  Ver os outros {cooling.length - 8} esfriando →
+                <Link href="/painel?ver=fila#fila" className="btn btn-sm btn-ghost">
+                  Ver os outros {fila.length - 8} →
                 </Link>
               </li>
             )}
           </ul>
         )}
-      </section>
-
-      {/* Toques de hoje */}
-      <section style={{ marginTop: 32 }}>
-        <div className="between" style={{ alignItems: "baseline" }}>
-          <h2 style={{ fontSize: 15, margin: 0 }}>Para hoje</h2>
-          <Link href="/painel/agenda" style={{ fontSize: 13, opacity: 0.7 }}>ver agenda</Link>
-        </div>
-        {hoje.length === 0 ? (
-          <p className="text-dim" style={{ fontSize: 14, marginTop: 10 }}>Nenhum toque pendente para hoje.</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-            {hoje.slice(0, 6).map((a, i) => (
-              <li key={`${a.contactId}-${i}`} className="row" style={{ gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
-                <span className={a.days < 0 ? "badge badge-danger" : "badge badge-warn"}>
-                  {a.days < 0 ? "atrasado" : "hoje"}
-                </span>
-                <Link href={`/painel/contatos/${a.contactId}`} className="grow">{a.name}</Link>
-                <span className="text-faint">{a.phaseLabel}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="text-faint" style={{ marginTop: 12, fontSize: 12 }}>
+          Cada pessoa aparece <strong>uma vez</strong>, pelo motivo mais urgente. Depois
+          que a conversa acontece, ela sai daqui sozinha e só volta quando houver
+          um motivo novo — o combinado seguinte, o contrato a vencer, o próximo
+          toque da régua ou a hora da recompra.
+        </p>
       </section>
 
       {/* Funil resumido */}
