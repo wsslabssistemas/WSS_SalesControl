@@ -63,6 +63,12 @@ transformaria 9.151 pessoas em alunas.
 - **E.164 brasileiro** — mensagem sai para o número certo, inclusive DDD 55.
 - Login por e-mail e senha, com convite que termina em criar senha e
   recuperação de acesso.
+- **"Gerar acesso" na tela de Equipe** (10/ago) — um botão por pessoa que
+  devolve um link de criar senha na hora, para copiar ou mandar no WhatsApp.
+  **Ninguém mais fica parado esperando e-mail.** Existe porque o único caminho
+  de quem já era membro e esqueceu a senha era "Esqueci minha senha", que sai
+  pelo mesmo e-mail nativo que estava falhando: a saída da pessoa dependia do
+  canal quebrado, e destravá-la exigia eu gerar o link na mão.
 
 ---
 
@@ -72,9 +78,9 @@ transformaria 9.151 pessoas em alunas.
 
 | # | O quê | Onde |
 |---|---|---|
-| 1 | **Subir o teto global de IA** | Aba **Fabricante**, primeiro bloco. Está **R$ 130** e o teto só da Be Fitness é R$ 156 — o global aperta antes e a IA para para todo mundo. O freio POR EMPRESA já existe em Fabricante → Cota de IA. |
-| 2 | **SMTP próprio no Supabase** | O e-mail nativo é lento e limitado. Foi o que travou a equipe hoje. Resend ou Brevo, ~10 min. |
-| 3 | **Decidir sobre `teste-a@exemplo.com`** | É `owner` da Be Fitness, com acesso a 597 cadastros reais. |
+| 1 | **Subir o teto global de IA** | Aba **Fabricante**, primeiro bloco. Está **R$ 130**; a soma dos tetos das 4 empresas reais é **R$ 195** (Be Fitness R$ 156 + R$ 13 × 3). **Não bloqueia nada hoje** — a trava só nega quando o GASTO acumulado do mês alcança o teto, e o gasto é zero. Ela morde em ~500 respostas, antes de a Be Fitness chegar ao teto dela. |
+| 2 | **SMTP próprio no Supabase** | O e-mail nativo é lento e limitado. Resend ou Brevo, ~10 min. **Já não trava mais a equipe** — ver "Gerar acesso" abaixo. Continua valendo para quem chega de fora e não tem a quem pedir link: confirmação de cadastro e "esqueci minha senha" de conta nova. |
+| 3 | **Decidir sobre `teste-a@exemplo.com`** | É `owner` da Be Fitness ("Usuário A" na tela de Equipe), com acesso a 598 cadastros reais. |
 | 4 | **A equipe usar** | Os três estão com senha definida e acesso funcionando. |
 
 ### Minhas, e o que cada uma espera
@@ -104,9 +110,9 @@ Não é pendência de construção. É a única coisa que decide se o produto pr
 
 | Empresa | Ramo | Estado |
 |---|---|---|
-| **Be Fitness** | academia | 597 contatos, 328 com vencimento, carteira dividida entre 3. Equipe com acesso. |
+| **Be Fitness** | academia | 598 contatos, 328 com vencimento (**81 vencem em 60 dias, 9 já vencidos**), todos com responsável. DNA 10/10 seções. Equipe com acesso. |
 | **Darvil Engenharia** (Luis) | energia solar | Entrou. **DNA vazio** — 23 campos com sugestão esperando. Teste até 08/09. |
-| **Feltros Bandeirantes** (Jeniffer) | indústria | Conta confirmada; **ainda não criou a empresa**. |
+| **Feltros Bandeira** (Jeniffer) | indústria | **Já criou a empresa** (`feltros-bandeira`, indústria) — conferido no banco em 10/ago. **DNA vazio.** |
 | **WSS Kairós** | software_b2b | A do fabricante. Renomeada a partir de "WSS Labs". |
 
 ### ⚠ Telefone compartilhado — o que a importação descobriu

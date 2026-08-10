@@ -71,7 +71,8 @@ export default function LinkDoConvite({ link }: { link: string }) {
 
       <p className="text-faint" style={{ fontSize: 11, margin: 0 }}>
         O link vale por tempo limitado e só pode ser usado uma vez. Se vencer,
-        é só adicionar a pessoa de novo — o sistema gera outro.
+        clique em <strong>Gerar acesso</strong> na linha da pessoa — sai outro
+        na hora, sem passar por e-mail.
       </p>
     </div>
   );

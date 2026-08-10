@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { origemDoSite } from "@/lib/site";
 
 /**
  * Reenvia o e-mail de confirmação.
@@ -19,11 +20,15 @@ export async function reenviarConfirmacao(formData: FormData) {
   if (!email) redirect("/confirme-email?erro=" + encodeURIComponent("Informe o e-mail."));
 
   const supabase = await createClient();
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const site = await origemDoSite();
   await supabase.auth.resend({
     type: "signup",
     email,
-    options: site ? { emailRedirectTo: `${site}/auth/callback` } : undefined,
+    // `type=signup` no destino: quem acabou de confirmar o cadastro ainda não
+    // tem empresa, e o callback usa isso para mandar criar uma em vez de abrir
+    // um painel vazio. O reenvio mandava sem o tipo — mesmo e-mail, destino
+    // diferente do cadastro original.
+    options: site ? { emailRedirectTo: `${site}/auth/callback?type=signup` } : undefined,
   });
 
   redirect("/confirme-email?reenviado=1");

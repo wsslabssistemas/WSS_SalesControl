@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveTenant } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { origemDoSite } from "@/lib/site";
 
 async function requireAdmin() {
   const m = await getActiveTenant();
@@ -37,13 +37,8 @@ export async function inviteMember(formData: FormData) {
   // senha** — no dia seguinte não entrava mais, porque o link do convite é de
   // uso único. Do lado dela, o sistema parava de funcionar sem explicação.
   // A origem tem que ser ABSOLUTA. Vazia, o Supabase recusa o `redirectTo` e
-  // o convite inteiro falha — por isso o cabeçalho entra como último recurso,
-  // em vez de deixar montar "/auth/callback" solto.
-  const h = await headers();
-  const site =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    (h.get("host") ? `https://${h.get("host")}` : "");
+  // o convite inteiro falha — ver `lib/site.ts`, que hoje é a cascata única.
+  const site = await origemDoSite();
   // O LINK É MONTADO POR NÓS, com o `hashed_token` — e NÃO é o `action_link`
   // que o Supabase devolve.
   //
@@ -124,6 +119,75 @@ export async function inviteMember(formData: FormData) {
   revalidatePath("/painel/equipe");
   if (link) redirect(`/painel/equipe?convite=${encodeURIComponent(link)}`);
   redirect("/painel/equipe?ok=1");
+}
+
+/**
+ * GERA UM LINK DE ACESSO NOVO para quem JÁ está na equipe.
+ *
+ * ⚠ ISTO EXISTE PARA QUE NINGUÉM MAIS FIQUE PARADO ESPERANDO E-MAIL.
+ *
+ * Em 10/ago/2026 a equipe da Be Fitness travou por horas, e a causa foi o
+ * e-mail nativo do Supabase — lento e limitado. Quem ainda não tinha entrado
+ * foi destravado por um link que EU gerei na mão. O convite já tem esse
+ * caminho pronto na tela; quem já é membro e esqueceu a senha, não tinha:
+ * sobrava "Esqueci minha senha", que sai pelo mesmo e-mail que estava
+ * falhando. A única saída da pessoa dependia do canal quebrado.
+ *
+ * SMTP próprio continua valendo — ele resolve quem chega de fora, que não tem
+ * ninguém para pedir link. O que ele NÃO pode continuar sendo é o único
+ * caminho para destravar alguém de dentro: a regra escrita é **destrave a
+ * pessoa primeiro e conserte a causa depois**, e um procedimento que só o
+ * fabricante sabe executar não é destravar — é virar gargalo.
+ *
+ * O link é de RECUPERAÇÃO, o mesmo do convite reenviado: leva à tela de criar
+ * senha e serve tanto para quem nunca definiu uma quanto para quem esqueceu.
+ *
+ * O ESCOPO É CONFERIDO PELO CLIENTE DO USUÁRIO, de propósito. A membership é
+ * lida com RLS antes de o `service_role` tocar em qualquer coisa: sem isso,
+ * um id de membership de OUTRA empresa geraria um link de acesso válido para
+ * a conta de outra pessoa. `service_role` não filtra nada sozinho.
+ */
+export async function gerarLinkDeAcesso(membershipId: string) {
+  const m = await requireAdmin();
+  const supabase = await createClient();
+
+  const { data: alvo } = await supabase
+    .from("memberships")
+    .select("user_id, user:profiles(email)")
+    .eq("id", membershipId)
+    .eq("tenant_id", m.tenant!.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  const email = (alvo as { user?: { email: string | null } | null } | null)?.user?.email;
+  if (!email) {
+    redirect(
+      `/painel/equipe?erro=${encodeURIComponent("Não achei o e-mail dessa pessoa. Adicione-a de novo pelo botão Adicionar.")}`,
+    );
+  }
+
+  const site = await origemDoSite();
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: `${site}/auth/confirmar` },
+  });
+
+  // O `hashed_token` é o que importa, não o `action_link` — o `action_link`
+  // passa pelo `/auth/v1/verify` do Supabase, que devolve a sessão no
+  // fragmento da URL e nunca chega ao nosso servidor. É o mesmo motivo
+  // documentado em `/auth/confirmar`.
+  const hash = data?.properties?.hashed_token;
+  if (error || !hash) {
+    redirect(
+      `/painel/equipe?erro=${encodeURIComponent(error?.message ?? "Não consegui gerar o link.")}`,
+    );
+  }
+
+  redirect(
+    `/painel/equipe?convite=${encodeURIComponent(`${site}/auth/confirmar?token_hash=${hash}&type=recovery`)}`,
+  );
 }
 
 export async function changeRole(membershipId: string, formData: FormData) {

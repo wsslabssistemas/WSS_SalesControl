@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SENHA_MINIMA } from "@/lib/senha";
+import { origemDoSite } from "@/lib/site";
 
 export async function definirSenha(formData: FormData) {
   const senha = String(formData.get("senha") ?? "");
@@ -63,10 +64,19 @@ export async function pedirRecuperacao(formData: FormData) {
   if (!email) redirect("/login?erro=" + encodeURIComponent("Informe o e-mail."));
 
   const supabase = await createClient();
-  const origem = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  await supabase.auth.resetPasswordForEmail(email, {
+  const origem = await origemDoSite();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origem}/auth/callback?type=recovery`,
   });
+
+  // O ERRO NÃO MUDA A MENSAGEM, MAS NÃO PODE SUMIR.
+  //
+  // A resposta neutra é de propósito (anti-enumeração), e por isso esta tela
+  // diz "o link chegou lá" mesmo quando o Supabase recusou o pedido — limite
+  // de envio atingido, SMTP fora do ar, destino não permitido. Do lado de
+  // quem espera, é idêntico a ter dado certo. Registrar no servidor é o único
+  // lugar onde a diferença ainda existe.
+  if (error) console.error("[recuperacao] falha ao enviar:", error.message);
 
   redirect(
     "/login?aviso=" +

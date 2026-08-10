@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { changeRole } from "./actions";
+import { changeRole, gerarLinkDeAcesso } from "./actions";
 import { stagesForaDeJogo } from "@/lib/recurrence";
 import { computePlacar } from "@/lib/placar";
 import { PlacarDaEquipe } from "./Placar";
@@ -19,7 +19,7 @@ const ROLES = ["owner", "admin", "manager", "agent"];
 export default async function EquipePage({
   searchParams,
 }: {
-  searchParams: Promise<{ convite?: string; ok?: string }>;
+  searchParams: Promise<{ convite?: string; ok?: string; erro?: string }>;
 }) {
   const sp = await searchParams;
   const membership = await getActiveTenant();
@@ -145,13 +145,15 @@ export default async function EquipePage({
       {inviteLink && (
         <div className="card mt-16" style={{ borderColor: "var(--border-brand)" }}>
           <p style={{ margin: "0 0 8px", fontSize: 13 }}>
-            <span className="badge badge-success" style={{ marginRight: 8 }}>Convite gerado</span>
-            Envie este link para a pessoa (WhatsApp, e-mail) — ela define a própria senha:
+            <span className="badge badge-success" style={{ marginRight: 8 }}>Link gerado</span>
+            Envie este link para a pessoa (WhatsApp, e-mail) — ela define a própria senha.
+            <strong> Ela não precisa esperar e-mail nenhum.</strong>
           </p>
           <LinkDoConvite link={inviteLink} />
         </div>
       )}
       {sp.ok && <p className="badge badge-success mt-16">Membro vinculado.</p>}
+      {sp.erro && <p className="badge badge-danger mt-16">{sp.erro}</p>}
 
       <div className="card mt-24" style={{ padding: 0, overflowX: "auto" }}>
         <table className="table">
@@ -194,9 +196,18 @@ export default async function EquipePage({
                 {isAdmin && (
                   <td style={{ textAlign: "right" }}>
                     {mem.id !== membership.membershipId ? (
-                      <Link href={`/painel/equipe/${mem.id}/remover`} style={{ color: "var(--danger)", fontSize: 13 }}>
-                        Remover
-                      </Link>
+                      <div className="row" style={{ gap: 10, justifyContent: "flex-end", alignItems: "center" }}>
+                        {/* Destrava a pessoa na hora, sem depender de e-mail —
+                            que foi o que travou a equipe em 10/ago. */}
+                        <form action={gerarLinkDeAcesso.bind(null, mem.id)}>
+                          <button type="submit" className="btn btn-sm btn-ghost" style={{ whiteSpace: "nowrap" }}>
+                            Gerar acesso
+                          </button>
+                        </form>
+                        <Link href={`/painel/equipe/${mem.id}/remover`} style={{ color: "var(--danger)", fontSize: 13 }}>
+                          Remover
+                        </Link>
+                      </div>
                     ) : (
                       <span className="text-faint" style={{ fontSize: 13 }}>você</span>
                     )}

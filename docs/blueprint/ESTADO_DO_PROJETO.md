@@ -85,6 +85,23 @@ opções são **formato do ramo**, nunca fato daquela empresa.
 - **O e-mail nativo do Supabase é lento e limitado.** Foi ele que travou a
   equipe da Be Fitness por horas. SMTP próprio resolve confirmação,
   recuperação e convite de uma vez.
+- **Mas a dependência de e-mail era a falha de projeto, e essa foi fechada.**
+  SMTP é a correção do sintoma: enquanto o e-mail for o ÚNICO caminho para
+  destravar alguém, o produto tem um ponto único de falha operado por
+  terceiro. O convite já tinha a saída (link copiável); quem já era membro e
+  esqueceu a senha, não — sobrava "Esqueci minha senha", pelo mesmo canal que
+  estava quebrado. Hoje a tela de Equipe tem **"Gerar acesso"** por pessoa.
+  A regra do socorro virou botão em vez de procedimento que só eu executo.
+- **`NEXT_PUBLIC_SITE_URL` era dependência invisível de três telas de acesso.**
+  `criar-conta` e o convite tinham cascata de origem; `confirme-email` e a
+  recuperação usavam `?? ""` — e a variável não está no `.env.local`. Origem
+  vazia não dá erro: o Supabase manda o link para a "Site URL" padrão dele e a
+  pessoa chega na raiz do site, deslogada. Mesma classe do resto desta seção.
+  Hoje a cascata é uma só (`lib/site.ts`) e a variável virou opcional.
+  Junto: a recuperação **engolia o erro do envio** — a resposta neutra é de
+  propósito (anti-enumeração), mas ela também escondia SMTP fora do ar e
+  limite de envio estourado. O log de servidor passou a registrar; a mensagem
+  na tela continua a mesma.
 - **Ordem de socorro:** quando alguém está travado, **destrave a pessoa
   primeiro** (senha definida pelo admin leva 30 segundos) e conserte a causa
   depois. Em 10/ago isso foi feito ao contrário e custou horas de uma

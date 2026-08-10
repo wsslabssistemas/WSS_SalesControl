@@ -3,15 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SENHA_MINIMA } from "@/lib/senha";
-import { headers } from "next/headers";
-
-/** A origem absoluta do site. Vazia faz o Supabase recusar o `emailRedirectTo`. */
-async function origemDoSite(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  const h = await headers();
-  return h.get("host") ? `https://${h.get("host")}` : "";
-}
+import { origemDoSite } from "@/lib/site";
 
 const erro: (m: string) => never = (m) =>
   redirect(`/criar-conta?erro=${encodeURIComponent(m)}`);
