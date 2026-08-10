@@ -69,6 +69,29 @@ export async function criarConta(formData: FormData) {
     erro(error.message);
   }
 
+  // ⚠ CONTA QUE JÁ EXISTE NÃO VEM COMO ERRO — e foi assim que a primeira
+  // vendedora da Be Fitness ficou travada.
+  //
+  // Com a confirmação de e-mail LIGADA, o Supabase não avisa que o e-mail já
+  // tem cadastro: ele devolve sucesso, sem sessão e sem erro, de propósito —
+  // senão esta tela viraria um verificador de quem tem conta no sistema.
+  //
+  // O sinal documentado é outro: `identities` volta VAZIO. Sem checar isso, o
+  // código caía no `!data.session` abaixo e mandava a pessoa para a tela de
+  // "confirme seu e-mail" — esperando uma mensagem que NUNCA vai chegar,
+  // porque não há nada para confirmar. Ela descreveu exatamente assim:
+  // "criei a conta e a senha, mas diz que preciso confirmar no e-mail, e esse
+  // e-mail não chegou".
+  //
+  // Pior: a senha que ela digitou aqui NÃO substituiu a antiga. Ela ficou
+  // esperando um e-mail com uma senha na cabeça que não é a da conta.
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    erro(
+      "Já existe uma conta com esse e-mail. Entre em 'Já tenho conta' — " +
+      "e se não lembrar a senha, use 'Esqueci minha senha' na tela de entrada.",
+    );
+  }
+
   // CONFIRMAÇÃO DE E-MAIL LIGADA no Supabase devolve usuário SEM sessão. Sem
   // tratar isso, a pessoa cadastraria e cairia numa tela pedindo login, com a
   // senha que ela acabou de criar não funcionando ainda — parece sistema
