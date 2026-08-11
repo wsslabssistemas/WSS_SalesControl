@@ -54,6 +54,12 @@ export async function prepararToque(
   contactId: string,
   motivo: MotivoDaFila,
   intencao: string,
+  /**
+   * O que alguém anotou na ficha — entra no prompt MARCADO como anotação de
+   * procedência desconhecida, nunca como o motivo. Ver a regra do pretexto em
+   * `lib/fila.ts`.
+   */
+  observacao?: string,
 ): Promise<ToqueResult> {
   if (!hasAIKey()) return { ok: false, error: "Chave de IA não configurada." };
   const membership = await getActiveTenant();
@@ -72,7 +78,7 @@ export async function prepararToque(
     const [{ data: skill }, { data: dna }, { data: c }, { data: h }, { data: lib }] = await Promise.all([
       supabase.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
       supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
-      supabase.from("contacts").select("name, journey_stage, source, custom, next_action_note").eq("id", contactId).eq("tenant_id", tenant.id).maybeSingle(),
+      supabase.from("contacts").select("name, journey_stage, source, custom, next_action_note, stage_entered_at, contract_start, contract_end").eq("id", contactId).eq("tenant_id", tenant.id).maybeSingle(),
       supabase.from("interactions").select("direction, content").eq("tenant_id", tenant.id).eq("contact_id", contactId)
         .order("occurred_at", { ascending: false }).limit(6),
       // A biblioteca GLOBAL do segmento só é legível pelo service_role (0006).
@@ -83,8 +89,44 @@ export async function prepararToque(
         .eq("skill_key", tenant.skill_key).is("tenant_id", null).eq("status", "active"),
     ]);
 
-    const contact = c as { name: string; journey_stage: string; source: string | null; custom: Record<string, unknown> | null; next_action_note: string | null } | null;
+    const contact = c as {
+      name: string; journey_stage: string; source: string | null;
+      custom: Record<string, unknown> | null; next_action_note: string | null;
+      stage_entered_at: string | null; contract_start: string | null; contract_end: string | null;
+    } | null;
     if (!contact) return { ok: false, error: "Contato não encontrado." };
+
+    // ---------------------------------------------- A SITUAÇÃO, EM VEZ DO RÓTULO
+    //
+    // ⚠ ISTO É O QUE O MOTOR PRECISA PARA SABER **POR QUE** ESTÁ FALANDO.
+    //
+    // O fundador perguntou o que aconteceria no dia em que isto for automático:
+    // *"ele saberia o real motivo? abordaria com qual pretexto?"*. Sem este
+    // bloco, não — ele recebia o nome da etapa e um rótulo de fluxo, e escrevia
+    // uma mensagem simpática e errada (o caso Noeli: matriculada há 19 dias,
+    // com a anotação "Continuar conversa e descobrir necessidades" de quando
+    // ela ainda era lead).
+    //
+    // A diferença entre um rótulo e uma situação é que a situação é
+    // **derivada e recalculada agora**: dias na etapa, tempo de casa, quanto
+    // falta de contrato. Ela não pode envelhecer porque não é guardada. É o
+    // mesmo princípio da trava anti-invenção, um nível acima: lá o motor não
+    // inventa o preço; aqui ele não inventa o assunto.
+    const dia = (s: string | null) => (s ? Math.floor((Date.now() - Date.parse(s)) / 86400000) : null);
+    const diasNaEtapa = dia(contact.stage_entered_at);
+    const diasDeCasa = dia(contact.contract_start);
+    const diasDeContrato = contact.contract_end
+      ? Math.round((Date.parse(contact.contract_end) - Date.now()) / 86400000)
+      : null;
+    const situacao = [
+      diasNaEtapa !== null ? `está nesta etapa há ${diasNaEtapa} dias` : null,
+      diasDeCasa !== null ? `é cliente há ${diasDeCasa} dias` : null,
+      diasDeContrato !== null
+        ? diasDeContrato >= 0
+          ? `contrato vence em ${diasDeContrato} dias`
+          : `contrato venceu há ${Math.abs(diasDeContrato)} dias`
+        : null,
+    ].filter(Boolean).join(" · ");
 
     const manifest = (skill?.manifest as Record<string, unknown> | null) ?? {};
     const sections = (dna?.sections as Record<string, unknown> | null) ?? {};
@@ -114,13 +156,24 @@ REGRAS INEGOCIÁVEIS:
 - NÃO trate quem já é cliente como desconhecido, e não se apresente de novo.
 - Curta: 2 a 4 linhas, tom humano, português do Brasil, pronta para copiar.
 - UMA pergunta só, e fácil de responder. Nada de "qualquer coisa me chama".
+- A ABERTURA TEM QUE BATER COM A SITUAÇÃO DELE. Quem já comprou não recebe
+  pergunta de descoberta ("o que você procura?", "qual seu objetivo?"): isso
+  denuncia que ninguém olhou a ficha e é pior que não mandar nada.
+- Se o motivo do toque não sustentar um assunto concreto, marque "escalar":
+  true. **Escalar é resposta certa.** Mensagem genérica e simpática sem
+  assunto é o único jeito de errar aqui sem parecer erro.
 ${hardRules ? `\nREGRAS PERMANENTES DO SEGMENTO:\n- ${hardRules}` : ""}`;
 
     const prompt = `SEGMENTO: ${manifest.name ?? tenant.skill_key}
 
 MOTIVO DO TOQUE: ${ROTULO[motivo]}
 O QUE ESTE TOQUE DEVE FAZER: ${intencao}
-${contact.next_action_note ? `O QUE FICOU COMBINADO COM ELE (use, é a melhor abertura possível): ${contact.next_action_note}` : ""}
+SITUAÇÃO DELE AGORA (calculada no banco, é fato): ${situacao || "sem datas registradas"}
+${contact.next_action_note ? `O QUE FICOU COMBINADO COM ELE (escrito por quem atendeu — use, é a melhor abertura possível): ${contact.next_action_note}` : ""}
+${observacao ? `ANOTAÇÃO ANTIGA NA FICHA, DE PROCEDÊNCIA DESCONHECIDA: ${observacao}
+→ NÃO use isso como pretexto e NÃO trate como algo que o cliente disse. Ela pode
+  ter sido escrita quando ele estava em outra etapa e não valer mais. Serve só
+  para você não contradizer o histórico. O motivo do contato é o de cima.` : ""}
 
 FATOS DA EMPRESA (a única verdade que você pode afirmar):
 ${fatos(sections)}

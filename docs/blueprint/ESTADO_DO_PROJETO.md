@@ -732,6 +732,51 @@ tempo entre o contato e o primeiro toque de retomada.
   **Regra que fica: fila é lógica, não é tela.** Lista de quem contatar que
   não passa por `construirFila` vai divergir — e em silêncio, porque duas
   listas erradas parecem duas listas.
+- **⚠ UMA DATA NÃO É UM MOTIVO — a regra do pretexto (ago/2026).** Esta é a
+  decisão de produto mais importante da fila, e ela nasceu de uma pergunta do
+  fundador, não de um bug: vendo a **Noeli da Silva** — matriculada desde
+  22/jul, plano trimestral até jan/2027 — sob o rótulo "Você combinou de
+  voltar", ele perguntou *"se o sistema fosse 100% automático, ele abordaria
+  com qual pretexto? saberia o real motivo?"*.
+  **A resposta honesta era não — e ele escreveria mesmo assim.** Existia uma
+  data (24/jul) e um rótulo herdado do Base44 (*"Continuar conversa e
+  descobrir necessidades"*, escrito quando ela ainda era lead). A IA viraria
+  isso numa mensagem simpática de descoberta para quem é aluna há 19 dias.
+  **Fluente e errado é o pior defeito possível** numa mensagem que sai no nome
+  da academia — e não dispara alarme nenhum.
+  Medido: **257 contatos com `next_action` preenchido e ZERO com
+  `next_action_note`**, e o rótulo **não é invalidado na mudança de etapa** (11
+  pessoas em "Parou de responder" com "Continuar descoberta", uma matriculada
+  com "Acompanhamento do trial"). A fila lia `next_action_note` e caía num
+  texto genérico — os 163 combinados devidos da Be Fitness eram 163 rótulos de
+  fluxo apresentados como compromisso com o cliente.
+  **A separação que resolve, e que vale para o dia da automação:**
+  - **MOTIVO é DERIVADO do estado** — etapa, dias na etapa, vigência, régua do
+    ramo. Recalculado a cada abertura, então **não envelhece**.
+  - **PRETEXTO só vem de fato escrito por alguém** (`next_action_note`) **ou
+    da régua curada**. Texto de procedência desconhecida vira **anotação**,
+    exibida como citação e mandada à IA com a ordem explícita de não usar como
+    pretexto.
+  Sem nota, o combinado vira `lembrete` — motivo de **menor** prioridade, para
+  não mascarar quem sabe o porquê. Na Noeli o motivo passou a ser o certo: a
+  cadência `pos_matricula` do dia 7 (*"Primeira semana: como foi vir, e o que
+  já mudou na rotina"*), vencida há 12 dias e nunca feita. **16 dos 17
+  matriculados na fila** estavam nessa situação.
+  É a trava anti-invenção um nível acima: lá o motor não inventa o preço,
+  aqui não inventa o assunto. Guardado por `fila_test.mjs` (20/20).
+- **Recusa educada da IA pode ser prompt incompleto, não falta de dado.** O
+  Analista de Gestão respondeu *"não tenho dado de hoje… não posso inventar
+  essa granularidade"* a um pedido de relatório diário. A recusa estava certa
+  e a premissa errada: `interactions.occurred_at` tem hora e **já vinha na
+  consulta** — era somada num total do período antes de chegar ao prompt.
+  **O sintoma foi uma recusa educada, e recusa educada parece limite do
+  produto, não defeito.** Ao ouvir "não tenho esse dado", conferir se o motor
+  não tem ou se quem monta o prompt não mandou.
+- **Folga de profissional só existe onde se agenda profissional.** A seção da
+  Agenda era mostrada em todo segmento; para academia é cadastro que não muda
+  nada, e cadastro que não muda nada ensina a ignorar a tela. O manifesto já
+  declarava a diferença: `scheduling.offer_by_turno: true` é literalmente
+  "aqui não se marca hora com pessoa". A tela passou a obedecer o dado — Lei 1.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.
@@ -771,7 +816,7 @@ node packages/db/tests/cnae_test.mjs       # alvos de prospecção: 9/9
 node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
 node packages/db/tests/telefone_test.mjs   # E.164 brasileiro: 30/30
 node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
-node packages/db/tests/fila_test.mjs       # quitação do toque e "um motivo por pessoa": 14/14
+node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql

@@ -20,6 +20,7 @@ type Contact = {
   journey_stage: string;
   stage_entered_at: string;
   next_action_at: string | null;
+  next_action: string | null;
   next_action_note: string | null;
   contract_end: string | null;
   custom: Record<string, unknown> | null;
@@ -66,7 +67,7 @@ export default async function FilaPage({
     lerTudo<Contact>(
       (de, ate) => supabase
         .from("contacts")
-        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action_note, contract_end, custom")
+        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action, next_action_note, contract_end, custom")
         .eq("tenant_id", tenant.id)
         .is("deleted_at", null)
         .order("id")
@@ -143,7 +144,7 @@ export default async function FilaPage({
       ) : (
         <>
           <div className="row wrap mt-16" style={{ gap: 8 }}>
-            {(["combinado", "renovacao", "followup", "recompra"] as const).map((m) =>
+            {(["combinado", "renovacao", "followup", "recompra", "lembrete"] as const).map((m) =>
               porMotivo(m) > 0 ? (
                 <span key={m} className="badge">{ROTULO[m]}: <strong>{porMotivo(m)}</strong></span>
               ) : null,
@@ -165,6 +166,7 @@ export default async function FilaPage({
                   ajusteNoNumero={num.ok ? num.ajuste : null}
                   motivo={f.motivo}
                   intencao={f.intencao}
+                  observacao={f.observacao}
                   atraso={f.atraso}
                 />
               );

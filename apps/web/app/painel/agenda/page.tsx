@@ -147,8 +147,18 @@ export default async function AgendaPage({
         />
       )}
 
-      {/* Folgas e bloqueios: tiram o período da agenda */}
-      {scheduling?.enabled && (isAdmin || profSel === membership.membershipId) && (
+      {/* ⚠ FOLGA DE PROFISSIONAL SÓ EXISTE ONDE SE AGENDA PROFISSIONAL.
+          O fundador disse que este bloco é inútil para academia, e está certo
+          — mas o motivo é estrutural, não de gosto. Numa barbearia o cliente
+          marca COM UM BARBEIRO: a folga dele apaga horários reais. Numa
+          academia o aluno vem dentro do horário de funcionamento; quem estiver
+          na recepção atende. Cobrar folga ali é pedir cadastro que não muda
+          nada, e cadastro que não muda nada ensina a ignorar a tela.
+          O manifesto já sabia disso: `offer_by_turno: true` é exatamente a
+          declaração "aqui não se marca hora com pessoa, se marca turno". A
+          tela passa a obedecer o dado em vez de o segmento ser adivinhado no
+          código — Lei 1. */}
+      {scheduling?.enabled && !scheduling?.offer_by_turno && (isAdmin || profSel === membership.membershipId) && (
         <div className="card mt-16">
           <p className="eyebrow" style={{ marginBottom: 4 }}>Folgas e bloqueios</p>
           <p className="text-dim" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>

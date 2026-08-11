@@ -125,6 +125,79 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       .slice(0, 12)
       .map((c) => `- ${c.nome} (${c.etapa}, resp. ${c.resp}): ${c.dias} dias sem contato`);
 
+    // ------------------------------------------------ QUEBRA POR DIA E POR SEMANA
+    //
+    // ⚠ O DADO SEMPRE EXISTEU; O QUE FALTAVA ERA MANDAR.
+    //
+    // O fundador pediu "uma relação para saber o que os vendedores fizeram
+    // hoje" e o Analista respondeu **"não tenho dado de hoje… não posso
+    // inventar essa granularidade"**. A recusa estava certa — a trava
+    // anti-invenção funcionando — mas a premissa estava errada: cada linha de
+    // `interactions` tem `occurred_at` com hora, e todas já vinham na
+    // consulta. Elas eram somadas em um total do período antes de chegar ao
+    // prompt, e ninguém percebeu porque **o sintoma foi uma recusa educada, e
+    // recusa educada parece limite do produto**, não defeito.
+    //
+    // Fica a regra: quando o motor disser "não tenho esse dado", conferir se
+    // ele não tem ou se **quem monta o prompt não mandou**. As duas se
+    // parecem, e só a segunda tem conserto barato.
+    //
+    // Por dia mostra os últimos 14 (é o que um dono acompanha de manhã) e por
+    // semana cobre o período inteiro, para mês e trimestre.
+    const diaDe = (iso: string) => iso.slice(0, 10);
+    const semanaDe = (iso: string) => {
+      const d = new Date(iso);
+      d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // segunda-feira
+      return d.toISOString().slice(0, 10);
+    };
+    const agrupar = (chave: (iso: string) => string) => {
+      const m = new Map<string, Map<string, { saidas: number; entradas: number }>>();
+      for (const i of ix) {
+        if (!i.contact_id) continue;
+        const k = chave(i.occurred_at);
+        const dono = nomeDe(ownerOf.get(i.contact_id) ?? null);
+        const porDono = m.get(k) ?? new Map();
+        const cur = porDono.get(dono) ?? { saidas: 0, entradas: 0 };
+        if (i.direction === "outbound") cur.saidas++; else cur.entradas++;
+        porDono.set(dono, cur);
+        m.set(k, porDono);
+      }
+      return m;
+    };
+    // Fechamentos por dia saem do histórico de etapa, que é append-only e
+    // carimbado — é o único lugar onde "quando virou venda" é fato, não
+    // dedução.
+    const fechouEm = new Map<string, string[]>();
+    for (const h of hist) {
+      if (!wonKeys.has(h.to_stage)) continue;
+      const k = diaDe(h.occurred_at);
+      fechouEm.set(k, [...(fechouEm.get(k) ?? []), nomeDe(ownerOf.get(h.contact_id) ?? null)]);
+    }
+    const linhasDe = (m: Map<string, Map<string, { saidas: number; entradas: number }>>, comFechamento: boolean) =>
+      [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([k, porDono]) => {
+        const fech = comFechamento ? (fechouEm.get(k) ?? []) : [];
+        const detalhe = [...porDono.entries()]
+          .sort((a, b) => b[1].saidas + b[1].entradas - (a[1].saidas + a[1].entradas))
+          .map(([dono, v]) => {
+            const f = fech.filter((x) => x === dono).length;
+            return `${dono}: ${v.saidas} enviadas, ${v.entradas} recebidas${f ? `, ${f} fecharam` : ""}`;
+          })
+          .join(" | ");
+        return `- ${k}: ${detalhe || "sem atividade"}`;
+      });
+
+    const porDia = agrupar(diaDe);
+    const porSemana = agrupar(semanaDe);
+    const hojeKey = new Date().toISOString().slice(0, 10);
+    const blocoDiario = `ATIVIDADE POR DIA, POR VENDEDOR (últimos 14 dias com movimento — hoje é ${hojeKey})
+${linhasDe(porDia, true).slice(0, 14).join("\n") || "- nenhuma interação registrada no período"}
+Obs.: conta interações REGISTRADAS no sistema. Conversa que aconteceu no
+WhatsApp e não foi registrada não aparece aqui — se um vendedor aparece com
+zero e você sabe que ele trabalhou, o buraco é o registro, não o vendedor.`;
+
+    const blocoSemanal = `ATIVIDADE POR SEMANA, POR VENDEDOR (semana começa na segunda)
+${linhasDe(porSemana, true).join("\n") || "- nenhuma interação registrada no período"}`;
+
     const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
     const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -192,6 +265,9 @@ ${desfechos.join("\n")}
 
 CONTATOS EM ABERTO PARADOS HÁ MAIS TEMPO
 ${parados.join("\n") || "- nenhum"}
+
+${blocoDiario}
+${blocoSemanal}
 ${blocoFaturamento}`;
 
     const system = `Você é o analista comercial da empresa. Responde ao dono/gestor em português do Brasil, de forma direta e prática.

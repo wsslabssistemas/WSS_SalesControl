@@ -26,6 +26,7 @@ export function ItemDaFila({
   ajusteNoNumero,
   motivo,
   intencao,
+  observacao,
   atraso,
 }: {
   contactId: string;
@@ -41,6 +42,12 @@ export function ItemDaFila({
   ajusteNoNumero?: string | null;
   motivo: MotivoDaFila;
   intencao: string;
+  /**
+   * O que alguém anotou na ficha — contexto para quem vai escrever, **nunca o
+   * pretexto**. Aparece em cinza e entre aspas de propósito: é citação, não
+   * instrução. Ver a regra do pretexto em `lib/fila.ts`.
+   */
+  observacao?: string;
   atraso: number;
 }) {
   const [texto, setTexto] = useState<string | null>(null);
@@ -56,7 +63,7 @@ export function ItemDaFila({
     setErro(null);
     setLimite(null);
     try {
-      const r = await prepararToque(contactId, motivo, intencao);
+      const r = await prepararToque(contactId, motivo, intencao, observacao);
       if (r.ok) {
         setTexto(r.texto);
         setEscalar(r.escalar);
@@ -94,6 +101,11 @@ export function ItemDaFila({
       </div>
 
       <p className="text-faint" style={{ fontSize: 12, margin: "6px 0 0" }}>{intencao}</p>
+      {observacao && (
+        <p className="text-faint" style={{ fontSize: 12, margin: "4px 0 0", fontStyle: "italic", opacity: 0.75 }}>
+          {observacao} — anotação antiga, pode não valer mais. Confira antes de usar.
+        </p>
+      )}
 
       {limite && <AvisoDeCota mensagem={limite} />}
       {erro && <p className="badge badge-danger" style={{ marginTop: 8 }}>{erro}</p>}

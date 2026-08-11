@@ -140,5 +140,62 @@ verifica("etapa terminal de perda não entra na fila",
 verifica("combinado no futuro não aparece hoje",
   fila(pessoa({ next_action_at: "2026-09-01" }), {}).length, 0);
 
-console.log(falhas === 0 ? "\nOK — 14/14" : `\nFALHOU — ${falhas} de 14`);
+// ------------------------------------------- A REGRA DO PRETEXTO (caso Noeli)
+//
+// ⚠ O QUE ESTES CINCO CASOS GUARDAM, e por que valem mais que os outros nove.
+//
+// O fundador viu a Noeli da Silva — MATRICULADA desde 22/jul, plano
+// trimestral até jan/2027 — na fila sob "Você combinou de voltar", sem nada
+// dizendo por quê. E fez a pergunta que decide o produto: *se fosse
+// automático, com que pretexto ele abordaria? ele saberia o real motivo?*
+//
+// Sem esta regra: não saberia, e escreveria mesmo assim. Existia uma data
+// (24/jul) e um rótulo herdado do sistema antigo — "Continuar conversa e
+// descobrir necessidades", escrito quando ela ainda era lead. Na base da Be
+// Fitness são **257 contatos com `next_action` preenchido e ZERO com
+// `next_action_note`**, e vários rançosos em relação à etapa atual: 11
+// pessoas em "Parou de responder" com "Continuar descoberta", uma matriculada
+// com "Acompanhamento do trial (Dia 2)".
+//
+// A separação: MOTIVO é derivado do estado e recalculado agora, então não
+// envelhece. PRETEXTO só pode vir de fato escrito por alguém ou da régua
+// curada. Rótulo de procedência desconhecida vira anotação.
+const semNota = { next_action_note: null, next_action: "Continuar conversa e descobrir necessidades" };
+
+// Sem nota, o motivo não pode se chamar "combinado": ninguém combinou nada.
+verifica("data sem motivo anotado vira lembrete, não combinado",
+  fila(pessoa(semNota), {})[0].motivo, "lembrete");
+
+// E o texto não pode inventar assunto — ele manda abrir a ficha.
+verifica("lembrete manda conferir em vez de sugerir assunto",
+  fila(pessoa(semNota), {})[0].intencao.includes("não invente o assunto"), true);
+
+// O rótulo antigo sobrevive como CITAÇÃO, para o humano julgar.
+verifica("o rótulo antigo vira anotação, não pretexto",
+  fila(pessoa(semNota), {})[0].observacao,
+  'anotado na ficha: "Continuar conversa e descobrir necessidades"');
+
+// ⚠ O CASO QUE IMPORTA: `lembrete` é o motivo de MENOR prioridade, então
+// quando existe um motivo que SABE o porquê, ele ganha — e a anotação viaja
+// junto. É isto que faz a Noeli deixar de ser "você combinou de voltar" e
+// passar a ser o acompanhamento de primeira semana que ninguém fez.
+const comFollowup = {
+  ...DEPS_VAZIAS,
+  computeDueTouches: () => [{
+    contactId: "p1", name: "Noeli da Silva", phone: null, ownerId: "m1",
+    intent: "Primeira semana: como foi vir, e o que já mudou na rotina",
+    stepNumber: 1, totalSteps: 4, overdueDays: 12, semCadencia: false,
+  }],
+};
+const noeli = construirFila({
+  contatos: [pessoa(semNota)], ultimoContato: {}, stages: STAGES, cadences: [],
+  recurrence: null, hojeISO: "2026-08-10", deps: comFollowup,
+})[0];
+verifica("motivo que sabe o porquê vence o lembrete", noeli.motivo, "followup");
+verifica("e o pretexto passa a ser o certo",
+  noeli.intencao, "Primeira semana: como foi vir, e o que já mudou na rotina (toque 1 de 4)");
+verifica("a anotação sobrevive à dedução, como contexto",
+  noeli.observacao, 'anotado na ficha: "Continuar conversa e descobrir necessidades"');
+
+console.log(falhas === 0 ? "\nOK — 20/20" : `\nFALHOU — ${falhas} de 20`);
 process.exit(falhas === 0 ? 0 : 1);

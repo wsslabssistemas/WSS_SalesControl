@@ -5,6 +5,8 @@ import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { perguntarGestao } from "./ia-actions";
 
 const ATALHOS = [
+  "O que cada vendedor fez hoje",
+  "Relatório da semana por vendedor",
   "Relatório de desempenho dos vendedores",
   "Quais clientes estão parados e o que fazer",
   "De onde vêm meus melhores leads?",

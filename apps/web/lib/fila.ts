@@ -23,13 +23,17 @@
 //
 // Dentro de cada motivo, o mais atrasado primeiro.
 
-export type MotivoDaFila = "combinado" | "renovacao" | "followup" | "recompra";
+export type MotivoDaFila = "combinado" | "renovacao" | "followup" | "recompra" | "lembrete";
 
 export const PESO: Record<MotivoDaFila, number> = {
   combinado: 0,
   renovacao: 1,
   followup: 2,
   recompra: 3,
+  // ÚLTIMO DE PROPÓSITO. `lembrete` é uma data marcada SEM ninguém ter escrito
+  // por quê — ela não sabe o motivo, então não pode mascarar quem sabe. Ver a
+  // regra do pretexto abaixo.
+  lembrete: 4,
 };
 
 export const ROTULO: Record<MotivoDaFila, string> = {
@@ -37,6 +41,7 @@ export const ROTULO: Record<MotivoDaFila, string> = {
   renovacao: "Contrato a vencer",
   followup: "Follow-up devido",
   recompra: "Hora de chamar de volta",
+  lembrete: "Data marcada, sem motivo anotado",
 };
 
 export type ItemDaFila = {
@@ -49,6 +54,29 @@ export type ItemDaFila = {
   intencao: string;
   /** Dias de atraso. 0 = vence hoje. */
   atraso: number;
+  /**
+   * O que alguém anotou na ficha, quando anotou — **contexto, nunca pretexto.**
+   *
+   * ⚠ A DISTINÇÃO QUE ESTE CAMPO EXISTE PARA GUARDAR.
+   *
+   * `contacts.next_action` chegou preenchido em 257 contatos da Be Fitness e
+   * `next_action_note` em ZERO. E o conteúdo do `next_action` é rótulo de
+   * fluxo do sistema anterior, não algo que o cliente disse: "Retornar
+   * contato", "Continuar descoberta e qualificar". Pior, ele **não é
+   * invalidado quando a pessoa muda de etapa** — há 11 pessoas em "Parou de
+   * responder" com "Continuar descoberta", uma matriculada com
+   * "Acompanhamento do trial (Dia 2)", e a Noeli da Silva, matriculada desde
+   * 22/jul, com "Continuar conversa e descobrir necessidades".
+   *
+   * Um rótulo desses vira pretexto errado com aparência de pretexto certo —
+   * a IA escreveria "vamos continuar nossa conversa para eu entender o que
+   * você procura?" para quem é aluna há 19 dias. Fluente e errado é o pior
+   * defeito possível numa mensagem que sai no nome da academia.
+   *
+   * Então ele aparece para o HUMANO julgar, e vai para a IA marcado como
+   * anotação de procedência desconhecida — nunca como o motivo do contato.
+   */
+  observacao?: string;
 };
 
 /**
@@ -104,9 +132,19 @@ export function quitado(
  */
 export function montarFila(itens: ItemDaFila[]): ItemDaFila[] {
   const melhor = new Map<string, ItemDaFila>();
+  // A ANOTAÇÃO SOBREVIVE À DEDUÇÃO. Ela costuma vir junto do `lembrete`, que é
+  // o motivo de menor prioridade e quase sempre perde — e perder o motivo é
+  // certo, perder o contexto não. Quem vai escrever a mensagem precisa saber
+  // que alguém anotou alguma coisa naquela ficha.
+  const anotacao = new Map<string, string>();
+  for (const i of itens) if (i.observacao) anotacao.set(i.contactId, i.observacao);
   for (const i of itens) {
     const atual = melhor.get(i.contactId);
     if (!atual || PESO[i.motivo] < PESO[atual.motivo]) melhor.set(i.contactId, i);
+  }
+  for (const [id, obs] of anotacao) {
+    const v = melhor.get(id);
+    if (v && !v.observacao) melhor.set(id, { ...v, observacao: obs });
   }
   return [...melhor.values()].sort(
     (a, b) => PESO[a.motivo] - PESO[b.motivo] || b.atraso - a.atraso || a.name.localeCompare(b.name, "pt-BR"),
@@ -153,17 +191,53 @@ export function construirFila(params: {
   const porId = new Map(contatos.map((c) => [c.id, c]));
 
   // 1. COMBINADO — o compromisso que a PESSOA assumiu com o cliente.
+  //
+  // ⚠ A REGRA DO PRETEXTO: uma DATA não é um MOTIVO.
+  //
+  // O fundador pegou a Noeli da Silva na fila — matriculada desde 22/jul,
+  // plano trimestral até jan/2027 — sob o rótulo "Você combinou de voltar",
+  // sem nada dizendo por quê. E fez a pergunta que decide o produto: *se
+  // fosse automático, com que pretexto ele abordaria? ele saberia o real
+  // motivo?*
+  //
+  // Hoje, sem esta regra, **não saberia** — e isso é o mais grave, porque ele
+  // escreveria mesmo assim. Havia uma data (24/jul) e um rótulo herdado do
+  // sistema antigo ("Continuar conversa e descobrir necessidades", escrito
+  // quando ela ainda era lead). A IA transformaria isso numa mensagem
+  // simpática e completamente errada para quem é aluna há 19 dias.
+  //
+  // A separação que resolve, e que vale para o dia em que isto for
+  // automático:
+  //
+  //   • MOTIVO é DERIVADO do estado — etapa, dias na etapa, vigência do
+  //     contrato, régua do ramo. Ele é recalculado a cada abertura da tela e
+  //     por isso **não envelhece**.
+  //   • PRETEXTO só pode vir de FATO ESCRITO POR ALGUÉM (`next_action_note`)
+  //     ou da régua curada do segmento. Texto de procedência desconhecida
+  //     vira anotação, não pretexto.
+  //
+  // Sem nota, o combinado não some — ele vira `lembrete`, que é o motivo de
+  // MENOR prioridade justamente para não mascarar quem sabe o porquê. No caso
+  // da Noeli, o motivo que aparece passa a ser o certo: a cadência
+  // `pos_matricula` do dia 7 ("Primeira semana: como foi vir, e o que já
+  // mudou na rotina"), vencida há 12 dias e nunca feita.
+  //
+  // É a mesma trava anti-invenção do Responder, aplicada um nível acima: lá
+  // ela impede inventar o preço; aqui, inventar o assunto.
   for (const c of contatos) {
     if (!c.next_action_at || c.next_action_at > hojeISO) continue;
     if (foraDeJogo.has(c.journey_stage)) continue;
     if (quitado(ultimoContato[c.id], c.next_action_at)) continue;
+    const nota = c.next_action_note?.trim();
+    const rotulo = c.next_action?.trim();
     itens.push({
       contactId: c.id, name: c.name, phone: c.phone, ownerId: c.owner_id,
-      motivo: "combinado",
-      intencao: c.next_action_note
-        ? `Retomar o que ficou combinado: ${c.next_action_note}`
-        : "Retomar o contato na data que foi combinada com ele.",
+      motivo: nota ? "combinado" : "lembrete",
+      intencao: nota
+        ? `Retomar o que ficou combinado: ${nota}`
+        : "Alguém marcou esta data no sistema, mas ninguém anotou o motivo. Abra a ficha e confira o histórico antes de escrever — não invente o assunto.",
       atraso: Math.round((Date.parse(hojeISO) - Date.parse(c.next_action_at)) / 86400000),
+      ...(nota ? {} : rotulo ? { observacao: `anotado na ficha: "${rotulo}"` } : {}),
     });
   }
 
@@ -213,7 +287,10 @@ export type ContatoDaFila = {
   journey_stage: string;
   stage_entered_at: string;
   next_action_at: string | null;
+  /** Escrito por uma pessoa. É o único texto que pode virar pretexto. */
   next_action_note: string | null;
+  /** Rótulo de fluxo, de procedência desconhecida. Vira anotação, nunca pretexto. */
+  next_action?: string | null;
   contract_end: string | null;
 };
 

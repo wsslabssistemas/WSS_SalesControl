@@ -19,6 +19,7 @@ type Contact = {
   owner_id: string | null;
   custom: Record<string, unknown> | null;
   next_action_at: string | null;
+  next_action: string | null;
   next_action_note: string | null;
   contract_end: string | null;
 };
@@ -74,7 +75,7 @@ export default async function PainelHome({
     lerTudo<Contact>(
       (de, ate) => supabase
         .from("contacts")
-        .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action_note, contract_end")
+        .select("id, name, phone, journey_stage, stage_entered_at, owner_id, custom, next_action_at, next_action, next_action_note, contract_end")
         .eq("tenant_id", tenant.id)
         .is("deleted_at", null)
         .order("id")
