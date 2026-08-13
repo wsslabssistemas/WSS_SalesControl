@@ -16,7 +16,7 @@ version: 1.0.0
 # mecanismo encontra tanto defeito tão rápido.
 #
 # COBERTURA CONFERIDA ANTES DE ESCREVER, contra as 262 entradas das 14
-# bibliotecas: `automacao` e `industria` são B2B, mas de equipamento e
+# bibliotecas: `automacao` e `indústria` são B2B, mas de equipamento e
 # material. Nenhuma das 262 fala de planilha como concorrente, medo de
 # adoção pela equipe, teste grátis, LGPD e posse do dado, implantação,
 # "é mais um sistema?" ou "a IA vai responder pelo meu cliente?".
@@ -46,9 +46,11 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir com quem se está falando e como a empresa atende hoje. A primeira mensagem NÃO vende — qualifica."
     - key: descoberta
       label: "Descoberta"
+      cadence: descoberta_parada
       goal: "Volume de atendimento, quem responde, onde o funil vaza e quem decide. Sem isso, o preço não tem como estar certo."
     - key: demonstracao
       label: "Demonstração"
@@ -73,9 +75,11 @@ journey:
         - { key: dia_12, label: "Reta final do teste",      offset_days: 12 }
     - key: proposta
       label: "Proposta"
+      cadence: proposta_sem_resposta
       goal: "Preço pelo volume real observado no teste, não pela tabela. O número que ele viu funcionar é o argumento."
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Isolar o que trava — verba, quem assina, medo da equipe não usar — e viabilizar o começo."
     # ASSINANTE É `won` E NÃO É TERMINAL: em software a receita se perde
     # DEPOIS da venda. Cancelamento é o último passo, e ele avisa antes —
@@ -97,7 +101,7 @@ journey:
     # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
-    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisão.
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -324,6 +328,54 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: 67% do B2B prefere se servir sozinho. Cada
+  # toque tem que valer sem resposta - se ele só ler, já ganhou alguma coisa.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 3, intent: "Perguntar como a empresa atende hoje, uma coisa só. A primeira mensagem qualifica, não vende." }
+      - { offset_days: 8, intent: "Mandar algo que vale mesmo sem resposta - o número que ele consegue conferir sozinho na própria operação." }
+      - { offset_days: 18, intent: "Encerrar com porta aberta e sem cobrança. Comprador B2B que se sentiu perseguido não volta nem quando precisa." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 3, intent: "Confirmar só volume de atendimento e quem responde hoje - sem isso o preço não tem como estar certo." }
+      - { offset_days: 8, intent: "Trazer o padrão que se vê em operacoes do porte dele, e perguntar se bate. Comparar e mais fácil que descrever." }
+      - { offset_days: 18, intent: "Perguntar se o assunto segue em pe neste trimestre e registrar a resposta." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: proposta_sem_resposta
+    applies_to: proposal
+    steps:
+      - { offset_days: 3, intent: "Confirmar que chegou e perguntar o que ficou aberto - não se decidiram. Proposta parada em B2B quase sempre e aprovação interna." }
+      - { offset_days: 8, intent: "Oferecer o que destrava aprovação: número do teste dele, prazo de implantacao e o que acontece se quiser sair." }
+      - { offset_days: 18, intent: "Perguntar em que etapa interna esta e quem mais precisa ver. Ajudar a passar pelo processo vale mais que insistir na decisão." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 3, intent: "Nomear o que trava e responder com o fato que falta - verba, contrato, ou medo da equipe não usar." }
+      - { offset_days: 8, intent: "Tratar o risco real de software B2B: adocao. Quem já comprou ferramenta que ninguém usou tem medo disso, não do preço." }
+      - { offset_days: 18, intent: "Oferecer o menor começo possível que existir no DNA; se não existir, ESCALAR em vez de inventar condição." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_demo
     applies_to: proposal_followup
     steps:

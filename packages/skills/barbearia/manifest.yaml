@@ -29,12 +29,15 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir o que a pessoa procura e para quando."
     - key: descoberta
       label: "Descoberta"
+      cadence: descoberta_parada
       goal: "Entender serviço desejado, urgência e preferência de profissional."
     - key: proposta
       label: "Proposta"
+      cadence: proposta_sem_resposta
       goal: "Indicar serviço e horário disponível."
     - key: agendado
       label: "Agendado"
@@ -260,6 +263,44 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência declarada, o núcleo escrevia a
+  # própria frase genérica — a mesma para todo ramo. Eram 39 das 80 etapas
+  # vivas dos 15 segmentos, e quase todas aqui, onde a venda acontece.
+  #
+  # A régua abaixo é deste ramo: ciclo curto e decisão de impulso. Quem
+  # perguntou de corte hoje cortou em outro lugar em uma semana — insistir
+  # depois disso não recupera, só irrita.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 1, intent: "Oferecer horário concreto em vez de perguntar de novo. Quem chamou barbearia quer marcar, não conversar — a pergunta aberta é o que trava." }
+      - { offset_days: 3, intent: "Dar a alternativa que ele não pediu: outro dia, outro profissional, ou o horário vazio que ninguém disputa." }
+      - { offset_days: 7, intent: "Encerrar leve, com a porta aberta para quando precisar. Depois de uma semana ele já cortou em outro lugar." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 1, intent: "Fechar a escolha em duas opções concretas de serviço e horário. Descrever o que quer é mais difícil que escolher." }
+      - { offset_days: 3, intent: "Perguntar pela ocasião — casamento, entrevista, viagem. A data dele resolve a agenda melhor que qualquer pergunta técnica." }
+      - { offset_days: 7, intent: "Encerrar sem cobrança, deixando o canal aberto." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: proposta_sem_resposta
+    applies_to: proposal
+    steps:
+      - { offset_days: 1, intent: "Confirmar o horário oferecido antes que ele caia. Vaga é perecível e dizer isso é fato, não pressão." }
+      - { offset_days: 3, intent: "Oferecer o horário alternativo mais próximo do que ele pediu." }
+      - { offset_days: 7, intent: "Encerrar e registrar a preferência para a recompra — é ela que traz o cliente de barbearia de volta." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   # Falta é o maior problema do segmento — cadência própria
   - key: appointment_confirm
     applies_to: trial_followup

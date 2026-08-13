@@ -40,9 +40,11 @@ journey:
         - { key: followup_2, label: "Última tentativa",   offset_days: 8 }
     - key: qualificacao
       label: "Qualificação"
+      cadence: descoberta_parada
       goal: "Entender a operação, o problema real e quem assina."
     - key: levantamento
       label: "Visita técnica"
+      cadence: visita_pendente
       goal: "Levantar em campo o escopo e as condições da instalação."
       phases:
         - { key: agendamento, label: "Agendar visita",  offset_days: 0 }
@@ -57,6 +59,7 @@ journey:
         - { key: cobranca,   label: "Cobrar posição",      offset_days: 7 }
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Isolar a objeção real (preço, prazo, concorrente) e fechar."
     - key: fechado
       label: "Contrato fechado"
@@ -70,7 +73,7 @@ journey:
     # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
-    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisão.
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -104,8 +107,8 @@ contact_fields:
   # As quatro perguntas que dizem se o negocio existe de verdade. O campo
   # `decisor` diz QUEM e o contato; estes dizem como a compra anda.
   # Chaves e opcoes sao CANONICAS (validadas pelo skill-loader): sem isso a
-  # dimensao nao se compara entre segmentos, que e a unica razao de existir.
-  # So o label e do ramo.
+  # dimensao não se compara entre segmentos, que e a unica razao de existir.
+  # Só o label e do ramo.
   # ---------------------------------------------------------------------
   - key: verba
     label: "Verba do projeto"
@@ -231,6 +234,44 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: quem pede e o técnico e quem assina e outro;
+  # a venda morre quando para no técnico.
+  # -------------------------------------------------------------------
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 3, intent: "Confirmar o problema operacional em uma pergunta e descobrir quem mais participa da decisão. Proposta que não chega a quem assina não e avaliada." }
+      - { offset_days: 8, intent: "Trazer um caso parecido de operação semelhante, sem pedir nada - prova antes de pergunta funciona melhor em B2B técnico." }
+      - { offset_days: 18, intent: "Perguntar se o projeto segue em pe neste orçamento ou mudou de ano, e aceitar a resposta." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: visita_pendente
+    applies_to: service
+    steps:
+      - { offset_days: 3, intent: "Confirmar a visita técnica e o que precisa estar disponível no local. Visita que volta sem dado e escopo errado depois." }
+      - { offset_days: 10, intent: "Se a visita não aconteceu, remarcar oferecendo duas janelas concretas em vez de perguntar quando da." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 2
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 3, intent: "Nomear a objeção e responder com o fato que falta - prazo de obra, garantia, suporte depois da entrega." }
+      - { offset_days: 8, intent: "Checar se o que trava e técnico ou orcamentario: uma se resolve com engenheiro, a outra com quem assina." }
+      - { offset_days: 18, intent: "Perguntar em que etapa interna esta e o que falta para destravar - em B2B a resposta costuma ser um documento, não uma decisão." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_proposta
     applies_to: proposal_followup
     steps:

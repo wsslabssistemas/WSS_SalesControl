@@ -35,9 +35,11 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Acolher a queixa e qualificar antes de falar preço."
     - key: qualificacao
       label: "Qualificação"
+      cadence: descoberta_parada
       goal: "Entender a queixa, histórico, urgência e quem decide/paga."
     - key: avaliacao
       label: "Avaliação agendada"
@@ -56,9 +58,11 @@ journey:
         - { key: decisao, label: "Buscar decisão",   offset_days: 7 }
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Tratar a objeção real (valor, medo, tempo) e viabilizar o pagamento."
     - key: em_tratamento
       label: "Em tratamento"
+      cadence: adesao_tratamento
       goal: "Garantir adesão e comparecimento até concluir."
     - key: concluido
       label: "Tratamento aprovado"
@@ -261,6 +265,51 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica — a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # A régua abaixo é deste ramo: o que trava é MEDO tanto quanto valor, e
+  # cobrança acelera a desistência. Nunca prometer resultado clínico.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Acolher a queixa em uma frase e oferecer a avaliação — sem preço de procedimento, que sem exame é chute." }
+      - { offset_days: 5, intent: "Responder a dúvida que quase ninguém escreve: se dói, quanto tempo leva e se dá para parcelar." }
+      - { offset_days: 11, intent: "Encerrar com porta aberta e sem urgência fabricada. Urgência inventada em saúde é o que faz o paciente não voltar nunca." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 2, intent: "Confirmar só o que falta para montar o plano — histórico ou urgência —, devolvendo o que ele já contou." }
+      - { offset_days: 6, intent: "Oferecer a avaliação como o passo que responde tudo de uma vez, em vez de continuar perguntando por mensagem." }
+      - { offset_days: 12, intent: "Encerrar deixando claro que a porta segue aberta quando ele decidir cuidar disso." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 2, intent: "Nomear o que ele levantou e trazer o fato que falta — condição de pagamento, tempo de tratamento ou o que está incluso." }
+      - { offset_days: 6, intent: "Checar se é valor mesmo ou medo do procedimento. São objeções diferentes e o remédio de uma piora a outra." }
+      - { offset_days: 12, intent: "Oferecer o menor primeiro passo clínico que exista no DNA; se não existir, ESCALAR em vez de inventar condição." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: adesao_tratamento
+    applies_to: onboarding
+    steps:
+      - { offset_days: 7, intent: "Confirmar que a primeira etapa foi feita e perguntar como ele está — abandono de tratamento começa no silêncio, não na recusa." }
+      - { offset_days: 21, intent: "Retomar quem não voltou para a sessão seguinte, sem cobrança: remarcar é mais fácil que recomeçar." }
+      - { offset_days: 45, intent: "Último toque de adesão antes de considerar o tratamento interrompido — e registrar isso, que é fato clínico e comercial." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   # A conversão acontece na cadeira: confirmar presença é dinheiro.
   - key: pre_consulta
     applies_to: trial_followup

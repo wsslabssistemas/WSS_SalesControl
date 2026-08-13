@@ -60,6 +60,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Entender o sintoma e o veículo. Nunca cotar serviço sem saber modelo, ano e motor."
     - key: agendado
       label: "Entrada agendada"
@@ -70,6 +71,7 @@ journey:
         - { key: confirmar, label: "Confirmar véspera", offset_days: -1 }
     - key: diagnostico
       label: "Em diagnóstico"
+      cadence: diagnostico_em_curso
       goal: "Identificar a causa e separar o que é urgente do que pode esperar."
     - key: orcamento
       label: "Orçamento apresentado"
@@ -81,6 +83,7 @@ journey:
         - { key: decisao,  label: "Buscar decisão",     offset_days: 5 }
     - key: aprovado
       label: "Serviço aprovado"
+      cadence: servico_em_execucao
       goal: "Executar com prazo combinado e avisar antes de qualquer atraso de peça."
     - key: entregue
       label: "Veículo entregue"
@@ -305,6 +308,40 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica — a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # A régua abaixo é deste ramo: confiança se ganha AVISANDO, não vendendo. O
+  # cliente de oficina desconfia por padrão, e silêncio confirma a desconfiança.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 1, intent: "Pedir modelo, ano e o sintoma — nessa ordem. Cotar serviço sem isso é chute, e chute em oficina vira briga na entrega." }
+      - { offset_days: 3, intent: "Oferecer a avaliação com hora marcada: ouvir o carro decide mais rápido que qualquer troca de mensagem." }
+      - { offset_days: 7, intent: "Encerrar com porta aberta. Problema de carro volta sozinho — e volta para quem foi honesto." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: diagnostico_em_curso
+    applies_to: service
+    steps:
+      - { offset_days: 1, intent: "Avisar o que já se sabe, mesmo que ainda não seja o diagnóstico fechado. Carro parado sem notícia é o que gera a ligação irritada." }
+      - { offset_days: 3, intent: "Fechar o diagnóstico separando o que é urgente do que pode esperar — e dizer o que PODE esperar é o que constrói a confiança." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 2
+
+  - key: servico_em_execucao
+    applies_to: service
+    steps:
+      - { offset_days: 2, intent: "Confirmar o andamento contra o prazo combinado. Avisar atraso ANTES é reclamação evitada; avisar depois é cliente perdido." }
+      - { offset_days: 5, intent: "Se houver espera de peça, dizer qual peça e qual a nova previsão — vago é pior que ruim." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 2
+
   - key: pre_entrada
     applies_to: trial_followup
     steps:

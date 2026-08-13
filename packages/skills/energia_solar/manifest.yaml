@@ -60,6 +60,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Entender o que motivou a busca. Nunca dar preço por kWp sem ver a conta."
     - key: qualificacao
       label: "Qualificação"
@@ -86,6 +87,7 @@ journey:
         - { key: cobranca, label: "Cobrar posição",    offset_days: 7 }
     - key: negociacao
       label: "Negociação e pagamento"
+      cadence: negociacao_travada
       goal: "Isolar o que trava (valor, financiamento, telhado, cônjuge) e viabilizar o pagamento."
     # A ORDEM MUDOU POR CORREÇÃO DE ESPECIALISTA (ago/2026, integrador do RS).
     # Antes: fecha → compra o kit → instala → homologa. O especialista
@@ -124,7 +126,7 @@ journey:
     # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
-    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisão.
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -235,8 +237,8 @@ contact_fields:
   # As quatro perguntas que dizem se o negocio existe de verdade. O campo
   # `decisor` diz QUEM e o contato; estes dizem como a compra anda.
   # Chaves e opcoes sao CANONICAS (validadas pelo skill-loader): sem isso a
-  # dimensao nao se compara entre segmentos, que e a unica razao de existir.
-  # So o label e do ramo.
+  # dimensao não se compara entre segmentos, que e a unica razao de existir.
+  # Só o label e do ramo.
   # ---------------------------------------------------------------------
   - key: verba
     label: "Como pretende pagar"
@@ -406,6 +408,36 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: a CONTA DE LUZ e o que qualifica; sem ela não
+  # existe dimensionamento nem retorno, e número por kWp e chute.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Pedir a foto da conta de luz - uma coisa só. E o que substitui dez perguntas e o único jeito de o número sair certo." }
+      - { offset_days: 6, intent: "Explicar o que a conta revela e por que o preço por kWp da internet não se aplica ao telhado dele." }
+      - { offset_days: 14, intent: "Encerrar com porta aberta. Decisão de solar leva meses e quem pressiona sai da lista." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 3, intent: "Nomear o que trava e trazer o fato que falta - payback com a conta dele, garantia, ou o que acontece se ele mudar de casa." }
+      - { offset_days: 8, intent: "Checar se e valor ou financiamento. São coisas diferentes: uma se resolve com condição, a outra com banco." }
+      - { offset_days: 16, intent: "Perguntar se falta alguém na decisão - cônjuge decide junto em residencial e e a objeção que nunca e dita." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pedir_conta
     applies_to: qualification
     steps:

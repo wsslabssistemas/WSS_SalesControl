@@ -31,6 +31,7 @@ journey:
         - { key: followup,   label: "Retomada",           offset_days: 4 }
     - key: qualificacao
       label: "Qualificação"
+      cadence: descoberta_parada
       goal: "Volume, frequência e fornecedor atual. Achar a brecha."
     - key: cotacao
       label: "Cotação"
@@ -41,6 +42,7 @@ journey:
         - { key: retorno,  label: "Cobrar retorno", offset_days: 2 }
     - key: primeiro_pedido
       label: "Primeiro pedido"
+      cadence: primeiro_pedido_parado
       goal: "Fechar o pedido de entrada, mesmo pequeno."
     - key: recorrente
       label: "Cliente recorrente"
@@ -126,8 +128,8 @@ contact_fields:
   # As quatro perguntas que dizem se o negocio existe de verdade. O campo
   # `decisor` diz QUEM e o contato; estes dizem como a compra anda.
   # Chaves e opcoes sao CANONICAS (validadas pelo skill-loader): sem isso a
-  # dimensao nao se compara entre segmentos, que e a unica razao de existir.
-  # So o label e do ramo.
+  # dimensao não se compara entre segmentos, que e a unica razao de existir.
+  # Só o label e do ramo.
   # ---------------------------------------------------------------------
   - key: verba
     label: "Verba para o pedido"
@@ -249,6 +251,36 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: ele já tem fornecedor. A venda e a BRECHA -
+  # ruptura, prazo ou mix - não o preço.
+  # -------------------------------------------------------------------
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 3, intent: "Perguntar o que falta no fornecedor atual, não o que ele compra. A brecha e a venda; o volume vem depois dela." }
+      - { offset_days: 8, intent: "Trazer o item de giro que costuma faltar na prateleira dele, com o dado que sustenta - informação, não catálogo." }
+      - { offset_days: 18, intent: "Perguntar se vale retomar na próxima reposição e registrar a data. Ciclo de compra tem calendário próprio." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: primeiro_pedido_parado
+    applies_to: proposal
+    steps:
+      - { offset_days: 3, intent: "Confirmar se o pedido de entrada cabe no orçamento desta reposição - pedido pequeno existe para provar giro, não para faturar." }
+      - { offset_days: 8, intent: "Tirar o risco do caminho: prazo, troca do que não girar, ou mínimo menor se existir no DNA." }
+      - { offset_days: 18, intent: "Perguntar diretamente o que falta para o primeiro pedido sair, e aceitar 'nada agora' sem insistir." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_cotacao
     applies_to: proposal_followup
     steps:

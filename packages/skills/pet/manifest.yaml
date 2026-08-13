@@ -60,6 +60,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir o animal e a necessidade. Porte e temperamento mudam preço, vaga e viabilidade."
     - key: avaliacao
       label: "Avaliação e adaptação"
@@ -314,6 +315,26 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência declarada, o núcleo escrevia a
+  # própria frase genérica — a mesma para todo ramo. Eram 39 das 80 etapas
+  # vivas dos 15 segmentos, e quase todas aqui, onde a venda acontece.
+  #
+  # A régua abaixo é deste ramo: porte e temperamento mudam preço, vaga e
+  # viabilidade — sem eles não existe resposta, e é por isso que a régua
+  # persegue o DADO, não a venda.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 1, intent: "Pedir só porte e raça, uma pergunta fechada. Sem isso não há preço nem vaga possível, e perguntar tudo de uma vez faz o tutor sumir." }
+      - { offset_days: 3, intent: "Oferecer a janela de agenda mais fácil para o porte dele, mostrando que a resposta depende do animal e não de tabela." }
+      - { offset_days: 7, intent: "Encerrar com porta aberta — banho e tosa volta sozinho quando o pelo pede." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_avaliacao
     applies_to: proposal_followup
     steps:

@@ -39,6 +39,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Entender o que a pessoa precisa. Nunca dar preço por metro sem ver."
     - key: qualificacao
       label: "Qualificação"
@@ -63,6 +64,7 @@ journey:
         - { key: decisao,   label: "Buscar decisão",     offset_days: 15 }
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Isolar a objeção real (valor, prazo, concorrente, escopo) e viabilizar."
     - key: fechado
       label: "Projeto fechado"
@@ -76,7 +78,7 @@ journey:
     # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
-    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisão.
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -123,8 +125,8 @@ contact_fields:
   # As quatro perguntas que dizem se o negocio existe de verdade. O campo
   # `decisor` diz QUEM e o contato; estes dizem como a compra anda.
   # Chaves e opcoes sao CANONICAS (validadas pelo skill-loader): sem isso a
-  # dimensao nao se compara entre segmentos, que e a unica razao de existir.
-  # So o label e do ramo.
+  # dimensao não se compara entre segmentos, que e a unica razao de existir.
+  # Só o label e do ramo.
   # ---------------------------------------------------------------------
   - key: verba
     label: "Verba do cliente"
@@ -275,6 +277,36 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: medida no local vem antes de preço, e o
+  # concorrente que da número por telefone e o que ele vai comparar.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Pedir o ambiente e a medida aproximada, e explicar em uma linha por que preço por metro sem ver engana os dois lados." }
+      - { offset_days: 6, intent: "Oferecer a visita de medição como passo curto e sem compromisso - e ela que transforma curiosidade em projeto." }
+      - { offset_days: 14, intent: "Encerrar com porta aberta. Reforma tem tempo próprio e voltar em três meses e normal neste ramo." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 3, intent: "Nomear o que ele levantou e responder com o fato que falta - prazo de produção, material, o que esta e o que não esta no escopo." }
+      - { offset_days: 8, intent: "Checar se a comparação e com o mesmo escopo. Orçamento mais barato quase sempre e escopo menor, e mostrar isso e informação, não ataque." }
+      - { offset_days: 16, intent: "Perguntar se e para agora ou para depois da obra, e aceitar 'depois' sem insistir - insistir aqui perde a indicação junto." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   # Antes de pegar o carro: visita para curioso é prejuízo.
   - key: qualificar
     applies_to: cold_outreach

@@ -257,8 +257,14 @@ export function construirFila(params: {
     itens.push({
       contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
       motivo: "followup",
+      // O TEXTO VEM DO MANIFESTO NOS DOIS CAMINHOS. Antes, `semCadencia`
+      // trocava a intenção por uma frase genérica escrita aqui no núcleo —
+      // jogando fora o `goal` que o segmento já declarava. O que muda entre
+      // os dois casos é só a MOLDURA: com cadência existe passo ("toque 2 de
+      // 4"); sem cadência é alarme de silêncio, e dizer há quantos dias
+      // ninguém fala é o que dá o tom certo para quem vai escrever.
       intencao: t.semCadencia
-        ? "Sem cadência declarada para esta etapa: retome com um ângulo novo, sem cobrar o silêncio."
+        ? `${t.intent} — ninguém fala com ele há ${t.daysSince} dias.`
         : `${t.intent} (toque ${t.stepNumber} de ${t.totalSteps})`,
       atraso: t.overdueDays,
     });
@@ -294,7 +300,7 @@ export type ContatoDaFila = {
   contract_end: string | null;
 };
 
-type EtapaDaFila = { key: string; label: string; terminal?: boolean; won?: boolean; lost?: boolean };
+type EtapaDaFila = { key: string; label: string; terminal?: boolean; won?: boolean; lost?: boolean; goal?: string };
 type CadenciaDaFila = { key: string };
 
 /**
@@ -312,7 +318,7 @@ export type DepsDaFila = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeRenovacoes: (c: any, fora: Set<string>) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; semCadencia: boolean }[];
+  computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeDue: (c: any, ultimo: Record<string, string>, rec: any, excl: Set<string>) => { contactId: string; name: string; phone: string | null; intervalDays: number; overdueDays: number }[];
 };

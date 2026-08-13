@@ -66,6 +66,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir data, número de convidados e tipo de evento. Sem isso não existe orçamento."
     - key: orcamento
       label: "Orçamento enviado"
@@ -308,6 +309,24 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica — a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # A régua abaixo é deste ramo: a DATA é escassez real, não argumento de
+  # vendedor — e dizer isso com fato é legítimo; sem fato, é pressão.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Perguntar data e número de convidados, só isso. Sem os dois não existe orçamento — e é a pergunta que o cliente entende por que precisa responder." }
+      - { offset_days: 5, intent: "Informar a situação REAL da data que ele citou, se ela estiver no sistema. Escassez verdadeira move; escassez inventada queima." }
+      - { offset_days: 10, intent: "Encerrar com porta aberta — e registrar a data pretendida, que é o gancho da retomada." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   # O orçamento de festa some rápido porque a pessoa pede em cinco lugares
   # no mesmo dia. O terceiro toque usa a única urgência honesta que existe
   # aqui: a data que ela quer ainda está livre — e pode não estar amanhã.

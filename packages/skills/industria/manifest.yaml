@@ -66,6 +66,7 @@ journey:
         - { key: followup_2, label: "Última tentativa",   offset_days: 8 }
     - key: qualificacao
       label: "Qualificação"
+      cadence: descoberta_parada
       goal: "Mix, giro, público e quem assina. Descobrir de quem ele compra hoje e o que falta lá."
     - key: amostra
       label: "Amostra e ficha técnica"
@@ -85,6 +86,7 @@ journey:
         - { key: cobranca, label: "Cobrar posição",   offset_days: 7 }
     - key: primeiro_pedido
       label: "Primeiro pedido"
+      cadence: primeiro_pedido_parado
       goal: "Fechar o pedido de entrada, mesmo pequeno — o produto precisa provar giro na loja dele."
     - key: carteira_ativa
       label: "Carteira ativa"
@@ -103,7 +105,7 @@ journey:
     # parou de responder apagava a pessoa para sempre. Sumir não é dizer não.
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
-    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # `perdido` = perdeu_silencio, `recusou` = perdeu_decisão.
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -333,6 +335,36 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica - a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # REGUA LONGA, DE PROPÓSITO. Rackham mediu: em ticket alto, pressão DERRUBA
+  # conversão. Cada toque precisa trazer informação nova, e o intervalo
+  # respeita que do outro lado existe processo interno, não humor.
+  # Deste ramo: ticket alto, decisão colegiada e ciclo de
+  # meses. Cada toque traz dado técnico ou não acontece.
+  # -------------------------------------------------------------------
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 4, intent: "Confirmar a aplicação e o volume estimado - uma pergunta técnica. Em indústria, quem pergunta certo já vale mais que quem responde rápido." }
+      - { offset_days: 10, intent: "Mandar a informação técnica que costuma faltar na comparação (ficha, tolerância, lote mínimo) sem pedir decisão." }
+      - { offset_days: 21, intent: "Perguntar em que fase interna esta o projeto - homologação, amostra, compras - e registrar. Ciclo longo se acompanha por fase, não por insistência." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: primeiro_pedido_parado
+    applies_to: proposal
+    steps:
+      - { offset_days: 4, intent: "Confirmar se a amostra foi avaliada e por quem. Amostra parada em desenvolvimento e o gargalo mais comum e ninguém avisa." }
+      - { offset_days: 10, intent: "Tirar do caminho o que costuma travar o pedido de entrada: lote mínimo, prazo de produção e condição de pagamento." }
+      - { offset_days: 21, intent: "Perguntar o que falta para o primeiro pedido ser emitido - costuma ser um cadastro ou uma aprovação, não uma decisão comercial." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: prospeccao_fria
     applies_to: cold_outreach
     steps:

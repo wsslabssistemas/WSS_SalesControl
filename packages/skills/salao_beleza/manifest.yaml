@@ -75,6 +75,7 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Entender o que ela quer e o que já foi feito. Química não se cota por mensagem."
     - key: avaliacao
       label: "Avaliação do cabelo"
@@ -298,6 +299,25 @@ strategy_map:
   ecosystem:           persuasao_cialdini
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência declarada, o núcleo escrevia a
+  # própria frase genérica — a mesma para todo ramo. Eram 39 das 80 etapas
+  # vivas dos 15 segmentos, e quase todas aqui, onde a venda acontece.
+  #
+  # A régua abaixo é deste ramo: química não se cota por mensagem, e prometer
+  # resultado sem ver o cabelo é o erro que custa cliente e reputação.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 1, intent: "Pedir uma foto do cabelo em luz natural e o que já foi feito nele. É o que substitui o orçamento impossível — e é pedido concreto, não enrolação." }
+      - { offset_days: 3, intent: "Explicar por que a avaliação vem antes do preço, e oferecer a avaliação como passo curto e sem compromisso." }
+      - { offset_days: 7, intent: "Encerrar sem promessa. Cliente de química volta quando confia, e confiança não se acelera por insistência." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_avaliacao
     applies_to: proposal_followup
     steps:

@@ -38,9 +38,11 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir para quem é e para quê. O objetivo é que escolhe o curso — preço sem objetivo vende a trilha errada."
     - key: descoberta
       label: "Descoberta"
+      cadence: descoberta_parada
       goal: "Nível atual, objetivo, prazo, disponibilidade e quem decide junto."
     - key: teste_de_nivel
       label: "Teste de nível"
@@ -60,6 +62,7 @@ journey:
         - { key: cobranca, label: "Cobrar posição",    offset_days: 7 }
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Isolar o que trava — valor, tempo, medo de não terminar, outra pessoa na decisão — e viabilizar o pagamento."
     # MATRICULADO É `won` E **NÃO** É TERMINAL, de propósito.
     #
@@ -387,6 +390,42 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia a própria frase
+  # genérica — a mesma para todo ramo. Eram 39 das 80 etapas vivas.
+  #
+  # A régua abaixo é deste ramo: o OBJETIVO escolhe a trilha, e o medo real é
+  # 'não vou terminar' — não é preço.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Perguntar para quem é e para quê, uma coisa só. Sem o objetivo, qualquer preço vende a trilha errada." }
+      - { offset_days: 6, intent: "Oferecer o teste de nível ou a aula aberta: descobrir onde ele está resolve a qualificação e a objeção juntas." }
+      - { offset_days: 12, intent: "Encerrar com porta aberta para a próxima turma." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 2, intent: "Confirmar só prazo e disponibilidade semanal — é o que decide formato, e é onde a maioria trava." }
+      - { offset_days: 6, intent: "Apresentar duas trilhas concretas para o objetivo dele, em vez de repetir a pergunta." }
+      - { offset_days: 12, intent: "Oferecer a aula aberta como caminho de menor esforço e encerrar a qualificação." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 2, intent: "Nomear o que ele levantou e responder com o fato que falta — carga horária, certificado, política de trancamento." }
+      - { offset_days: 6, intent: "Tratar o medo que ninguém escreve: começar e não terminar. É a objeção real da maioria dos cursos." }
+      - { offset_days: 12, intent: "Oferecer a menor entrada que existir no DNA; se não existir, ESCALAR em vez de inventar desconto." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_teste
     applies_to: trial_followup
     steps:

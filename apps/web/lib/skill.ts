@@ -20,6 +20,21 @@ export type Stage = {
   phases?: Phase[];
   /** Cadência de follow-up que governa esta etapa (chave em `cadences`). */
   cadence?: string;
+  /**
+   * O que esta etapa existe para fazer, na voz do segmento.
+   *
+   * ⚠ ESTE CAMPO SEMPRE EXISTIU NO MANIFESTO E O NÚCLEO O IGNORAVA — e é por
+   * isso que ele está tipado agora. Etapa sem cadência declarada caía num
+   * texto genérico escrito em `lib/cadence.ts` ("retome com um ângulo novo"),
+   * igual para academia e para indústria, enquanto o manifesto já dizia
+   * "Quebrar o gelo e descobrir o objetivo. Nunca abrir com preço." e
+   * "Mix, giro, público e quem assina."
+   *
+   * São **39 das 80 etapas vivas** dos 15 segmentos — quase todas o miolo da
+   * venda (contato, descoberta, proposta, negociação). O núcleo estava
+   * escrevendo prosa de venda genérica exatamente onde a venda acontece.
+   */
+  goal?: string;
 };
 
 /** Config de formulário vinda do manifesto da Skill (campos são dado, não código). */

@@ -29,12 +29,15 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Quebrar o gelo e descobrir o objetivo. Nunca abrir com preço."
     - key: descoberta
       label: "Descoberta"
+      cadence: descoberta_parada
       goal: "Qualificar objetivo, experiência e rotina."
     - key: proposta
       label: "Proposta"
+      cadence: proposta_sem_resposta
       goal: "Apresentar a opção adequada e conduzir à experiência."
     - key: experimentacao
       label: "Semana experimental"
@@ -49,6 +52,7 @@ journey:
         - { key: conversao,     label: "Conversão",     offset_days: 8 }
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Isolar a objeção real e fechar."
     # MATRICULADO É `won` E DEIXOU DE SER TERMINAL (ago/2026).
     #
@@ -288,6 +292,56 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # AS QUATRO CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência, o núcleo escrevia "retome com um
+  # ângulo novo" — a mesma frase para academia e para indústria. Eram 39 das
+  # 80 etapas vivas dos 15 segmentos, e quase todas aqui, onde a venda
+  # acontece.
+  #
+  # A régua da academia é CURTA porque o ticket é baixo e a decisão é
+  # emocional: quem pesquisou academia hoje entra em outra em uma semana.
+  # Nada de "só passando para saber" — cada toque entrega algo novo ou
+  # encerra. Três toques e para: insistir além disso em ticket de mensalidade
+  # queima o contato para a reativação, que é onde ele volta a valer.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 1, intent: "Refazer a pergunta de um jeito mais fácil de responder — uma só, fechada. Quem não respondeu não recusou: quase sempre travou na pergunta aberta demais." }
+      - { offset_days: 4, intent: "Dar algo útil SEM pedir nada em troca: o horário mais vazio para quem está começando, ou como funciona a primeira vez. Reciprocidade antes de qualificação." }
+      - { offset_days: 9, intent: "Encerrar com porta aberta e sem culpa — 'deixo por aqui, me chama quando for a hora'. Encerrar bem é o que permite reativar depois." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 2, intent: "Devolver o que ele JÁ contou e pedir só o pedaço que falta. Repetir a pergunta que ele ignorou é o jeito mais rápido de virar silêncio definitivo." }
+      - { offset_days: 6, intent: "Trocar a pergunta por uma alternativa concreta — dois horários, dois formatos. Escolher é mais fácil que descrever." }
+      - { offset_days: 12, intent: "Oferecer a experimental como caminho de menor esforço: ver é mais barato que explicar, e resolve a qualificação sozinho." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: proposta_sem_resposta
+    applies_to: proposal
+    steps:
+      - { offset_days: 2, intent: "Confirmar que chegou e perguntar o que ficou confuso — não se a decisão saiu. Proposta parada quase sempre é dúvida não dita, não recusa." }
+      - { offset_days: 5, intent: "Atacar a dúvida mais comum deste ramo sem esperar ele levantar: fidelidade, cancelamento e o que acontece se ele não conseguir vir." }
+      - { offset_days: 10, intent: "Perguntar diretamente se faz sentido seguir agora ou se é melhor retomar mais para frente — e aceitar o 'mais para frente' sem insistir." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 2, intent: "Nomear a objeção que ele levantou e devolver com a informação que falta — sem repetir argumento que já não funcionou uma vez." }
+      - { offset_days: 5, intent: "Checar se a objeção declarada é a real. Preço costuma ser a educada; a verdadeira é horário, vergonha de começar ou alguém em casa." }
+      - { offset_days: 11, intent: "Fechar o ciclo com a alternativa de menor compromisso que existir no DNA — e se ela não existir, ESCALAR em vez de inventar condição." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: trial_followup
     applies_to: trial_followup
     steps:

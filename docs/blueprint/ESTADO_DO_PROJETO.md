@@ -816,6 +816,7 @@ node packages/db/tests/cnae_test.mjs       # alvos de prospecção: 9/9
 node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
 node packages/db/tests/telefone_test.mjs   # E.164 brasileiro: 30/30
 node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
+node packages/db/tests/cadencia_check.mjs   # nenhuma etapa viva muda: 80/80 (sem banco)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)

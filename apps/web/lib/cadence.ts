@@ -116,7 +116,26 @@ export function computeDueTouches(
       continue;
     }
 
-    // Sem cadência declarada: cobra o silêncio.
+    // ------------------------------------------- SEM CADÊNCIA: O OBJETIVO DA ETAPA
+    //
+    // ⚠ AQUI O NÚCLEO ESCREVIA PROSA DE VENDA, e isso é a Lei 1 vazando no
+    // lugar mais caro possível.
+    //
+    // O texto era *"Retomar o contato — ninguém falou com ele desde então."*:
+    // igual para academia e para indústria, para um lead de R$ 89/mês e para
+    // um pedido de 3 mil metros de feltro. E não era caso de borda — são **39
+    // das 80 etapas vivas** dos 15 segmentos, quase todas o MIOLO da venda
+    // (primeiro contato, descoberta, proposta, negociação).
+    //
+    // O manifesto já sabia o que dizer. Toda etapa declara `goal` na voz do
+    // ramo — *"Nunca abrir com preço"*, *"Mix, giro, público e quem assina"*,
+    // *"Química não se cota por mensagem"* — e o núcleo jogava fora para
+    // escrever a própria frase genérica.
+    //
+    // A regra que fica: **o núcleo diz QUANDO falar; o manifesto diz O QUÊ.**
+    // Se um dia aparecer etapa sem `goal`, o texto de último recurso continua
+    // existindo — mas agora ele é o que ele realmente é: um aviso de que falta
+    // curadoria, não uma instrução de venda.
     if (daysSince >= silenceDays) {
       out.push({
         contactId: c.id,
@@ -126,7 +145,9 @@ export function computeDueTouches(
         stageLabel: stage.label,
         stepNumber: 0,
         totalSteps: 0,
-        intent: "Retomar o contato — ninguém falou com ele desde então.",
+        intent: stage.goal
+          ? stage.goal
+          : `Etapa "${stage.label}" não declara objetivo nem cadência no manifesto — o sistema não sabe o que este toque deve fazer. Abra a ficha antes de escrever.`,
         daysSince,
         overdueDays: daysSince - silenceDays,
         cadenceKey: null,

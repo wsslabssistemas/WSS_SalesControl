@@ -25,9 +25,11 @@ journey:
   stages:
     - key: contato
       label: "Primeiro contato"
+      cadence: primeiro_contato
       goal: "Descobrir para quem é a aula e o objetivo. Nunca abrir com preço."
     - key: descoberta
       label: "Descoberta"
+      cadence: descoberta_parada
       goal: "Idade, nível, disponibilidade de horário e quem decide."
     - key: aula_experimental
       label: "Aula experimental"
@@ -39,9 +41,11 @@ journey:
         - { key: pos_aula,   label: "Retorno pós-aula",   offset_days: 3 }
     - key: proposta
       label: "Proposta"
+      cadence: proposta_sem_resposta
       goal: "Apresentar a turma e o plano adequados ao horário dele."
     - key: negociacao
       label: "Negociação"
+      cadence: negociacao_travada
       goal: "Tratar a objeção real (horário, valor, distância) e fechar."
     - key: matriculado
       label: "Matriculado"
@@ -212,6 +216,52 @@ strategy_map:
   ecosystem:           relacionamento_carnegie
 
 cadences:
+  # -------------------------------------------------------------------
+  # CADÊNCIAS DO MIOLO DA VENDA (ago/2026)
+  #
+  # Estas etapas eram MUDAS: sem cadência declarada, o núcleo escrevia a
+  # própria frase genérica — a mesma para todo ramo. Eram 39 das 80 etapas
+  # vivas dos 15 segmentos, e quase todas aqui, onde a venda acontece.
+  #
+  # A régua abaixo é deste ramo: quem decide é o pai e quem usa é a criança,
+  # e o que trava quase sempre é HORÁRIO, não preço.
+  # -------------------------------------------------------------------
+  - key: primeiro_contato
+    applies_to: prospecting
+    steps:
+      - { offset_days: 2, intent: "Perguntar a idade e o horário possível — uma coisa só. Turma é o produto, e sem idade e horário não existe turma para oferecer." }
+      - { offset_days: 5, intent: "Oferecer a aula experimental como o menor passo possível: ver a turma decide mais que qualquer explicação." }
+      - { offset_days: 10, intent: "Encerrar com porta aberta para o próximo ciclo de turmas." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: descoberta_parada
+    applies_to: qualification
+    steps:
+      - { offset_days: 2, intent: "Devolver o que ele já contou e confirmar só a disponibilidade de horário, que é o que fecha ou derruba a matrícula." }
+      - { offset_days: 6, intent: "Apresentar duas turmas concretas com dia e hora, em vez de perguntar de novo." }
+      - { offset_days: 12, intent: "Oferecer a experimental e encerrar a qualificação por ali." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: proposta_sem_resposta
+    applies_to: proposal
+    steps:
+      - { offset_days: 2, intent: "Confirmar se a turma proposta cabe na rotina da família — e não se decidiram. Silêncio depois de proposta é agenda, não preço." }
+      - { offset_days: 6, intent: "Tratar a dúvida que ninguém verbaliza: se a criança não se adaptar, o que acontece." }
+      - { offset_days: 12, intent: "Perguntar se é para agora ou para o próximo semestre, e aceitar a segunda resposta sem insistir." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
+  - key: negociacao_travada
+    applies_to: negotiation
+    steps:
+      - { offset_days: 2, intent: "Nomear a objeção levantada e responder com o fato que falta — sem repetir argumento que já não funcionou." }
+      - { offset_days: 6, intent: "Checar se o que trava é valor mesmo ou logística: quem leva, quem busca, distância." }
+      - { offset_days: 12, intent: "Fechar com a alternativa de menor compromisso que existir no DNA — e ESCALAR se ela não existir, em vez de inventar condição." }
+    stop_on: [replied, converted, opted_out, lost]
+    max_attempts: 3
+
   - key: pos_experimental
     applies_to: trial_followup
     steps:
