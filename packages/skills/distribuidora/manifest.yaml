@@ -219,6 +219,10 @@ categories:
 # O campo `frequencia` do contato vira ciclo previsto de reposição: o núcleo
 # avisa antes do estoque do cliente acabar, em vez de esperar ele ligar.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto da próxima reposição pelo giro dele. Traga o que costuma faltar na prateleira nessa altura do ciclo — chegar antes da ruptura é a venda; chegar depois é atender pedido."
   frequency_field: frequencia
   remind_before_days: 3
   intervals_days:

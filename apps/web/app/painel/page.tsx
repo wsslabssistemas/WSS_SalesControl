@@ -61,7 +61,7 @@ export default async function PainelHome({
     );
   }
 
-  const { stages, recurrence, cadences } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, recurrence, cadences, contract } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -143,7 +143,7 @@ export default async function PainelHome({
   // seção em que a pessoa caiu.
   const fila = construirFila({
     contatos: contacts.map((c) => ({ ...c, next_action_note: c.next_action_note })),
-    ultimoContato: lastByContact, stages, cadences, recurrence, hojeISO,
+    ultimoContato: lastByContact, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
 

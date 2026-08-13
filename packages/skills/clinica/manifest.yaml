@@ -119,6 +119,10 @@ contact_fields:
 
 # Recompra: retorno de manutenção é o LTV que estas clínicas perdem.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto do retorno preventivo. Ofereça a data da reavaliação sem alarme e sem prometer resultado — prevenção se vende com rotina, não com medo."
   frequency_field: retorno_previsto
   remind_before_days: 7
   intervals_days:
@@ -160,6 +164,33 @@ services:
 contract:
   enabled: true
   label: "Plano de tratamento"
+  # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
+  #
+  # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
+  # ele já conseguiu que não conseguia" é ótimo para um aluno e constrangedor
+  # num contrato de fornecimento. Prosa de venda no núcleo é a Lei 1 vazando,
+  # e vazando no lugar mais caro: é o texto que a IA recebe como instrução.
+  #
+  # A ESTRUTURA continua sendo do núcleo — três janelas com ângulos diferentes
+  # e o primeiro toque falando de RESULTADO, nunca de renovação. Isso não é
+  # opinião de segmento: é o que separa renovar de cobrar.
+  renewal:
+    vencido:
+      titulo: "Plano de tratamento parou sem conclusão"
+      intencao: "Retome sem cobrança e sem alarme. Pergunte como ele está e ofereça o retorno para reavaliação — tratamento interrompido se retoma com avaliação, nunca com desconto."
+    janelas:
+      - key: resultado
+        dias_antes: 60
+        titulo: "Perguntar como ele está"
+        intencao: "NÃO mencione continuidade comercial. Pergunte como está a queixa que o trouxe e registre a resposta. Em saúde, o resultado percebido é o que sustenta qualquer conversa seguinte."
+      - key: continuidade
+        dias_antes: 30
+        titulo: "Abrir a próxima etapa clínica"
+        intencao: "Retome o que ele relatou e apresente a próxima etapa do plano, com o que ela resolve. Nunca prometa resultado clínico — descreva a etapa, não o desfecho."
+      - key: condicao
+        dias_antes: 7
+        titulo: "Fechar retorno e condição"
+        intencao: "Data do retorno, valor e forma de pagamento, com o que existir no DNA. Sem data marcada, plano de tratamento vira abandono — e abandono em saúde custa mais que dinheiro."
 
 lead_sources:
   - instagram

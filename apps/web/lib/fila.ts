@@ -182,10 +182,12 @@ export function construirFila(params: {
   stages: EtapaDaFila[];
   cadences: CadenciaDaFila[];
   recurrence: unknown;
+  /** `contract.renewal` do manifesto — o texto de cada janela, na voz do ramo. */
+  renewal?: unknown;
   hojeISO: string;
   deps: DepsDaFila;
 }): ItemDaFila[] {
-  const { contatos, ultimoContato, stages, cadences, recurrence, hojeISO, deps } = params;
+  const { contatos, ultimoContato, stages, cadences, recurrence, renewal, hojeISO, deps } = params;
   const foraDeJogo = deps.stagesForaDeJogo(stages);
   const itens: ItemDaFila[] = [];
   const porId = new Map(contatos.map((c) => [c.id, c]));
@@ -242,7 +244,7 @@ export function construirFila(params: {
   }
 
   // 2. RENOVAÇÃO — receita já vendida saindo pela porta.
-  for (const r of deps.computeRenovacoes(contatos, foraDeJogo)) {
+  for (const r of deps.computeRenovacoes(contatos, foraDeJogo, undefined, renewal)) {
     const c = porId.get(r.contactId);
     if (!c) continue;
     itens.push({
@@ -277,7 +279,13 @@ export function construirFila(params: {
     itens.push({
       contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
       motivo: "recompra",
-      intencao: `Está no ponto de voltar (ciclo de ${r.intervalDays} dias). Sugira uma data concreta, sem cobrar a ausência.`,
+      // O TEXTO É DO SEGMENTO. Antes era esta frase, escrita aqui, servindo
+      // igual para o corte de 21 dias da barbearia e para a reposição de
+      // estoque da distribuidora — conversas diferentes: hábito pessoal de um
+      // lado, ruptura de prateleira do outro. O ciclo em dias continua sendo
+      // cálculo do núcleo e entra como fato.
+      intencao: `${(recurrence as { intent?: string } | null)?.intent
+        ?? "Está no ponto de voltar. Sugira uma data concreta, sem cobrar a ausência."} (ciclo de ${r.intervalDays} dias)`,
       atraso: Math.max(0, r.overdueDays),
     });
   }
@@ -316,7 +324,7 @@ export type DepsDaFila = {
   stagesForaDeJogo: (s: EtapaDaFila[]) => Set<string>;
   stagesWithoutRecurrence: (s: EtapaDaFila[]) => Set<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  computeRenovacoes: (c: any, fora: Set<string>) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean }[];
+  computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

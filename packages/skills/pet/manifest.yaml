@@ -188,6 +188,10 @@ services:
 # Banho tem ciclo próprio por pelagem; creche é frequência semanal; hotel
 # é por viagem. O campo do contato manda; isto é o padrão do banho.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "O pelo já está pedindo o próximo banho ou tosa. Ofereça a janela concreta para o porte dele e lembre do que foi combinado da última vez — tosa tem ritmo, e o tutor conta com quem lembra."
   enabled: true
   default_interval_days: 21
   field: frequencia

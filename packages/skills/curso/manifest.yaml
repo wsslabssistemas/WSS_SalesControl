@@ -250,6 +250,33 @@ services:
 contract:
   enabled: true
   label: "Matrícula no módulo"
+  # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
+  #
+  # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
+  # ele já conseguiu que não conseguia" é ótimo para um aluno e constrangedor
+  # num contrato de fornecimento. Prosa de venda no núcleo é a Lei 1 vazando,
+  # e vazando no lugar mais caro: é o texto que a IA recebe como instrução.
+  #
+  # A ESTRUTURA continua sendo do núcleo — três janelas com ângulos diferentes
+  # e o primeiro toque falando de RESULTADO, nunca de renovação. Isso não é
+  # opinião de segmento: é o que separa renovar de cobrar.
+  renewal:
+    vencido:
+      titulo: "Matrícula venceu sem contato"
+      intencao: "Retome sem cobrança e sem julgamento sobre não ter terminado. Pergunte se ele quer retomar de onde parou e ofereça o caminho concreto que existir no DNA."
+    janelas:
+      - key: resultado
+        dias_antes: 60
+        titulo: "Falar do que ele já domina"
+        intencao: "NÃO mencione renovação. Pergunte o que ele já consegue fazer com o que aprendeu — usar, ler, conversar, aplicar no trabalho. O ganho concreto é o que sustenta o próximo módulo."
+      - key: continuidade
+        dias_antes: 30
+        titulo: "Abrir o próximo módulo"
+        intencao: "Retome o que ele contou que já consegue e mostre o que o próximo módulo destrava. Progressão é o argumento do ramo: quem parou no meio perde o que já pagou."
+      - key: condicao
+        dias_antes: 7
+        titulo: "Fechar turma e condição"
+        intencao: "Turma, horário, valor e forma de pagamento, com o que existir no DNA. Se a turma nova tem data de início, ela é o prazo real — e prazo real não é pressão."
 
 lead_sources:
   - whatsapp

@@ -208,6 +208,33 @@ services:
 contract:
   enabled: true
   label: "Assinatura"
+  # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
+  #
+  # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
+  # ele já conseguiu que não conseguia" é ótimo para um aluno e constrangedor
+  # num contrato de fornecimento. Prosa de venda no núcleo é a Lei 1 vazando,
+  # e vazando no lugar mais caro: é o texto que a IA recebe como instrução.
+  #
+  # A ESTRUTURA continua sendo do núcleo — três janelas com ângulos diferentes
+  # e o primeiro toque falando de RESULTADO, nunca de renovação. Isso não é
+  # opinião de segmento: é o que separa renovar de cobrar.
+  renewal:
+    vencido:
+      titulo: "Assinatura venceu sem renovação"
+      intencao: "Retome sem cobrança e pergunte o que mudou na operação. Assinatura B2B que vence em silêncio quase sempre é troca de responsável ou corte de orçamento — descobrir qual muda a conversa inteira."
+    janelas:
+      - key: resultado
+        dias_antes: 60
+        titulo: "Mostrar o número que ele conseguiu"
+        intencao: "NÃO mencione renovação. Traga o número da operação DELE — atendimentos, tempo de resposta, o que a equipe usou — e pergunte se bate com o que ele percebe. Dado próprio é o único argumento que não se discute."
+      - key: continuidade
+        dias_antes: 30
+        titulo: "Abrir o próximo ciclo com quem assina"
+        intencao: "Retome o número e descubra se quem assina é a mesma pessoa. Em B2B a renovação morre quando chega só a quem usa; o orçamento está em outra mesa."
+      - key: condicao
+        dias_antes: 7
+        titulo: "Fechar condição e caminho de aprovação"
+        intencao: "Valor, prazo e o que a área de compras precisa, com o que existir no DNA. Ajudar a passar pelo processo interno vale mais que insistir na decisão."
 
 lead_sources:
   - whatsapp

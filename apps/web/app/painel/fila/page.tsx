@@ -50,7 +50,7 @@ export default async function FilaPage({
     return (<main><h1>Fila de envio</h1><p className="text-dim">Sem empresa vinculada.</p></main>);
   }
 
-  const { stages, cadences, recurrence } = await getSkillFormConfig(tenant.skill_key);
+  const { stages, cadences, recurrence, contract } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
   // LEITURA PAGINADA, e não é otimização — é correção.
@@ -107,7 +107,7 @@ export default async function FilaPage({
   // dedução "uma pessoa, um motivo" não valia lá — a mesma aluna aparecia em
   // três lugares. Fila é lógica, não é tela.
   const fila = construirFila({
-    contatos, ultimoContato: ultimo, stages, cadences, recurrence, hojeISO,
+    contatos, ultimoContato: ultimo, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
   const porMotivo = (m: string) => fila.filter((f) => f.motivo === m).length;

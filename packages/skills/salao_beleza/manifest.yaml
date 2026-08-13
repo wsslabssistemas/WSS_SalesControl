@@ -175,6 +175,10 @@ services:
 # Retoque de raiz, manutenção de unha e corte têm ciclos DIFERENTES na
 # mesma cliente. O campo do contato manda; isto é só o padrão.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto da manutenção — raiz, retoque ou hidratação. Ofereça data concreta antes de o resultado desmanchar: em química, atrasar a manutenção custa o trabalho todo."
   enabled: true
   default_interval_days: 30
   field: ciclo_retorno

@@ -5,6 +5,16 @@
 const DAY = 86400000;
 
 export type RecurrenceConfig = {
+  /**
+   * O que dizer no toque de recompra, na voz do ramo.
+   *
+   * ⚠ Isto morava no NÚCLEO — *"Está no ponto de voltar (ciclo de X dias).
+   * Sugira uma data concreta, sem cobrar a ausência."* — e servia igual para
+   * a barbearia (corte de 21 dias) e para a distribuidora (reposição de
+   * estoque). São conversas diferentes: uma é hábito pessoal, a outra é
+   * ruptura de prateleira. Prosa de venda no núcleo é a Lei 1 vazando.
+   */
+  intent?: string;
   frequency_field?: string;
   preferred_day_field?: string;
   remind_before_days?: number;

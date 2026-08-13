@@ -186,6 +186,10 @@ services:
 # 365 dias, e o alerta precisa sair com MESES de antecedência, porque data
 # boa esgota. O campo do contato manda; isto é o padrão.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está chegando a data que ele comemora todo ano. Ofereça a reserva antes de a agenda fechar — data de aniversário e formatura é escassez real, e lembrar dela primeiro é o diferencial."
   enabled: true
   default_interval_days: 365
   field: data_aniversario

@@ -262,6 +262,10 @@ contact_fields:
 # com sistema sujo gera menos e reclama do fornecedor, não da poeira.
 # ---------------------------------------------------------------------
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto da limpeza e checagem anual dos módulos. Fale de geração, não de venda: painel sujo perde rendimento e o cliente só descobre pela conta de luz."
   frequency_field: ciclo_manutencao
   remind_before_days: 15
   intervals_days:

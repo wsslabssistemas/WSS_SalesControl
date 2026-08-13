@@ -140,6 +140,33 @@ services:
 contract:
   enabled: true
   label: "Plano"
+  # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
+  #
+  # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
+  # ele já conseguiu que não conseguia" é ótimo para um aluno e constrangedor
+  # num contrato de fornecimento. Prosa de venda no núcleo é a Lei 1 vazando,
+  # e vazando no lugar mais caro: é o texto que a IA recebe como instrução.
+  #
+  # A ESTRUTURA continua sendo do núcleo — três janelas com ângulos diferentes
+  # e o primeiro toque falando de RESULTADO, nunca de renovação. Isso não é
+  # opinião de segmento: é o que separa renovar de cobrar.
+  renewal:
+    vencido:
+      titulo: "Venceu sem contato"
+      intencao: "Retome sem cobrar o atraso e sem falar de dívida. Pergunte se ele quer voltar e ofereça a condição concreta que existir no DNA — quem venceu sem conversa quase sempre só não foi lembrado."
+    janelas:
+      - key: resultado
+        dias_antes: 60
+        titulo: "Falar do resultado"
+        intencao: "NÃO mencione renovação. Pergunte o que ele já consegue fazer e não conseguia quando começou — e registre a resposta. É esse texto que sustenta a conversa daqui a um mês."
+      - key: continuidade
+        dias_antes: 30
+        titulo: "Abrir a continuidade"
+        intencao: "Retome com as palavras dele o ganho que ele mesmo contou e projete o próximo ciclo de treino. A renovação entra como continuação do que já está funcionando."
+      - key: condicao
+        dias_antes: 7
+        titulo: "Fechar com condição concreta"
+        intencao: "Data, valor e forma de pagamento, só com o que existir no DNA. Sem condição concreta o vencimento passa e vira cancelamento por inércia — que na academia é a evasão silenciosa."
 
 # ---------------------------------------------------------------------
 # AGENDA — o caso da academia é DIFERENTE dos outros segmentos

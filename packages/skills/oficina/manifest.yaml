@@ -182,6 +182,10 @@ services:
 # A revisão tem intervalo previsível — é o motor de recorrência com o
 # melhor encaixe de todos os segmentos até aqui.
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto da próxima revisão por tempo ou quilometragem. Lembre o que ficou pendente da última vez, se ficou — avisar antes de quebrar é o que constrói confiança em oficina."
   enabled: true
   default_interval_days: 180
   field: intervalo_revisao

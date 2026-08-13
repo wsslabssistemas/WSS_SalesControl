@@ -127,7 +127,61 @@ for (const seg of segmentos) {
   }
 }
 
+// ---------------------------------------------------------------------
+// RENOVAÇÃO E RECOMPRA — os outros dois lugares onde o núcleo escrevia
+// prosa de venda.
+//
+// A cadência era o buraco maior, mas não era o único. `computeRenovacoes`
+// carregava três textos nascidos na academia ("pergunte o que ele já
+// conseguiu que não conseguia") e `construirFila` carregava o da recompra —
+// o mesmo para o corte de 21 dias da barbearia e para a reposição de estoque
+// da distribuidora. Hábito pessoal de um lado, ruptura de prateleira do
+// outro: conversas diferentes com a mesma frase.
+//
+// Cobrado de quem TEM a capacidade: só faz sentido exigir texto de renovação
+// de quem declara `contract.enabled`, e texto de recompra de quem declara
+// `recurrence`. Cobrar de todo mundo produziria curadoria de mentira para
+// preencher trava — que é pior que trava nenhuma.
+// ---------------------------------------------------------------------
+let comContrato = 0, comCiclo = 0;
+for (const seg of segmentos) {
+  const m = YAML.parse(fs.readFileSync(path.join(DIR, seg, "manifest.yaml"), "utf8"));
+
+  if (m?.contract?.enabled) {
+    comContrato++;
+    const r = m.contract.renewal;
+    if (!r?.janelas?.length) {
+      erro(`${seg} — tem contrato com vigência e não declara \`contract.renewal\`. As três janelas vão sair na voz do núcleo, que é genérica por construção.`);
+    } else {
+      const chaves = new Set(r.janelas.map((j) => j.key));
+      for (const k of ["resultado", "continuidade", "condicao"]) {
+        if (!chaves.has(k)) erro(`${seg} — \`contract.renewal\` não declara a janela "${k}".`);
+      }
+      // ⚠ A REGRA DE TÉCNICA, e ela vale em todo ramo: o PRIMEIRO toque não
+      // fala de renovação, fala do resultado. Quem só aparece para cobrar
+      // assinatura ensina o cliente a lembrar do produto como despesa.
+      const prim = r.janelas.find((j) => j.key === "resultado");
+      const t = (prim?.intencao ?? "").toLowerCase();
+      if (t && /\brenov(ar|ação|ac)/.test(t) && !/n[ãa]o mencione/.test(t)) {
+        erro(`${seg} — a janela "resultado" fala de renovação. O primeiro toque fala do RESULTADO; é isso que separa renovar de cobrar.`);
+      }
+      if (!r.vencido?.intencao) {
+        erro(`${seg} — \`contract.renewal\` não declara o texto do vencido, que é o caso mais caro da lista.`);
+      }
+    }
+  }
+
+  if (m?.recurrence) {
+    comCiclo++;
+    const i = (m.recurrence.intent ?? "").trim();
+    if (i.length < 25) {
+      erro(`${seg} — tem ciclo de recompra e não declara \`recurrence.intent\`. O toque vai sair com a frase genérica do núcleo.`);
+    }
+  }
+}
+
 console.log(`\nSegmentos: ${segmentos.length} · etapas vivas: ${vivas} · com cadência: ${comCadencia} · passos curados: ${passos}`);
+console.log(`Com contrato: ${comContrato} (renovação declarada) · com ciclo: ${comCiclo} (recompra declarada)`);
 console.log(falhas === 0
   ? `✓ PASSOU — nenhuma etapa viva muda em ${segmentos.length} segmentos`
   : `✗ FALHOU — ${falhas} problema(s)`);

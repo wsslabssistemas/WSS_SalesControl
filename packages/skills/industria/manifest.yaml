@@ -216,6 +216,10 @@ contact_fields:
 # ponto — o cliente há +90 dias sem repor.
 # ---------------------------------------------------------------------
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto do próximo pedido pelo consumo estimado. Confirme se o giro se manteve e se a aplicação mudou — em indústria, mudança de aplicação muda o produto, não só o volume."
   frequency_field: ciclo_reposicao
   remind_before_days: 7
   intervals_days:

@@ -124,6 +124,33 @@ services:
 contract:
   enabled: true
   label: "Plano"
+  # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
+  #
+  # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
+  # ele já conseguiu que não conseguia" é ótimo para um aluno e constrangedor
+  # num contrato de fornecimento. Prosa de venda no núcleo é a Lei 1 vazando,
+  # e vazando no lugar mais caro: é o texto que a IA recebe como instrução.
+  #
+  # A ESTRUTURA continua sendo do núcleo — três janelas com ângulos diferentes
+  # e o primeiro toque falando de RESULTADO, nunca de renovação. Isso não é
+  # opinião de segmento: é o que separa renovar de cobrar.
+  renewal:
+    vencido:
+      titulo: "Venceu sem contato"
+      intencao: "Retome com quem decide, sem cobrar. Em escola esportiva a criança quer continuar e o adulto esqueceu a data — trate como lembrete, não como cobrança."
+    janelas:
+      - key: resultado
+        dias_antes: 60
+        titulo: "Falar da evolução do aluno"
+        intencao: "NÃO mencione renovação. Conte o que o professor observou de evolução e pergunte como está em casa. Quem decide é o adulto, e ele não vê a aula."
+      - key: continuidade
+        dias_antes: 30
+        titulo: "Abrir o próximo ciclo"
+        intencao: "Retome a evolução relatada e apresente a turma do próximo ciclo, com dia e hora. Turma é o produto: continuidade sem horário definido não fecha."
+      - key: condicao
+        dias_antes: 7
+        titulo: "Fechar com vaga e condição"
+        intencao: "Confirmar vaga na turma, valor e forma de pagamento, com o que existir no DNA. Vaga em turma é escassez real — dizer isso com fato é legítimo."
 
 lead_sources:
   - whatsapp

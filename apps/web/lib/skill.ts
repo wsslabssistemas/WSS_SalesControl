@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 import type { RecurrenceConfig } from "./recurrence";
+import type { RenewalConfig } from "./renovacao";
 import type { Cadence } from "./cadence";
 import type { SchedulingConfig } from "./scheduling";
 
@@ -60,7 +61,7 @@ export async function getSkillFormConfig(skillKey: string) {
       // Vigência de contrato: nem todo ramo tem. Academia, curso, escola
       // esportiva e software vendem PERÍODO; barbearia vende corte. O núcleo
       // sabe o que é "contrato com vigência" — não o que é matrícula (Lei 1).
-      contract?: { enabled?: boolean; label?: string };
+      contract?: { enabled?: boolean; label?: string; renewal?: RenewalConfig };
     } | null) ?? {};
 
   return {

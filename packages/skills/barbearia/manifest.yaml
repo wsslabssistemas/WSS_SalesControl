@@ -118,6 +118,10 @@ contact_fields:
 # quando sai alguns dias ANTES do ciclo fechar.
 # ---------------------------------------------------------------------
 recurrence:
+  # O QUE DIZER NO TOQUE DE RECOMPRA, na voz deste ramo. Estava no núcleo,
+  # servindo igual para o corte de 21 dias e para a reposição de estoque —
+  # hábito pessoal de um lado, ruptura de prateleira do outro.
+  intent: "Está no ponto do próximo corte. Ofereça dia e horário concretos com o profissional de preferência dele — recompra de barbearia se perde para a agenda, não para o preço."
   frequency_field: frequencia
   preferred_day_field: dia_preferido
   remind_before_days: 3
