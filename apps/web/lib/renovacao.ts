@@ -90,6 +90,28 @@ export type ContatoComContrato = {
   phone: string | null;
   journey_stage: string;
   contract_end: string | null;
+  /**
+   * Quando a vigência foi CONFERIDA na fonte pela última vez (ISO, só data).
+   *
+   * ⚠ ESTE CAMPO EXISTE POR CAUSA DA MARIA ISABEL FERREIRA GARCIA.
+   *
+   * O contrato dela era 11/fev → 10/ago, semestral. Em 13/ago a fila dizia
+   * "Venceu sem contato" — e ela já tinha renovado. A fila não errou: ela
+   * reportou fielmente o que o banco dizia. O banco é que estava afirmando
+   * uma FOTOGRAFIA com a confiança de um fato vivo.
+   *
+   * O sistema da academia não tem API; a vigência entra por planilha, e cada
+   * renovação cria uma LINHA NOVA lá. Entre uma importação e a próxima, todo
+   * `contract_end` envelhece em silêncio — e envelhecer em silêncio é
+   * exatamente o defeito que o `0029` corrigiu no DNA: *"dado de um ano atrás
+   * passava como PRONTO e era afirmado com a confiança do dado de ontem —
+   * mentir sem nunca ter inventado."*
+   *
+   * A regra derivada: um vencimento só pode ser AFIRMADO se a fonte foi
+   * conferida DEPOIS da data de fim. Antes disso o sistema não sabe se
+   * venceu ou se renovou, e dizer que venceu é inventar.
+   */
+  contrato_conferido_em?: string | null;
 };
 
 export type Renovacao = {
@@ -103,6 +125,13 @@ export type Renovacao = {
   intencao: string;
   /** Já passou da data. É o caso mais caro e por isso vem primeiro. */
   vencido: boolean;
+  /**
+   * A fonte foi conferida DEPOIS do vencimento?
+   *
+   * `false` significa "não sei se venceu ou renovou" — e a diferença entre os
+   * dois textos é a diferença entre cobrar quem já pagou e perguntar.
+   */
+  vencimentoConfirmado?: boolean;
 };
 
 const diaISO = (d: Date) => d.toISOString().slice(0, 10);
@@ -161,13 +190,26 @@ export function computeRenovacoes(
     // Vencido: uma janela só, e sem número de dias na intenção — "venceu há 40
     // dias" dito ao cliente é constrangimento, não argumento.
     if (dias < 0) {
+      // ⚠ SÓ AFIRMA O VENCIMENTO SE A FONTE FOI CONFERIDA DEPOIS DELE.
+      //
+      // Sem conferência posterior, "venceu" é dedução sobre dado velho. E o
+      // erro é assimétrico: dizer "venceu" para quem renovou é constrangedor
+      // e faz o cliente duvidar do sistema inteiro; perguntar para quem
+      // realmente venceu custa uma frase. Na dúvida, perguntar.
+      const conferido = c.contrato_conferido_em ?? null;
+      const confirmado = !!conferido && conferido.slice(0, 10) > c.contract_end.slice(0, 10);
       out.push({
         contactId: c.id, name: c.name, phone: c.phone,
         diasParaVencer: dias, janela: "condicao",
-        titulo: renewal?.vencido?.titulo ?? "Venceu sem contato",
-        intencao: renewal?.vencido?.intencao ??
-          "Retome sem cobrar o atraso. Pergunte se ele quer seguir e ofereça a condição concreta — quem venceu sem conversa quase sempre só não foi lembrado.",
+        titulo: confirmado
+          ? (renewal?.vencido?.titulo ?? "Venceu sem contato")
+          : "Vencimento não confirmado",
+        intencao: confirmado
+          ? (renewal?.vencido?.intencao ??
+            "Retome sem cobrar o atraso. Pergunte se ele quer seguir e ofereça a condição concreta — quem venceu sem conversa quase sempre só não foi lembrado.")
+          : `A vigência registrada terminou${conferido ? ` e a fonte não é conferida desde ${conferido.slice(0, 10).split("-").reverse().join("/")}` : " e nunca foi conferida na fonte"}. O sistema NÃO sabe se ele renovou. Confirme antes de falar — e não escreva nada que afirme que o contrato venceu.`,
         vencido: true,
+        vencimentoConfirmado: confirmado,
       });
       continue;
     }

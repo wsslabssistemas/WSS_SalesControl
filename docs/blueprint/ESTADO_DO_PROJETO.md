@@ -777,6 +777,26 @@ tempo entre o contato e o primeiro toque de retomada.
   nada, e cadastro que não muda nada ensina a ignorar a tela. O manifesto já
   declarava a diferença: `scheduling.offer_by_turno: true` é literalmente
   "aqui não se marca hora com pessoa". A tela passou a obedecer o dado — Lei 1.
+- **⚠ VIGÊNCIA É FOTOGRAFIA, NÃO FATO VIVO — o caso Maria Isabel (13/ago).**
+  O fundador viu **Maria Isabel Ferreira Garcia** na fila como "contrato a
+  vencer" e avisou: *ela já renovou*. **A fila não errou** — reportou
+  fielmente o que o banco dizia (11/fev → 10/ago, semestral, vencido há 3
+  dias). O banco é que afirmava uma **fotografia da importação** com a
+  confiança de um fato vivo.
+  O sistema da academia **não tem API**; a vigência entra por planilha e cada
+  renovação vira **linha nova** lá. Entre duas importações, todo
+  `contract_end` envelhece em silêncio — o mesmo defeito que o `0029` corrigiu
+  no DNA, só que aqui a mentira sai **numa mensagem para o cliente**.
+  **A regra:** um vencimento só pode ser AFIRMADO se a fonte foi conferida
+  DEPOIS da data de fim (`custom.contrato_conferido_em`, carimbado pelo
+  importador). Sem isso o motivo vira *"Vencimento não confirmado"* e o texto
+  manda perguntar, com ordem explícita de não afirmar que venceu.
+  **O erro é assimétrico, e é ele que decide a regra:** dizer "venceu" para
+  quem renovou é constrangedor e faz o cliente duvidar do sistema inteiro;
+  perguntar para quem realmente venceu custa uma frase.
+  Hoje os **16 vencidos da Be Fitness** viram "não confirmado" — nenhum tem
+  carimbo, porque ele só passa a existir na próxima importação. Isso é o
+  sistema dizendo a verdade sobre o que sabe. `renovacao_test.mjs` 17/17.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.

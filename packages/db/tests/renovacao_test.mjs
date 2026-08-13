@@ -80,5 +80,46 @@ verifica(
   true,
 );
 
-console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 11/11");
+
+// ------------------------------------------- O VENCIMENTO QUE NÃO SE PODE AFIRMAR
+//
+// ⚠ O CASO MARIA ISABEL FERREIRA GARCIA (13/ago/2026).
+//
+// Contrato 11/fev → 10/ago, semestral. A fila dizia "Venceu sem contato" — e
+// ela JÁ TINHA RENOVADO. A fila não errou: reportou fielmente o que o banco
+// dizia. O banco é que afirmava uma FOTOGRAFIA com a confiança de um fato
+// vivo.
+//
+// O sistema da academia não tem API. A vigência entra por planilha e cada
+// renovação vira uma LINHA NOVA lá; entre duas importações, todo
+// `contract_end` envelhece em silêncio. É o mesmo defeito que o `0029`
+// corrigiu no DNA — só que aqui a mentira sai numa mensagem para o cliente.
+//
+// O ERRO É ASSIMÉTRICO, e é isso que decide a regra: dizer "venceu" para quem
+// renovou é constrangedor e faz o cliente duvidar do sistema inteiro;
+// perguntar para quem realmente venceu custa uma frase.
+const venc = (conferido) => computeRenovacoes(
+  [{ id: "m", name: "Maria Isabel", phone: null, journey_stage: "convertido",
+     contract_end: "2026-08-10", contrato_conferido_em: conferido }],
+  new Set(),
+  new Date("2026-08-13T12:00:00Z"),
+)[0];
+
+verifica("sem carimbo, NÃO afirma o vencimento", venc(null).vencimentoConfirmado, false);
+verifica("sem carimbo, o texto manda confirmar",
+  venc(null).intencao.includes("NÃO sabe se ele renovou"), true);
+verifica("sem carimbo, o título não afirma", venc(null).titulo, "Vencimento não confirmado");
+
+// Conferido ANTES do fim não vale: a planilha foi lida quando o contrato
+// ainda estava vivo, então ela não pode dizer nada sobre o que houve depois.
+verifica("conferido antes do fim, continua não confirmado",
+  venc("2026-08-01").vencimentoConfirmado, false);
+
+// Conferido DEPOIS do fim e ainda vencido: aí sim venceu de verdade.
+verifica("conferido depois do fim, afirma o vencimento",
+  venc("2026-08-12").vencimentoConfirmado, true);
+verifica("conferido depois do fim, volta o texto de retomada",
+  venc("2026-08-12").titulo, "Venceu sem contato");
+
+console.log(falhas ? `\n✗ FALHOU — ${falhas} caso(s)` : "\n✓ PASSOU — 17/17");
 process.exit(falhas ? 1 : 0);

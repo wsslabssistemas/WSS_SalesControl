@@ -251,6 +251,12 @@ export function construirFila(params: {
       contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
       motivo: "renovacao", intencao: r.intencao,
       atraso: r.vencido ? Math.abs(r.diasParaVencer) : 0,
+      // O AVISO VAI JUNTO ATÉ A TELA. Vencimento não confirmado é o caso em
+      // que o motor sabe menos do que parece saber, e quem vai escrever
+      // precisa ver isso antes de clicar em "preparar mensagem".
+      ...(r.vencido && r.vencimentoConfirmado === false
+        ? { observacao: "vigência não conferida na fonte desde antes do vencimento" }
+        : {}),
     });
   }
 
@@ -293,6 +299,19 @@ export function construirFila(params: {
   return montarFila(itens);
 }
 
+/**
+ * Puxa o carimbo de conferência de dentro do `custom` para o campo tipado.
+ *
+ * O importador grava em `custom.contrato_conferido_em` porque `custom` é o
+ * saco de dados do segmento e não exige migration a cada campo novo. Mas o
+ * núcleo não lê `custom` — ele leria vocabulário de mercado junto (Lei 1).
+ * Esta função é a fronteira: converte um dado do segmento num fato do núcleo.
+ */
+export function comCarimbo<T extends { custom?: Record<string, unknown> | null }>(c: T) {
+  const v = c.custom?.["contrato_conferido_em"];
+  return { ...c, contrato_conferido_em: typeof v === "string" ? v : null };
+}
+
 export type ContatoDaFila = {
   id: string;
   name: string;
@@ -306,6 +325,8 @@ export type ContatoDaFila = {
   /** Rótulo de fluxo, de procedência desconhecida. Vira anotação, nunca pretexto. */
   next_action?: string | null;
   contract_end: string | null;
+  /** Quando a vigência foi conferida na fonte. Ver `lib/renovacao.ts`. */
+  contrato_conferido_em?: string | null;
 };
 
 type EtapaDaFila = { key: string; label: string; terminal?: boolean; won?: boolean; lost?: boolean; goal?: string };
@@ -324,7 +345,7 @@ export type DepsDaFila = {
   stagesForaDeJogo: (s: EtapaDaFila[]) => Set<string>;
   stagesWithoutRecurrence: (s: EtapaDaFila[]) => Set<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean }[];
+  computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean; vencimentoConfirmado?: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

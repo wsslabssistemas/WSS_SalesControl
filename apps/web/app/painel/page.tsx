@@ -8,7 +8,7 @@ import { computeDueTouches } from "@/lib/cadence";
 import { linkDeWhatsApp } from "@/lib/envio";
 import { lerTudo } from "@/lib/paginado";
 import { computeRenovacoes } from "@/lib/renovacao";
-import { construirFila, ROTULO, PESO } from "@/lib/fila";
+import { construirFila, comCarimbo, ROTULO, PESO } from "@/lib/fila";
 
 type Contact = {
   id: string;
@@ -142,7 +142,7 @@ export default async function PainelHome({
   // motivo aparece escrito na linha em vez de ficar implícito no título da
   // seção em que a pessoa caiu.
   const fila = construirFila({
-    contatos: contacts.map((c) => ({ ...c, next_action_note: c.next_action_note })),
+    contatos: contacts.map(comCarimbo),
     ultimoContato: lastByContact, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });

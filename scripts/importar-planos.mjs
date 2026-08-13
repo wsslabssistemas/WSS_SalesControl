@@ -141,6 +141,15 @@ for (const l of linhas) {
       source: "outro",
       ...campos,
       custom: {
+        // ⚠ CARIMBO DE CONFERÊNCIA — a data em que a fonte foi lida.
+        //
+        // Sem ele, `contract_end` é uma fotografia afirmada como fato vivo. A
+        // Maria Isabel Ferreira Garcia renovou e a fila dizia "venceu há 3
+        // dias": o sistema da academia não tem API, cada renovação vira uma
+        // LINHA NOVA na planilha, e entre duas importações todo vencimento
+        // envelhece em silêncio. `lib/renovacao.ts` só AFIRMA o vencimento se
+        // este carimbo for posterior à data de fim.
+        contrato_conferido_em: new Date().toISOString().slice(0, 10),
         codigo_sistema: l.codigo,
         plano: l.plano || null,
         periodicidade: l.periodicidade || null,
@@ -224,7 +233,7 @@ for (const a of plano.atualizar) {
   // `custom` é mesclado, não substituído: o cadastro pode ter campos que a
   // planilha não conhece, e sobrescrever apagaria o que o vendedor anotou.
   const { data: atual } = await db.from("contacts").select("custom").eq("id", a.id).maybeSingle();
-  const custom = { ...(atual?.custom ?? {}), codigo_sistema: a.codigo };
+  const custom = { ...(atual?.custom ?? {}), codigo_sistema: a.codigo, contrato_conferido_em: new Date().toISOString().slice(0, 10) };
   const { error } = await db.from("contacts").update({ ...a.campos, custom }).eq("id", a.id);
   if (error) { console.error(`  ✗ ${a.nome}: ${error.message}`); falhas++; }
   else atualizados++;

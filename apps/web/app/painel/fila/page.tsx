@@ -5,7 +5,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { computeDueTouches } from "@/lib/cadence";
 import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
 import { computeRenovacoes } from "@/lib/renovacao";
-import { construirFila, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
+import { construirFila, comCarimbo, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
 import { paraE164BR } from "@/lib/phone";
 import { lerTudo } from "@/lib/paginado";
 import { ItemDaFila } from "./ItemDaFila";
@@ -107,7 +107,7 @@ export default async function FilaPage({
   // dedução "uma pessoa, um motivo" não valia lá — a mesma aluna aparecia em
   // três lugares. Fila é lógica, não é tela.
   const fila = construirFila({
-    contatos, ultimoContato: ultimo, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
+    contatos: contatos.map(comCarimbo), ultimoContato: ultimo, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
   const porMotivo = (m: string) => fila.filter((f) => f.motivo === m).length;
