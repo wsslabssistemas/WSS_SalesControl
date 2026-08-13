@@ -6,12 +6,17 @@ import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics"
 import { hasAIKey } from "@/lib/ai";
 import { brl } from "@/lib/money";
 import Analista from "./Analista";
+import { OQueFunciona } from "./OQueFunciona";
 import { stagesForaDeJogo } from "@/lib/recurrence";
 
 export const metadata = { title: "Gestão" };
 
 type Contact = { id: string; name: string; journey_stage: string; source: string | null; owner_id: string | null; created_at: string };
-type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string };
+type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string 
+  /** Desfecho canônico (0044) e as escolas usadas — o par que fecha o ciclo. */
+  outcome?: string | null;
+  schools?: string[] | null;
+};
 type Hist = { contact_id: string; to_stage: string; occurred_at: string };
 type Member = { id: string; user: { full_name: string | null; email: string | null } | null };
 
@@ -59,7 +64,7 @@ export default async function GestaoPage({
 
   const [{ data: cData }, { data: ixData }, { data: hData }, { data: mData }, { data: srData }] = await Promise.all([
     supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
-    supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
+    supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome, schools").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
     supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
     supabase.from("memberships").select("id, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
     supabase
@@ -73,6 +78,22 @@ export default async function GestaoPage({
   const contacts = (cData as Contact[] | null) ?? [];
   const ix = (ixData as Ix[] | null) ?? [];
   const hist = (hData as Hist[] | null) ?? [];
+
+  // OS EVENTOS DE APRENDIZADO — desfecho + escolas + a ORIGEM do contato.
+  //
+  // A origem entra aqui e não é detalhe: contato de convênio tem 9% de
+  // resposta contra 54% do WhatsApp na base real. Medir junto mede duas
+  // coisas diferentes e chama de uma — é a regra que o fundador impôs em
+  // ago/2026, e o recorte confirmou que ela REVELA sinal em vez de escondê-lo.
+  const origemDe = new Map(contacts.map((c) => [c.id, { origem: c.source ?? null, etapa: c.journey_stage }]));
+  const eventosDeAprendizado = ix
+    .filter((i) => i.outcome && Array.isArray(i.schools) && i.schools.length)
+    .map((i) => ({
+      escolas: i.schools as string[],
+      desfecho: i.outcome as string,
+      origem: origemDe.get(i.contact_id ?? "")?.origem ?? null,
+      etapa: origemDe.get(i.contact_id ?? "")?.etapa ?? null,
+    }));
   const members = (mData as Member[] | null) ?? [];
   const servicos = (srData as { performed_by: string | null; service: string; value_cents: number; occurred_at: string }[] | null) ?? [];
 
@@ -263,6 +284,12 @@ export default async function GestaoPage({
           ))}
         </div>
       </section>
+
+      {/* ⚠ O CICLO QUE FALTAVA: técnica → desfecho.
+          846 interações do piloto já tinham escola E desfecho no banco, e
+          NENHUMA linha de código lia isso. O sistema aplicava técnica curada
+          por opinião e nunca descobria se funcionou nesta casa. */}
+      <OQueFunciona eventos={eventosDeAprendizado} rotuloEscola={(k) => k.replace(/_/g, " ")} />
 
       {/* Ranking de vendedores */}
       <section style={{ marginTop: 32 }}>

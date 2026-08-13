@@ -1,6 +1,7 @@
 "use server";
 
 import { generateObject } from "ai";
+import { medir, notaParaOMotor, type Evento } from "@/lib/aprendizado";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -157,9 +158,13 @@ export async function gerarResposta(input: {
   // Cada profissional tem a sua agenda: as vagas oferecidas precisam ser as
   // DELE, não as da casa. O contato pertence a um responsável.
   let donoDoContato: string | null = null;
+  // A ORIGEM DO CONTATO SOBE DE ESCOPO. Ela é o recorte obrigatório da
+  // medição de aprendizado (convênio 9% de resposta × WhatsApp 54%), e o
+  // `contact` daqui é local ao `if`.
+  let origemDoContato: string | null = null;
   if (input.contactId) {
     const [{ data: c }, { data: h }] = await Promise.all([
-      supabase.from("contacts").select("name, journey_stage, owner_id, custom").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
+      supabase.from("contacts").select("name, journey_stage, owner_id, custom, source").eq("id", input.contactId).eq("tenant_id", tenant.id).maybeSingle(),
       supabase
         .from("interactions")
         .select("direction, content, occurred_at")
@@ -173,7 +178,9 @@ export async function gerarResposta(input: {
       journey_stage: string;
       owner_id: string | null;
       custom: Record<string, unknown> | null;
+      source: string | null;
     } | null;
+    origemDoContato = contact?.source ?? null;
     const hist = (h as { direction: string; content: string; occurred_at: string }[] | null) ?? [];
     const stageLabel = stages.find((s) => s.key === contact?.journey_stage)?.label ?? contact?.journey_stage;
     const histText = hist.length
@@ -242,6 +249,65 @@ export async function gerarResposta(input: {
     .map((w) => `Técnica: ${w.technique ?? "—"}\nResposta que converteu: ${w.content}`)
     .join("\n---\n");
 
+  // ------------------------------------------------ O QUE JÁ SE OBSERVOU AQUI
+  //
+  // ⚠ O CICLO QUE FALTAVA — e ele entra COM FREIO.
+  //
+  // 846 interações do piloto já tinham escola E desfecho no banco, e nenhuma
+  // linha lia isso: o motor aplicava técnica curada por opinião e nunca
+  // descobria se funcionou nesta casa.
+  //
+  // O que entra no prompt não é um ranking. `notaParaOMotor` devolve `null`
+  // sempre que a amostra não sustenta — que é a maioria das vezes — e quando
+  // devolve texto, o texto se declara **observação, não instrução**. A
+  // biblioteca continua decidindo a técnica.
+  //
+  // MEDE RESPOSTA, NÃO FECHAMENTO. Fechamento são 14 eventos no piloto
+  // inteiro: qualquer leitura ali coroaria a escola com 1 acerto em 14 usos.
+  // Resposta são centenas — e é o que a tese do produto pede, porque a perda
+  // medida é silêncio, não objeção.
+  //
+  // E O RECORTE É POR ORIGEM, obrigatoriamente: convênio tem 9% de resposta
+  // contra 54% do WhatsApp na base real. Somar as duas mede duas coisas
+  // diferentes e chama de uma.
+  let notaDoAprendizado: string | null = null;
+  try {
+    const { data: apr } = await supabase
+      .from("interactions")
+      .select("contact_id, outcome, schools")
+      .eq("tenant_id", tenant.id)
+      .not("outcome", "is", null)
+      .limit(4000);
+    const linhas = (apr as { contact_id: string | null; outcome: string | null; schools: string[] | null }[] | null) ?? [];
+    const ids = [...new Set(linhas.map((l) => l.contact_id).filter(Boolean))] as string[];
+    const { data: orig } = ids.length
+      ? await supabase.from("contacts").select("id, source").in("id", ids.slice(0, 1000))
+      : { data: [] };
+    const origemDe = new Map(((orig as { id: string; source: string | null }[] | null) ?? []).map((c) => [c.id, c.source]));
+
+    // Só o recorte da origem DESTE contato — comparar com a média de todas as
+    // origens é o erro que a regra do fundador proíbe.
+    const minhaOrigem = origemDoContato?.trim() || null;
+    const eventos: Evento[] = linhas
+      .filter((l) => Array.isArray(l.schools) && l.schools.length && l.outcome)
+      .map((l) => ({
+        escolas: l.schools as string[],
+        desfecho: l.outcome as string,
+        origem: origemDe.get(l.contact_id ?? "") ?? null,
+        etapa: null,
+      }))
+      .filter((e) => (minhaOrigem ? (e.origem ?? "").trim() === minhaOrigem : true));
+
+    if (eventos.length) {
+      notaDoAprendizado = notaParaOMotor(
+        medir(eventos, "resposta", minhaOrigem ? `origem ${minhaOrigem}` : "todas as origens"),
+      );
+    }
+  } catch {
+    // Aprendizado é acessório: se falhar, o motor responde igual. Nunca pode
+    // derrubar a resposta ao cliente por causa de uma estatística.
+  }
+
   const stageList = stages.map((s) => `${s.key} = ${s.label}${s.won ? " (ganho)" : ""}${s.terminal ? " (final)" : ""}`).join("; ");
   const hardRules = Array.isArray(manifest.hard_rules) ? (manifest.hard_rules as string[]).join("; ") : "";
 
@@ -273,6 +339,8 @@ ${trava.travou ? "→ Falta fato EXIGIDO por uma entrada que manda escalar. Marq
 
 BIBLIOTECA COMERCIAL (estratégia e técnicas — a base das respostas):
 ${library || "(biblioteca vazia)"}
+${notaDoAprendizado ? `
+${notaDoAprendizado}` : ""}
 
 HORÁRIOS REALMENTE LIVRES na agenda (ofereça DOIS destes quando o assunto for marcar; nunca invente outro):
 ${horarios || "(agenda não configurada — não ofereça horário específico; combine que vai confirmar)"}

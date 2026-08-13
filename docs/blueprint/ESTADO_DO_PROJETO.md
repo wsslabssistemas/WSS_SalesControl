@@ -797,6 +797,38 @@ tempo entre o contato e o primeiro toque de retomada.
   Hoje os **16 vencidos da Be Fitness** viram "não confirmado" — nenhum tem
   carimbo, porque ele só passa a existir na próxima importação. Isso é o
   sistema dizendo a verdade sobre o que sabe. `renovacao_test.mjs` 17/17.
+- **⚠ O CICLO TÉCNICA → DESFECHO ESTÁ FECHADO (ago/2026), e ele foi desenhado
+  para dizer "ainda não sei".** 846 interações do piloto já tinham escola E
+  desfecho no banco e **nenhuma linha de código lia isso** — o motor aplicava
+  técnica curada por opinião e nunca descobria se funcionou nesta casa.
+  **A objeção do fundador definiu o desenho:** *"ele usou a técnica 1x e
+  conseguiu, vai seguir só nessa? teria que ter dado suficiente."* O banco
+  prova que ele estava certo — contando fechamento puro, `challenger` lidera
+  com **7,1% em UM fechamento de 14 usos** e `negociacao_voss` some com 0% em
+  55, sendo escola de negociação, etapa que pouca gente alcança.
+  Quatro defeitos do desenho ingênuo, os quatro tratados em `lib/aprendizado.ts`:
+  **amostra** (piso de 30 + intervalo de 95%; abaixo dele a taxa é `null`, e
+  `null` ≠ zero), **atribuição** (`schools` é array — ~2,4 escolas por
+  atendimento; mede-se presença contra a base, nunca crédito exclusivo),
+  **origem** (recorte obrigatório: convênio tem **9%** de resposta contra
+  **54%** do WhatsApp) e **caça-níqueis** (`deveExplorar` — se o motor sempre
+  usa o vencedor, o dado sobre as outras congela, e ele pode ter vencido por
+  sorte; a exploração cai com a amostra mas **nunca zera**).
+  **Mede RESPOSTA, não fechamento**: fechamento são 14 eventos; resposta são
+  centenas — e é o que a tese pede, porque a perda medida é silêncio.
+  `perdeu_decisao` conta como sucesso: quem disse "não" respondeu, e juntar o
+  "não" com o silêncio esconde a única coisa que tem conserto.
+  **A leitura real da Be Fitness** (n=846, base 46% ±3): consultiva_spin 66%
+  ▲, relacionamento_carnegie 58% ▲, cadencia_blount **24% ▼** (metade da
+  base — confirma a hipótese de ago/2026 de que o follow-up é usado tarde),
+  negociacao_voss 27% ▼, challenger *não sei*. **Recortado por WhatsApp o
+  sinal fica mais forte, não mais fraco**: spin 76%, cialdini 73%, blount 25%.
+  **"Acima"/"abaixo" só aparece quando os intervalos não se tocam**, e a tela
+  ordena por VOLUME — a primeira linha de uma lista é lida como recomendação,
+  esteja escrito o que estiver ao lado. A biblioteca continua decidindo; o
+  que volta ao prompt se declara *"observação, não instrução"*, e é `null` na
+  maior parte das vezes. `aprendizado_test.mjs` 16/16, testada quebrando o
+  piso e a ordenação.
 - **`knowledge_entries.on_missing_facts`** só aceita `escalate` ou `omit`.
 - **As 12 categorias canônicas são fixas** — o validador barra qualquer outra.
   O label muda por segmento; a chave, não.
@@ -837,6 +869,8 @@ node packages/db/tests/proximidade_test.mjs # bairro e CEP: 10/10
 node packages/db/tests/telefone_test.mjs   # E.164 brasileiro: 30/30
 node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
 node packages/db/tests/cadencia_check.mjs   # nenhuma etapa viva muda: 80/80 (sem banco)
+node packages/db/tests/aprendizado_test.mjs # o ciclo tecnica-desfecho, e o silencio: 16/16
+node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
