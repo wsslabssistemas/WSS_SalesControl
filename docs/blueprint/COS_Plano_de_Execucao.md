@@ -95,6 +95,170 @@ agendado → cobrança automática.
 
 ---
 
+## A fila pedida em 11/ago/2026 — Feltros, SMTP e a pergunta da autonomia
+
+> Aberta pelo fundador depois de conversar com a **Jeniffer (Feltros
+> Bandeira)**, a primeira empresa externa de outro segmento — a que tira o
+> projeto do N=1. Está no topo do arquivo de propósito: é a fila corrente.
+
+### F1. SMTP próprio — **decisão tomada, falta a conta**
+
+Pesquisado em 11/ago. Dois candidatos, e a escolha depende de uma troca:
+
+| | Limite grátis | Marca no e-mail |
+|---|---|---|
+| **Resend** | 3.000/mês, **100/dia**, 1 domínio | Não injeta rodapé |
+| **Brevo** | ~9.000/mês, **300/dia**, para sempre | **Carimba "Sent with Brevo"** no plano grátis; tirar custa ~US$ 9/mês |
+
+**Recomendado: Resend.** O volume real é confirmação de conta, recuperação de
+senha e convite — hoje, 7 pessoas em 4 empresas. 100/dia sobra, e são e-mails
+que saem com a cara do Kairós para a equipe de um cliente pagante: carimbo de
+terceiro ali é o tipo de detalhe que faz uma empresa duvidar do produto.
+Brevo entra se um dia houver rajada acima de 100/dia (onboarding de equipe
+grande), e aí o carimbo é o preço do volume.
+
+**O que trava:** criar a conta e colar a chave — é do fundador. Depois disso a
+configuração é Supabase → Authentication → Emails → SMTP Settings, e vale subir
+o *rate limit* em Auth → Rate Limits, que é o teto real do e-mail nativo.
+Lembrete: **isso já não bloqueia mais a equipe** — o botão "Gerar acesso" da
+tela de Equipe resolve quem já é membro. O SMTP resolve quem chega de fora e
+não tem a quem pedir link.
+
+### F2. Feltros Bandeira — o que a Jeniffer precisa
+
+Site com os produtos: <https://www.feltrosbandeira.com.br/produtos/>
+
+**F2.1 — Preço é CALCULADO, não consultado.** A planilha que ela usa tem
+**custo por KG do fornecedor** (ETRURIA, OBER, BENEDETE, BRAPE, RATEX), e o
+preço ao cliente sai de uma fórmula:
+
+```
+(tamanho da peça + apara) × gramatura × custo/kg × TM
+```
+
+com duas variáveis que o sistema não pode inventar: **a apara é diferente por
+feltro** e **a TM não é sempre a mesma**.
+
+Isto é uma capacidade nova, não um catálogo. O catálogo de hoje guarda preço;
+aqui o preço não existe até alguém informar a medida. O desenho que respeita a
+trava anti-invenção: **fórmula declarada no manifesto do segmento** (dado, não
+código), **insumos no catálogo** (custo/kg, gramatura, apara por produto), e
+**a TM como fato do DNA** com carimbo de atualidade — TM velha é o caso do
+`0029`: número de um mês atrás afirmado com a confiança do de hoje.
+Falta qualquer um dos fatos → **escalar, não estimar**.
+
+> ⚠ **RISCO QUE VEM JUNTO, e é o mais grave desta frente: a planilha é CUSTO
+> DE FORNECEDOR.** A trava anti-invenção impede inventar; ela **não impede
+> vazar**. Custo por kg da ETRURIA numa resposta ao cliente é dano comercial
+> direto e irreversível. Se este dado entrar, entra como insumo de cálculo
+> **que nunca pode ser citado** — e isso precisa de teste próprio, não de
+> instrução no prompt.
+
+**F2.2 — Google Sheets em tempo real: é possível, sim.** A planilha publicada
+gera um CSV que o sistema lê a cada consulta, ou a API do Sheets com conta de
+serviço. Sem OAuth do usuário nos dois casos.
+**Mas a pergunta certa não é se dá — é se deve.** Ler direto significa que uma
+célula errada às 23h vira preço errado ao cliente às 23h01, sem ninguém
+revisar. O formato que resolve os dois lados: **importar da planilha e mostrar
+o que mudou antes de valer** (o importador de catálogo já reconhece colunas
+sozinho), com botão de "sincronizar agora". Ela edita onde já edita; o sistema
+não obedece cegamente.
+Detalhe visto na foto: a planilha tem **correções à caneta por cima dos
+valores impressos**. Isso é o mesmo alerta do relatório da academia — *planilha
+é LOG, não cadastro*. Antes de ligar qualquer coisa, a versão digital precisa
+ser a verdade.
+
+**F2.3 — A triagem dela já é uma técnica, e o sistema deve saber fazê-la.**
+Mensagem que ela manda hoje pede nome, empresa, telefone, e-mail,
+cidade/estado, **aplicação**, **medidas/espessura/densidade** e como chegou.
+O motivo é preciso e vale como regra do segmento: *"com cliente que não sabe o
+que quer, nem sabe pra que serve o feltro, eu perco tempo até conseguir falar
+com o usuário"*. Isso é **qualificação por aplicação**, e é exatamente o que a
+biblioteca de `industria` deve cobrir — hoje ela tem 20 entradas e nenhuma
+trata "o cliente não sabe o que pedir" como situação própria.
+
+**F2.4 — O gargalo dela é tempo de resposta, não técnica.** *"Perco cliente
+porque não consigo responder a tempo."* O fundador leu certo: **manual
+primeiro, ajustado ao uso dela; automação depois.** É a mesma ordem que já
+está congelada por decisão, e agora com uma segunda empresa confirmando.
+
+**F2.5 — Áudio.** Cliente manda áudio. Só faz sentido no modo automático
+(transcrição no recebimento). Fica registrado, não começado.
+
+### F3. Custo de IA por período — ✅ FEITO (11/ago)
+
+Painel do fabricante com **Este mês / Mês passado / Total desde sempre**.
+A margem só aparece no total, de propósito: recebido e consumo não caem no
+mesmo mês, e subtrair o custo de agosto do recebido de sempre dá um número
+com cara de margem que não é margem de nada.
+
+### F4. ⚠ A PERGUNTA DA AUTONOMIA — o que falta para o sistema trabalhar sozinho
+
+O fundador perguntou: *se hoje tivéssemos o modo automático, a IA conseguiria
+mapear cada cliente, cada necessidade, cada categoria, e fazer o trabalho que
+hoje é humano?* E completou certo: se não, **deixar as ligações prontas
+agora**.
+
+**A resposta honesta é: hoje, NÃO — e o que falta não é modelo melhor.**
+Medido em 11/ago, item por item.
+
+#### O que JÁ está pronto (mais do que se imaginava)
+
+| Peça | Estado |
+|---|---|
+| **Receber mensagem e CADASTRAR o lead** | ✅ Pronto. O webhook confere assinatura HMAC, resolve a empresa pelo `phone_number_id` (nunca pelo pacote), acha o contato em qualquer formato de telefone, **cria o contato se for gente nova**, e dedupe por `external_id` contra o reenvio da Meta. Falta só a credencial. |
+| **Saber QUEM contatar** | ✅ Pronto (11/ago). Fila com quitação e dedução: uma pessoa, um motivo. |
+| **Escrever com técnica** | ✅ Pronto. DNA + biblioteca curada + escola de venda. |
+| **Não inventar** | ✅ Pronto e estrutural. `escalate` é comportamento certo, não falha. |
+| **Não estourar o caixa** | ✅ Pronto. Cota e teto suspendem sozinhos. |
+| **Enviar** | ⚠️ Escrito, **nunca executado** contra a API real. |
+
+#### O que FALTA — em ordem de quanto trava
+
+1. **⚠ COBERTURA DE MOTIVO — o item nº 1, e é curadoria, não código.**
+   Das 80 etapas vivas dos 15 segmentos, **39 (49%) não declaram cadência
+   nenhuma**. Nelas o motor cai em *"Sem cadência declarada para esta etapa:
+   retome com um ângulo novo"* — texto do núcleo, igual para academia e para
+   indústria. **Automatizar com metade das etapas mudas é mandar mensagem sem
+   assunto, em escala** — e é exatamente o defeito da Noeli multiplicado por
+   598 contatos. As mudas são quase sempre as mesmas: *Primeiro contato,
+   Descoberta/Qualificação, Proposta, Negociação* — ou seja, **o miolo da
+   venda**, não a borda.
+
+2. **Prosa de venda dentro do núcleo (Lei 1 vazando).** `renovacao` e
+   `recompra` têm o texto do toque escrito em português fixo em
+   `lib/renovacao.ts` e `lib/fila.ts`. "Contrato a vencer" serve para plano de
+   academia e mente para contrato de fornecimento da indústria ou evento
+   contratado de casa de festa. Tem que ir para o manifesto, como a cadência
+   já vai.
+
+3. **Nada dispara sozinho.** Não existe motor proativo agendado (Inngest). Hoje
+   a fila só se move quando um humano abre a tela.
+
+4. **Janela de 24 horas da Meta.** Fora dela, só template aprovado — e o motor
+   não sabe disso. É restrição de plataforma, não de código: nenhuma
+   engenharia nossa remove.
+
+5. **Áudio e imagem entram como `ignorados`** (fica no log, de propósito, para
+   "o cliente respondeu e ninguém viu" ser número e não silêncio). A Jeniffer
+   já disse que recebe áudio. Precisa de transcrição no recebimento.
+
+6. **Desfecho é registrado por humano.** Sem ele o sistema não aprende sozinho
+   — continua escriturando, que é o limite já escrito no `CLAUDE.md`.
+
+7. **Remetente indefinido.** Só existe CNPJ da Be Fitness. Ver §7.
+
+#### A ordem que isso impõe
+
+**1 e 2 vêm antes de qualquer automação, e podem ser feitos agora** — não
+dependem da Meta, de CNPJ nem de credencial. São exatamente as "ligações
+prontas" que o fundador pediu: quando o canal abrir, o motor já sabe o porquê
+de cada contato em cada etapa de cada ramo. Fazer na ordem inversa (canal
+primeiro) entrega um robô fluente que não sabe o assunto — o pior resultado
+possível, porque parece que funciona.
+
+---
+
 ## A fila
 
 ### 1. Prova do motor ponta a ponta — **o que fazer primeiro**

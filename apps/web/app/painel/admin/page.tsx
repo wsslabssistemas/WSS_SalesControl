@@ -21,7 +21,34 @@ function brl(cents: number) {
   });
 }
 
-export default async function AdminPage() {
+/**
+ * OS PERÍODOS DO CUSTO.
+ *
+ * O painel só mostrava o acumulado desde sempre, e acumulado desde sempre não
+ * responde a pergunta que se faz olhando ele: *"quanto isso está me custando
+ * por mês?"*. Com meses de operação, o total vira um número que só cresce e
+ * que não serve para decidir teto nem preço — e o teto é mensal.
+ *
+ * O total continua existindo, porque é ele que responde a outra pergunta:
+ * *"quanto já saiu do meu bolso até hoje?"*. São perguntas diferentes e as
+ * duas importam; o defeito era ter só uma delas.
+ */
+const PERIODOS = [
+  { key: "mes", label: "Este mês" },
+  { key: "anterior", label: "Mês passado" },
+  { key: "total", label: "Total desde sempre" },
+] as const;
+type PeriodoKey = (typeof PERIODOS)[number]["key"];
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periodo?: string }>;
+}) {
+  const sp = await searchParams;
+  const periodo: PeriodoKey = PERIODOS.some((p) => p.key === sp.periodo)
+    ? (sp.periodo as PeriodoKey)
+    : "mes";
   // Quem está logado?
   const supabase = await createClient();
   const {
@@ -54,7 +81,16 @@ export default async function AdminPage() {
     );
   }
 
-  const inicioDoMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  const agora = new Date();
+  const inicioDoMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
+  const inicioMesAnterior = new Date(agora.getFullYear(), agora.getMonth() - 1, 1).toISOString();
+
+  // A JANELA DO PERÍODO ESCOLHIDO. `total` não filtra nada — é o acumulado.
+  const janela = periodo === "mes"
+    ? { de: inicioDoMes, ate: null as string | null }
+    : periodo === "anterior"
+      ? { de: inicioMesAnterior, ate: inicioDoMes }
+      : { de: null as string | null, ate: null as string | null };
 
   // Leitura cross-tenant (acima da RLS) — só para o fabricante.
   const [
@@ -69,7 +105,16 @@ export default async function AdminPage() {
     admin.from("tenants").select("id, name, slug, plan, status"),
     admin.from("contacts").select("tenant_id").is("deleted_at", null),
     admin.from("memberships").select("tenant_id").eq("status", "active"),
-    admin.from("usage_ledger").select("tenant_id, cost_cents, tokens_in, tokens_out"),
+    // O CUSTO POR EMPRESA RESPEITA O PERÍODO ESCOLHIDO. Antes era sempre o
+    // acumulado desde sempre, o que fazia a coluna "Custo IA" não bater com a
+    // barra do teto logo acima — a barra é mensal. Dois números de custo na
+    // mesma tela, um mensal e outro eterno, sem nada dizendo qual era qual.
+    (() => {
+      let q = admin.from("usage_ledger").select("tenant_id, cost_cents, tokens_in, tokens_out");
+      if (janela.de) q = q.gte("occurred_at", janela.de);
+      if (janela.ate) q = q.lt("occurred_at", janela.ate);
+      return q;
+    })(),
     admin.from("tenant_payments").select("tenant_id, amount_cents, status"),
     // O FREIO DE GASTO, na primeira tela. Ele morava só em /painel/admin/cotas
     // e o fundador nao achava — "que painel? painel do que?". Configuracao de
@@ -133,6 +178,22 @@ export default async function AdminPage() {
         de IA por empresa em tokens e em R$. Cobrança do cliente é por atendimento.
       </p>
 
+      {/* O PERÍODO GOVERNA CUSTO E TOKENS, não o recebido — pagamento não tem
+          a mesma data do consumo, e fingir que tem produziria uma "margem"
+          que não é margem de nada. Por isso o rótulo da coluna muda junto. */}
+      <div className="row wrap mt-16" style={{ gap: 6, alignItems: "center" }}>
+        <span className="text-faint" style={{ fontSize: 12 }}>Custo de IA em:</span>
+        {PERIODOS.map((p) => (
+          <Link
+            key={p.key}
+            href={`/painel/admin?periodo=${p.key}`}
+            className={periodo === p.key ? "btn btn-sm btn-primary" : "btn btn-sm btn-ghost"}
+          >
+            {p.label}
+          </Link>
+        ))}
+      </div>
+
       {/* FREIO DE GASTO — o que o fundador precisava e nao achava. */}
       <div className="card mt-24" style={{ borderColor: apertado ? "var(--danger)" : undefined }}>
         <div className="between" style={{ alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
@@ -187,9 +248,22 @@ export default async function AdminPage() {
       <div className="stat-grid mt-24">
         <div className="card"><div className="stat-num">{ts.length}</div><div className="stat-label">Empresas</div></div>
         <div className="card"><div className="stat-num">{brl(totalRecebido)}</div><div className="stat-label">Recebido</div></div>
-        <div className="card"><div className="stat-num">{brl(totalCost)}</div><div className="stat-label">Custo de IA</div></div>
+        <div className="card"><div className="stat-num">{brl(totalCost)}</div><div className="stat-label">Custo de IA · {PERIODOS.find((p) => p.key === periodo)!.label.toLowerCase()}</div></div>
         <div className="card"><div className="stat-num">{fmt(totalTokens)}</div><div className="stat-label">Tokens</div></div>
-        <div className="card"><div className="stat-num" style={{ color: "var(--brand-cyan)" }}>{brl(totalRecebido - totalCost)}</div><div className="stat-label">Margem</div></div>
+        {/* ⚠ MARGEM SÓ EXISTE NO TOTAL, e isto não é preciosismo.
+            Recebido e consumo não caem no mesmo mês: o cliente paga a
+            mensalidade num dia e gasta IA o mês inteiro. Subtrair o custo de
+            AGOSTO do recebido DE SEMPRE dá um número que parece margem, tem
+            cara de margem e não é margem de nada — exatamente o tipo de
+            número plausível que este projeto existe para não produzir. */}
+        <div className="card">
+          <div className="stat-num" style={{ color: periodo === "total" ? "var(--brand-cyan)" : undefined }}>
+            {periodo === "total" ? brl(totalRecebido - totalCost) : "—"}
+          </div>
+          <div className="stat-label">
+            {periodo === "total" ? "Margem" : "Margem (só no total)"}
+          </div>
+        </div>
       </div>
 
       <div className="card mt-24" style={{ padding: 0, overflowX: "auto" }}>
@@ -202,7 +276,7 @@ export default async function AdminPage() {
               <th style={{ textAlign: "right" }}>Membros</th>
               <th style={{ textAlign: "right" }}>Contatos</th>
               <th style={{ textAlign: "right" }}>Tokens</th>
-              <th style={{ textAlign: "right" }}>Custo IA</th>
+              <th style={{ textAlign: "right" }}>Custo IA<br /><span className="text-faint" style={{ fontSize: 10, fontWeight: 400 }}>{PERIODOS.find((p) => p.key === periodo)!.label.toLowerCase()}</span></th>
               <th style={{ textAlign: "right" }}>Recebido</th>
               <th style={{ textAlign: "right" }}>Margem</th>
             </tr>
@@ -221,7 +295,7 @@ export default async function AdminPage() {
                 <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(tokens(t.id))}</td>
                 <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{brl(cost(t.id))}</td>
                 <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{brl(recebido(t.id))}</td>
-                <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{brl(margem(t.id))}</td>
+                <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{periodo === "total" ? brl(margem(t.id)) : "—"}</td>
               </tr>
             ))}
           </tbody>
