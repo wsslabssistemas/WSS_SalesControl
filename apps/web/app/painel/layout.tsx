@@ -62,6 +62,7 @@ export default async function PainelLayout({
     { href: "/painel/dna", label: "DNA" },
     { href: "/painel/automacao", label: "Automação" },
     { href: "/painel/tutorial", label: "Tutorial" },
+    ...(showManager ? [{ href: "/painel/sincronizar", label: "Sincronizar" }] : []),
     ...(showManager ? [{ href: "/painel/aparencia", label: "Aparência" }] : []),
     ...(showAdmin ? [{ href: "/painel/admin", label: "Fabricante" }] : []),
   ];

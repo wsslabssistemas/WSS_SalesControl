@@ -19,6 +19,52 @@
 import { parseCsv, parseDataBR, detectColumns } from "./csv.ts";
 import type { LinhaDaFonte } from "./sincronizacao.ts";
 
+/**
+ * ⚠ O ARQUIVO `.xls` DA ACADEMIA É HTML.
+ *
+ * O relatório "Recebimentos Detalhados" sai com extensão `.xls` e por dentro é
+ * uma `<table>` HTML. O Excel abre por gentileza, não porque o arquivo está
+ * certo — e um leitor de XLS de verdade recusaria.
+ *
+ * É a MESMA classe já registrada no `BE_FITNESS_CHECKLIST.md`: *"o botão
+ * exportar CSV do sistema devolve PDF"*. O sistema da academia mente a
+ * extensão em pelo menos dois relatórios, então detectar pelo CONTEÚDO e não
+ * pelo nome é regra aqui, não exceção.
+ */
+function pareceHtml(texto: string): boolean {
+  const inicio = texto.slice(0, 2000).toLowerCase();
+  return inicio.includes("<table") || inicio.includes("<tr");
+}
+
+/** Extrai a primeira tabela HTML como matriz, do jeito que `parseCsv` devolveria. */
+function lerTabelaHtml(texto: string): string[][] {
+  const linhas: string[][] = [];
+  const trs = texto.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) ?? [];
+  for (const tr of trs) {
+    const celulas = (tr.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) ?? []).map((c) =>
+      desescapar(c.replace(/<[^>]+>/g, "")).trim(),
+    );
+    if (celulas.some((c) => c !== "")) linhas.push(celulas);
+  }
+  return linhas;
+}
+
+/** As entidades que aparecem nesta exportação. Sem dependência externa. */
+function desescapar(s: string): string {
+  return s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+/** Lê CSV ou tabela HTML — decidido pelo CONTEÚDO, nunca pela extensão. */
+export function linhasDe(texto: string): string[][] {
+  return pareceHtml(texto) ? lerTabelaHtml(texto) : parseCsv(texto);
+}
+
 /** Cabeçalhos que servem como CHAVE de reconciliação, em ordem de confiança. */
 const CHAVE_H = ["codigo", "código", "cod", "matricula", "matrícula", "id", "registro"];
 
@@ -69,7 +115,7 @@ export type Leitura = {
  * mesmo ter.
  */
 export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitura {
-  const linhas = parseCsv(csv);
+  const linhas = linhasDe(csv);
   if (linhas.length < 2) {
     return {
       linhas: [], ignoradas: [], erro: "A aba veio vazia ou só com cabeçalho.",
@@ -160,6 +206,171 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
       chave: iChave >= 0 ? (cab[iChave] ?? "").trim() : `${det.phoneLabel} (telefone, na falta de código)`,
       nome: det.adivinhou.nome ? null : (cab[det.nameIdx] ?? "").trim(),
       vigencia: det.endIdx >= 0 ? (cab[det.endIdx] ?? "").trim() : null,
+      lidas: linhas.length - 1,
+    },
+  };
+}
+
+// =====================================================================
+// RECEBIMENTOS — o que a pessoa PAGOU, e como ela costuma pagar.
+// =====================================================================
+
+/** O que o sistema guarda de cada pagante. CPF e endereço NÃO entram. */
+export type Pagante = {
+  chave: string;
+  nome: string | null;
+  /** Quantos pagamentos, no total do histórico. */
+  pagamentos: number;
+  /** Soma em centavos. Inteiro, nunca float — ver `lib/money.ts`. */
+  totalCents: number;
+  /** ISO do pagamento mais recente. */
+  ultimoPagamento: string | null;
+  /** ISO do vencimento mais recente pago. */
+  ultimoVencimento: string | null;
+  /**
+   * ⚠ O ATRASO HABITUAL DESTA PESSOA — mediana de (pagamento − vencimento).
+   *
+   * É o achado do arquivo real (13/ago) e muda o que "atraso" significa.
+   * Maria Isabel Ferreira Garcia paga com 3 a 7 dias de atraso **desde 2025**,
+   * todas as vezes, e sempre paga: 15/02 para vencimento 10/02, 12/08 para
+   * 11/08, 18/02 para 11/02, 13/08 para 10/08. Cobrar essa cliente no
+   * primeiro dia seria perseguir quem paga há três anos.
+   *
+   * Na base inteira: de 756 pessoas com 3+ pagamentos, **575 pagam em dia**,
+   * 96 atrasam de 1 a 3 dias, 60 de 4 a 10, e 25 mais de 10. Um dia de atraso
+   * em quem sempre paga adiantado é sinal; em quem sempre atrasa três, é ruído.
+   *
+   * `null` com menos de 3 pagamentos: duas observações não fazem um hábito, e
+   * declarar hábito com n=2 é o mesmo erro do ranking de escolas.
+   */
+  atrasoHabitualDias: number | null;
+};
+
+/** Cabeçalhos do relatório de recebimentos. */
+const REC_H = {
+  chave: ["codigo", "código"],
+  nome: ["nome-ou-razao-social", "nome", "nome-completo"],
+  venc: ["vencimento"],
+  pag: ["pagamento", "data-de-pagamento"],
+  valor: ["valor"],
+  recibo: ["codigo-do-recebimento", "recibo"],
+};
+
+/**
+ * ⚠ COLUNAS QUE NUNCA ENTRAM, por decisão — não por esquecimento.
+ *
+ * O relatório traz `CPF-ou-CNPJ`, `Endereco`, `Numero` e `Complemento`. Junto
+ * com nome e telefone isso é kit de identidade completo, e **o sistema não
+ * precisa de nada disso para o que ele faz**: ele decide com quem falar e o
+ * que dizer, não emite nota nem cobra.
+ *
+ * Guardar dado sensível sem uso cria responsabilidade com zero benefício —
+ * então o descarte é na PORTA, antes de qualquer gravação, e está aqui em
+ * cima para quem for mexer ver primeiro.
+ */
+export const DESCARTADAS = ["cpf-ou-cnpj", "cpf", "cnpj", "endereco", "endereço", "numero", "número", "complemento"];
+
+const acha = (h: string[], nomes: string[]) =>
+  h.findIndex((c) => nomes.some((n) => c === n || c.startsWith(n)));
+
+const brlParaCents = (v: string): number => {
+  const t = (v ?? "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+};
+
+export type LeituraRecebimentos = {
+  pagantes: Pagante[];
+  entendeu: { chave: string; vencimento: string; pagamento: string; valor: string; lidas: number };
+  descartadas: string[];
+  ignoradas: { linha: number; motivo: string }[];
+  erro: string | null;
+};
+
+export function lerRecebimentos(texto: string): LeituraRecebimentos {
+  const linhas = linhasDe(texto);
+  const vazio = {
+    pagantes: [], descartadas: [], ignoradas: [],
+    entendeu: { chave: "—", vencimento: "—", pagamento: "—", valor: "—", lidas: 0 },
+  };
+  if (linhas.length < 2) return { ...vazio, erro: "O relatório veio vazio ou só com cabeçalho." };
+
+  const cab = linhas[0];
+  const h = cab.map(strip);
+  const i = {
+    chave: acha(h, REC_H.chave), nome: acha(h, REC_H.nome), venc: acha(h, REC_H.venc),
+    pag: acha(h, REC_H.pag), valor: acha(h, REC_H.valor), recibo: acha(h, REC_H.recibo),
+  };
+  if (i.chave < 0 || i.pag < 0 || i.valor < 0) {
+    return {
+      ...vazio,
+      erro:
+        "Não achei as colunas mínimas do relatório de recebimentos (código, pagamento e valor). " +
+        `Cabeçalhos lidos: ${cab.join(" | ")}`,
+    };
+  }
+
+  const porPessoa = new Map<string, { nome: string | null; pags: string[]; vencs: (string | null)[]; cents: number; recibos: Set<string> }>();
+  const ignoradas: { linha: number; motivo: string }[] = [];
+
+  for (let n = 1; n < linhas.length; n++) {
+    const r = linhas[n];
+    const chave = (r[i.chave] ?? "").trim();
+    if (!chave) { ignoradas.push({ linha: n + 1, motivo: "sem código" }); continue; }
+    const pago = parseDataBR(r[i.pag] ?? "");
+    if (!pago) { ignoradas.push({ linha: n + 1, motivo: "sem data de pagamento — parcela em aberto ou linha de total" }); continue; }
+
+    const cur = porPessoa.get(chave) ?? { nome: null, pags: [], vencs: [], cents: 0, recibos: new Set<string>() };
+    // RECIBO REPETIDO NÃO SOMA DUAS VEZES. No arquivo real são 7.991 linhas
+    // para 7.648 recibos distintos — pagamento dividido compartilha o mesmo
+    // número, e somar de novo inflaria o faturamento em silêncio.
+    const recibo = i.recibo >= 0 ? (r[i.recibo] ?? "").trim() : "";
+    if (recibo && cur.recibos.has(recibo)) {
+      ignoradas.push({ linha: n + 1, motivo: `recibo ${recibo} repetido — valor não somado de novo` });
+    } else {
+      if (recibo) cur.recibos.add(recibo);
+      cur.cents += brlParaCents(r[i.valor] ?? "");
+    }
+    cur.nome = cur.nome ?? ((i.nome >= 0 ? (r[i.nome] ?? "").trim() : "") || null);
+    cur.pags.push(pago);
+    cur.vencs.push(i.venc >= 0 ? parseDataBR(r[i.venc] ?? "") : null);
+    porPessoa.set(chave, cur);
+  }
+
+  const mediana = (v: number[]) => {
+    const s = [...v].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+  };
+
+  const pagantes: Pagante[] = [...porPessoa.entries()].map(([chave, v]) => {
+    const atrasos = v.pags
+      .map((p, k) => (v.vencs[k] ? Math.round((Date.parse(p) - Date.parse(v.vencs[k]!)) / 86400000) : null))
+      .filter((x): x is number => x !== null);
+    const ordenados = [...v.pags].sort();
+    const idxUltimo = v.pags.indexOf(ordenados[ordenados.length - 1]);
+    return {
+      chave,
+      nome: v.nome,
+      pagamentos: v.pags.length,
+      totalCents: v.cents,
+      ultimoPagamento: ordenados[ordenados.length - 1] ?? null,
+      ultimoVencimento: idxUltimo >= 0 ? v.vencs[idxUltimo] ?? null : null,
+      // Três é o piso: duas observações não fazem um hábito.
+      atrasoHabitualDias: atrasos.length >= 3 ? mediana(atrasos) : null,
+    };
+  });
+
+  return {
+    pagantes,
+    ignoradas,
+    erro: null,
+    descartadas: cab.filter((c) => DESCARTADAS.includes(strip(c))),
+    entendeu: {
+      chave: (cab[i.chave] ?? "").trim(),
+      vencimento: i.venc >= 0 ? (cab[i.venc] ?? "").trim() : "(ausente)",
+      pagamento: (cab[i.pag] ?? "").trim(),
+      valor: (cab[i.valor] ?? "").trim(),
       lidas: linhas.length - 1,
     },
   };
