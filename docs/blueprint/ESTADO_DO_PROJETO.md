@@ -871,6 +871,7 @@ node packages/db/tests/turno_test.mjs      # turno em vez de hora: 16/16
 node packages/db/tests/cadencia_check.mjs   # nenhuma etapa viva muda: 80/80 (sem banco)
 node packages/db/tests/aprendizado_test.mjs # o ciclo tecnica-desfecho, e o silencio: 16/16
 node packages/db/tests/sincronizacao_test.mjs # foto x historico, e a trava da planilha parcial: 15/15
+node packages/db/tests/planilha_test.mjs   # leitor de aba: recusa adivinhar a chave: 14/14
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12

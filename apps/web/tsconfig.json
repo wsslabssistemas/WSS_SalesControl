@@ -9,6 +9,12 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    // Permite `import ... from "./csv.ts"`. Necessario porque os testes deste
+    // repositorio rodam os arquivos de `lib/` DIRETO no Node, sem bundler — e
+    // sem a extensao o Node nao resolve o import relativo. E a mesma decisao
+    // que faz `retrieval_check` importar `lib/match.ts` em vez de guardar uma
+    // copia da regra: teste que reimplementa diverge do codigo.
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
