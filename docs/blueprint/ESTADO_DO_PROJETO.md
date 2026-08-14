@@ -1177,7 +1177,7 @@ node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (li
 node packages/db/tests/sugestoes_dna_check.mjs # campo aberto de DNA sem sugestão: 229/229
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
-node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 13/13
+node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 15/15
 node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
 node packages/db/tests/carteira_test.mjs   # quem recebe o contato que chega sozinho: 6/6
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12

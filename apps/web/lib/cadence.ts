@@ -165,47 +165,89 @@ export function computeDueTouches(
     const cad = cadKey ? byKey.get(cadKey) : undefined;
     const steps = (cad?.steps ?? []).slice().sort((a, b) => a.offset_days - b.offset_days);
 
+    let expirou = false;
     if (steps.length > 0) {
       // QUAL passo: o próximo que ainda não foi dado.
-      const idx = toquesNossos[c.id] ?? 0;
+      const dados = toquesNossos[c.id] ?? 0;
       // Régua cumprida. É o `max_attempts` do manifesto: insistir além disso
       // em ticket de mensalidade queima o contato para a reativação, que é
       // onde ele volta a valer.
-      if (idx >= steps.length) continue;
+      if (dados >= steps.length) continue;
 
-      // QUANDO: o mais TARDE entre a data da régua e um intervalo desde a
-      // última conversa.
+      // ⚠ PASSO CUJA JANELA PASSOU NÃO ESTÁ ATRASADO — ESTÁ PERDIDO.
       //
-      // As duas metades resolvem casos opostos e nenhuma sozinha resolve os
-      // dois. A data da régua é o que faz um contato novo ser tocado no dia
-      // certo; o intervalo desde a última conversa é o que impede o acervo de
-      // vencer tudo de uma vez — e é o que faz a pessoa voltar em N dias
-      // depois de falarmos, em vez de voltar amanhã.
-      const anterior = idx > 0 ? steps[idx - 1].offset_days : 0;
-      const intervalo = Math.max(1, steps[idx].offset_days - anterior);
-      const dataDaRegua = entrada + steps[idx].offset_days * DAY;
-      const desdeAConversa = ultimo + intervalo * DAY;
-      const vencimento = Math.max(dataDaRegua, desdeAConversa);
-      if (hoje < vencimento) continue;
+      // Este é o outro lado da correção do acervo, e sem ele a correção
+      // troca um defeito por um pior. Contar o passo pelos toques dados faz o
+      // primeiro passo ser escolhido para quem nunca recebeu nenhum — e para
+      // uma pessoa matriculada há três anos isso é o toque *"primeira semana:
+      // como foi vir, e o que já mudou na rotina"*.
+      //
+      // **Fluente e errado é o pior defeito possível** numa mensagem que sai
+      // no nome da academia, e é a mesma regra do pretexto de `lib/fila.ts`:
+      // a trava anti-invenção impede inventar o preço; aqui, impede inventar
+      // o momento.
+      //
+      // A janela de um passo termina quando o SEGUINTE vence — passado o dia
+      // 30, o toque do dia 7 não é mais o assunto. O último passo ganha mais
+      // um intervalo, senão ele nunca expiraria e o acervo inteiro cairia
+      // sempre nele.
+      const fimDaJanela = (i: number) => {
+        const proximo = steps[i + 1];
+        if (proximo) return entrada + proximo.offset_days * DAY;
+        const anteriorDoUltimo = i > 0 ? steps[i - 1].offset_days : 0;
+        const sobra = Math.max(1, steps[i].offset_days - anteriorDoUltimo);
+        return entrada + (steps[i].offset_days + sobra) * DAY;
+      };
 
-      out.push({
-        contactId: c.id,
-        name: c.name,
-        phone: c.phone,
-        ownerId: c.owner_id,
-        stageLabel: stage.label,
-        stepNumber: idx + 1,
-        totalSteps: steps.length,
-        intent: steps[idx].intent,
-        daysSince,
-        overdueDays: Math.floor((hoje - vencimento) / DAY),
-        cadenceKey: cad?.key ?? null,
-        semCadencia: false,
-      });
-      continue;
+      let idx = dados;
+      while (idx < steps.length && hoje > fimDaJanela(idx)) idx++;
+
+      // Todos os passos venceram e passaram: a régua não tem mais o que
+      // dizer sobre esta pessoa. Ela não some — cai no alarme de silêncio
+      // abaixo, que fala do OBJETIVO da etapa e de há quantos dias ninguém
+      // conversa. Genérico e honesto é melhor que específico e falso.
+      expirou = idx >= steps.length;
+
+      if (!expirou) {
+        // QUANDO: o mais TARDE entre a data da régua e um intervalo desde a
+        // última conversa.
+        //
+        // As duas metades resolvem casos opostos e nenhuma sozinha resolve os
+        // dois. A data da régua é o que faz um contato novo ser tocado no dia
+        // certo; o intervalo desde a última conversa é o que impede o acervo
+        // de vencer tudo de uma vez — e é o que faz a pessoa voltar em N dias
+        // depois de falarmos, em vez de voltar amanhã.
+        const anterior = idx > 0 ? steps[idx - 1].offset_days : 0;
+        const intervalo = Math.max(1, steps[idx].offset_days - anterior);
+        const dataDaRegua = entrada + steps[idx].offset_days * DAY;
+        const desdeAConversa = ultimo + intervalo * DAY;
+        const vencimento = Math.max(dataDaRegua, desdeAConversa);
+        if (hoje < vencimento) continue;
+
+        out.push({
+          contactId: c.id,
+          name: c.name,
+          phone: c.phone,
+          ownerId: c.owner_id,
+          stageLabel: stage.label,
+          stepNumber: idx + 1,
+          totalSteps: steps.length,
+          intent: steps[idx].intent,
+          daysSince,
+          overdueDays: Math.floor((hoje - vencimento) / DAY),
+          cadenceKey: cad?.key ?? null,
+          semCadencia: false,
+        });
+        continue;
+      }
     }
 
-    // ------------------------------------------- SEM CADÊNCIA: O OBJETIVO DA ETAPA
+    // ----------------------- SEM CADÊNCIA (OU COM A RÉGUA VENCIDA): O OBJETIVO DA ETAPA
+    //
+    // Chega aqui quem nunca teve régua declarada **e** quem tinha uma cuja
+    // janela inteira já passou. Os dois casos pedem a mesma coisa: falar do
+    // OBJETIVO da etapa e de há quantos dias ninguém conversa, sem fingir que
+    // é o toque do dia 7 de alguém que está há três anos na academia.
     //
     // ⚠ AQUI O NÚCLEO ESCREVIA PROSA DE VENDA, e isso é a Lei 1 vazando no
     // lugar mais caro possível.

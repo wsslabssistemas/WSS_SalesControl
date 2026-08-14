@@ -22,13 +22,19 @@
  * sempre nesta casa, não aparecia como erro — a fila só ficava menor do que
  * devia, e fila menor parece trabalho em dia.
  *
- * A REGRA NOVA, em duas metades que só funcionam juntas:
+ * A REGRA NOVA, em três metades — e a terceira só apareceu ao conferir o
+ * efeito da segunda na base real:
  *   • QUAL passo = quantos toques NOSSOS já saíram nesta etapa.
  *   • QUANDO ele vence = o mais TARDE entre a data da régua e um intervalo
  *     desde a última conversa.
+ *   • PASSO CUJA JANELA PASSOU É PULADO. Contar só pelos toques mandava o
+ *     toque 1 para quem está na etapa há 400 dias — *"como foi sua primeira
+ *     semana?"* para quem treina há três anos. A janela de um passo fecha
+ *     quando o seguinte vence; vencidas todas, vale o objetivo da etapa e o
+ *     "ninguém fala com ele há N dias".
  * Toques dados >= passos da régua → cadência esgotada, some da fila.
  *
- * ESPERADO: 13/13.
+ * ESPERADO: 15/15.
  *
  *   node packages/db/tests/cadencia_test.mjs
  */
@@ -77,7 +83,12 @@ const diasAtras = (n) => new Date(Date.now() - n * DIA).toISOString();
 
 /** A régua real da academia para primeiro contato: 1, 4 e 9 dias. */
 const STAGES = [
-  { key: "contato", label: "Primeiro contato", cadence: "primeiro_contato" },
+  {
+    key: "contato",
+    label: "Primeiro contato",
+    cadence: "primeiro_contato",
+    goal: "Quebrar o gelo e descobrir o objetivo. Nunca abrir com preço.",
+  },
   { key: "recusou", label: "Disse não", terminal: true },
 ];
 const CADENCES = [{
@@ -115,36 +126,55 @@ eq("e o texto do toque vem do manifesto, não do núcleo",
 eq("etapa terminal não recebe toque",
   () => devido([{ ...pessoa("a", 30), journey_stage: "recusou" }], {}, {}).length, 0);
 
-// ------------------------------------------------- O ACERVO: O DEFEITO REAL
-// Alguém parado há 400 dias na etapa. Antes, a régua começava no ÚLTIMO passo
-// e uma mensagem quitava tudo.
+// -------------------------------- SAI DE HOJE, VOLTA NO INTERVALO DO PASSO
+// O medo do fundador, e o oposto dele, no mesmo mecanismo. Pessoa entrou há 4
+// dias, recebeu o toque 1, e falamos com ela HOJE.
 
-eq("no acervo, a régua começa no PRIMEIRO passo, não no último",
-  () => passos([pessoa("velho", 400)], {}, {}), [1]);
-
-eq("e ele aparece como muito atrasado, não como novo",
-  () => devido([pessoa("velho", 400)], {}, {})[0].overdueDays, 399);
-
-// Falei com ele HOJE. O toque 1 foi dado.
 eq("depois de falar hoje, a pessoa SAI da lista de hoje",
-  () => devido([pessoa("velho", 400)], { velho: diasAtras(0) }, { velho: 1 }).length, 0);
+  () => devido([pessoa("x", 4)], { x: diasAtras(0) }, { x: 1 }).length, 0);
 
-// ⚠ O MEDO DO FUNDADOR, e a resposta a ele: os mil NÃO voltam no dia seguinte.
-eq("um dia depois de ser tocada, a pessoa não reaparece",
-  () => devido([pessoa("velho", 401)], { velho: diasAtras(1) }, { velho: 1 }).length, 0);
+eq("um dia depois ela não reaparece — seria desanimador",
+  () => devido([pessoa("x", 5)], { x: diasAtras(1) }, { x: 1 }).length, 0);
 
-eq("dois dias depois ainda não voltou — o intervalo do passo 2 é 3",
-  () => devido([pessoa("velho", 402)], { velho: diasAtras(2) }, { velho: 1 }).length, 0);
+eq("dois dias depois ainda não — o intervalo do passo 2 é 3",
+  () => devido([pessoa("x", 6)], { x: diasAtras(2) }, { x: 1 }).length, 0);
 
-// E o outro lado do medo dele: também não pode sumir para sempre.
+// E o outro lado: também não pode sumir para sempre.
 eq("no terceiro dia ela VOLTA, no passo 2",
-  () => passos([pessoa("velho", 403)], { velho: diasAtras(3) }, { velho: 1 }), [2]);
+  () => passos([pessoa("x", 7)], { x: diasAtras(3) }, { x: 1 }), [2]);
 
 // ----------------------------------------------------- A RÉGUA SE ESGOTA
 // `max_attempts` do manifesto: três toques e para. Insistir além disso em
 // ticket de mensalidade queima o contato para a reativação.
 eq("dados os três toques, a cadência se esgota e a pessoa some da fila",
-  () => devido([pessoa("velho", 500)], { velho: diasAtras(30) }, { velho: 3 }).length, 0);
+  () => devido([pessoa("x", 12)], { x: diasAtras(1) }, { x: 3 }).length, 0);
+
+// ------------------------------------ ⚠ O ACERVO: PASSO PERDIDO NÃO É ATRASADO
+//
+// Alguém parado há 400 dias. A primeira versão desta correção escolhia o passo
+// pela contagem de toques e mandava o toque 1 — que na academia é *"refazer a
+// pergunta"* e, na régua de matrícula, *"primeira semana: como foi vir"*. Para
+// quem está há três anos, isso é fluente e errado: o pior defeito possível
+// numa mensagem que sai no nome da academia.
+//
+// A janela de um passo fecha quando o seguinte vence. Vencidas todas, a régua
+// não tem mais o que dizer — e o sistema fala do OBJETIVO da etapa, dizendo há
+// quantos dias ninguém conversa. Genérico e honesto ganha de específico e falso.
+
+eq("no acervo, a régua não finge que é o toque do dia 1",
+  () => passos([pessoa("velho", 400)], {}, {}), [0]);
+
+eq("ele vira alarme de silêncio, não passo de cadência",
+  () => devido([pessoa("velho", 400)], {}, {})[0].semCadencia, true);
+
+eq("e o texto passa a ser o OBJETIVO da etapa, do manifesto",
+  () => devido([pessoa("velho", 400)], {}, {})[0].intent,
+  "Quebrar o gelo e descobrir o objetivo. Nunca abrir com preço.");
+
+// O meio-termo, que é o caso mais comum do acervo real: entrou há 6 dias sem
+// nenhum toque. O dia 1 já passou do prazo, o dia 4 ainda vale.
+eq("passo cuja janela passou é PULADO, não repetido",
+  () => passos([pessoa("meio", 6)], {}, {}), [2]);
 
 // ------------------------------------------ RESPOSTA DO CLIENTE ADIA, NÃO EXECUTA
 // Ela entra no `ultimo` (adia o próximo toque) mas não conta como toque nosso.

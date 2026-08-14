@@ -119,6 +119,13 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   passos já venceram; escolher o "último vencido" faz uma mensagem quitar a
   régua inteira e a pessoa nunca mais voltar. O vencimento do próximo passo é o
   mais tarde entre a data da régua e um intervalo desde a última conversa.
+- **Passo cuja janela passou é PULADO, não atrasado.** Só contar toques manda
+  o toque do dia 7 (*"como foi sua primeira semana?"*) para quem está na etapa
+  há três anos — fluente e errado, que é o pior defeito de uma mensagem que sai
+  no nome do cliente. Vencidas todas as janelas, vale o `goal` da etapa e o
+  "ninguém fala com ele há N dias": genérico e honesto ganha de específico e
+  falso. É a trava anti-invenção aplicada ao MOMENTO, como a do pretexto é
+  aplicada ao ASSUNTO.
 - **Três motores reais** (Context, Decision, Memory). Os outros sete "Engines"
   dos documentos fundadores são fronteiras conceituais — não criar pasta para
   honrar documento.
