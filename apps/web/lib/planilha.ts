@@ -22,6 +22,22 @@ import type { LinhaDaFonte } from "./sincronizacao.ts";
 /** Cabeçalhos que servem como CHAVE de reconciliação, em ordem de confiança. */
 const CHAVE_H = ["codigo", "código", "cod", "matricula", "matrícula", "id", "registro"];
 
+/** Cabeçalhos que dizem o CICLO do plano — é o que separa renovação de ajuste. */
+const CICLO_H = ["meses", "periodicidade", "ciclo", "duracao", "duração"];
+const CICLO_PALAVRA: Record<string, number> = {
+  mensal: 30, bimestral: 60, trimestral: 90, quadrimestral: 120,
+  semestral: 180, anual: 365, bianual: 730,
+};
+
+function cicloEmDias(v: string): number | null {
+  const t = strip(v);
+  if (!t) return null;
+  if (CICLO_PALAVRA[t]) return CICLO_PALAVRA[t];
+  const n = Number(t.replace(/[^0-9]/g, ""));
+  // Número puro nesta coluna é MÊS (a planilha da academia traz "12", "6").
+  return Number.isFinite(n) && n > 0 && n <= 60 ? n * 30 : null;
+}
+
 const strip = (s: string) =>
   (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -64,6 +80,7 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
   const cab = linhas[0];
   const h = cab.map(strip);
   const det = detectColumns(cab);
+  const iCiclo = h.findIndex((c) => CICLO_H.some((k) => c === k || c.startsWith(k)));
 
   // ⚠ A CHAVE NUNCA É ADIVINHADA.
   //
@@ -131,6 +148,7 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
       chave,
       nome: (r[det.nameIdx] ?? "").trim() || null,
       vigencia_ate: vigencia,
+      ciclo_dias: iCiclo >= 0 ? cicloEmDias(r[iCiclo] ?? "") : null,
     });
   }
 

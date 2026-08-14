@@ -40,6 +40,15 @@ export type LinhaDaFonte = {
   vigencia_ate?: string | null;
   /** Marcação derivada pelo sistema (ex.: veio da aba de convênio). */
   marcacoes?: string[];
+  /**
+   * Duração do ciclo em dias, quando a fonte declara (Mensal=30, Anual=365…).
+   *
+   * ⚠ SEM ISTO, TODO PROLONGAMENTO VIRA "RENOVOU" — e a primeira execução
+   * contra a planilha real da Be Fitness mostrou por que isso não serve: das
+   * 7 vigências que andaram para frente, **3 eram renovação e 4 eram ajuste
+   * de data** (6, 13, 20 e 21 dias). Ver `EXTENSAO_MINIMA` abaixo.
+   */
+  ciclo_dias?: number | null;
 };
 
 /** O que o banco lembra da última sincronização. */
@@ -54,6 +63,7 @@ export type EstadoConhecido = {
 export type TipoDeEvento =
   | "entrou"
   | "renovou"
+  | "ajuste_de_data"
   | "vigencia_recuou"
   | "encerrou"
   | "reapareceu"
@@ -72,7 +82,7 @@ export type Resultado = {
   eventos: Evento[];
   /** Quando preenchido, NADA deve ser aplicado. Ver a trava abaixo. */
   bloqueio: string | null;
-  resumo: { naFonte: number; noBanco: number; entraram: number; renovaram: number; encerraram: number; reapareceram: number };
+  resumo: { naFonte: number; noBanco: number; entraram: number; renovaram: number; ajustaram: number; encerraram: number; reapareceram: number };
 };
 
 /**
@@ -93,6 +103,39 @@ export type Resultado = {
  * lê depois.
  */
 export const LIMITE_DESAPARECIDOS = 0.15;
+
+/**
+ * ⚠ QUANTO A VIGÊNCIA PRECISA ANDAR PARA SER RENOVAÇÃO.
+ *
+ * Achado na primeira execução contra a planilha real (13/ago): das 7 vigências
+ * que andaram para frente, **4 eram ajuste de data** — 6, 13, 20 e 21 dias.
+ * Mudança de dia de cobrança, crédito de dias parados, correção de digitação.
+ *
+ * Tratar ajuste como renovação erra dos dois lados, e o segundo é o caro:
+ * mandaria "obrigado por renovar" para quem não renovou, **e tiraria da fila
+ * de renovação alguém cujo contrato continua vencendo logo** — perdendo a
+ * receita que a fila existe para proteger.
+ *
+ * A régua é PROPORCIONAL ao ciclo quando a fonte o declara: meio ciclo já é
+ * renovação (mensal que anda 30 dias renovou; anual que anda 20 não). Sem
+ * ciclo declarado, vale o piso absoluto — 28 dias, abaixo do menor ciclo real
+ * que existe nos planos (mensal).
+ */
+export const EXTENSAO_MINIMA_DIAS = 28;
+export const EXTENSAO_MINIMA_FRACAO = 0.5;
+
+const dias = (a: string, b: string) =>
+  Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+
+/** Renovação de verdade, ou só a data andando? */
+export function ehRenovacao(de: string, para: string, cicloDias?: number | null): boolean {
+  const andou = dias(de, para);
+  if (andou <= 0) return false;
+  const minimo = cicloDias && cicloDias > 0
+    ? Math.max(1, Math.round(cicloDias * EXTENSAO_MINIMA_FRACAO))
+    : EXTENSAO_MINIMA_DIAS;
+  return andou >= minimo;
+}
 
 /**
  * Compara a foto com o que o banco sabe.
@@ -136,8 +179,19 @@ export function comparar(
       // ⚠ ISTO É O CASO MARIA ISABEL, e é a razão de a comparação existir.
       // Vencimento que anda para frente é RENOVAÇÃO OBSERVADA — fato, não
       // dedução sobre dado velho. Sem esta linha, ela seguiria como "venceu".
-      eventos.push({ chave: l.chave, tipo: "renovou", de: antes, para: agora,
-        descricao: `${l.nome ?? l.chave} renovou: vigência foi de ${antes} para ${agora}.` });
+      //
+      // Mas nem todo prolongamento é renovação: ver `ehRenovacao`. Ajuste de
+      // data vira evento próprio, para não desligar a conversa de renovação
+      // de quem continua vencendo logo.
+      const renovou = ehRenovacao(antes, agora, l.ciclo_dias);
+      eventos.push({
+        chave: l.chave,
+        tipo: renovou ? "renovou" : "ajuste_de_data",
+        de: antes, para: agora,
+        descricao: renovou
+          ? `${l.nome ?? l.chave} renovou: vigência foi de ${antes} para ${agora}.`
+          : `${l.nome ?? l.chave} teve a vigência ajustada em ${dias(antes, agora)} dia(s) (${antes} → ${agora}) — curto demais para ser renovação. Continua na régua de vencimento.`,
+      });
       continue;
     }
 
@@ -182,6 +236,7 @@ export function comparar(
       noBanco: vivosNoBanco.length,
       entraram: eventos.filter((e) => e.tipo === "entrou").length,
       renovaram: eventos.filter((e) => e.tipo === "renovou").length,
+      ajustaram: eventos.filter((e) => e.tipo === "ajuste_de_data").length,
       encerraram: sumidos.length,
       reapareceram: eventos.filter((e) => e.tipo === "reapareceu").length,
     },

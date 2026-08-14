@@ -16,7 +16,7 @@
  * `seed-curso.mjs` derrubou oito módulos ao lado **saindo com três ✓ verdes**,
  * porque o relatório só mostrava o que ele mesmo escrevera.
  *
- * ESPERADO: 15/15.
+ * ESPERADO: 20/20.
  *
  *   node packages/db/tests/sincronizacao_test.mjs
  */
@@ -61,6 +61,38 @@ const r2 = comparar(
   banco,
 );
 verifica("vigência encurtada vira aviso, não baixa", tipoDe(r2, "7386"), "vigencia_recuou");
+
+// ------------------------------------ RENOVAÇÃO × AJUSTE DE DATA
+//
+// ⚠ ACHADO NA PRIMEIRA EXECUÇÃO CONTRA A PLANILHA REAL (13/ago).
+//
+// Das 7 vigências que andaram para frente na base da Be Fitness, **4 eram
+// ajuste de data** — 6, 13, 20 e 21 dias: mudança de dia de cobrança, crédito
+// de dias parados, correção de digitação. Só 3 eram renovação (183, 365 e 92
+// dias, batendo com semestral, anual e trimestral).
+//
+// Tratar ajuste como renovação erra dos dois lados, e o segundo é o caro:
+// mandaria "obrigado por renovar" a quem não renovou **e tiraria da fila de
+// renovação alguém cujo contrato continua vencendo logo** — perdendo
+// exatamente a receita que a fila existe para proteger.
+const mudou = (de, para, ciclo) => comparar(
+  [{ chave: "k", nome: "P", vigencia_ate: para, ciclo_dias: ciclo }],
+  [{ chave: "k", nome: "P", vigencia_ate: de }],
+).eventos[0].tipo;
+
+// O caso Maria Isabel: semestral, +183 dias.
+verifica("meio ciclo à frente é renovação", mudou("2026-08-10", "2027-02-09", 180), "renovou");
+// O caso Michélle: +6 dias num plano anual.
+verifica("seis dias num plano anual é ajuste", mudou("2027-05-03", "2027-05-09", 365), "ajuste_de_data");
+// Mensal que anda 30 dias É renovação — por isso a régua é proporcional ao
+// ciclo, e não um número fixo que trataria mensal e anual igual.
+verifica("mensal que anda um mês é renovação", mudou("2026-08-01", "2026-08-31", 30), "renovou");
+verifica("anual que anda um mês é ajuste", mudou("2026-08-01", "2026-08-31", 365), "ajuste_de_data");
+// Sem ciclo declarado, vale o piso absoluto de 28 dias — abaixo do menor
+// ciclo real que existe nos planos.
+verifica("sem ciclo, o piso absoluto decide",
+  [mudou("2026-08-01", "2026-08-20", null), mudou("2026-08-01", "2026-09-15", null)],
+  ["ajuste_de_data", "renovou"]);
 
 // --------------------------------------------------- AUSÊNCIA VIRA HISTÓRICO
 
@@ -124,5 +156,5 @@ verifica("a marcação é derivada do cruzamento",
 verifica("quem está no convênio e não na base vira órfão, não some",
   cruz.orfaos, [{ marcacao: "wellhub", chaves: ["zzz"] }]);
 
-console.log(falhas === 0 ? "\nOK — 15/15" : `\nFALHOU — ${falhas} de 15`);
+console.log(falhas === 0 ? "\nOK — 20/20" : `\nFALHOU — ${falhas} de 20`);
 process.exit(falhas === 0 ? 0 : 1);
