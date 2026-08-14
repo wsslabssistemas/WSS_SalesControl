@@ -108,10 +108,22 @@ Planilha criada pelo fundador, 4 abas: **Matriculas**, **Cadastros** (9k+),
 <https://docs.google.com/spreadsheets/d/18rQRnL6Z7rmx1iJ677nsjVoUb4Mq14W-y-FNIKthr4U>
 
 **Acesso hoje:** o conector do Drive desta conversa não enxerga o arquivo (nem
-os próprios arquivos da conta autorizada). Para o SISTEMA ler — que é o que
-importa — o caminho não passa por conector de chat: é **publicar como CSV**
-(Arquivo → Compartilhar → Publicar na web, por aba) ou conta de serviço na API
-do Sheets. O CSV publicado é a opção sem OAuth e sem senha.
+os próprios arquivos da conta autorizada). Para o SISTEMA ler, o caminho não
+passa por conector de chat.
+
+> ⚠ **CORREÇÃO (13/ago): NÃO publicar na web.** A primeira recomendação daqui
+> foi "publicar como CSV", e ela estava **errada para este dado**. O fundador
+> fez a pergunta certa — *"não corre o risco de terceiros terem acesso?"* —
+> e corre: "Publicar na web" cria URL acessível **sem login por qualquer um
+> que tenha o link**, e pode ser indexada. São **nome, telefone e data de
+> nascimento de 9 mil pessoas**. É exposição de dado pessoal de cliente, e a
+> conveniência não paga isso.
+>
+> Os dois caminhos certos: **conta de serviço** (compartilhar a planilha com
+> um e-mail de robô, como se compartilha com uma pessoa — sem link público e
+> revogável removendo o compartilhamento) ou **exportar CSV e subir** (zero
+> exposição, zero configuração no Google; perde o "tempo real", que não é
+> necessário porque a atualização é em lote de qualquer jeito).
 
 #### ⚠ A pergunta que decide o desenho: onde mora o histórico?
 
@@ -135,6 +147,14 @@ passos — e ainda cria escrita concorrente entre pessoa e sistema.
 - **O sistema NUNCA escreve na planilha.** Sem conflito, sem risco de derrubar
   edição de humano, sem dois donos do mesmo dado.
 
+**✅ O motor da comparação está pronto** (`lib/sincronizacao.ts`,
+`sincronizacao_test.mjs` 15/15, testado quebrando a trava). Ele não escreve
+nada — devolve os eventos e, quando a fonte não é confiável, o motivo de
+parar. Falta só o leitor da planilha, que depende da decisão de acesso acima.
+Trata `vigencia_recuou` (vigência que anda para trás é erro de digitação, não
+cancelamento) e `reapareceu` (quem estava baixado e voltou é retorno, não
+gente nova — e é essa diferença que preserva a história).
+
 **A ideia central: ausência é informação, e só o sistema enxerga.** Ele apaga a
 linha; o sistema percebe a falta *porque lembra do que havia antes*. É o mesmo
 princípio do `contact_stage_history`, que já é append-only.
@@ -148,12 +168,16 @@ princípio do `contact_stage_history`, que já é append-only.
 
 #### As 4 abas — o que eu mudaria
 
-**Wellhub e Totalpass não deveriam ser abas.** São recortes de `Cadastros`,
-e como abas separadas a mesma pessoa existe em dois lugares e as duas vão
-divergir — o mesmo defeito que "Matriculados" e "Vencidos" teriam. **Uma
-coluna `convenio`** (Wellhub / Totalpass / nenhum) na aba `Cadastros` faz o
-sistema derivar as três visões — e ainda deixa cruzar filtros que aba separada
-não deixa: *"Gympass + nunca foi aluno pagante + mora perto"*.
+A recomendação inicial foi manter uma coluna `convenio` na aba `Cadastros`.
+**O fundador recusou, e estava certo:** *"vai ter que ser manual, então sem
+chances."* Trabalho manual recorrente é trabalho que para de acontecer — e aí
+o dado fica errado em silêncio, que é pior que não existir.
+
+**Então as 3 abas ficam e o SISTEMA deriva a marcação**, cruzando por chave
+(`marcarPorCruzamento` em `lib/sincronizacao.ts`). O que se perde é a garantia
+de que as abas concordam; o que se ganha é o sistema **relatar a divergência**
+(os "órfãos") em vez de exigir que ela seja evitada. Divergência relatada é
+conserto; divergência silenciosa é o defeito.
 
 #### A pergunta que muda a estratégia de convênio
 
@@ -162,11 +186,17 @@ A medição de ago/2026 diz que a abordagem normal não vai funcionar: **contato
 de convênio responde a 9% contra 54% do WhatsApp** — ele não está comprando,
 está usando um benefício que já paga.
 
-**A pergunta que precisa ser respondida antes de escrever qualquer mensagem:
-o convênio paga por CHECK-IN ou valor fixo?** Se for por check-in, o objetivo
-não é converter em aluno pagante — é **frequência**, que é receita sem custo
-de aquisição nenhum. São duas conversas completamente diferentes, e escolher a
-errada desperdiça a melhor lista da planilha.
+**RESPONDIDO pelo fundador (13/ago): ele quer o CHECK-IN deles.**
+
+Isso muda a estratégia inteira e explica os 9%: **eles não estão numa conversa
+de compra.** Mensagem de venda para quem já paga só gera silêncio — e a
+medição já provava isso antes de alguém tentar.
+
+**O objetivo é FREQUÊNCIA, não conversão** — receita sem custo de aquisição
+nenhum. A conversa muda de eixo: horário vazio, o que tem aqui que a
+concorrente do mesmo convênio não tem, o treino da semana. Nunca preço, nunca
+plano. Entra como **cadência própria no manifesto de academia**, não como
+adaptação da régua de venda — porque não é venda.
 
 #### O que mais dá para fazer com esses dados
 

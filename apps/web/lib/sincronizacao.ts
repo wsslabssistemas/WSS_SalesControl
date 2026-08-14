@@ -1,0 +1,227 @@
+// A SINCRONIZAÇÃO COM A FONTE EXTERNA — comparar a foto de hoje com o que o
+// banco lembra, e transformar a diferença em fato.
+//
+// Sem banco e sem imports, para ser testável em Node puro.
+//
+// ⚠ POR QUE ISTO EXISTE, E POR QUE NÃO É UM IMPORTADOR.
+//
+// O sistema da academia não tem API: a verdade sobre matrícula e vigência mora
+// numa planilha que o fundador atualiza. Ele viu o problema sozinho: *"toda
+// vez que eu atualizar a aba Matriculas, quem virou ex-cliente vai ser
+// apagado, e o sistema perde o histórico"* — e propôs que o sistema mantivesse
+// uma aba própria.
+//
+// A recomendação foi outra, e a razão é a mesma que atravessa este projeto
+// inteiro: **histórico numa planilha que um humano sobrescreve toda semana é o
+// mesmo defeito com mais passos**, e ainda cria dois donos escrevendo no mesmo
+// dado.
+//
+// A DIVISÃO QUE RESOLVE:
+//
+//   • A planilha é a FOTOGRAFIA DE HOJE. Um trabalho só: o que é verdade agora.
+//   • O histórico é do BANCO, e nasce da COMPARAÇÃO.
+//   • O sistema NUNCA escreve na planilha. Sem conflito, sem sobrescrever
+//     edição de humano.
+//
+// **A ideia central: ausência é informação, e só o sistema enxerga.** Ele
+// apaga a linha; o sistema percebe a falta *porque lembra do que havia antes*.
+// O fundador não mantém histórico nenhum e ganha um histórico completo.
+//
+// E é a mesma comparação que resolve o caso Maria Isabel: `vigencia_ate` que
+// anda para frente é uma RENOVAÇÃO, e renovação observada é fato — diferente
+// de vencimento deduzido de dado velho.
+
+/** Uma linha da fonte externa, já normalizada pelo leitor. */
+export type LinhaDaFonte = {
+  /** Chave de reconciliação. Na Be Fitness é o código do sistema da academia. */
+  chave: string;
+  nome?: string | null;
+  /** ISO (YYYY-MM-DD). Ausente quando a fonte não declara vigência. */
+  vigencia_ate?: string | null;
+  /** Marcação derivada pelo sistema (ex.: veio da aba de convênio). */
+  marcacoes?: string[];
+};
+
+/** O que o banco lembra da última sincronização. */
+export type EstadoConhecido = {
+  chave: string;
+  nome?: string | null;
+  vigencia_ate?: string | null;
+  /** Já foi baixado como encerrado numa sincronização anterior? */
+  encerrado?: boolean;
+};
+
+export type TipoDeEvento =
+  | "entrou"
+  | "renovou"
+  | "vigencia_recuou"
+  | "encerrou"
+  | "reapareceu"
+  | "sem_mudanca";
+
+export type Evento = {
+  chave: string;
+  tipo: TipoDeEvento;
+  de?: string | null;
+  para?: string | null;
+  /** Frase para o log e para a tela de conferência. Não é mensagem ao cliente. */
+  descricao: string;
+};
+
+export type Resultado = {
+  eventos: Evento[];
+  /** Quando preenchido, NADA deve ser aplicado. Ver a trava abaixo. */
+  bloqueio: string | null;
+  resumo: { naFonte: number; noBanco: number; entraram: number; renovaram: number; encerraram: number; reapareceram: number };
+};
+
+/**
+ * ⚠ A TRAVA DA PLANILHA PARCIAL — e ela é a parte mais importante do arquivo.
+ *
+ * "Sumiu da fonte" só significa "encerrou" se a fonte estiver COMPLETA. Uma
+ * exportação com filtro aplicado, uma aba baixada pela metade, um erro de
+ * cópia — e a comparação daria baixa em massa em gente que continua pagando.
+ *
+ * É exatamente a classe de defeito que já custou o curso inteiro neste
+ * repositório: o `seed-curso.mjs` recarregava um arquivo e derrubava oito
+ * módulos ao lado, **saindo com três ✓ verdes**, porque o relatório só mostrava
+ * o que ele havia escrito. *Relatório que só mostra o que a operação escreveu
+ * não enxerga o que ela derrubou.*
+ *
+ * Por isso a trava é por PROPORÇÃO e não por número absoluto, e por isso ela
+ * bloqueia em vez de avisar: aviso em operação destrutiva é aviso que alguém
+ * lê depois.
+ */
+export const LIMITE_DESAPARECIDOS = 0.15;
+
+/**
+ * Compara a foto com o que o banco sabe.
+ *
+ * Não escreve nada e não decide nada — devolve os eventos e, se for o caso, o
+ * motivo pelo qual a aplicação deve parar. Quem aplica é o chamador, depois de
+ * mostrar ao humano.
+ */
+export function comparar(
+  fonte: LinhaDaFonte[],
+  banco: EstadoConhecido[],
+  limite = LIMITE_DESAPARECIDOS,
+): Resultado {
+  const naFonte = new Map(fonte.map((l) => [l.chave, l]));
+  const noBanco = new Map(banco.map((b) => [b.chave, b]));
+  const eventos: Evento[] = [];
+
+  // ------------------------------------------------------------- O QUE ESTÁ LÁ
+  for (const l of fonte) {
+    const b = noBanco.get(l.chave);
+
+    if (!b) {
+      eventos.push({ chave: l.chave, tipo: "entrou", para: l.vigencia_ate ?? null,
+        descricao: `${l.nome ?? l.chave} não existia no sistema.` });
+      continue;
+    }
+
+    // REAPARECEU: estava baixado e voltou à fonte. É renovação depois de uma
+    // saída, e tratar como "entrou de novo" apagaria a história de que ele já
+    // foi cliente antes — que é justamente o dado que o fundador quer manter.
+    if (b.encerrado) {
+      eventos.push({ chave: l.chave, tipo: "reapareceu", de: b.vigencia_ate ?? null, para: l.vigencia_ate ?? null,
+        descricao: `${l.nome ?? l.chave} voltou depois de ter encerrado.` });
+      continue;
+    }
+
+    const antes = b.vigencia_ate ?? null;
+    const agora = l.vigencia_ate ?? null;
+
+    if (antes && agora && agora > antes) {
+      // ⚠ ISTO É O CASO MARIA ISABEL, e é a razão de a comparação existir.
+      // Vencimento que anda para frente é RENOVAÇÃO OBSERVADA — fato, não
+      // dedução sobre dado velho. Sem esta linha, ela seguiria como "venceu".
+      eventos.push({ chave: l.chave, tipo: "renovou", de: antes, para: agora,
+        descricao: `${l.nome ?? l.chave} renovou: vigência foi de ${antes} para ${agora}.` });
+      continue;
+    }
+
+    if (antes && agora && agora < antes) {
+      // Vigência que ANDA PARA TRÁS quase sempre é erro de digitação ou de
+      // exportação. Não é tratado como cancelamento: vira evento para alguém
+      // olhar. Encurtar contrato em silêncio colocaria gente na fila de
+      // renovação sem motivo.
+      eventos.push({ chave: l.chave, tipo: "vigencia_recuou", de: antes, para: agora,
+        descricao: `${l.nome ?? l.chave} teve a vigência ENCURTADA de ${antes} para ${agora}. Confira antes de aplicar.` });
+      continue;
+    }
+
+    eventos.push({ chave: l.chave, tipo: "sem_mudanca", de: antes, para: agora, descricao: "" });
+  }
+
+  // -------------------------------------------------- O QUE SUMIU (a informação)
+  const vivosNoBanco = banco.filter((b) => !b.encerrado);
+  const sumidos = vivosNoBanco.filter((b) => !naFonte.has(b.chave));
+  for (const b of sumidos) {
+    eventos.push({ chave: b.chave, tipo: "encerrou", de: b.vigencia_ate ?? null,
+      descricao: `${b.nome ?? b.chave} não está mais na fonte — contrato encerrado.` });
+  }
+
+  // ------------------------------------------------------------------ A TRAVA
+  let bloqueio: string | null = null;
+  const proporcao = vivosNoBanco.length ? sumidos.length / vivosNoBanco.length : 0;
+  if (fonte.length === 0 && vivosNoBanco.length > 0) {
+    bloqueio = `A fonte veio VAZIA e o sistema conhece ${vivosNoBanco.length} contratos ativos. Isso daria baixa em todos. Nada foi aplicado.`;
+  } else if (proporcao > limite) {
+    bloqueio =
+      `${sumidos.length} de ${vivosNoBanco.length} contratos ativos (${Math.round(proporcao * 100)}%) sumiram da fonte, ` +
+      `acima do limite de ${Math.round(limite * 100)}%. Planilha parcial ou filtro aplicado dariam exatamente este resultado. ` +
+      `Confira a exportação antes de aplicar — nada foi gravado.`;
+  }
+
+  return {
+    eventos,
+    bloqueio,
+    resumo: {
+      naFonte: fonte.length,
+      noBanco: vivosNoBanco.length,
+      entraram: eventos.filter((e) => e.tipo === "entrou").length,
+      renovaram: eventos.filter((e) => e.tipo === "renovou").length,
+      encerraram: sumidos.length,
+      reapareceram: eventos.filter((e) => e.tipo === "reapareceu").length,
+    },
+  };
+}
+
+/**
+ * Cruza as abas de convênio com a base de cadastros, por chave.
+ *
+ * ⚠ POR QUE O SISTEMA DERIVA EM VEZ DE PEDIR UMA COLUNA.
+ *
+ * A recomendação inicial foi o fundador manter uma coluna `convenio` na aba de
+ * cadastros. Ele respondeu o que fechava a questão: *"vai ter que ser manual,
+ * então sem chances."* Está certo — trabalho manual recorrente é trabalho que
+ * para de acontecer, e aí o dado fica errado em silêncio, que é pior.
+ *
+ * Então o sistema lê as abas separadas e deriva a marcação sozinho. O que se
+ * perde é a GARANTIA de que as abas concordam; o que se ganha é o sistema
+ * RELATAR a divergência em vez de exigir que ela seja evitada. Divergência
+ * relatada é conserto; divergência silenciosa é o defeito.
+ */
+export function marcarPorCruzamento(
+  base: LinhaDaFonte[],
+  recortes: { marcacao: string; linhas: LinhaDaFonte[] }[],
+): { linhas: LinhaDaFonte[]; orfaos: { marcacao: string; chaves: string[] }[] } {
+  const porChave = new Map(base.map((l) => [l.chave, { ...l, marcacoes: [...(l.marcacoes ?? [])] }]));
+  const orfaos: { marcacao: string; chaves: string[] }[] = [];
+
+  for (const r of recortes) {
+    const semPar: string[] = [];
+    for (const l of r.linhas) {
+      const alvo = porChave.get(l.chave);
+      // ÓRFÃO É INFORMAÇÃO, NÃO ERRO. Alguém na aba do convênio que não está
+      // na base de cadastros significa que as duas abas divergiram — e é
+      // exatamente isso que se quer ver, em vez de descartar em silêncio.
+      if (!alvo) { semPar.push(l.chave); continue; }
+      if (!alvo.marcacoes!.includes(r.marcacao)) alvo.marcacoes!.push(r.marcacao);
+    }
+    if (semPar.length) orfaos.push({ marcacao: r.marcacao, chaves: semPar });
+  }
+
+  return { linhas: [...porChave.values()], orfaos };
+}
