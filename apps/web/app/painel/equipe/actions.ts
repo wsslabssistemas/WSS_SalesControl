@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { origemDoSite } from "@/lib/site";
 import { lerTudo } from "@/lib/paginado";
+import { RACAO_MAXIMA } from "@/lib/racao";
 
 async function requireAdmin() {
   const m = await getActiveTenant();
@@ -307,4 +308,40 @@ export async function removeMember(membershipId: string, formData: FormData) {
   revalidatePath("/painel/equipe");
   revalidatePath("/painel/contatos");
   redirect("/painel/equipe");
+}
+
+/**
+ * A RAÇÃO DO DIA — quantas pessoas o sistema pede por vendedor, por dia.
+ *
+ * Mora em `tenants.settings` como a aparência e o token do calendário, e é
+ * regulada aqui porque é uma decisão sobre o TIME, não sobre a fila: quem
+ * define o ritmo é quem responde pelo resultado dele.
+ *
+ * O motivo de ela existir, e por que o número não pode ser livre, está em
+ * `lib/racao.ts` — resumo: lista grande faz a pessoa parar de executar, e
+ * rajada de mensagem queima o número da empresa, que é o ativo.
+ */
+export async function salvarRacao(formData: FormData) {
+  const m = await getActiveTenant();
+  if (!m?.tenant || (m.role !== "owner" && m.role !== "admin")) redirect("/painel/equipe");
+
+  const bruto = Number(String(formData.get("racao_dia") ?? "").replace(",", "."));
+  if (!Number.isFinite(bruto) || bruto < 1) {
+    redirect(`/painel/equipe?erro=${encodeURIComponent("Informe um número de 1 a " + RACAO_MAXIMA + ".")}`);
+  }
+  const valor = Math.min(Math.floor(bruto), RACAO_MAXIMA);
+
+  const supabase = await createClient();
+  const { data: atual } = await supabase
+    .from("tenants").select("settings").eq("id", m.tenant.id).maybeSingle();
+  const settings = (atual?.settings as Record<string, unknown> | null) ?? {};
+
+  await supabase
+    .from("tenants")
+    .update({ settings: { ...settings, racao_dia: valor } })
+    .eq("id", m.tenant.id);
+
+  revalidatePath("/painel/equipe");
+  revalidatePath("/painel/fila");
+  redirect(`/painel/equipe?ok=racao`);
 }

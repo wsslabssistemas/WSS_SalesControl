@@ -147,6 +147,60 @@ desenvolve e no CI é trava que a pessoa aprende a ignorar** — e a seção 6 d
 documento manda justamente rodar estas verificações localmente. Ao escrever
 verificação nova que lê arquivo, normalize a quebra de linha.
 
+### ⚠ A LISTA DE TRABALHO — a régua que colapsava e a ração que não existia
+
+Nasceu de uma pergunta do fundador sobre operação, não de um bug reportado:
+*"eu peço para os vendedores mandarem mensagem, cadastrarem as pessoas, e em
+determinado momento eles param de executar, sem motivo algum. Quando eu
+percebo, já tem semanas."* E o medo dele: *"se por um milagre eu deixo o
+sistema sem pendências, no outro dia não pode aparecer esses mil de novo, é
+desanimador."*
+
+**A régua errava para o lado oposto do que ele temia — e pior.**
+`computeDueTouches` pegava o **último** passo já vencido e o quitava com
+qualquer contato posterior. Para quem entrou na etapa ontem, certo. Para o
+acervo — 245 combinados vencidos, 352 pessoas sem contato há 30 dias, os
+ex-alunos que pararam há anos — **todos os passos já estavam vencidos**, então
+a régua começava no último e **uma mensagem quitava a sequência inteira**. A
+régua de três toques virava um toque só, justamente onde ela mais vale (8 de
+cada 9 perdas medidas são silêncio). Não aparecia como erro: a fila só ficava
+menor do que devia, e fila menor parece trabalho em dia.
+
+**A regra nova, em duas metades que só funcionam juntas:** qual passo vem agora
+é decidido por **quantos toques nossos já saíram** na etapa; quando ele vence é
+o **mais tarde** entre a data da régua e um intervalo desde a última conversa.
+Toques dados ≥ passos da régua → cadência esgotada (é o `max_attempts` do
+manifesto finalmente valendo). Falar hoje tira a pessoa da lista de hoje e a
+traz de volta no intervalo do passo seguinte. `cadencia_test.mjs` 13/13,
+testada restaurando o comportamento antigo — 6 das 13 reprovam.
+
+**A ração diária** (`lib/racao.ts`, padrão 10 por vendedor, ajustável na
+Equipe). Não existia teto nenhum de mensagem para contato: `prospeccao_dia`
+limita a BUSCA de empresas no módulo de prospecção, nunca o envio. Três motivos,
+e nenhum é enfeite: lista de três dígitos faz a pessoa parar de executar; rajada
+queima o número da empresa (§3.5); e é a peça que o motor proativo vai obedecer
+— autonomia sem ração é uma máquina de queimar o número na primeira semana.
+**A tela do vendedor passou a mostrar a ração e o progresso, nunca o acervo** —
+o acervo continua visível para quem decide, na visão de equipe. E o vendedor
+abre na carteira dele; o padrão era a fila dos três juntos.
+
+**"O que ficou combinado" saiu do limbo.** `next_action_note` existia e só dava
+para preencher três telas adiante, na edição do contato — daí **257 contatos com
+data e ZERO com nota**. Agora a pergunta é feita no momento do envio, com prazos
+prontos em vez de campo de data. É a resposta ao "sai da lista mas não sai":
+quem foi contatado some de hoje e volta na data combinada, com o assunto junto.
+
+**E o toque da fila não contava para ninguém:** `marcarEnviado` não gravava
+`created_by`, então o trabalho não aparecia no placar, no tempo de resposta nem
+na ração. Sistema que apaga o esforço de quem executa é o pior incentivo
+possível.
+
+**Medido antes de decidir o número:** Luciana 22 saídas, João 8, Nycolas 8 — na
+primeira semana de uso. O chute do fundador (10/dia) é de 2 a 6 vezes o ritmo
+atual. **⚠ Mas isso mede REGISTRO, não trabalho:** o envio é manual e o registro
+depende de um clique depois. Antes de cobrar, saber se eles fazem pouco ou
+registram pouco — problemas diferentes, soluções opostas.
+
 ### O que foi entregue em 11–14 de agosto
 
 | Entrega | Onde |
@@ -172,14 +226,55 @@ verificação nova que lê arquivo, normalize a quebra de linha.
    **"fechado sem pagar"** (7 dos 324 matriculados nunca pagaram — a Noeli é o
    caso) e **"atraso fora do hábito"** (a Maria Isabel atrasa 3 dias *sempre* e
    *sempre paga*; cobrá-la no dia 1 seria perseguir quem paga há 3 anos).
-4. **Cadência de convênio** — o fundador confirmou que quer o **check-in**, não
+4. **A etapa `ex_aluno` e a régua de reativação** (decidido em 14/ago, proposta
+   aprovada). Quem foi aluno e saiu **não tem estado na jornada** — a academia
+   vai de lead a matriculado e sai por "parou de responder" ou "disse não".
+   Jogar ex-aluno em "parou de responder" faz a IA escrever "vamos continuar
+   nossa conversa" para quem treinou dois anos. A técnica já está curada
+   (`retention` com `opportunity_type: reactivation`); falta o estado e a
+   régua, e os dois são **dado no manifesto**, não código.
+   Depois disso: importar os **~1.200 ex-alunos que pagaram** (não os 9.158
+   cadastros — decisão dele), com **data histórica**, senão eles nascem todos
+   como "leads de hoje" e derrubam a conversão de toda a empresa por 30 dias.
+5. **Cadência de convênio** — o fundador confirmou que quer o **check-in**, não
    a conversão. Objetivo é FREQUÊNCIA, e isso explica os 9% de resposta do
    convênio contra 54% do WhatsApp: não é conversa de compra.
-5. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
+6. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
    ação dele; ver `COS_Plano_de_Execucao.md` §F1 e §F4.
+
+### ⚠ O QUE FALTA PARA O SISTEMA SER AUTÔNOMO — a pergunta do fundador
+
+Ele fixou o critério e ele é bom: *"se o sistema hoje fosse automático, ele
+conseguiria fazer a execução e o controle de todos os clientes, ex-clientes e
+abas? Se não, temos que focar nessa estrutura."* **Hoje não**, e os buracos são
+nomeáveis:
+
+1. **O sistema é CEGO PARA METADE DA CONVERSA.** Medido em 14/ago: **zero**
+   pessoas "aguardando resposta" — e não porque está em dia, mas porque nada
+   entra sozinho. Sem a Cloud API, o único `inbound` que existe é o que o
+   recepcionista digita ao registrar um atendimento que ele **já respondeu**.
+   Qualquer alerta do tipo "responda o fulano" é impossível por construção.
+   Isso não é motor incompleto; trava no CNPJ (§3.6), não em código.
+2. **Nada roda no horário.** Sem motor proativo, tudo acontece quando alguém
+   abre uma tela.
+3. ~~**Sem ração, autonomia = banimento.**~~ Fechado em 14/ago.
+4. ~~**A régua colapsava no acervo.**~~ Fechado em 14/ago.
+5. **As abas dependem de ele exportar e subir.** O sistema da academia não tem
+   API — limite de fora, não do produto.
+
+O passo a passo do funcionário (o que fazer ao logar, e os alertas) foi
+desenhado nesta conversa e a primeira metade está no ar: o vendedor abre a fila
+na carteira dele, com a ração do dia e o progresso. Falta o alerta de ração não
+cumprida e o de dias sem abrir o sistema — os dois dependem do motor proativo.
 
 ### Decisões fechadas nesta conversa (não reabrir)
 
+- **Ex-aluno é estado próprio, não "parou de responder".** Quem pagou e saiu
+  não é um lead que sumiu, e tratar como tal faz a IA escrever descoberta para
+  quem treinou anos. Vai para o manifesto (Lei 2), não para o núcleo.
+- **Entram os ~1.200 que PAGARAM, não os 9.158 cadastros.** Quem pagou pelo
+  menos uma vez foi aluno de verdade; o resto é cadastro de qualidade
+  desconhecida. Base menor e melhor primeiro, e medindo antes de crescer.
 - **NÃO publicar a planilha na web.** São nome, CPF, endereço e telefone de 9
   mil pessoas; "publicar" cria URL acessível sem login e indexável. Conta de
   serviço ou upload.
@@ -1054,6 +1149,8 @@ node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (li
 node packages/db/tests/sugestoes_dna_check.mjs # campo aberto de DNA sem sugestão: 229/229
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
+node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 13/13
+node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql

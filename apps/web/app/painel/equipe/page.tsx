@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { changeRole, gerarLinkDeAcesso } from "./actions";
+import { changeRole, gerarLinkDeAcesso, salvarRacao } from "./actions";
+import { lerRacao, RACAO_MAXIMA } from "@/lib/racao";
 import { stagesForaDeJogo } from "@/lib/recurrence";
 import { computePlacar } from "@/lib/placar";
 import { PlacarDaEquipe } from "./Placar";
@@ -58,7 +59,7 @@ export default async function EquipePage({
   // Num placar isso é pior que em qualquer outra tela: o número de uma pessoa
   // aparece para os colegas dela, menor do que foi, **e ela não tem como
   // contestar um número que o sistema afirma.**
-  const [contatos, ixData] = await Promise.all([
+  const [contatos, ixData, { data: tRow }] = await Promise.all([
     lerTudo<{ id: string; owner_id: string | null; journey_stage: string; created_at: string; next_action_at: string | null }>(
       (de, ate) => supabase
         .from("contacts")
@@ -79,7 +80,9 @@ export default async function EquipePage({
       .gte("occurred_at", desde)
       .order("occurred_at", { ascending: true })
       .range(de, ate), { rotulo: "interacoes do placar" }),
+    supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle(),
   ]);
+  const racaoAtual = lerRacao((tRow?.settings ?? null) as Record<string, unknown> | null);
 
   const team = (members as Member[] | null) ?? [];
   const owned = contatos;
@@ -151,6 +154,36 @@ export default async function EquipePage({
 
       <PlacarDaEquipe placar={placar} periodo="últimos 30 dias" />
 
+      {/* ⚠ O RITMO DO TIME, e ele é decisão de quem responde pelo resultado.
+          A fila do vendedor mostra a ração do dia em vez do acervo inteiro —
+          ver `lib/racao.ts` para os três motivos. Aqui é onde o número se
+          ajusta depois de medir o que o time de fato dá conta. */}
+      {isAdmin && (
+        <div className="card mt-16">
+          <p className="eyebrow" style={{ marginBottom: 6 }}>Ritmo do time</p>
+          <form action={salvarRacao} className="row wrap" style={{ gap: 10, alignItems: "flex-end" }}>
+            <label className="text-dim" style={{ fontSize: 13 }}>
+              <span style={{ display: "block", marginBottom: 4 }}>Pessoas por dia, por vendedor</span>
+              <input
+                type="number"
+                name="racao_dia"
+                min={1}
+                max={RACAO_MAXIMA}
+                defaultValue={racaoAtual}
+                style={{ width: 90 }}
+              />
+            </label>
+            <button type="submit" className="btn btn-sm">Salvar</button>
+          </form>
+          <p className="text-faint" style={{ fontSize: 12, marginTop: 10, marginBottom: 0 }}>
+            É o teto do que o sistema <strong>pede</strong> por dia — ninguém fica impedido de
+            falar com mais gente. Lista grande demais faz a pessoa parar de executar, e
+            centenas de mensagens em poucos dias é o padrão que faz o WhatsApp banir o
+            número da empresa.
+          </p>
+        </div>
+      )}
+
       {inviteLink && (
         <div className="card mt-16" style={{ borderColor: "var(--border-brand)" }}>
           <p style={{ margin: "0 0 8px", fontSize: 13 }}>
@@ -161,7 +194,8 @@ export default async function EquipePage({
           <LinkDoConvite link={inviteLink} />
         </div>
       )}
-      {sp.ok && <p className="badge badge-success mt-16">Membro vinculado.</p>}
+      {sp.ok === "racao" && <p className="badge badge-success mt-16">Ritmo salvo: {racaoAtual} por dia, por vendedor.</p>}
+      {sp.ok && sp.ok !== "racao" && <p className="badge badge-success mt-16">Membro vinculado.</p>}
       {sp.erro && <p className="badge badge-danger mt-16">{sp.erro}</p>}
 
       <div className="card mt-24" style={{ padding: 0, overflowX: "auto" }}>

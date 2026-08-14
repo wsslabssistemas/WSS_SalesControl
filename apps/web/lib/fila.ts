@@ -179,6 +179,15 @@ export function construirFila(params: {
   contatos: ContatoDaFila[];
   /** Última interação por contato (QUALQUER direção), ISO. */
   ultimoContato: Record<string, string>;
+  /**
+   * Quantas mensagens NOSSAS já saíram para cada contato na etapa atual.
+   *
+   * É o que diz em qual passo da régua a pessoa está. Sem isso a cadência
+   * colapsa no acervo — ver a nota em `computeDueTouches`. Opcional para não
+   * quebrar quem monta a fila sem histórico (os testes), e a ausência
+   * significa "nenhum toque dado", que é o começo da régua.
+   */
+  toquesNossos?: Record<string, number>;
   stages: EtapaDaFila[];
   cadences: CadenciaDaFila[];
   recurrence: unknown;
@@ -187,7 +196,7 @@ export function construirFila(params: {
   hojeISO: string;
   deps: DepsDaFila;
 }): ItemDaFila[] {
-  const { contatos, ultimoContato, stages, cadences, recurrence, renewal, hojeISO, deps } = params;
+  const { contatos, ultimoContato, toquesNossos = {}, stages, cadences, recurrence, renewal, hojeISO, deps } = params;
   const foraDeJogo = deps.stagesForaDeJogo(stages);
   const itens: ItemDaFila[] = [];
   const porId = new Map(contatos.map((c) => [c.id, c]));
@@ -261,7 +270,7 @@ export function construirFila(params: {
   }
 
   // 3. FOLLOW-UP — a cadência do ramo, que é a maior perda medida do piloto.
-  for (const t of deps.computeDueTouches(contatos, ultimoContato, stages, cadences)) {
+  for (const t of deps.computeDueTouches(contatos, ultimoContato, stages, cadences, toquesNossos)) {
     itens.push({
       contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
       motivo: "followup",
@@ -347,7 +356,7 @@ export type DepsDaFila = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean; vencimentoConfirmado?: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
+  computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any, toques?: Record<string, number>) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeDue: (c: any, ultimo: Record<string, string>, rec: any, excl: Set<string>) => { contactId: string; name: string; phone: string | null; intervalDays: number; overdueDays: number }[];
 };

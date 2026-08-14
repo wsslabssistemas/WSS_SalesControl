@@ -99,8 +99,15 @@ for (const seg of segmentos) {
       continue;
     }
 
-    // O DIA TEM QUE AVANÇAR. Dois passos no mesmo offset disparam juntos e o
-    // segundo nunca é alcançado — `computeDueTouches` pega o ÚLTIMO vencido.
+    // O DIA TEM QUE AVANÇAR, e o motivo mudou junto com o motor (ago/2026).
+    //
+    // Antes: `computeDueTouches` pegava o ÚLTIMO passo vencido, então dois
+    // passos no mesmo dia disparavam juntos e o segundo nunca era alcançado.
+    // Hoje o passo é escolhido por CONTAGEM de toques e o vencimento sai do
+    // intervalo entre um passo e o anterior — offset repetido daria intervalo
+    // ZERO, e o núcleo teria que arredondar para 1 dia por conta própria.
+    // Régua que só funciona porque o núcleo corrige o manifesto é régua que
+    // mente sobre o que foi curado: melhor reprovar aqui.
     const dias = steps.map((s) => s.offset_days);
     for (let i = 1; i < dias.length; i++) {
       if (dias[i] <= dias[i - 1]) {

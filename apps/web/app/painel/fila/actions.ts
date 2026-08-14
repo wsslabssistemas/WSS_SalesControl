@@ -238,6 +238,24 @@ export async function marcarEnviado(formData: FormData) {
   const texto = String(formData.get("texto") ?? "").trim();
   if (!contactId) return;
 
+  // O QUE FICOU COMBINADO — a pergunta feita onde a resposta é sabida.
+  //
+  // ⚠ ESTE CAMPO EXISTIA E ERA INALCANÇÁVEL NA PRÁTICA. `next_action_note` só
+  // dava para preencher entrando na ficha do contato, abrindo o formulário de
+  // edição e salvando — três telas depois do momento em que a pessoa acabou de
+  // conversar. O resultado está medido: **257 contatos com data marcada e ZERO
+  // com nota.**
+  //
+  // E a nota não é enfeite: sem ela o combinado vira `lembrete`, o motivo de
+  // MENOR prioridade, porque uma DATA NÃO É UM MOTIVO (a regra do pretexto, em
+  // `lib/fila.ts`). Com ela, a fila sabe o porquê e a IA abre a conversa pelo
+  // que o cliente de fato disse.
+  //
+  // É também a resposta ao "sai da lista mas não sai": quem foi contatado
+  // some de hoje, e volta na data combinada — com o assunto junto.
+  const combinado = String(formData.get("combinado") ?? "").trim();
+  const emDias = Number(formData.get("em_dias") ?? 0);
+
   const supabase = await createClient();
   // `input_kind` é o PAPEL da interação e tem lista fechada no banco
   // (`customer_message | agent_briefing | system_initiated`). O toque da fila
@@ -260,6 +278,12 @@ export async function marcarEnviado(formData: FormData) {
     channel: "whatsapp",
     content: texto || "(toque da fila, sem texto registrado)",
     occurred_at: new Date().toISOString(),
+    // ⚠ QUEM REGISTROU. Faltava — e sem isso o toque da fila não contava para
+    // NINGUÉM: nem no placar da equipe, nem no tempo de resposta, nem na ração
+    // do dia, que são todos por `created_by`. O trabalho acontecia e sumia da
+    // medição, que é a forma mais desmoralizante de um sistema errar com quem
+    // está executando.
+    created_by: membership!.membershipId,
   });
   if (error) {
     // Falha aqui NÃO pode ser silenciosa. É a diferença entre "a fila repetiu
@@ -267,6 +291,26 @@ export async function marcarEnviado(formData: FormData) {
     console.error(`[fila] falha ao registrar envio de ${contactId}: ${error.message}`);
     throw new Error(`Não consegui registrar o envio: ${error.message}`);
   }
+
+  // A nota só vira compromisso com uma DATA junto — sem ela a fila não tem
+  // quando trazer a pessoa de volta, e a nota morre no cadastro sem nunca
+  // aparecer. Por isso a tela oferece prazos prontos em vez de um campo de
+  // data: data digitada em pt-BR já é armadilha conhecida deste repositório.
+  if (combinado && Number.isFinite(emDias) && emDias > 0) {
+    const volta = new Date();
+    volta.setDate(volta.getDate() + emDias);
+    // paginacao-ok: UPDATE de uma linha, endereçado por id.
+    const { error: e2 } = await supabase
+      .from("contacts")
+      .update({ next_action_note: combinado, next_action_at: volta.toISOString().slice(0, 10) })
+      .eq("id", contactId)
+      .eq("tenant_id", tenant.id);
+    if (e2) {
+      console.error(`[fila] falha ao gravar o combinado de ${contactId}: ${e2.message}`);
+      throw new Error(`O envio foi registrado, mas não consegui salvar o combinado: ${e2.message}`);
+    }
+  }
+
   revalidatePath("/painel/fila");
   revalidatePath("/painel");
 }

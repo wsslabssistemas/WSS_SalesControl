@@ -57,6 +57,7 @@ export function ItemDaFila({
   const [escalar, setEscalar] = useState(false);
   const [faltam, setFaltam] = useState<string[]>([]);
   const [enviado, setEnviado] = useState(false);
+  const [combinado, setCombinado] = useState("");
 
   const preparar = async () => {
     setCarregando(true);
@@ -149,19 +150,57 @@ export function ItemDaFila({
                     Sem telefone válido — copie e envie por onde falar com ele.
                   </span>
                 )}
-                <form
-                  action={marcarEnviado}
-                  onSubmit={() => setEnviado(true)}
-                  style={{ display: "inline" }}
-                >
-                  <input type="hidden" name="contact_id" value={contactId} />
-                  <input type="hidden" name="texto" value={texto} />
-                  <button type="submit" className="btn btn-sm btn-ghost">Marquei como enviado</button>
-                </form>
                 <button type="button" className="btn btn-sm btn-ghost" onClick={preparar} disabled={carregando}>
                   Gerar outra
                 </button>
               </div>
+
+              {/* ⚠ A PERGUNTA VAI AQUI, no momento em que a resposta é sabida.
+                  `next_action_note` existia desde sempre e só dava para
+                  preencher três telas adiante, na edição do contato — e o
+                  resultado está medido: 257 contatos com data e ZERO com nota.
+                  Campo que exige desvio é campo que ninguém preenche.
+
+                  O prazo é uma lista pronta, não um campo de data: data em
+                  pt-BR já é armadilha conhecida aqui (`03/08` vira 8 de março
+                  no JavaScript), e escolher é mais fácil que digitar — o
+                  mesmo princípio da régua de descoberta do manifesto. */}
+              <form
+                action={marcarEnviado}
+                onSubmit={() => setEnviado(true)}
+                className="stack"
+                style={{ gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}
+              >
+                <input type="hidden" name="contact_id" value={contactId} />
+                <input type="hidden" name="texto" value={texto} />
+                <label className="text-dim" style={{ fontSize: 12 }}>
+                  Ficou combinado alguma coisa?{" "}
+                  <span className="text-faint">(opcional, mas é o que faz o sistema saber o assunto da próxima vez)</span>
+                  <input
+                    type="text"
+                    name="combinado"
+                    value={combinado}
+                    onChange={(e) => setCombinado(e.target.value)}
+                    placeholder="ex.: vai passar sábado de manhã para conhecer"
+                    style={{ marginTop: 4 }}
+                  />
+                </label>
+                {combinado.trim() && (
+                  <label className="text-dim" style={{ fontSize: 12 }}>
+                    Voltar a falar com ele
+                    <select name="em_dias" defaultValue="7" style={{ marginTop: 4, width: "auto" }}>
+                      <option value="2">em 2 dias</option>
+                      <option value="7">em 1 semana</option>
+                      <option value="15">em 15 dias</option>
+                      <option value="30">em 1 mês</option>
+                    </select>
+                  </label>
+                )}
+                <button type="submit" className="btn btn-sm">
+                  {combinado.trim() ? "Enviei e anotei o combinado" : "Marquei como enviado"}
+                </button>
+              </form>
+
               <p className="text-faint" style={{ fontSize: 11, marginTop: 10, marginBottom: 0 }}>
                 Leia antes de enviar. O sistema escreve; quem manda é você.
               </p>

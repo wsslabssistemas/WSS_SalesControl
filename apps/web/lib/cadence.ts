@@ -46,11 +46,88 @@ function startOfDay(ms: number): number {
 }
 
 /**
+ * O histórico que a fila precisa, numa passada só: a última conversa e quantos
+ * toques NOSSOS já saíram na etapa atual.
+ *
+ * ⚠ EXISTE PARA SER UM LUGAR SÓ. Três telas montam fila (Painel, Fila,
+ * Follow-up) e as três derivavam o `ultimoContato` com o próprio laço. Somar
+ * agora a contagem de toques em cada uma seria a terceira cópia de uma regra
+ * que decide **quem aparece na lista de trabalho de alguém** — e a regra
+ * "fila é lógica, não é tela" existe justamente porque duas listas erradas
+ * parecem duas listas.
+ *
+ * A contagem é POR ETAPA: mudar de etapa reinicia a régua, porque a cadência é
+ * declarada por etapa no manifesto. Quem voltou para descoberta recomeça a
+ * descoberta.
+ *
+ * As interações podem vir em qualquer ordem — `ultimo` é o máximo, não o
+ * primeiro que aparecer.
+ */
+export function historicoPorContato(
+  interacoes: { contact_id: string | null; occurred_at: string; direction?: string | null }[],
+  entradaNaEtapa: Record<string, string>,
+): { ultimo: Record<string, string>; toques: Record<string, number> } {
+  const ultimo: Record<string, string> = {};
+  const toques: Record<string, number> = {};
+
+  for (const i of interacoes) {
+    const id = i.contact_id;
+    if (!id || !i.occurred_at) continue;
+
+    if (!ultimo[id] || i.occurred_at > ultimo[id]) ultimo[id] = i.occurred_at;
+
+    // Só o que SAIU, e só depois de entrar na etapa. Resposta do cliente adia
+    // o próximo toque (via `ultimo`) mas não executa nenhum passo da régua.
+    if (i.direction !== "outbound") continue;
+    const entrada = entradaNaEtapa[id];
+    if (entrada && i.occurred_at < entrada) continue;
+    toques[id] = (toques[id] ?? 0) + 1;
+  }
+
+  return { ultimo, toques };
+}
+
+/**
  * Toques vencidos. Para cada contato em etapa não-terminal:
- *  - se a etapa declara `cadence`, usa os passos dela (offset a partir da
- *    entrada na etapa) e aponta o último passo já vencido que ainda não foi
- *    coberto por um contato nosso;
+ *  - se a etapa declara `cadence`, aponta o PRÓXIMO passo ainda não dado;
  *  - se não declara, sinaliza silêncio a partir de `silenceDays`.
+ *
+ * ⚠ A RÉGUA COLAPSAVA NO ACERVO, E ISSO ERA O DEFEITO MAIS CARO DAQUI.
+ *
+ * A versão anterior escolhia o **último** passo já vencido e o quitava com
+ * qualquer contato posterior ao vencimento dele. Para quem entrou na etapa
+ * ontem, isso funciona. Para o ACERVO — os 245 combinados vencidos da Be
+ * Fitness, os 352 sem contato há 30 dias, os ex-alunos que pararam há anos —
+ * **todos os passos já venceram**, então a régua começava no último e **uma
+ * única mensagem quitava a sequência inteira**. A pessoa saía da fila e nunca
+ * mais voltava.
+ *
+ * Ou seja: a régua de três toques, que existe porque a maior perda medida do
+ * piloto é silêncio (8 de cada 9), virava um toque só exatamente na base onde
+ * ela mais valia. E como sempre nesta casa, não aparecia como erro nenhum — a
+ * fila só ficava menor do que deveria.
+ *
+ * ⚠ O DESENHO NOVO, e ele responde à pergunta do fundador de como uma pessoa
+ * "sai da lista sem sumir da lista":
+ *
+ *   • QUAL passo vem agora é decidido por **quantos toques já demos** naquela
+ *     etapa, não pela data. Passo 1 é para quem não recebeu nenhum.
+ *   • QUANDO ele vence é o **mais tarde** entre a data da régua e um intervalo
+ *     desde a última conversa. O intervalo é o declarado no manifesto (a
+ *     distância entre um passo e o anterior).
+ *   • Toques dados >= passos da régua → **cadência esgotada**, some da fila. É
+ *     o `max_attempts` do manifesto finalmente valendo.
+ *
+ * O efeito prático: falar com alguém hoje tira a pessoa da lista de hoje e a
+ * traz de volta no intervalo do passo seguinte — não amanhã (desanimador) e
+ * não nunca (a régua colapsada). Para contato novo o resultado é idêntico ao
+ * de antes; o que muda é só o acervo.
+ *
+ * ⚠ RESPOSTA DO CLIENTE NÃO CONTA COMO TOQUE NOSSO, mas ADIA o próximo. Ela
+ * entra em `lastTouchByContact` (que é qualquer direção) e por isso empurra o
+ * vencimento; ela não entra em `toquesNossos`, porque quem responde não
+ * executou o passo da régua. Contar a resposta como toque faria três mensagens
+ * seguidas de um cliente ansioso esgotarem a cadência dele.
  */
 export function computeDueTouches(
   contacts: {
@@ -64,6 +141,8 @@ export function computeDueTouches(
   lastTouchByContact: Record<string, string>,
   stages: Stage[],
   cadences: Cadence[],
+  /** Quantas mensagens NOSSAS saíram para cada contato desde que ele entrou na etapa. */
+  toquesNossos: Record<string, number> = {},
   silenceDays = 5,
 ): DueTouch[] {
   const hoje = startOfDay(Date.now());
@@ -81,23 +160,33 @@ export function computeDueTouches(
       ? startOfDay(new Date(lastTouchByContact[c.id]).getTime())
       : entrada;
     const daysSince = Math.floor((hoje - ultimo) / DAY);
-    const diasNaEtapa = Math.floor((hoje - entrada) / DAY);
 
     const cadKey = (stage as Stage & { cadence?: string }).cadence;
     const cad = cadKey ? byKey.get(cadKey) : undefined;
     const steps = (cad?.steps ?? []).slice().sort((a, b) => a.offset_days - b.offset_days);
 
     if (steps.length > 0) {
-      // Último passo cuja data já venceu.
-      let idx = -1;
-      for (let i = 0; i < steps.length; i++) {
-        if (diasNaEtapa >= steps[i].offset_days) idx = i;
-      }
-      if (idx < 0) continue; // nenhum toque venceu ainda
+      // QUAL passo: o próximo que ainda não foi dado.
+      const idx = toquesNossos[c.id] ?? 0;
+      // Régua cumprida. É o `max_attempts` do manifesto: insistir além disso
+      // em ticket de mensalidade queima o contato para a reativação, que é
+      // onde ele volta a valer.
+      if (idx >= steps.length) continue;
 
-      // Já falamos depois que esse passo venceu? Então está em dia.
-      const vencimento = entrada + steps[idx].offset_days * DAY;
-      if (ultimo >= vencimento) continue;
+      // QUANDO: o mais TARDE entre a data da régua e um intervalo desde a
+      // última conversa.
+      //
+      // As duas metades resolvem casos opostos e nenhuma sozinha resolve os
+      // dois. A data da régua é o que faz um contato novo ser tocado no dia
+      // certo; o intervalo desde a última conversa é o que impede o acervo de
+      // vencer tudo de uma vez — e é o que faz a pessoa voltar em N dias
+      // depois de falarmos, em vez de voltar amanhã.
+      const anterior = idx > 0 ? steps[idx - 1].offset_days : 0;
+      const intervalo = Math.max(1, steps[idx].offset_days - anterior);
+      const dataDaRegua = entrada + steps[idx].offset_days * DAY;
+      const desdeAConversa = ultimo + intervalo * DAY;
+      const vencimento = Math.max(dataDaRegua, desdeAConversa);
+      if (hoje < vencimento) continue;
 
       out.push({
         contactId: c.id,

@@ -110,6 +110,15 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   `required_facts`; os números vêm de `commercial_dna`.
 - **Trava anti-invenção.** Falta fato exigido, o motor devolve `escalate` e
   **não redige**. Prompt não resolve essa classe de erro; verificação estrutural resolve.
+- **A lista de trabalho tem ração diária** (`lib/racao.ts`). A tela de quem
+  executa mostra o teto do dia e o progresso, **nunca o acervo inteiro** —
+  dívida de três dígitos toda manhã é o que faz alguém parar de executar. O
+  acervo é leitura de gestão. E a ração é pré-requisito da automação: motor
+  proativo sem teto é uma máquina de queimar o número do cliente pagante.
+- **Cadência conta TOQUES DADOS, não datas vencidas.** No acervo todos os
+  passos já venceram; escolher o "último vencido" faz uma mensagem quitar a
+  régua inteira e a pessoa nunca mais voltar. O vencimento do próximo passo é o
+  mais tarde entre a data da régua e um intervalo desde a última conversa.
 - **Três motores reais** (Context, Decision, Memory). Os outros sete "Engines"
   dos documentos fundadores são fronteiras conceituais — não criar pasta para
   honrar documento.

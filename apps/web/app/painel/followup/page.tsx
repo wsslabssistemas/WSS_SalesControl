@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { computeDueTouches } from "@/lib/cadence";
+import { computeDueTouches, historicoPorContato } from "@/lib/cadence";
 import { linkDeWhatsApp } from "@/lib/envio";
 import { lerTudo } from "@/lib/paginado";
 
@@ -66,15 +66,23 @@ export default async function FollowUpPage({
     .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
     .sort((a, b) => a.nome.localeCompare(b.nome));
 
-  // Último toque NOSSO (outbound) por contato — é o que conta como follow-up feito.
-  const ultimoToque: Record<string, string> = {};
-  for (const i of ix) {
-    if (!i.contact_id || i.direction !== "outbound") continue;
-    if (!ultimoToque[i.contact_id]) ultimoToque[i.contact_id] = i.occurred_at;
-  }
+  // ⚠ ESTA TELA QUITAVA DIFERENTE DA FILA, e as duas mostram a mesma coisa.
+  //
+  // Aqui o "último toque" contava só o que SAIU; na Fila, qualquer interação.
+  // Efeito: o cliente respondia, a Fila dava o assunto por resolvido e o
+  // Follow-up continuava cobrando o mesmo toque — duas listas divergentes, e
+  // divergência entre listas não parece defeito, parece duas listas.
+  //
+  // A regra da casa é a da Fila (`lib/fila.ts`): o toque proativo existe para
+  // a conversa acontecer; se ela aconteceu, o motivo foi cumprido. As duas
+  // passam a usar o mesmo cálculo.
+  const { ultimo, toques } = historicoPorContato(
+    ix,
+    Object.fromEntries(contacts.map((c) => [c.id, c.stage_entered_at])),
+  );
 
   const alvo = resp ? contacts.filter((c) => c.owner_id === resp) : contacts;
-  const pendentes = computeDueTouches(alvo, ultimoToque, stages, cadences);
+  const pendentes = computeDueTouches(alvo, ultimo, stages, cadences, toques);
 
   const nomeDe = (id: string | null) => membros.find((m) => m.id === id)?.nome ?? "Sem responsável";
   const waLink = (phone: string | null) => linkDeWhatsApp(phone);

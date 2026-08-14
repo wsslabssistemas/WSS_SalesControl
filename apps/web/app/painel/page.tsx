@@ -4,7 +4,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeCooling } from "@/lib/agenda";
 import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
-import { computeDueTouches } from "@/lib/cadence";
+import { computeDueTouches, historicoPorContato } from "@/lib/cadence";
 import { linkDeWhatsApp } from "@/lib/envio";
 import { lerTudo } from "@/lib/paginado";
 import { computeRenovacoes } from "@/lib/renovacao";
@@ -91,7 +91,7 @@ export default async function PainelHome({
     // quem ja foi contatado. Cortado, gente contatada aparecia como abandonada.
     lerTudo<Ix>((de, ate) => supabase
       .from("interactions")
-      .select("contact_id, occurred_at, outcome")
+      .select("contact_id, occurred_at, outcome, direction")
       .eq("tenant_id", tenant.id)
       .order("occurred_at", { ascending: false })
       .range(de, ate), { rotulo: "interacoes do painel" }),
@@ -120,12 +120,13 @@ export default async function PainelHome({
   const foraDeJogo = stagesForaDeJogo(stages);
   const emAberto = contacts.filter((c) => !foraDeJogo.has(c.journey_stage)).length;
 
-  // Última interação por contato (para "esfriando").
-  const lastByContact: Record<string, string> = {};
-  for (const i of ix) {
-    if (!i.contact_id) continue;
-    if (!lastByContact[i.contact_id]) lastByContact[i.contact_id] = i.occurred_at;
-  }
+  // Última interação por contato (para "esfriando") e em qual passo da régua
+  // cada um está. Um cálculo só, compartilhado com a Fila e o Follow-up — as
+  // três telas montavam o mesmo mapa cada uma do seu jeito.
+  const { ultimo: lastByContact, toques } = historicoPorContato(
+    ix,
+    Object.fromEntries(contacts.map((c) => [c.id, c.stage_entered_at])),
+  );
 
   const cooling = computeCooling(contacts, lastByContact, stages);
   const hojeISO = new Date().toISOString().slice(0, 10);
@@ -145,7 +146,8 @@ export default async function PainelHome({
   // seção em que a pessoa caiu.
   const fila = construirFila({
     contatos: contacts.map(comCarimbo),
-    ultimoContato: lastByContact, stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
+    ultimoContato: lastByContact, toquesNossos: toques,
+    stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
 
