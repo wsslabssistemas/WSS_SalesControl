@@ -1,5 +1,5 @@
 # ESTADO DO PROJETO — COS (WSS Kairós)
-**Última atualização:** 10 de agosto de 2026
+**Última atualização:** 14 de agosto de 2026
 **Fabricante:** WSS Labs · **Fundador:** William
 
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
@@ -15,7 +15,134 @@
 
 ---
 
-## 0. A ENTRADA DO PRODUTO — 9 e 10 de agosto de 2026
+## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 14 de agosto de 2026
+
+> Escrito no fim de uma conversa longa, para a próxima começar sabendo. O que
+> está aqui é **o que quebrou, o que foi consertado e o que continua aberto** —
+> nesta ordem, porque o aberto é o que decide o próximo passo.
+
+### 🔴 O BUG ABERTO: a tela de sincronização não grava
+
+`/painel/sincronizar` foi construída em 14/ago e o fundador reportou: **"não
+está salvando"**. Antes disso ele já tinha dito que **"parece que falta o botão
+de enviar"**.
+
+**Não foi diagnosticado.** O que se sabe:
+- O fluxo é de dois passos: `prever()` (não grava) → mostra a lista →
+  `aplicar()` (grava).
+- O arquivo é lido no NAVEGADOR (`file.text()`) e o texto vai para a server
+  action. Arquivos de 4 MB (o de recebimentos) passam por aqui.
+- `aplicar()` **refaz a previsão no servidor** e recusa se houver bloqueio.
+- Só `owner`/`admin` passam por `contexto()`.
+
+**Hipóteses, em ordem do que eu checaria:**
+1. **Limite de tamanho da server action.** Next.js limita o corpo (padrão ~1 MB).
+   O `.xls` de recebimentos tem **4,3 MB de texto** e o de matrículas ~86 KB.
+   Isso explicaria "não salva" sem erro visível na tela. **É a suspeita mais
+   forte.** Conserto: subir o limite em `next.config`, ou processar o arquivo em
+   pedaços, ou fazer o parse no cliente e mandar só o resultado (bem menor).
+2. O botão de aplicar só aparece quando `p.resumo` existe **e** não há bloqueio;
+   se `prever` devolve `ok:true` sem `resumo` (nenhum arquivo de matrículas), o
+   botão não é renderizado — e com só o de recebimentos é exatamente o caso.
+   **Isso é bug de lógica meu, independente do item 1.**
+3. Erro silencioso no `update`: o código conta `gravados` só quando `!error`,
+   mas **não mostra os erros** ao usuário.
+
+**Comece por reproduzir com o arquivo pequeno (matrículas, 86 KB) sozinho.** Se
+gravar, é tamanho; se não gravar, é lógica.
+
+**⚠ TRÊS CONSERTOS JÁ FORAM APLICADOS (14/ago, no fim da conversa) e NÃO foram
+confirmados pelo fundador.** Se ainda não gravar, comece descartando estes:
+
+1. **`serverActions.bodySizeLimit` subiu para 12 MB** em `next.config.mjs`. O
+   padrão do Next é **1 MB** e o `.xls` tem **4,3 MB** — estourava **sem erro
+   na tela**, que é exatamente como "não está salvando" se apresenta.
+2. **O botão de aplicar dependia de `p.resumo`**, que só existe quando vem
+   arquivo de MATRÍCULAS. Quem subisse só o de recebimentos via a leitura certa
+   e **nenhum botão** — provavelmente o "parece que falta o botão de enviar".
+3. **`aplicar()` devolvia `ok: true` com `gravados: 0`**, e a tela dizia "0
+   contatos atualizados" — indistinguível de sucesso para quem lê rápido. Agora
+   zero é ERRO, com a causa provável escrita na mensagem.
+
+**Se depois disso ainda não gravar, a suspeita seguinte é a CHAVE:** confira se
+`custom.codigo_sistema` de um contato bate com a coluna `Codigo` da planilha. A
+sincronização só atualiza quem já existe no banco — ela não cria contato.
+
+### ⚠ O DEFEITO MAIS INSTRUTIVO DO DIA — e ele já tem trava
+
+O fundador perguntou ao Analista *"o que os vendedores fizeram hoje"* e recebeu
+*"o último dia com movimento foi 25/07, faz 20 dias"*. Ele desconfiou —
+**"não pode, eles devem ter usado o sistema sim"** — e estava certo: havia 32
+interações no dia anterior.
+
+**`.limit(5000)` NÃO PROTEGE.** O teto de 1.000 linhas é do PostgREST, do lado
+do servidor, e ele **corta em silêncio**. Havia 1.955 linhas no período;
+chegaram 1.000 — e **sem `ORDER BY` as 1.000 são arbitrárias**, nem estáveis
+entre chamadas. A IA raciocinou com honestidade perfeita sobre um recorte que
+ninguém sabia que existia.
+
+**Ninguém tem como desconfiar de um dado que não apareceu.** Só apareceu
+porque o dono conhece a operação de cor.
+
+Oito lugares liam cortado, todos corrigidos com `lerTudo`: Analista, Gestão,
+Painel, **Placar da Equipe** (mostrava o desempenho de uma pessoa para os
+colegas dela, com número menor que o real e sem como ela contestar), Follow-up,
+feed `.ics`, o aprendizado do Responder e a sincronização.
+
+**Trava:** `paginacao_check.mjs`, no CI. Ela cobre também **o caso mais
+perigoso, que não tem `.limit()` nenhum** — consulta sem limite parece inocente
+e é a mais exposta. **Restam 39 pendências** em 20 arquivos, e a trava usa
+**linha de base**: falha se o número subir, e falha (do jeito bom) se cair sem
+alguém abaixar a constante. CI vermelho permanente seria trava que alguém
+desliga.
+
+### O que foi entregue em 11–14 de agosto
+
+| Entrega | Onde |
+|---|---|
+| **Fila com quitação e motivo único** — combinado que nunca dava baixa (233 de 251 vencidos, 74 já respondidos) | `lib/fila.ts` |
+| **A regra do pretexto** — uma DATA não é um MOTIVO. 257 contatos com `next_action` e ZERO com nota | `lib/fila.ts` |
+| **39 etapas mudas ganharam cadência** — 80/80 etapas vivas, 117 passos curados | 15 manifestos |
+| **Renovação e recompra saíram do núcleo** para o manifesto (Lei 1) | `lib/renovacao.ts` |
+| **Vigência com carimbo de conferência** — o caso Maria Isabel | `lib/renovacao.ts` |
+| **O ciclo técnica → desfecho**, desenhado para dizer "ainda não sei" | `lib/aprendizado.ts` |
+| **Comparação foto × histórico** com trava de planilha parcial | `lib/sincronizacao.ts` |
+| **Leitor de planilha** (CSV e o `.xls` que é HTML), recusa adivinhar a chave | `lib/planilha.ts` |
+| **Custo de IA por período** no painel do fabricante | `/painel/admin` |
+| **"Gerar acesso"** na Equipe — ninguém mais espera e-mail | `/painel/equipe` |
+
+### Os próximos passos, em ordem
+
+1. **Consertar a gravação da sincronização** (bug acima). Sem isso os 11
+   encerramentos e as 3 renovações medidas não entram no banco.
+2. **Continuar a varredura de paginação** — 39 pendências, com os 9 mil
+   cadastros a caminho.
+3. **Os estados comerciais que faltam**, agora com dado real medido:
+   **"fechado sem pagar"** (7 dos 324 matriculados nunca pagaram — a Noeli é o
+   caso) e **"atraso fora do hábito"** (a Maria Isabel atrasa 3 dias *sempre* e
+   *sempre paga*; cobrá-la no dia 1 seria perseguir quem paga há 3 anos).
+4. **Cadência de convênio** — o fundador confirmou que quer o **check-in**, não
+   a conversão. Objetivo é FREQUÊNCIA, e isso explica os 9% de resposta do
+   convênio contra 54% do WhatsApp: não é conversa de compra.
+5. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
+   ação dele; ver `COS_Plano_de_Execucao.md` §F1 e §F4.
+
+### Decisões fechadas nesta conversa (não reabrir)
+
+- **NÃO publicar a planilha na web.** São nome, CPF, endereço e telefone de 9
+  mil pessoas; "publicar" cria URL acessível sem login e indexável. Conta de
+  serviço ou upload.
+- **CPF e endereço são descartados na porta** (`DESCARTADAS` em
+  `lib/planilha.ts`). O sistema não precisa deles para decidir com quem falar.
+- **A planilha é a foto de hoje; o histórico é do banco.** O sistema nunca
+  escreve nela. Ausência vira histórico.
+- **O sistema deriva a marcação de convênio** cruzando as abas — o fundador
+  recusou manter coluna à mão, e tinha razão: trabalho manual recorrente para
+  de acontecer e o dado fica errado em silêncio.
+
+---
+
+## 0.1. A ENTRADA DO PRODUTO — 9 e 10 de agosto de 2026
 
 > Dois dias inteiros num só assunto: **fazer uma pessoa de fora conseguir
 > entrar.** Vale ler antes de tudo, porque é a área que mais quebrou e a que
@@ -872,6 +999,7 @@ node packages/db/tests/cadencia_check.mjs   # nenhuma etapa viva muda: 80/80 (se
 node packages/db/tests/aprendizado_test.mjs # o ciclo tecnica-desfecho, e o silencio: 16/16
 node packages/db/tests/sincronizacao_test.mjs # foto x historico, e a trava da planilha parcial: 15/15
 node packages/db/tests/planilha_test.mjs   # leitor de aba: recusa adivinhar a chave: 14/14
+node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (linha de base: 39)
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12

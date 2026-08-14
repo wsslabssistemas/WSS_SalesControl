@@ -72,6 +72,23 @@ transformaria 9.151 pessoas em alunas.
 
 ---
 
+## 🔴 ABERTO AGORA — a sincronização não grava (14/ago)
+
+`/painel/sincronizar` lê os dois relatórios, compara e **mostra certo** — mas
+o fundador reportou que **não salva**. Diagnóstico e hipóteses no §0 do
+`ESTADO_DO_PROJETO.md`. A suspeita mais forte é **tamanho do corpo da server
+action**: o `.xls` de recebimentos tem 4,3 MB de texto.
+
+**Teste que separa as hipóteses:** subir SÓ o de matrículas (86 KB). Se gravar,
+é tamanho. Se não gravar, é lógica do botão.
+
+**O que já está medido e esperando para entrar no banco** (rodado contra o
+arquivo real, sem gravar): 12 entraram · **3 renovaram** · 4 ajuste de data ·
+**11 encerraram**. E dos recebimentos: 1.548 pagantes, R$ 1.548.051 de
+faturamento histórico, atraso habitual por pessoa.
+
+---
+
 ## ❌ O que falta — 10 de agosto de 2026, fim do dia
 
 ### Suas

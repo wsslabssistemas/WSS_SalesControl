@@ -111,6 +111,12 @@ export function Sincronizador() {
 
           {/* ⚠ O BLOQUEIO VEM ANTES DE TUDO E SUBSTITUI O BOTÃO. Mostrar o
               aviso e deixar o botão do lado é o mesmo que não ter aviso. */}
+          {/* ⚠ O BOTÃO DE APLICAR NÃO PODE DEPENDER DE `resumo`.
+              `resumo` só existe quando veio arquivo de MATRÍCULAS. Quem subisse
+              só o de recebimentos via a leitura correta e **nenhum botão** —
+              que é exatamente o "não está salvando" e o "parece que falta o
+              botão de enviar" que o fundador relatou. O botão agora depende de
+              haver ALGO a aplicar, não de um dos dois arquivos. */}
           {p.bloqueio ? (
             <div className="card mt-16" style={{ borderColor: "var(--danger)" }}>
               <p className="badge badge-danger">Não dá para aplicar</p>
@@ -120,15 +126,15 @@ export function Sincronizador() {
               </p>
             </div>
           ) : (
-            p.resumo && (
+            (p.resumo || p.pagantes) && (
               <>
                 <div className="row wrap mt-16" style={{ gap: 8 }}>
-                  {p.resumo.renovaram > 0 && <span className="badge badge-success">renovaram: <strong>{p.resumo.renovaram}</strong></span>}
-                  {p.resumo.entraram > 0 && <span className="badge badge-brand">entraram: <strong>{p.resumo.entraram}</strong></span>}
-                  {p.resumo.reapareceram > 0 && <span className="badge badge-brand">voltaram: <strong>{p.resumo.reapareceram}</strong></span>}
-                  {p.resumo.encerraram > 0 && <span className="badge badge-danger">encerraram: <strong>{p.resumo.encerraram}</strong></span>}
-                  {p.resumo.ajustaram > 0 && <span className="badge">ajuste de data: <strong>{p.resumo.ajustaram}</strong></span>}
-                  {p.resumo.recuaram > 0 && <span className="badge badge-warn">conferir: <strong>{p.resumo.recuaram}</strong></span>}
+                  {!!p.resumo && p.resumo.renovaram > 0 && <span className="badge badge-success">renovaram: <strong>{p.resumo.renovaram}</strong></span>}
+                  {!!p.resumo && p.resumo.entraram > 0 && <span className="badge badge-brand">entraram: <strong>{p.resumo.entraram}</strong></span>}
+                  {!!p.resumo && p.resumo.reapareceram > 0 && <span className="badge badge-brand">voltaram: <strong>{p.resumo.reapareceram}</strong></span>}
+                  {!!p.resumo && p.resumo.encerraram > 0 && <span className="badge badge-danger">encerraram: <strong>{p.resumo.encerraram}</strong></span>}
+                  {!!p.resumo && p.resumo.ajustaram > 0 && <span className="badge">ajuste de data: <strong>{p.resumo.ajustaram}</strong></span>}
+                  {!!p.resumo && p.resumo.recuaram > 0 && <span className="badge badge-warn">conferir: <strong>{p.resumo.recuaram}</strong></span>}
                 </div>
                 <button type="button" className="btn btn-primary mt-16" disabled={carregando !== null} onClick={rodarAplicacao}>
                   {carregando === "aplicar" ? "gravando…" : "Aplicar essas mudanças"}

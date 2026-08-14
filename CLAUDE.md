@@ -112,6 +112,32 @@ vazar para produção ou biblioteca faltar em ambiente novo:
 
 ---
 
+## ⚠ A regra dos 1.000 — leia antes de escrever qualquer `select`
+
+**O PostgREST devolve no máximo 1.000 linhas e NÃO AVISA.** Não vem erro, não
+vem flag: vem um número plausível e menor.
+
+**`.limit(5000)` não protege.** O teto é do servidor; um `.limit()` maior só dá
+a impressão de que alguém pensou no assunto. E **sem `ORDER BY` as 1.000 que
+voltam são arbitrárias**, nem estáveis entre duas chamadas iguais.
+
+**E o caso mais perigoso não tem `.limit()` nenhum** — consulta sem limite
+parece inocente e é a mais exposta.
+
+- Leitura de tabela que cresce (`interactions`, `contacts`,
+  `contact_stage_history`, `services_rendered`, `usage_ledger`,
+  `course_progress`) usa **`lerTudo`** de `lib/paginado.ts`.
+- `.limit(n)` pequeno continua legítimo — é "os 6 da tela", decisão de produto.
+- Se a tabela de fato não pode crescer, escreva **`// paginacao-ok: <motivo>`**.
+- `paginacao_check.mjs` está no CI, com linha de base: **dívida nova reprova**.
+
+Custou três vezes. A última foi em 14/ago/2026, ao vivo: o Analista de Gestão
+afirmou ao fundador que fazia 20 dias que ninguém usava o sistema, quando havia
+32 interações no dia anterior. Ele só pegou porque conhece a operação de cor —
+**ninguém tem como desconfiar de um dado que não apareceu.**
+
+---
+
 ## Métricas canônicas (implementar uma vez, consumir em todo lugar)
 
 - Conversão = **convertidos distintos ÷ leads do período**. Nunca ÷ atendimentos.

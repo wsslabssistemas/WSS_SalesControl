@@ -124,3 +124,39 @@ jobs:
       # produto. Segmento novo nao pode nascer sendo caixa vazia.
       - name: Sugestao em todo campo aberto do DNA
         run: node packages/db/tests/sugestoes_dna_check.mjs
+      # ⚠ O CORTE SILENCIOSO DO POSTGREST — 1.000 LINHAS, SEM AVISO.
+      #
+      # `.limit(5000)` NAO protege: o teto e do servidor. Em 14/ago/2026 o
+      # Analista de Gestao respondeu ao fundador que o ultimo movimento fora
+      # 20 dias antes; havia 32 interacoes no dia anterior. Existiam 1.955
+      # linhas no periodo e chegaram 1.000, ARBITRARIAS (sem ORDER BY a ordem
+      # nem e estavel entre chamadas). A IA raciocinou com honestidade sobre
+      # um recorte que ninguem sabia que existia.
+      #
+      # Ninguem tem como desconfiar de um dado que nao apareceu — este e o
+      # unico defeito daqui que nao da sinal nenhum. So apareceu porque o dono
+      # conhece a operacao de cor.
+      #
+      # A trava tambem cobre o caso mais perigoso: consulta SEM `.limit()`
+      # nenhum, que parece inocente e e a mais exposta.
+      - name: Nenhuma leitura grande sem paginacao
+        run: node packages/db/tests/paginacao_check.mjs
+      # Cadencia e escada, nao eco: os passos precisam dizer coisas
+      # DIFERENTES, e toda etapa viva precisa saber o que dizer.
+      - name: Nenhuma etapa viva muda
+        run: node packages/db/tests/cadencia_check.mjs
+      # A fila: quitacao do toque, um motivo por pessoa, e a regra do pretexto
+      # (uma DATA nao e um MOTIVO).
+      - name: Fila — quitacao, motivo unico e pretexto
+        run: node packages/db/tests/fila_test.mjs
+      # A medicao que fecha o ciclo tecnica -> desfecho, e que existe para
+      # dizer "ainda nao sei" na maior parte das vezes.
+      - name: Aprendizado — o piso de amostra e o silencio
+        run: node packages/db/tests/aprendizado_test.mjs
+      # Sincronizacao com a planilha: ausencia vira historico, e a trava da
+      # planilha parcial impede baixa em massa.
+      - name: Sincronizacao — foto x historico
+        run: node packages/db/tests/sincronizacao_test.mjs
+      # O leitor de planilha: recusa adivinhar a chave, e a planilha e um LOG.
+      - name: Leitor de planilha
+        run: node packages/db/tests/planilha_test.mjs

@@ -216,5 +216,22 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
 
   revalidatePath("/painel");
   revalidatePath("/painel/fila");
+
+  // ⚠ GRAVAR ZERO NÃO É SUCESSO. A versão anterior devolvia `ok: true` com
+  // `gravados: 0` e a tela dizia "0 contatos atualizados" — indistinguível de
+  // sucesso para quem lê rápido, e foi assim que "não está salvando" ficou sem
+  // explicação. Se nada casou, o motivo quase sempre é a chave: o código da
+  // planilha não bate com `custom.codigo_sistema` de ninguém.
+  if (gravados === 0) {
+    return {
+      ok: false,
+      erro:
+        "Li os arquivos e comparei, mas NENHUM contato foi atualizado. " +
+        "Isso quase sempre significa que o código da planilha não casa com o " +
+        "código guardado nos contatos (`codigo_sistema`) — a sincronização só " +
+        "atualiza quem já existe aqui. Confira um código da planilha na ficha " +
+        "de um contato antes de tentar de novo.",
+    };
+  }
   return { ok: true, gravados };
 }
