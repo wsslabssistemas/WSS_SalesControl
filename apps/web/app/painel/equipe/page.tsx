@@ -7,6 +7,7 @@ import { stagesForaDeJogo } from "@/lib/recurrence";
 import { computePlacar } from "@/lib/placar";
 import { PlacarDaEquipe } from "./Placar";
 import LinkDoConvite from "./LinkDoConvite";
+import { lerTudo } from "@/lib/paginado";
 
 type Member = {
   id: string;
@@ -48,7 +49,7 @@ export default async function EquipePage({
   // história inteira. Somar tudo desde sempre premia quem está há mais tempo.
   const desde = new Date(Date.now() - 30 * 86400000).toISOString();
   const hojeISO = new Date().toISOString().slice(0, 10);
-  const [{ data: contacts }, { data: idsData }, { data: ixData }] = await Promise.all([
+  const [{ data: contacts }, { data: idsData }, ixData] = await Promise.all([
     supabase
       .from("contacts")
       .select("owner_id, journey_stage, created_at, next_action_at")
@@ -59,13 +60,16 @@ export default async function EquipePage({
       .select("id, owner_id")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
-    supabase
+    // ⚠ PAGINADO. O placar mostra o desempenho de UMA PESSOA para os colegas
+    // dela. Cortar o array faz um vendedor aparecer com menos atendimento do
+    // que teve — e ele nao tem como contestar um numero que o sistema afirma.
+    lerTudo<{ contact_id: string | null; direction: string; occurred_at: string }>((de, ate) => supabase
       .from("interactions")
       .select("contact_id, direction, occurred_at")
       .eq("tenant_id", tenant.id)
       .gte("occurred_at", desde)
       .order("occurred_at", { ascending: true })
-      .limit(4000),
+      .range(de, ate), { rotulo: "interacoes do placar" }),
   ]);
 
   const team = (members as Member[] | null) ?? [];
@@ -90,7 +94,7 @@ export default async function EquipePage({
     ((idsData as { id: string; owner_id: string | null }[] | null) ?? []).map((r) => [r.id, r.owner_id]),
   );
 
-  const ix = (ixData as { contact_id: string | null; direction: string; occurred_at: string }[] | null) ?? [];
+  const ix = ixData;
   const atendimentos: { ownerId: string | null; entradaISO: string; respostaISO: string | null }[] = [];
   const aguardando = new Map<string, string>();
   for (const i of ix) {

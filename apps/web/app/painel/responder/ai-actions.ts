@@ -15,6 +15,7 @@ import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } fro
 import { verificarCota } from "@/lib/cota-db";
 import { revalidatePath } from "next/cache";
 import { opcoesDeHorario, marcarCompromisso } from "../agenda/horarios-actions";
+import { lerTudo } from "@/lib/paginado";
 
 export type GerarResult =
   | { ok: true; data: AiAnswer }
@@ -272,13 +273,19 @@ export async function gerarResposta(input: {
   // diferentes e chama de uma.
   let notaDoAprendizado: string | null = null;
   try {
-    const { data: apr } = await supabase
-      .from("interactions")
-      .select("contact_id, outcome, schools")
-      .eq("tenant_id", tenant.id)
-      .not("outcome", "is", null)
-      .limit(4000);
-    const linhas = (apr as { contact_id: string | null; outcome: string | null; schools: string[] | null }[] | null) ?? [];
+    // ⚠ PAGINADO. Amostra cortada em 1.000 linhas ARBITRARIAS faria a
+    // medicao declarar "sustenta" sobre um recorte que ninguem escolheu — e
+    // a peca inteira existe para nao afirmar sem base.
+    const linhas = await lerTudo<{ contact_id: string | null; outcome: string | null; schools: string[] | null }>(
+      (de, ate) => supabase
+        .from("interactions")
+        .select("contact_id, outcome, schools")
+        .eq("tenant_id", tenant.id)
+        .not("outcome", "is", null)
+        .order("occurred_at", { ascending: false })
+        .range(de, ate),
+      { rotulo: "interacoes do aprendizado" },
+    );
     const ids = [...new Set(linhas.map((l) => l.contact_id).filter(Boolean))] as string[];
     const { data: orig } = ids.length
       ? await supabase.from("contacts").select("id, source").in("id", ids.slice(0, 1000))

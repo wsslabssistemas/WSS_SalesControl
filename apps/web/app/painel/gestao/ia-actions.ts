@@ -9,6 +9,7 @@ import { median, percentile, responseMinutes, fmtDuration } from "@/lib/metrics"
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
 import { stagesForaDeJogo } from "@/lib/recurrence";
+import { lerTudo } from "@/lib/paginado";
 
 // `limite` separado de `error` pelo mesmo motivo do Responder: teto atingido
 // não é falha do produto, e mostrar como falha faz a empresa achar que quebrou.
@@ -52,24 +53,44 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
     const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
 
     const startISO = new Date(Date.now() - dias * 86400000).toISOString();
-    const [{ data: cData }, { data: ixData }, { data: hData }, { data: mData }] = await Promise.all([
+    const [{ data: cData }, ixData, hData, { data: mData }] = await Promise.all([
       supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
-      supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
-      supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
+      // ⚠ PAGINADO, e a falta disto foi um defeito AO VIVO (14/ago/2026).
+      //
+      // O fundador perguntou "o que os vendedores fizeram hoje" e o Analista
+      // respondeu que o ultimo movimento tinha sido 20 dias antes. Ele proprio
+      // desconfiou: *"nao pode, eles devem ter usado o sistema sim."* Estava
+      // certo — havia 32 interacoes no dia anterior.
+      //
+      // A causa: `.limit(5000)` NAO protege. O PostgREST tem teto proprio de
+      // 1.000 linhas e **corta em silencio** — e sem `ORDER BY` as 1.000 que
+      // voltam sao ARBITRARIAS. Eram 1.955 no periodo. O analista recebeu
+      // metade, escolhida ao acaso, e concluiu com honestidade sobre um
+      // recorte que ninguem sabia que existia.
+      //
+      // A licao ja estava escrita no ESTADO_DO_PROJETO ("limite que nao
+      // reclama e o pior tipo") e reapareceu aqui. Corrigir ocorrencia nao
+      // fecha classe: ver `paginacao_check.mjs`.
+      lerTudo<Ix>((de, ate) => supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "interacoes da gestao" }),
+      lerTudo<Hist>((de, ate) => supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "historico de etapa" }),
       supabase.from("memberships").select("id, role, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
     ]);
 
-    const { data: srData } = await supabase
-      .from("services_rendered")
-      .select("performed_by, service, value_cents, occurred_at")
-      .eq("tenant_id", tenant.id)
-      .gte("occurred_at", startISO)
-      .limit(5000);
+    const srData = await lerTudo<{ performed_by: string | null; service: string; value_cents: number }>(
+      (de, ate) => supabase
+        .from("services_rendered")
+        .select("performed_by, service, value_cents, occurred_at")
+        .eq("tenant_id", tenant.id)
+        .gte("occurred_at", startISO)
+        .order("occurred_at", { ascending: false })
+        .range(de, ate),
+      { rotulo: "atendimentos com valor" },
+    );
     const servicos = (srData as { performed_by: string | null; service: string; value_cents: number }[] | null) ?? [];
 
     const contacts = (cData as Contact[] | null) ?? [];
-    const ix = (ixData as Ix[] | null) ?? [];
-    const hist = (hData as Hist[] | null) ?? [];
+    const ix = ixData;
+    const hist = hData;
     const members = (mData as Member[] | null) ?? [];
 
     const nomeDe = (id: string | null) => {

@@ -133,10 +133,17 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
 
   if (matriculas.trim()) {
     const leitura = ler(matriculas, { exigeVigencia: true });
-    const { data: atuais } = await supabase
-      .from("contacts").select("id, custom, contract_end").eq("tenant_id", m.tenant!.id).is("deleted_at", null);
+    // ⚠ PAGINADO. Esta leitura decide quem recebe UPDATE. Cortada em 1.000
+    // linhas arbitrárias, parte da base ficaria sem sincronizar — e o que não
+    // foi atualizado não aparece em lugar nenhum para alguém desconfiar.
+    const atuais = await lerTudo<{ id: string; custom: Record<string, unknown> | null; contract_end: string | null }>(
+      (de, ate) => supabase
+        .from("contacts").select("id, custom, contract_end")
+        .eq("tenant_id", m.tenant!.id).is("deleted_at", null).order("id").range(de, ate),
+      { rotulo: "contatos para atualizar" },
+    );
     const porCodigo = new Map(
-      ((atuais as { id: string; custom: Record<string, unknown> | null; contract_end: string | null }[] | null) ?? [])
+      atuais
         .filter((c) => c.custom?.["codigo_sistema"])
         .map((c) => [String(c.custom!["codigo_sistema"]), c]),
     );
@@ -148,6 +155,7 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
       // Quem voltou perde a marca de encerrado — senão ficaria fora da fila
       // para sempre, que é o oposto do que a marca existe para fazer.
       delete (custom as Record<string, unknown>)["contrato_encerrado_em"];
+      // paginacao-ok: UPDATE de uma linha, endereçado por id.
       const { error } = await supabase
         .from("contacts")
         .update({ contract_end: l.vigencia_ate, custom })
@@ -160,6 +168,7 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
     for (const e of (p.eventos ?? []).filter((x) => x.tipo === "encerrou")) {
       const alvo = porCodigo.get(e.chave);
       if (!alvo) continue;
+      // paginacao-ok: UPDATE de uma linha, endereçado por id.
       await supabase
         .from("contacts")
         .update({ custom: { ...(alvo.custom ?? {}), contrato_encerrado_em: hoje, contrato_conferido_em: hoje } })
@@ -171,16 +180,21 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
 
   if (recebimentos.trim()) {
     const rec = lerRecebimentos(recebimentos);
-    const { data: atuais } = await supabase
-      .from("contacts").select("id, custom").eq("tenant_id", m.tenant!.id).is("deleted_at", null);
+    const atuais = await lerTudo<{ id: string; custom: Record<string, unknown> | null }>(
+      (de, ate) => supabase
+        .from("contacts").select("id, custom")
+        .eq("tenant_id", m.tenant!.id).is("deleted_at", null).order("id").range(de, ate),
+      { rotulo: "contatos para recebimentos" },
+    );
     const porCodigo = new Map(
-      ((atuais as { id: string; custom: Record<string, unknown> | null }[] | null) ?? [])
+      atuais
         .filter((c) => c.custom?.["codigo_sistema"])
         .map((c) => [String(c.custom!["codigo_sistema"]), c]),
     );
     for (const pg of rec.pagantes) {
       const alvo = porCodigo.get(pg.chave);
       if (!alvo) continue;
+      // paginacao-ok: UPDATE de uma linha, endereçado por id.
       const { error } = await supabase
         .from("contacts")
         .update({

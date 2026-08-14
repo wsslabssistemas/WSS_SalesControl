@@ -71,7 +71,7 @@ export default async function PainelHome({
   // mostraria "1.000 contatos" e um funil proporcionalmente errado, com toda a
   // aparência de estar certo. Com 273 contatos isso nunca apareceu; com 9 mil,
   // seria o primeiro número que o fundador olharia de manhã.
-  const [contactsData, { count: membersCount }, { data: ixData }, { data: skill }, { data: dnaRow }] = await Promise.all([
+  const [contactsData, { count: membersCount }, ixData, { data: skill }, { data: dnaRow }] = await Promise.all([
     lerTudo<Contact>(
       (de, ate) => supabase
         .from("contacts")
@@ -87,12 +87,14 @@ export default async function PainelHome({
       .select("id", { count: "exact", head: true })
       .eq("tenant_id", tenant.id)
       .eq("status", "active"),
-    supabase
+    // ⚠ PAGINADO. `lastByContact` sai daqui e decide quem esta "esfriando" e
+    // quem ja foi contatado. Cortado, gente contatada aparecia como abandonada.
+    lerTudo<Ix>((de, ate) => supabase
       .from("interactions")
       .select("contact_id, occurred_at, outcome")
       .eq("tenant_id", tenant.id)
       .order("occurred_at", { ascending: false })
-      .limit(2000),
+      .range(de, ate), { rotulo: "interacoes do painel" }),
     supabase.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
     supabase.from("commercial_dna").select("sections").eq("tenant_id", tenant.id).eq("is_current", true).maybeSingle(),
   ]);
@@ -110,7 +112,7 @@ export default async function PainelHome({
   const isAdmin = membership.role === "owner" || membership.role === "admin";
 
   const contacts = contactsData;
-  const ix = (ixData as Ix[] | null) ?? [];
+  const ix = ixData;
 
   // FORA DE JOGO = terminal OU perda. Contar só `terminal` colocaria os 135
   // leads que pararam de responder dentro de "em aberto" — e número inflado

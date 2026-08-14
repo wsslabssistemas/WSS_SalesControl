@@ -4,6 +4,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeDueTouches } from "@/lib/cadence";
 import { linkDeWhatsApp } from "@/lib/envio";
+import { lerTudo } from "@/lib/paginado";
 
 export const metadata = { title: "Follow-up" };
 
@@ -31,18 +32,20 @@ export default async function FollowUpPage({
   const { stages, cadences } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
-  const [{ data: cData }, { data: ixData }, { data: mData }] = await Promise.all([
+  const [{ data: cData }, ixData, { data: mData }] = await Promise.all([
     supabase
       .from("contacts")
       .select("id, name, phone, owner_id, journey_stage, stage_entered_at")
       .eq("tenant_id", tenant.id)
       .is("deleted_at", null),
-    supabase
+    // ⚠ PAGINADO. `ultimo` sai daqui e decide quem esta devendo toque. Cortado
+    // em 1.000 linhas arbitrarias, quem ja foi contatado voltaria para a lista.
+    lerTudo<{ contact_id: string | null; occurred_at: string; direction: string }>((de, ate) => supabase
       .from("interactions")
       .select("contact_id, occurred_at, direction")
       .eq("tenant_id", tenant.id)
       .order("occurred_at", { ascending: false })
-      .limit(3000),
+      .range(de, ate), { rotulo: "interacoes do follow-up" }),
     supabase
       .from("memberships")
       .select("id, user:profiles(full_name, email)")
@@ -51,7 +54,7 @@ export default async function FollowUpPage({
   ]);
 
   const contacts = (cData as Contact[] | null) ?? [];
-  const ix = (ixData as { contact_id: string | null; occurred_at: string; direction: string }[] | null) ?? [];
+  const ix = ixData;
   const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
     .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))
     .sort((a, b) => a.nome.localeCompare(b.nome));

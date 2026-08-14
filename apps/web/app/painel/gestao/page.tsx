@@ -8,6 +8,7 @@ import { brl } from "@/lib/money";
 import Analista from "./Analista";
 import { OQueFunciona } from "./OQueFunciona";
 import { stagesForaDeJogo } from "@/lib/recurrence";
+import { lerTudo } from "@/lib/paginado";
 
 export const metadata = { title: "Gestão" };
 
@@ -62,10 +63,13 @@ export default async function GestaoPage({
   const startISO = new Date(Date.now() - dias * 86400000).toISOString();
   const supabase = await createClient();
 
-  const [{ data: cData }, { data: ixData }, { data: hData }, { data: mData }, { data: srData }] = await Promise.all([
+  const [{ data: cData }, ixData, hData, { data: mData }, { data: srData }] = await Promise.all([
     supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
-    supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome, schools").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
-    supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).limit(5000),
+    // ⚠ PAGINADO. Todo numero desta tela — conversao, tempo de resposta,
+    // ranking de vendedor — sai deste array. Com `.limit()` ele vinha cortado
+    // em 1.000 linhas ARBITRARIAS e os numeros saiam plausiveis e errados.
+    lerTudo<Ix>((de, ate) => supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome, schools").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "interacoes da gestao" }),
+    lerTudo<Hist>((de, ate) => supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "historico de etapa" }),
     supabase.from("memberships").select("id, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
     supabase
       .from("services_rendered")
@@ -76,8 +80,8 @@ export default async function GestaoPage({
   ]);
 
   const contacts = (cData as Contact[] | null) ?? [];
-  const ix = (ixData as Ix[] | null) ?? [];
-  const hist = (hData as Hist[] | null) ?? [];
+  const ix = ixData;
+  const hist = hData;
 
   // OS EVENTOS DE APRENDIZADO — desfecho + escolas + a ORIGEM do contato.
   //

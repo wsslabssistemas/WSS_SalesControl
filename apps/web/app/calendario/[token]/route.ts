@@ -3,6 +3,7 @@ import { computeAlerts } from "@/lib/agenda";
 import { computeDue, stagesWithoutRecurrence } from "@/lib/recurrence";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import type { Stage } from "@/lib/skill";
+import { lerTudo } from "@/lib/paginado";
 
 /**
  * Calendário assinável do estabelecimento (.ics).
@@ -78,13 +79,19 @@ export async function GET(
 
   // 2) Retornos de recompra (segmentos com ciclo declarado).
   const ultimaVisita: Record<string, string> = {};
-  const { data: ix } = await admin
-    .from("interactions")
-    .select("contact_id, occurred_at")
-    .eq("tenant_id", tenant.id)
-    .order("occurred_at", { ascending: false })
-    .limit(3000);
-  for (const i of (ix as { contact_id: string | null; occurred_at: string }[] | null) ?? []) {
+  // ⚠ PAGINADO. Este feed vira a agenda no celular de quem trabalha. Cortado,
+  // um cliente ja atendido reapareceria como retorno devido — e ninguem
+  // desconfia de um compromisso a mais no calendario.
+  const ix = await lerTudo<{ contact_id: string | null; occurred_at: string }>(
+    (de, ate) => admin
+      .from("interactions")
+      .select("contact_id, occurred_at")
+      .eq("tenant_id", tenant.id)
+      .order("occurred_at", { ascending: false })
+      .range(de, ate),
+    { rotulo: "interacoes do calendario" },
+  );
+  for (const i of ix) {
     if (i.contact_id && !ultimaVisita[i.contact_id]) ultimaVisita[i.contact_id] = i.occurred_at;
   }
 
