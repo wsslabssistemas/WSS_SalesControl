@@ -101,6 +101,91 @@ agendado → cobrança automática.
 > Bandeira)**, a primeira empresa externa de outro segmento — a que tira o
 > projeto do N=1. Está no topo do arquivo de propósito: é a fila corrente.
 
+### F0. A PLANILHA DA BE FITNESS (13/ago) — e a decisão de onde mora o histórico
+
+Planilha criada pelo fundador, 4 abas: **Matriculas**, **Cadastros** (9k+),
+**Cadastros Wellhub (Gympass)**, **Cadastros Totalpass**.
+<https://docs.google.com/spreadsheets/d/18rQRnL6Z7rmx1iJ677nsjVoUb4Mq14W-y-FNIKthr4U>
+
+**Acesso hoje:** o conector do Drive desta conversa não enxerga o arquivo (nem
+os próprios arquivos da conta autorizada). Para o SISTEMA ler — que é o que
+importa — o caminho não passa por conector de chat: é **publicar como CSV**
+(Arquivo → Compartilhar → Publicar na web, por aba) ou conta de serviço na API
+do Sheets. O CSV publicado é a opção sem OAuth e sem senha.
+
+#### ⚠ A pergunta que decide o desenho: onde mora o histórico?
+
+O fundador viu o problema sozinho: *"toda vez que eu atualizar a aba
+Matriculas, quem virou ex-cliente vai ser apagado, e o sistema perde o
+histórico."* E propôs o sistema manter uma aba própria.
+
+**Recomendação: não.** Manter histórico numa planilha que um humano
+sobrescreve toda semana é o mesmo defeito desta conversa inteira, com mais
+passos — e ainda cria escrita concorrente entre pessoa e sistema.
+
+**O desenho que resolve, e resolve mais do que foi pedido:**
+
+- **A planilha é a FOTOGRAFIA DE HOJE.** Um trabalho só: o que é verdade
+  agora. O fundador mantém o que já ia manter.
+- **O histórico é do banco, e nasce da COMPARAÇÃO.** Cada importação confronta
+  a foto com o que o banco sabe e grava a diferença como evento:
+  - linha que **sumiu** → contrato encerrado, com a data em que sumiu
+  - linha **nova** → entrou
+  - `contract_end` **mudou para frente** → **renovou** ← resolve a Maria Isabel
+- **O sistema NUNCA escreve na planilha.** Sem conflito, sem risco de derrubar
+  edição de humano, sem dois donos do mesmo dado.
+
+**A ideia central: ausência é informação, e só o sistema enxerga.** Ele apaga a
+linha; o sistema percebe a falta *porque lembra do que havia antes*. É o mesmo
+princípio do `contact_stage_history`, que já é append-only.
+
+> ⚠ **A trava obrigatória junto:** se a importação recebe uma planilha
+> PARCIAL (filtro aplicado, aba exportada pela metade), "sumiu" vira baixa em
+> massa. Regra: **acima de um limiar de desaparecidos, para e pergunta** — é a
+> mesma lição do `seed-curso.mjs`, onde uma carga saiu "com três ✓ verdes"
+> enquanto derrubava oito módulos ao lado. *Relatório que só mostra o que
+> escreveu não enxerga o que derrubou.*
+
+#### As 4 abas — o que eu mudaria
+
+**Wellhub e Totalpass não deveriam ser abas.** São recortes de `Cadastros`,
+e como abas separadas a mesma pessoa existe em dois lugares e as duas vão
+divergir — o mesmo defeito que "Matriculados" e "Vencidos" teriam. **Uma
+coluna `convenio`** (Wellhub / Totalpass / nenhum) na aba `Cadastros` faz o
+sistema derivar as três visões — e ainda deixa cruzar filtros que aba separada
+não deixa: *"Gympass + nunca foi aluno pagante + mora perto"*.
+
+#### A pergunta que muda a estratégia de convênio
+
+O fundador quer **convencer o pessoal do convênio a treinar na Be Fitness**.
+A medição de ago/2026 diz que a abordagem normal não vai funcionar: **contato
+de convênio responde a 9% contra 54% do WhatsApp** — ele não está comprando,
+está usando um benefício que já paga.
+
+**A pergunta que precisa ser respondida antes de escrever qualquer mensagem:
+o convênio paga por CHECK-IN ou valor fixo?** Se for por check-in, o objetivo
+não é converter em aluno pagante — é **frequência**, que é receita sem custo
+de aquisição nenhum. São duas conversas completamente diferentes, e escolher a
+errada desperdiça a melhor lista da planilha.
+
+#### O que mais dá para fazer com esses dados
+
+1. **Cruzamento na chegada.** Lead novo escreve → o sistema confere nos 9k se
+   ele já treinou ali. *"Fulano treinou aqui em 2023"* muda a conversa
+   inteira, e é a diferença entre atender um desconhecido e reconhecer alguém.
+2. **Reativação por tempo de saída.** Com o histórico do banco, quem saiu há 6
+   meses e quem saiu há 3 anos recebem conversas diferentes — hoje receberiam
+   a mesma.
+3. **Convênio → convênio CORPORATIVO.** Se 15 pessoas da mesma empresa usam
+   Gympass na Be Fitness, aquela empresa é candidata a plano corporativo. É o
+   ângulo B2B da §3.4 do `ESTADO_DO_PROJETO.md`, agora com **dado próprio** —
+   e traz demanda de fora para dentro, que é a regra do bom add-on.
+4. **Retenção por periodicidade.** 183 anuais, 68 semestrais, 22 trimestrais,
+   14 mensais. Com o histórico de encerramento dá para medir qual plano segura
+   mais gente — e isso decide qual plano empurrar.
+5. **Sazonalidade.** Quando entram e quando saem, ao longo do ano. Diz em que
+   meses o trabalho de retenção precisa começar antes.
+
 ### F1. SMTP próprio — **decisão tomada, falta a conta**
 
 Pesquisado em 11/ago. Dois candidatos, e a escolha depende de uma troca:
