@@ -53,6 +53,10 @@ async function findPhoneDup(
   phone: string,
   exceptId?: string,
 ): Promise<{ id: string; name: string } | null> {
+  // paginacao-ok: procura UM contato por telefone exato, e o `.limit(1)` com
+  // `.maybeSingle()` vem no fim do encadeamento, depois do `if`. É a forma de
+  // consulta montada em etapas — a trava não consegue ver o fim dela, e o
+  // motivo fica escrito aqui em vez de a trava afrouxar para todo mundo.
   let q = supabase
     .from("contacts")
     .select("id, name")

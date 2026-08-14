@@ -53,8 +53,14 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
     const stageLabel = (k: string) => stages.find((s) => s.key === k)?.label ?? k;
 
     const startISO = new Date(Date.now() - dias * 86400000).toISOString();
-    const [{ data: cData }, ixData, hData, { data: mData }] = await Promise.all([
-      supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
+    const [cData, ixData, hData, { data: mData }] = await Promise.all([
+      // ⚠ PAGINADO — e esta é a METADE QUE SOBROU do defeito ao vivo contado
+      // logo abaixo. Naquele dia as `interactions` foram corrigidas e os
+      // `contacts` ficaram como estavam. O Analista responde sobre CARTEIRA,
+      // LEADS DO PERÍODO e CONVERSÃO, e os três saem daqui: com 9 mil
+      // cadastros ele afirmaria, com a mesma serenidade, números calculados
+      // sobre 1.000 pessoas escolhidas ao acaso.
+      lerTudo<Contact>((de, ate) => supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null).order("id").range(de, ate), { rotulo: "contatos da gestao" }),
       // ⚠ PAGINADO, e a falta disto foi um defeito AO VIVO (14/ago/2026).
       //
       // O fundador perguntou "o que os vendedores fizeram hoje" e o Analista
@@ -88,7 +94,7 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
     );
     const servicos = (srData as { performed_by: string | null; service: string; value_cents: number }[] | null) ?? [];
 
-    const contacts = (cData as Contact[] | null) ?? [];
+    const contacts = cData;
     const ix = ixData;
     const hist = hData;
     const members = (mData as Member[] | null) ?? [];

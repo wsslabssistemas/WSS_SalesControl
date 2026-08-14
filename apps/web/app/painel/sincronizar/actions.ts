@@ -3,8 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { lerTudo } from "@/lib/paginado";
-import { ler, lerRecebimentos } from "@/lib/planilha";
-import { comparar, type EstadoConhecido } from "@/lib/sincronizacao";
+import { mapLimit } from "@/lib/concorrencia";
+import type { Leitura, LeituraRecebimentos, Pagante } from "@/lib/planilha";
+import { comparar, type EstadoConhecido, type LinhaDaFonte } from "@/lib/sincronizacao";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -12,15 +13,58 @@ import { revalidatePath } from "next/cache";
  *
  * ⚠ SÃO DUAS AÇÕES SEPARADAS DE PROPÓSITO, e a separação é a segurança.
  *
- * `prever` não escreve NADA. Ela lê os arquivos, compara com o banco e devolve
- * o que ACONTECERIA. Só depois de a pessoa ver a lista é que `aplicar` grava.
+ * `prever` não escreve NADA. Ela compara o que veio da planilha com o banco e
+ * devolve o que ACONTECERIA. Só depois de a pessoa ver a lista é que `aplicar`
+ * grava.
  *
  * Sem isso, uma exportação com filtro aplicado daria baixa em massa em gente
  * que continua pagando — e o histórico do repositório mostra que essa classe
  * de defeito não aparece como erro: o `seed-curso.mjs` derrubou oito módulos
  * ao lado **saindo com três ✓ verdes**. *Relatório que só mostra o que a
  * operação escreveu não enxerga o que ela derrubou.*
+ *
+ * ⚠ QUEM LÊ O ARQUIVO É O NAVEGADOR — e isso mudou em 14/ago/2026, depois de
+ * o fundador confirmar o sintoma: o arquivo de matrículas (86 KB) importava e
+ * o de recebimentos (4,2 MB) não.
+ *
+ * A versão anterior mandava o TEXTO INTEIRO do arquivo para cá. O corpo de uma
+ * requisição para função serverless na Vercel tem teto de plataforma (~4,5 MB)
+ * que **o `serverActions.bodySizeLimit` do Next não move** — ele é o limite de
+ * cima, não o de baixo. Subir aquele número para 12 MB não resolveu nada, e
+ * não resolveria: quem recusava era a camada abaixo, e recusava sem chegar
+ * mensagem nenhuma à tela. A classe de sempre: falha que se apresenta como
+ * silêncio.
+ *
+ * A correção não é um número maior, é **não mandar o arquivo**. O leitor
+ * (`lib/planilha.ts`) não tem rede nem banco de propósito, então roda igual no
+ * navegador; o que sobe é o RESULTADO da leitura, que para os 1.548 pagantes
+ * da Be Fitness dá algo em torno de 200 KB em vez de 4,2 MB. Some o teto, some
+ * o parse duplicado (`aplicar` refaz a previsão) e some a possibilidade de o
+ * mesmo defeito voltar quando a base dobrar.
+ *
+ * ⚠ E O QUE NÃO MUDOU, QUE É O QUE IMPORTA: **a trava continua no servidor.**
+ * `aplicar` refaz a comparação contra o banco e recusa se houver bloqueio. O
+ * que o navegador manda é a leitura de um arquivo que o próprio administrador
+ * escolheu — ele já podia editar o arquivo antes de subir, então não ganhou
+ * poder nenhum aqui. O que ele nunca decide é o que o BANCO diz, e é o
+ * confronto entre os dois que autoriza a gravação.
  */
+
+/** O que o navegador leu e mandou. Só o necessário — a lista de linhas
+ *  ignoradas fica lá, porque aqui só o NÚMERO dela é usado. */
+export type DadosLidos = {
+  matriculas: {
+    linhas: LinhaDaFonte[];
+    entendeu: Leitura["entendeu"];
+    ignoradas: number;
+  } | null;
+  recebimentos: {
+    pagantes: Pagante[];
+    entendeu: LeituraRecebimentos["entendeu"];
+    descartadas: string[];
+    ignoradas: number;
+  } | null;
+};
 
 export type Previsao = {
   ok: boolean;
@@ -36,6 +80,21 @@ async function contexto() {
   const m = await getActiveTenant();
   if (!m?.tenant || (m.role !== "owner" && m.role !== "admin")) return null;
   return m;
+}
+
+/**
+ * O payload vem do navegador, então ele é conferido antes de virar decisão.
+ *
+ * Não é desconfiança do administrador — é que dado malformado aqui vira
+ * `undefined` no meio da comparação, e a comparação decide quem leva baixa.
+ * Recusar cedo, com o motivo escrito, é melhor que gravar sobre um `NaN`.
+ */
+function dadosInvalidos(d: DadosLidos | null | undefined): string | null {
+  if (!d || typeof d !== "object") return "Não recebi a leitura dos arquivos. Escolha os arquivos e tente de novo.";
+  if (d.matriculas && !Array.isArray(d.matriculas.linhas)) return "A leitura das matrículas veio malformada.";
+  if (d.recebimentos && !Array.isArray(d.recebimentos.pagantes)) return "A leitura dos recebimentos veio malformada.";
+  if (!d.matriculas && !d.recebimentos) return "Nenhum arquivo foi lido.";
+  return null;
 }
 
 /** O que o banco sabe hoje, na forma que a comparação espera. */
@@ -65,24 +124,26 @@ async function estadoConhecido(tenantId: string): Promise<EstadoConhecido[]> {
     }));
 }
 
-export async function prever(matriculas: string, recebimentos: string): Promise<Previsao> {
+export async function prever(d: DadosLidos): Promise<Previsao> {
   const m = await contexto();
   if (!m) return { ok: false, erro: "Só dono ou administrador pode sincronizar." };
+
+  const invalido = dadosInvalidos(d);
+  if (invalido) return { ok: false, erro: invalido };
 
   const entendeu: { matriculas?: string; recebimentos?: string } = {};
   let resumo: Previsao["resumo"];
   let eventos: Previsao["eventos"] = [];
   let bloqueio: string | null = null;
 
-  if (matriculas.trim()) {
-    const leitura = ler(matriculas, { exigeVigencia: true });
-    if (leitura.erro) return { ok: false, erro: `Matrículas: ${leitura.erro}` };
+  if (d.matriculas) {
+    const mat = d.matriculas;
     entendeu.matriculas =
-      `chave "${leitura.entendeu.chave}", vencimento "${leitura.entendeu.vigencia}" · ` +
-      `${leitura.entendeu.lidas} linhas → ${leitura.linhas.length} pessoas` +
-      (leitura.ignoradas.length ? ` (${leitura.ignoradas.length} linhas colapsadas ou ignoradas)` : "");
+      `chave "${mat.entendeu.chave}", vencimento "${mat.entendeu.vigencia}" · ` +
+      `${mat.entendeu.lidas} linhas → ${mat.linhas.length} pessoas` +
+      (mat.ignoradas ? ` (${mat.ignoradas} linhas colapsadas ou ignoradas)` : "");
 
-    const cmp = comparar(leitura.linhas, await estadoConhecido(m.tenant!.id));
+    const cmp = comparar(mat.linhas, await estadoConhecido(m.tenant!.id));
     bloqueio = cmp.bloqueio;
     resumo = {
       entraram: cmp.resumo.entraram, renovaram: cmp.resumo.renovaram,
@@ -96,13 +157,12 @@ export async function prever(matriculas: string, recebimentos: string): Promise<
   }
 
   let pagantes: Previsao["pagantes"];
-  if (recebimentos.trim()) {
-    const rec = lerRecebimentos(recebimentos);
-    if (rec.erro) return { ok: false, erro: `Recebimentos: ${rec.erro}` };
+  if (d.recebimentos) {
+    const rec = d.recebimentos;
     entendeu.recebimentos =
       `chave "${rec.entendeu.chave}", pagamento "${rec.entendeu.pagamento}" · ` +
       `${rec.entendeu.lidas} linhas → ${rec.pagantes.length} pagantes` +
-      (rec.ignoradas.length ? ` (${rec.ignoradas.length} linhas ignoradas)` : "");
+      (rec.ignoradas ? ` (${rec.ignoradas} linhas ignoradas)` : "");
     pagantes = {
       total: rec.pagantes.length,
       comHabito: rec.pagantes.filter((p) => p.atrasoHabitualDias !== null).length,
@@ -113,109 +173,129 @@ export async function prever(matriculas: string, recebimentos: string): Promise<
   return { ok: true, bloqueio, entendeu, resumo, eventos, pagantes };
 }
 
-export async function aplicar(matriculas: string, recebimentos: string): Promise<{ ok: boolean; erro?: string; gravados?: number }> {
+/** Quantas gravações vão em paralelo. Ver `lib/concorrencia.ts`. */
+const EM_PARALELO = 8;
+
+export async function aplicar(
+  d: DadosLidos,
+): Promise<{ ok: boolean; erro?: string; gravados?: number; falhas?: number }> {
   const m = await contexto();
   if (!m) return { ok: false, erro: "Só dono ou administrador pode sincronizar." };
 
   // ⚠ A PREVISÃO É REFEITA AQUI, e não é desperdício.
   //
-  // O cliente poderia mandar "aplicar" com um arquivo diferente do que foi
+  // O cliente poderia mandar "aplicar" com uma leitura diferente da que foi
   // previsto — por troca de aba, por clique duplo, ou por má-fé. Confiar na
   // previsão que o browser diz ter visto seria confiar no browser para decidir
   // uma gravação em massa. A trava tem que valer no servidor.
-  const p = await prever(matriculas, recebimentos);
+  const p = await prever(d);
   if (!p.ok) return { ok: false, erro: p.erro };
   if (p.bloqueio) return { ok: false, erro: p.bloqueio };
 
   const supabase = await createClient();
   const hoje = new Date().toISOString().slice(0, 10);
-  let gravados = 0;
 
-  if (matriculas.trim()) {
-    const leitura = ler(matriculas, { exigeVigencia: true });
+  // ⚠ CONTA PESSOAS DISTINTAS, NUNCA EVENTOS. Quem aparece nos dois arquivos
+  // levava dois UPDATEs e era contado duas vezes — a tela diria "1.800
+  // contatos atualizados" numa base de 1.548. É a mesma lei que o `CLAUDE.md`
+  // fixa para as métricas do produto, e ela vale para o recibo de uma
+  // gravação também.
+  const tocados = new Set<string>();
+  const falhas: string[] = [];
+
+  /** Um UPDATE endereçado por id, com o erro guardado em vez de engolido. */
+  const gravar = async (id: string, patch: Record<string, unknown>) => {
+    // paginacao-ok: UPDATE de uma linha, endereçado por id.
+    const { error } = await supabase
+      .from("contacts")
+      .update(patch)
+      .eq("id", id)
+      .eq("tenant_id", m.tenant!.id);
+    if (error) falhas.push(error.message);
+    else tocados.add(id);
+  };
+
+  /** Contatos desta empresa indexados pelo código do sistema da academia. */
+  const porCodigo = async () => {
     // ⚠ PAGINADO. Esta leitura decide quem recebe UPDATE. Cortada em 1.000
     // linhas arbitrárias, parte da base ficaria sem sincronizar — e o que não
     // foi atualizado não aparece em lugar nenhum para alguém desconfiar.
-    const atuais = await lerTudo<{ id: string; custom: Record<string, unknown> | null; contract_end: string | null }>(
-      (de, ate) => supabase
-        .from("contacts").select("id, custom, contract_end")
-        .eq("tenant_id", m.tenant!.id).is("deleted_at", null).order("id").range(de, ate),
-      { rotulo: "contatos para atualizar" },
-    );
-    const porCodigo = new Map(
-      atuais
-        .filter((c) => c.custom?.["codigo_sistema"])
-        .map((c) => [String(c.custom!["codigo_sistema"]), c]),
-    );
-
-    for (const l of leitura.linhas) {
-      const alvo = porCodigo.get(l.chave);
-      if (!alvo) continue; // criar contato novo é outro fluxo (importador)
-      const custom = { ...(alvo.custom ?? {}), contrato_conferido_em: hoje };
-      // Quem voltou perde a marca de encerrado — senão ficaria fora da fila
-      // para sempre, que é o oposto do que a marca existe para fazer.
-      delete (custom as Record<string, unknown>)["contrato_encerrado_em"];
-      // paginacao-ok: UPDATE de uma linha, endereçado por id.
-      const { error } = await supabase
-        .from("contacts")
-        .update({ contract_end: l.vigencia_ate, custom })
-        .eq("id", alvo.id)
-        .eq("tenant_id", m.tenant!.id);
-      if (!error) gravados++;
-    }
-
-    // O ENCERRAMENTO É O QUE A PLANILHA NÃO SABE CONTAR — ver `sincronizacao.ts`.
-    for (const e of (p.eventos ?? []).filter((x) => x.tipo === "encerrou")) {
-      const alvo = porCodigo.get(e.chave);
-      if (!alvo) continue;
-      // paginacao-ok: UPDATE de uma linha, endereçado por id.
-      await supabase
-        .from("contacts")
-        .update({ custom: { ...(alvo.custom ?? {}), contrato_encerrado_em: hoje, contrato_conferido_em: hoje } })
-        .eq("id", alvo.id)
-        .eq("tenant_id", m.tenant!.id);
-      gravados++;
-    }
-  }
-
-  if (recebimentos.trim()) {
-    const rec = lerRecebimentos(recebimentos);
     const atuais = await lerTudo<{ id: string; custom: Record<string, unknown> | null }>(
       (de, ate) => supabase
         .from("contacts").select("id, custom")
         .eq("tenant_id", m.tenant!.id).is("deleted_at", null).order("id").range(de, ate),
-      { rotulo: "contatos para recebimentos" },
+      { rotulo: "contatos para atualizar" },
     );
-    const porCodigo = new Map(
+    return new Map(
       atuais
         .filter((c) => c.custom?.["codigo_sistema"])
         .map((c) => [String(c.custom!["codigo_sistema"]), c]),
     );
-    for (const pg of rec.pagantes) {
-      const alvo = porCodigo.get(pg.chave);
-      if (!alvo) continue;
-      // paginacao-ok: UPDATE de uma linha, endereçado por id.
-      const { error } = await supabase
-        .from("contacts")
-        .update({
-          custom: {
-            ...(alvo.custom ?? {}),
-            // CPF e endereço NÃO estão aqui, e é decisão: ver `DESCARTADAS`.
-            pagamentos: pg.pagamentos,
-            total_pago_cents: pg.totalCents,
-            ultimo_pagamento: pg.ultimoPagamento,
-            atraso_habitual_dias: pg.atrasoHabitualDias,
-            recebimentos_conferidos_em: hoje,
-          },
-        })
-        .eq("id", alvo.id)
-        .eq("tenant_id", m.tenant!.id);
-      if (!error) gravados++;
-    }
+  };
+
+  // Uma leitura só serve aos dois arquivos — eram duas varreduras completas da
+  // mesma tabela quando os dois vinham juntos.
+  const indice = await porCodigo();
+
+  if (d.matriculas) {
+    const alvos = d.matriculas.linhas
+      .map((l) => ({ l, alvo: indice.get(l.chave) }))
+      .filter((x): x is { l: LinhaDaFonte; alvo: { id: string; custom: Record<string, unknown> | null } } => !!x.alvo);
+    // criar contato novo é outro fluxo (importador) — por isso o filtro acima.
+
+    await mapLimit(alvos, EM_PARALELO, async ({ l, alvo }) => {
+      const custom = { ...(alvo.custom ?? {}), contrato_conferido_em: hoje };
+      // Quem voltou perde a marca de encerrado — senão ficaria fora da fila
+      // para sempre, que é o oposto do que a marca existe para fazer.
+      delete (custom as Record<string, unknown>)["contrato_encerrado_em"];
+      // ⚠ LINHA SEM DATA LEGÍVEL NÃO APAGA A DATA QUE EXISTE. A pessoa está
+      // presente na planilha — quem sai de verdade some dela e vira
+      // "encerrou". Data em branco numa linha presente é quase sempre formato
+      // que o leitor não entendeu, e gravar `null` por causa disso destruiria
+      // a vigência real em silêncio. Mesma regra do `paraE164BR`: falhar não
+      // pode virar corromper.
+      const patch: Record<string, unknown> = { custom };
+      if (l.vigencia_ate) patch.contract_end = l.vigencia_ate;
+      await gravar(alvo.id, patch);
+    });
+
+    // O ENCERRAMENTO É O QUE A PLANILHA NÃO SABE CONTAR — ver `sincronizacao.ts`.
+    const encerrados = (p.eventos ?? [])
+      .filter((x) => x.tipo === "encerrou")
+      .map((e) => indice.get(e.chave))
+      .filter((a): a is { id: string; custom: Record<string, unknown> | null } => !!a);
+
+    await mapLimit(encerrados, EM_PARALELO, (alvo) =>
+      gravar(alvo.id, {
+        custom: { ...(alvo.custom ?? {}), contrato_encerrado_em: hoje, contrato_conferido_em: hoje },
+      }),
+    );
+  }
+
+  if (d.recebimentos) {
+    const pagantes = d.recebimentos.pagantes
+      .map((pg) => ({ pg, alvo: indice.get(pg.chave) }))
+      .filter((x): x is { pg: Pagante; alvo: { id: string; custom: Record<string, unknown> | null } } => !!x.alvo);
+
+    await mapLimit(pagantes, EM_PARALELO, ({ pg, alvo }) =>
+      gravar(alvo.id, {
+        custom: {
+          ...(alvo.custom ?? {}),
+          // CPF e endereço NÃO estão aqui, e é decisão: ver `DESCARTADAS`.
+          pagamentos: pg.pagamentos,
+          total_pago_cents: pg.totalCents,
+          ultimo_pagamento: pg.ultimoPagamento,
+          atraso_habitual_dias: pg.atrasoHabitualDias,
+          recebimentos_conferidos_em: hoje,
+        },
+      }),
+    );
   }
 
   revalidatePath("/painel");
   revalidatePath("/painel/fila");
+
+  const gravados = tocados.size;
 
   // ⚠ GRAVAR ZERO NÃO É SUCESSO. A versão anterior devolvia `ok: true` com
   // `gravados: 0` e a tela dizia "0 contatos atualizados" — indistinguível de
@@ -225,13 +305,20 @@ export async function aplicar(matriculas: string, recebimentos: string): Promise
   if (gravados === 0) {
     return {
       ok: false,
-      erro:
-        "Li os arquivos e comparei, mas NENHUM contato foi atualizado. " +
-        "Isso quase sempre significa que o código da planilha não casa com o " +
-        "código guardado nos contatos (`codigo_sistema`) — a sincronização só " +
-        "atualiza quem já existe aqui. Confira um código da planilha na ficha " +
-        "de um contato antes de tentar de novo.",
+      falhas: falhas.length,
+      erro: falhas.length
+        ? `Nenhum contato foi atualizado e o banco recusou ${falhas.length} gravação(ões). Primeiro motivo: ${falhas[0]}`
+        : "Li os arquivos e comparei, mas NENHUM contato foi atualizado. " +
+          "Isso quase sempre significa que o código da planilha não casa com o " +
+          "código guardado nos contatos (`codigo_sistema`) — a sincronização só " +
+          "atualiza quem já existe aqui. Confira um código da planilha na ficha " +
+          "de um contato antes de tentar de novo.",
     };
   }
-  return { ok: true, gravados };
+
+  // ⚠ FALHA PARCIAL TAMBÉM PRECISA APARECER. A versão anterior contava só o
+  // que deu certo (`if (!error) gravados++`) e o erro sumia: 1.500 gravados
+  // com 48 recusados era relatado como 1.500 gravados, e ninguém procura o que
+  // o sistema não disse que perdeu.
+  return { ok: true, gravados, falhas: falhas.length };
 }

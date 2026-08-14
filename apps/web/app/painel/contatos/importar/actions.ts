@@ -5,6 +5,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
 import { parseCsv, detectColumns, parseDataBR } from "@/lib/csv";
+import { lerTudo } from "@/lib/paginado";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -34,18 +35,27 @@ export async function importContacts(formData: FormData) {
   const { stages } = await getSkillFormConfig(tenant.skill_key);
   const initialStage = stages.find((s) => !s.terminal)?.key ?? stages[0]?.key ?? "contato";
 
-  // Telefones já existentes (para ignorar duplicados sem depender só do índice).
-  const { data: existing } = await supabase
-    .from("contacts")
-    .select("phone")
-    .eq("tenant_id", tenant.id)
-    .is("deleted_at", null)
-    .not("phone", "is", null);
-  const known = new Set(
-    ((existing as { phone: string | null }[] | null) ?? [])
-      .map((e) => e.phone)
-      .filter(Boolean) as string[],
+  // ⚠ PAGINADO, e aqui o corte tinha CONSEQUÊNCIA DE ESCRITA.
+  //
+  // Este conjunto é o que diz "esse telefone já existe, não importe de novo".
+  // Cortado em 1.000, ele conhecia só uma fração da base — e todo contato
+  // repetido a partir daí era reapresentado como novo. O índice único do
+  // banco segura o estrago, mas segura CAINDO PARA linha a linha e contando o
+  // repetido como `dup`: a tela continuava dizendo um número plausível.
+  //
+  // Com os 9 mil cadastros a caminho, esta era a leitura que ia doer primeiro.
+  const existing = await lerTudo<{ phone: string | null }>(
+    (de, ate) => supabase
+      .from("contacts")
+      .select("phone")
+      .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
+      .not("phone", "is", null)
+      .order("id")
+      .range(de, ate),
+    { rotulo: "telefones ja cadastrados" },
   );
+  const known = new Set(existing.map((e) => e.phone).filter(Boolean) as string[]);
 
   const seen = new Set<string>();
   const toInsert: Record<string, unknown>[] = [];

@@ -54,6 +54,12 @@ export default async function ResponderPage({
       .eq("source", "tenant")
       .eq("status", "active")
       .not("answer", "is", null),
+    // paginacao-ok: os 40 da busca ou os 300 do começo — decisão de PRODUTO,
+    // não tentativa de pegar tudo. Nada aqui é contado nem somado: é a lista
+    // de escolha do seletor, e a busca por nome é o caminho para achar quem
+    // não está nos primeiros 300. Trazer a base inteira é justamente o que o
+    // comentário abaixo explica que não se deve fazer.
+    //
     // BUSCA POR NOME, NÃO LISTA INTEIRA. Com 3.000 contatos um `<select>` é
     // impossível de usar — e carregar os 3.000 a cada abertura da tela mais
     // usada do produto deixa tudo lento para todo mundo. Com busca, traz 40;

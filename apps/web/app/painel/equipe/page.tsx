@@ -49,17 +49,26 @@ export default async function EquipePage({
   // história inteira. Somar tudo desde sempre premia quem está há mais tempo.
   const desde = new Date(Date.now() - 30 * 86400000).toISOString();
   const hojeISO = new Date().toISOString().slice(0, 10);
-  const [{ data: contacts }, { data: idsData }, ixData] = await Promise.all([
-    supabase
-      .from("contacts")
-      .select("owner_id, journey_stage, created_at, next_action_at")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
-    supabase
-      .from("contacts")
-      .select("id, owner_id")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
+  // ⚠ PAGINADO, e UMA LEITURA SÓ. Eram duas varreduras de `contacts` na mesma
+  // tela — uma para a carteira, outra para o mapa de dono — e nenhuma das duas
+  // paginada. Em 14/ago as `interactions` daqui foram corrigidas e os contatos
+  // ficaram para trás: metade do placar passou a ser contada certa sobre uma
+  // base cortada em 1.000 linhas ARBITRÁRIAS.
+  //
+  // Num placar isso é pior que em qualquer outra tela: o número de uma pessoa
+  // aparece para os colegas dela, menor do que foi, **e ela não tem como
+  // contestar um número que o sistema afirma.**
+  const [contatos, ixData] = await Promise.all([
+    lerTudo<{ id: string; owner_id: string | null; journey_stage: string; created_at: string; next_action_at: string | null }>(
+      (de, ate) => supabase
+        .from("contacts")
+        .select("id, owner_id, journey_stage, created_at, next_action_at")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .order("id")
+        .range(de, ate),
+      { rotulo: "contatos do placar" },
+    ),
     // ⚠ PAGINADO. O placar mostra o desempenho de UMA PESSOA para os colegas
     // dela. Cortar o array faz um vendedor aparecer com menos atendimento do
     // que teve — e ele nao tem como contestar um numero que o sistema afirma.
@@ -73,9 +82,7 @@ export default async function EquipePage({
   ]);
 
   const team = (members as Member[] | null) ?? [];
-  const owned =
-    (contacts as { owner_id: string | null; journey_stage: string; created_at: string; next_action_at: string | null }[] | null) ??
-    [];
+  const owned = contatos;
   const mine = (id: string) => owned.filter((c) => c.owner_id === id);
   const cadastros = (id: string) => mine(id).length;
   const matriculas = (id: string) =>
@@ -90,9 +97,7 @@ export default async function EquipePage({
   // de resposta existir sem ninguém preencher nada — e registro manual de
   // tempo é o campo que todo mundo esquece justamente nos dias corridos, que
   // são os dias em que ele importaria.
-  const ownerDe = new Map<string, string | null>(
-    ((idsData as { id: string; owner_id: string | null }[] | null) ?? []).map((r) => [r.id, r.owner_id]),
-  );
+  const ownerDe = new Map<string, string | null>(contatos.map((r) => [r.id, r.owner_id]));
 
   const ix = ixData;
   const atendimentos: { ownerId: string | null; entradaISO: string; respostaISO: string | null }[] = [];

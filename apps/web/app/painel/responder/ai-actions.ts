@@ -287,10 +287,28 @@ export async function gerarResposta(input: {
       { rotulo: "interacoes do aprendizado" },
     );
     const ids = [...new Set(linhas.map((l) => l.contact_id).filter(Boolean))] as string[];
-    const { data: orig } = ids.length
-      ? await supabase.from("contacts").select("id, source").in("id", ids.slice(0, 1000))
-      : { data: [] };
-    const origemDe = new Map(((orig as { id: string; source: string | null }[] | null) ?? []).map((c) => [c.id, c.source]));
+    // ⚠ EM LOTES, e o `.slice(0, 1000)` que estava aqui não era um limite: era
+    // o corte do PostgREST escrito à mão, com a mesma consequência silenciosa.
+    //
+    // Contato sem origem no mapa cai no recorte errado — e a origem é
+    // justamente a variável que o fundador impôs como obrigatória, porque
+    // convênio tem 9% de resposta contra 54% do WhatsApp. Perder a origem de
+    // parte da amostra é somar as duas coisas de volta, exatamente o erro que
+    // o recorte existe para não cometer.
+    //
+    // 500 por lote deixa folga contra o teto de 1.000 linhas da resposta e
+    // contra o tamanho da URL do `in()`.
+    const origemDe = new Map<string, string | null>();
+    for (let i = 0; i < ids.length; i += 500) {
+      // paginacao-ok: o lote é de 500 ids e a resposta tem no máximo 500
+      // linhas — metade do teto do PostgREST. É a própria paginação, feita
+      // pela lista de ids em vez de por faixa.
+      const { data: orig } = await supabase
+        .from("contacts").select("id, source").in("id", ids.slice(i, i + 500));
+      for (const c of (orig as { id: string; source: string | null }[] | null) ?? []) {
+        origemDe.set(c.id, c.source);
+      }
+    }
 
     // Só o recorte da origem DESTE contato — comparar com a média de todas as
     // origens é o erro que a regra do fundador proíbe.

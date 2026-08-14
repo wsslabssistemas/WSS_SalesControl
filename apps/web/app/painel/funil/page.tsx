@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
+import { lerTudo } from "@/lib/paginado";
 
 type Stage = { key: string; label: string; terminal?: boolean; won?: boolean };
 
@@ -26,16 +27,25 @@ export default async function FunilPage() {
     .limit(1)
     .maybeSingle();
 
-  const { data: contacts } = await supabase
-    .from("contacts")
-    .select("journey_stage")
-    .eq("tenant_id", tenant.id)
-    .is("deleted_at", null);
+  // ⚠ PAGINADO. O funil inteiro é a CONTAGEM deste array: quantos em cada
+  // etapa e a conversão no rodapé. Cortado em 1.000 linhas o desenho continua
+  // bonito e proporcional — só que sobre um terço da base, e nada na tela
+  // diria isso. É a forma mais silenciosa possível do corte: um gráfico certo
+  // sobre dado incompleto.
+  const rows = await lerTudo<{ journey_stage: string }>(
+    (de, ate) => supabase
+      .from("contacts")
+      .select("journey_stage")
+      .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
+      .order("id")
+      .range(de, ate),
+    { rotulo: "contatos do funil" },
+  );
 
   const stages =
     (skill?.manifest as { journey?: { stages?: Stage[] } } | null)?.journey
       ?.stages ?? [];
-  const rows = (contacts as { journey_stage: string }[] | null) ?? [];
   const total = rows.length;
   const countOf = (key: string) =>
     rows.filter((r) => r.journey_stage === key).length;

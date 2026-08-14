@@ -21,52 +21,52 @@
 > está aqui é **o que quebrou, o que foi consertado e o que continua aberto** —
 > nesta ordem, porque o aberto é o que decide o próximo passo.
 
-### 🔴 O BUG ABERTO: a tela de sincronização não grava
+### ✅ A SINCRONIZAÇÃO: era TAMANHO — e o limite não era o do Next
 
-`/painel/sincronizar` foi construída em 14/ago e o fundador reportou: **"não
-está salvando"**. Antes disso ele já tinha dito que **"parece que falta o botão
-de enviar"**.
+O fundador testou o que estava combinado e o resultado separou as hipóteses de
+uma vez: **matrículas (86 KB) importou; recebimentos (4,2 MB) não.**
 
-**Não foi diagnosticado.** O que se sabe:
-- O fluxo é de dois passos: `prever()` (não grava) → mostra a lista →
-  `aplicar()` (grava).
-- O arquivo é lido no NAVEGADOR (`file.text()`) e o texto vai para a server
-  action. Arquivos de 4 MB (o de recebimentos) passam por aqui.
-- `aplicar()` **refaz a previsão no servidor** e recusa se houver bloqueio.
-- Só `owner`/`admin` passam por `contexto()`.
+**A causa não era o `bodySizeLimit`.** Ele já estava em 12 MB — e não adiantou,
+porque **o teto que recusava é da plataforma**: o corpo de uma requisição para
+função serverless na Vercel para em ~4,5 MB, e a configuração do Next é o
+limite de cima, não o de baixo. Um número maior ali dá a impressão de que
+alguém tratou do assunto. É a mesma forma de engano do `.limit(5000)` uma
+seção abaixo, e nas duas vezes o sintoma foi silêncio.
 
-**Hipóteses, em ordem do que eu checaria:**
-1. **Limite de tamanho da server action.** Next.js limita o corpo (padrão ~1 MB).
-   O `.xls` de recebimentos tem **4,3 MB de texto** e o de matrículas ~86 KB.
-   Isso explicaria "não salva" sem erro visível na tela. **É a suspeita mais
-   forte.** Conserto: subir o limite em `next.config`, ou processar o arquivo em
-   pedaços, ou fazer o parse no cliente e mandar só o resultado (bem menor).
-2. O botão de aplicar só aparece quando `p.resumo` existe **e** não há bloqueio;
-   se `prever` devolve `ok:true` sem `resumo` (nenhum arquivo de matrículas), o
-   botão não é renderizado — e com só o de recebimentos é exatamente o caso.
-   **Isso é bug de lógica meu, independente do item 1.**
-3. Erro silencioso no `update`: o código conta `gravados` só quando `!error`,
-   mas **não mostra os erros** ao usuário.
+**A correção não é um número maior — é não mandar o arquivo.** `lib/planilha.ts`
+foi escrito sem rede e sem banco, de propósito, então roda igual no navegador.
+Hoje ele roda lá e o que sobe é o RESULTADO da leitura: os 1.548 pagantes
+viram ~200 KB em vez de 4,2 MB. Some o teto, some o parse duplicado (`aplicar`
+refaz a previsão) e some a chance de o mesmo defeito voltar quando a base
+dobrar. Erro de planilha passou a aparecer na hora, sem ida ao servidor.
 
-**Comece por reproduzir com o arquivo pequeno (matrículas, 86 KB) sozinho.** Se
-gravar, é tamanho; se não gravar, é lógica.
+**O que NÃO mudou, que é o que importa:** a trava continua no servidor.
+`aplicar` refaz a comparação contra o banco e recusa se houver bloqueio. O
+navegador manda a leitura de um arquivo que o próprio administrador escolheu —
+ele já podia editar o arquivo antes de subir, então não ganhou poder nenhum. O
+que ele nunca decide é o que o BANCO diz, e é o confronto dos dois que autoriza.
 
-**⚠ TRÊS CONSERTOS JÁ FORAM APLICADOS (14/ago, no fim da conversa) e NÃO foram
-confirmados pelo fundador.** Se ainda não gravar, comece descartando estes:
+**Três defeitos vizinhos, achados junto e consertados:**
+1. **1.548 UPDATEs em fila indiana estouram o tempo da função** — e função
+   interrompida no meio grava parte e some, sem dizer até onde chegou. Agora
+   vão 8 em paralelo (`lib/concorrencia.ts`), com `maxDuration` declarado.
+2. **Contava eventos, não pessoas.** Quem está nos dois arquivos levava dois
+   UPDATEs e era somado duas vezes: "1.800 atualizados" numa base de 1.548. É
+   a lei de métrica do `CLAUDE.md` valendo para o recibo de uma gravação.
+3. **Recusa do banco era engolida.** `if (!error) gravados++` conta só o
+   sucesso: 1.500 gravados com 48 recusados virava "1.500 gravados". Agora a
+   falha parcial aparece junto do sucesso.
 
-1. **`serverActions.bodySizeLimit` subiu para 12 MB** em `next.config.mjs`. O
-   padrão do Next é **1 MB** e o `.xls` tem **4,3 MB** — estourava **sem erro
-   na tela**, que é exatamente como "não está salvando" se apresenta.
-2. **O botão de aplicar dependia de `p.resumo`**, que só existe quando vem
-   arquivo de MATRÍCULAS. Quem subisse só o de recebimentos via a leitura certa
-   e **nenhum botão** — provavelmente o "parece que falta o botão de enviar".
-3. **`aplicar()` devolvia `ok: true` com `gravados: 0`**, e a tela dizia "0
-   contatos atualizados" — indistinguível de sucesso para quem lê rápido. Agora
-   zero é ERRO, com a causa provável escrita na mensagem.
+E uma quarta, na direção conservadora: **linha sem data legível não apaga mais
+a vigência que existe**. Quem sai de verdade some da planilha e vira
+"encerrou"; data em branco numa linha presente é quase sempre formato que o
+leitor não entendeu. Mesma regra do `paraE164BR` — falhar não pode virar
+corromper.
 
-**Se depois disso ainda não gravar, a suspeita seguinte é a CHAVE:** confira se
-`custom.codigo_sistema` de um contato bate com a coluna `Codigo` da planilha. A
-sincronização só atualiza quem já existe no banco — ela não cria contato.
+**⚠ Falta a confirmação dele com o arquivo grande.** Se ainda não gravar, a
+suspeita seguinte é a CHAVE: conferir se `custom.codigo_sistema` de um contato
+bate com a coluna `Codigo` da planilha. A sincronização só atualiza quem já
+existe no banco — ela não cria contato.
 
 ### ⚠ O DEFEITO MAIS INSTRUTIVO DO DIA — e ele já tem trava
 
@@ -91,10 +91,61 @@ feed `.ics`, o aprendizado do Responder e a sincronização.
 
 **Trava:** `paginacao_check.mjs`, no CI. Ela cobre também **o caso mais
 perigoso, que não tem `.limit()` nenhum** — consulta sem limite parece inocente
-e é a mais exposta. **Restam 39 pendências** em 20 arquivos, e a trava usa
-**linha de base**: falha se o número subir, e falha (do jeito bom) se cair sem
-alguém abaixar a constante. CI vermelho permanente seria trava que alguém
-desliga.
+e é a mais exposta.
+
+### A varredura terminou: 39 pendências → ZERO (14/ago, mesmo dia)
+
+E a triagem devolveu um resultado incômodo: **26 das 39 não eram leitura
+nenhuma.** Eram `insert`, `update` e `delete`, que não devolvem linha para o
+PostgREST cortar. **A trava media `.from("tabela")`, não "leitura que pode
+voltar cortada"** — e era isso que fazia a dívida parecer grande demais para
+resolver. É o mesmo defeito que a trava do `seed-curso.mjs` já teve, e a lição
+não mudou: *trava que nasce de um bug concreto tende a medir aquele bug em vez
+da propriedade.*
+
+**Corrigido o que ela media, apareceram OITO leituras reais escondidas** —
+inclusive:
+
+- **A metade que faltou do defeito ao vivo.** Em Gestão, Analista, Follow-up e
+  Placar, as `interactions` foram paginadas naquele dia e os **`contacts`
+  não** — e é o array de contatos que dá o DENOMINADOR: leads do período,
+  carteira, conversão. Denominador cortado faz a conversão **subir** sozinha,
+  que é o erro andando na direção que agrada.
+- **O gasto global do mês no painel do fabricante**, que escapava porque a
+  consulta VIZINHA usava `.maybeSingle()` — a trava procurava o escape na
+  janela inteira, então uma consulta absolvia a outra. Um freio de custo lendo
+  menos que o real é o único erro daquela tela que não dá para corrigir depois.
+- **O `.ics` assinado no Google/Apple**, o **Funil** (gráfico certo sobre dado
+  incompleto), a **Agenda**, a **exportação de contatos** (o arquivo sai com
+  cara de completo), o **dedupe do importador** e a **redistribuição de
+  carteira quando alguém sai da equipe** (o que passava de 1.000 ficava órfão).
+
+**Hoje a linha de base é 0** e a regra deixa de ser "dívida que não cresce":
+é dívida que não existe.
+
+**O que já estava errado HOJE, não amanhã:** `interactions` tem **2.177 linhas**
+no banco. A leitura cross-tenant da tela de preços já vinha cortada. Os
+`contacts` são 620 — abaixo do teto, então aquelas eram armadilhas armadas
+esperando os 9 mil cadastros para disparar todas juntas.
+
+### ⚠ E a trava estava com defeito próprio: CRLF
+
+`paginacao_check` tirava comentário de linha com `/\/\/.*$/`. **`.` não casa
+com `\r`**, que o JavaScript trata como terminador de linha — e os arquivos
+aqui estão em CRLF. Resultado: **nenhum comentário de linha era apagado**, e a
+trava lia comentário como se fosse código. Ela chegou a acusar `.limit(5000)`
+numa consulta paginada há dias, porque o `5000` estava no comentário que conta
+a história do defeito.
+
+A mesma causa quebrava o `sugestoes_dna_check` INTEIRO no Windows: o bloco de
+campos é achado por `/\ndna_sections:\n/`, que não casa com `\r\n`, então ele
+terminava com *"nenhum campo de texto encontrado"* — enquanto no CI, que roda
+em Linux com LF, passava. Corrigido: hoje ele mede os 229/229 de verdade.
+
+**A regra que fica: trava que dá resultado diferente na máquina de quem
+desenvolve e no CI é trava que a pessoa aprende a ignorar** — e a seção 6 deste
+documento manda justamente rodar estas verificações localmente. Ao escrever
+verificação nova que lê arquivo, normalize a quebra de linha.
 
 ### O que foi entregue em 11–14 de agosto
 
@@ -113,10 +164,10 @@ desliga.
 
 ### Os próximos passos, em ordem
 
-1. **Consertar a gravação da sincronização** (bug acima). Sem isso os 11
-   encerramentos e as 3 renovações medidas não entram no banco.
-2. **Continuar a varredura de paginação** — 39 pendências, com os 9 mil
-   cadastros a caminho.
+1. **Confirmar a gravação da sincronização com o arquivo grande.** A causa
+   (tamanho do corpo) está consertada e no ar; falta o teste dele. Sem isso os
+   11 encerramentos e as 3 renovações medidas não entram no banco.
+2. ~~**Continuar a varredura de paginação**~~ — **FEITA em 14/ago**: 39 → 0.
 3. **Os estados comerciais que faltam**, agora com dado real medido:
    **"fechado sem pagar"** (7 dos 324 matriculados nunca pagaram — a Noeli é o
    caso) e **"atraso fora do hábito"** (a Maria Isabel atrasa 3 dias *sempre* e
@@ -999,7 +1050,8 @@ node packages/db/tests/cadencia_check.mjs   # nenhuma etapa viva muda: 80/80 (se
 node packages/db/tests/aprendizado_test.mjs # o ciclo tecnica-desfecho, e o silencio: 16/16
 node packages/db/tests/sincronizacao_test.mjs # foto x historico, e a trava da planilha parcial: 15/15
 node packages/db/tests/planilha_test.mjs   # leitor de aba: recusa adivinhar a chave: 14/14
-node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (linha de base: 39)
+node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (linha de base: 0)
+node packages/db/tests/sugestoes_dna_check.mjs # campo aberto de DNA sem sugestão: 229/229
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12

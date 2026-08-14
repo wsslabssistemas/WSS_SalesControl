@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { prever, aplicar, type Previsao } from "./actions";
+import { ler, lerRecebimentos } from "@/lib/planilha";
+import { prever, aplicar, type Previsao, type DadosLidos } from "./actions";
 
 /**
  * A TELA DE SINCRONIZAÇÃO — ver antes de aplicar.
@@ -14,40 +15,97 @@ import { prever, aplicar, type Previsao } from "./actions";
  * `seed-curso.mjs` saiu **com três ✓ verdes** enquanto derrubava oito módulos
  * ao lado, porque relatava só o que ele mesmo escrevera.
  *
- * O arquivo é lido no NAVEGADOR e o texto vai para o servidor. Assim o
- * arquivo original nunca sobe inteiro e a mesma tela serve para o `.csv` das
- * matrículas e para o `.xls` dos recebimentos — que, apesar da extensão, é
- * HTML por dentro (o sistema da academia mente a extensão em pelo menos dois
- * relatórios; `linhasDe` decide pelo conteúdo).
+ * ⚠ O ARQUIVO É LIDO **E INTERPRETADO** AQUI, e a segunda metade é nova.
+ *
+ * Antes, o texto inteiro do arquivo ia para a server action. O de matrículas
+ * (86 KB) chegava; o de recebimentos (**4,2 MB**) não — o corpo da requisição
+ * estoura o teto de plataforma da Vercel, que o `bodySizeLimit` do Next não
+ * move, e estoura **sem mensagem na tela**. Do lado de quem usa, isso é
+ * exatamente "não está salvando".
+ *
+ * Hoje `lib/planilha.ts` roda aqui (ele não tem rede nem banco, de propósito)
+ * e o que sobe é o RESULTADO: os 1.548 pagantes viram algo perto de 200 KB.
+ * Some o teto, some o parse duplicado no servidor, e some a chance de o mesmo
+ * defeito voltar quando a base dobrar.
+ *
+ * O erro de leitura também passou a aparecer na hora, sem ida ao servidor —
+ * planilha com coluna faltando é resposta imediata, não espera.
+ *
+ * O arquivo continua sem subir: o `.csv` e o `.xls` que na verdade é HTML são
+ * decididos pelo CONTEÚDO (`linhasDe`), porque o sistema da academia mente a
+ * extensão em pelo menos dois relatórios.
  */
 export function Sincronizador() {
-  const [mat, setMat] = useState("");
-  const [rec, setRec] = useState("");
+  const [dados, setDados] = useState<DadosLidos>({ matriculas: null, recebimentos: null });
   const [nomeMat, setNomeMat] = useState("");
   const [nomeRec, setNomeRec] = useState("");
   const [p, setP] = useState<Previsao | null>(null);
-  const [carregando, setCarregando] = useState<null | "prever" | "aplicar">(null);
+  const [carregando, setCarregando] = useState<null | "lendo" | "prever" | "aplicar">(null);
   const [feito, setFeito] = useState<string | null>(null);
+
+  const rotuloDoArquivo = (f: File, extra: string) =>
+    `${f.name} · ${Math.round(f.size / 1024)} KB · ${extra}`;
 
   const escolher = async (f: File | undefined, qual: "mat" | "rec") => {
     if (!f) return;
-    const t = await f.text();
-    if (qual === "mat") { setMat(t); setNomeMat(`${f.name} · ${Math.round(f.size / 1024)} KB`); }
-    else { setRec(t); setNomeRec(`${f.name} · ${Math.round(f.size / 1024)} KB`); }
-    setP(null); setFeito(null);
+    setCarregando("lendo"); setP(null); setFeito(null);
+    try {
+      const texto = await f.text();
+      if (qual === "mat") {
+        const l = ler(texto, { exigeVigencia: true });
+        if (l.erro) {
+          setDados((d) => ({ ...d, matriculas: null }));
+          setNomeMat("");
+          setP({ ok: false, erro: `Matrículas: ${l.erro}` });
+          return;
+        }
+        setDados((d) => ({
+          ...d,
+          matriculas: { linhas: l.linhas, entendeu: l.entendeu, ignoradas: l.ignoradas.length },
+        }));
+        setNomeMat(rotuloDoArquivo(f, `${l.linhas.length} pessoas`));
+      } else {
+        const r = lerRecebimentos(texto);
+        if (r.erro) {
+          setDados((d) => ({ ...d, recebimentos: null }));
+          setNomeRec("");
+          setP({ ok: false, erro: `Recebimentos: ${r.erro}` });
+          return;
+        }
+        setDados((d) => ({
+          ...d,
+          recebimentos: {
+            pagantes: r.pagantes, entendeu: r.entendeu,
+            descartadas: r.descartadas, ignoradas: r.ignoradas.length,
+          },
+        }));
+        setNomeRec(rotuloDoArquivo(f, `${r.pagantes.length} pagantes`));
+      }
+    } finally {
+      setCarregando(null);
+    }
   };
+
+  const temAlgo = !!dados.matriculas || !!dados.recebimentos;
 
   const rodarPrevisao = async () => {
     setCarregando("prever"); setFeito(null);
-    try { setP(await prever(mat, rec)); } finally { setCarregando(null); }
+    try { setP(await prever(dados)); } finally { setCarregando(null); }
   };
 
   const rodarAplicacao = async () => {
     setCarregando("aplicar");
     try {
-      const r = await aplicar(mat, rec);
-      if (r.ok) { setFeito(`${r.gravados} contatos atualizados.`); setP(null); }
-      else setP({ ok: false, erro: r.erro });
+      const r = await aplicar(dados);
+      if (r.ok) {
+        // A falha parcial vem junto do sucesso, de propósito: "1.500
+        // atualizados" escondendo 48 recusas é o mesmo defeito de sempre.
+        setFeito(
+          `${r.gravados} contatos atualizados.` +
+          (r.falhas ? ` ${r.falhas} não foram gravados — o banco recusou.` : ""),
+        );
+        setP(null);
+      } else setP({ ok: false, erro: r.erro });
     } finally { setCarregando(null); }
   };
 
@@ -77,16 +135,18 @@ export function Sincronizador() {
           </label>
         </div>
         <p className="text-faint" style={{ fontSize: 12, marginTop: 12, marginBottom: 0 }}>
-          Pode mandar um só ou os dois. <strong>Nada é gravado neste passo.</strong> CPF,
-          endereço e complemento são descartados na leitura — o sistema não precisa deles.
+          Pode mandar um só ou os dois. O arquivo é lido <strong>aqui no seu
+          navegador</strong> e não sobe — só o que foi entendido dele.{" "}
+          <strong>Nada é gravado neste passo.</strong> CPF, endereço e complemento
+          são descartados na leitura — o sistema não precisa deles.
         </p>
         <button
           type="button"
           className="btn btn-primary mt-16"
-          disabled={(!mat && !rec) || carregando !== null}
+          disabled={!temAlgo || carregando !== null}
           onClick={rodarPrevisao}
         >
-          {carregando === "prever" ? "lendo…" : "Ver o que vai mudar"}
+          {carregando === "lendo" ? "lendo o arquivo…" : carregando === "prever" ? "comparando…" : "Ver o que vai mudar"}
         </button>
       </div>
 

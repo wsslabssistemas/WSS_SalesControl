@@ -4,6 +4,21 @@ import { Sincronizador } from "./Sincronizador";
 
 export const metadata = { title: "Sincronizar com o sistema da academia" };
 
+/**
+ * ⚠ ESTA TELA GRAVA MILHARES DE LINHAS NUMA CHAMADA SÓ.
+ *
+ * O arquivo real da Be Fitness tem 1.548 pagantes, e cada um é um UPDATE
+ * endereçado por id — não dá para juntar num comando só porque o conteúdo de
+ * `custom` é diferente em cada linha. Com o padrão da Vercel a função é
+ * interrompida no meio, e função interrompida no meio **grava parte e some**:
+ * o pior desfecho possível para uma sincronização, porque ela fica sem dizer
+ * até onde chegou.
+ *
+ * A folga vem de dois lados — `mapLimit` em `actions.ts` reduz o tempo total,
+ * e este número dá o teto para o caso da base crescer.
+ */
+export const maxDuration = 60;
+
 export default async function SincronizarPage() {
   const m = await getActiveTenant();
   const podeVer = m?.tenant && (m.role === "owner" || m.role === "admin");

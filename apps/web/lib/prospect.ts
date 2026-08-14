@@ -2,6 +2,8 @@
 // dos Dados; enriquecimento pela minhareceita.org). Nada é baixado/armazenado —
 // consulta sob demanda. Trocar por dump da Receita depois não muda a UI.
 
+import { mapLimit } from "./concorrencia";
+
 const SEARCH_URL = "https://api.casadosdados.com.br/v5/public/cnpj/pesquisa";
 const ENRICH_URL = (cnpj: string) => `https://minhareceita.org/${cnpj}`;
 
@@ -183,20 +185,9 @@ export async function getCompanyDetail(cnpj: string): Promise<CompanyDetail | nu
 }
 
 
-/** Concorrência limitada — rajada derruba API pública (a lição do PNCP). */
-async function mapLimit<T, R>(itens: T[], limite: number, fn: (x: T) => Promise<R>): Promise<R[]> {
-  const out: R[] = new Array(itens.length);
-  let i = 0;
-  await Promise.all(
-    Array.from({ length: Math.min(limite, itens.length) }, async () => {
-      while (i < itens.length) {
-        const k = i++;
-        out[k] = await fn(itens[k]);
-      }
-    }),
-  );
-  return out;
-}
+// Concorrência limitada — rajada derruba API pública (a lição do PNCP).
+// A implementação saiu daqui para `lib/concorrencia.ts` quando a
+// sincronização passou a precisar da mesma coisa; o comportamento é o mesmo.
 
 export type EnderecoDaEmpresa = {
   cnpj: string;

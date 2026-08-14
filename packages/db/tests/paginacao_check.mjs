@@ -51,25 +51,31 @@ const RAIZ = path.join(ROOT, "apps/web");
 const TETO_HONESTO = 200;
 
 /**
- * ⚠ A LINHA DE BASE — e por que ela existe em vez de um CI vermelho.
+ * ⚠ A LINHA DE BASE — hoje ZERO, e é bom entender como ela chegou aqui.
  *
  * Quando esta trava nasceu (14/ago/2026) ela apontou **44** consultas. Cinco
- * foram corrigidas na hora — as que causavam o defeito ao vivo. As outras 39
- * são leituras espalhadas por 20 arquivos, boa parte delas de linha única,
- * que precisam de triagem uma a uma e não de substituição em massa.
+ * foram corrigidas na hora; as outras 39 viraram linha de base, porque CI
+ * vermelho permanente é trava que alguém desliga.
  *
- * Deixar o CI vermelho enquanto isso seria pior que não ter trava: build
- * quebrado por padrão é build que ninguém olha, e a próxima quebra de
- * verdade entra sem ninguém ver. **A regra aqui é dívida que não cresce.**
+ * A triagem das 39 (14/ago, mesmo dia) devolveu um resultado incômodo: **26
+ * não eram leitura nenhuma** — eram `insert`, `update` e `delete`, que não
+ * devolvem linha para o PostgREST cortar. A trava media `.from("tabela")`,
+ * não "leitura que pode voltar cortada", e a dívida parecia intratável por
+ * causa disso. É o mesmo defeito que a trava do `seed-curso.mjs` já teve, e
+ * a lição continua a mesma: *trava que nasce de um bug concreto tende a medir
+ * aquele bug em vez da propriedade.*
  *
- * A trava falha quando o número SOBE. Quando alguém consertar um trecho,
- * abaixa este número junto — e aí ele nunca mais volta a subir.
+ * Fechado o que ela media, apareceram **oito leituras reais que estavam
+ * escondidas** — inclusive o gasto global do mês no painel do fabricante, que
+ * escapava porque a consulta VIZINHA usava `.maybeSingle()`. Todas corrigidas.
  *
- * Chegar a zero é o objetivo, e cada `paginacao-ok:` escrito com motivo conta
- * como conserto: o que se quer não é o número, é que **ninguém leia uma
- * tabela que cresce sem ter decidido o que acontece quando ela crescer.**
+ * **De hoje em diante o número é zero e a regra deixa de ser "dívida que não
+ * cresce": é dívida que não existe.** Consulta nova de leitura numa tabela
+ * que cresce usa `lerTudo`, ou escreve `paginacao-ok:` com o motivo — e o
+ * motivo é o produto aqui, não o número. O que se quer é que **ninguém leia
+ * uma tabela que cresce sem ter decidido o que acontece quando ela crescer.**
  */
-const DIVIDA_CONHECIDA = 39;
+const DIVIDA_CONHECIDA = 0;
 
 /** Só o que a operação faz crescer. Catálogo pode ser lido inteiro. */
 const TABELAS_QUE_CRESCEM = [
@@ -77,10 +83,24 @@ const TABELAS_QUE_CRESCEM = [
   "services_rendered", "usage_ledger", "course_progress",
 ];
 
-const ESCAPES = [
-  "lerTudo", "paginacao-ok:", ".maybeSingle()", ".single()",
-  "head: true", 'count: "exact"',
-];
+/**
+ * ⚠ ABSOLVIÇÃO É POR CONSULTA, NUNCA POR VIZINHANÇA (achado em 14/ago/2026).
+ *
+ * A versão anterior procurava os escapes na JANELA inteira — 6 linhas para
+ * trás e 14 para a frente. Dentro de um `Promise.all` isso quer dizer que
+ * **uma consulta absolvia a outra**: em `/painel/admin` a leitura de
+ * `usage_ledger` que soma o gasto global do mês passava batida porque uma
+ * linha acima havia um `.maybeSingle()` de `ai_limits`.
+ *
+ * O número que ela calcula é justamente o que a barra do teto global mostra.
+ * Cortado em 1.000, o painel do fabricante diria que se gastou menos do que
+ * se gastou — o freio de custo lendo um número menor que o real, que é o
+ * único erro daquela tela que não dá para corrigir depois.
+ *
+ * Estes quatro são propriedades da PRÓPRIA consulta, então são procurados só
+ * dentro dela.
+ */
+const ESCAPES_DA_CONSULTA = [".maybeSingle()", ".single()", "head: true", 'count: "exact"'];
 
 function arquivos(dir) {
   const out = [];
@@ -99,13 +119,90 @@ const NL = String.fromCharCode(10);
  * Apaga o CONTEÚDO dos comentários preservando as quebras de linha — a v1
  * acusou o texto do próprio comentário que documenta o defeito, e trava que
  * acusa a própria documentação é trava que alguém desliga.
+ *
+ * ⚠ E ELA VOLTOU A ACUSAR, POR CAUSA DO `\r` (achado em 14/ago/2026).
+ *
+ * O repositório é editado no Windows e os arquivos estão em CRLF. A versão
+ * anterior tirava comentário de linha com `/\/\/.*$/` — e `.` **não casa com
+ * `\r`**, que o JavaScript trata como terminador de linha igual ao `\n`. Com
+ * `\r` sobrando no fim, o `$` (sem flag `m`) nunca chegava, o `replace` não
+ * casava nada e **nenhum comentário de linha era apagado**.
+ *
+ * O efeito era exatamente o que a v1 existia para evitar: em
+ * `gestao/ia-actions.ts` a trava apontava `.limit(5000)` numa consulta que
+ * está paginada há dias — o `5000` estava no COMENTÁRIO que conta a história
+ * do defeito. Trava que aponta o lugar errado gasta o crédito que ela vai
+ * precisar no dia em que apontar certo.
+ *
+ * Tirar o `$` resolve: `.*` para sozinho no `\r`, e o que sobra é só a quebra.
  */
 function semComentarios(texto) {
   return texto
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
     .split(NL)
-    .map((l) => l.replace(/\/\/.*$/, ""))
+    .map((l) => l.replace(/\/\/.*/, ""))
     .join(NL);
+}
+
+/**
+ * ⚠ ESCREVER NÃO É LER — e só a leitura pode ser cortada em silêncio.
+ *
+ * `insert`, `upsert`, `update` e `delete` sem `.select()` não devolvem
+ * linha nenhuma: não existe conjunto para o PostgREST cortar, e o UPDATE
+ * alcança todas as linhas do filtro independentemente de qualquer teto. A
+ * versão anterior acusava os 26 pontos de escrita do app junto com as
+ * leituras, e é isso que fazia a dívida parecer intratável.
+ *
+ * **A exigência do `.select()` é o que impede a brecha:** `update().select()`
+ * e `insert().select()` DEVOLVEM linhas, e aí o corte volta a existir — um
+ * `update` em massa que conta `data.length` para dizer "N atualizados"
+ * reportaria 1.000 com 3.000 alterados, que é a mesma mentira plausível de
+ * sempre. Esses continuam sendo acusados.
+ *
+ * A lição está escrita no `ESTADO_DO_PROJETO.md`, na trava do curso: *quando
+ * uma trava nasce de um bug concreto, ela tende a medir aquele bug em vez da
+ * propriedade.* A propriedade aqui é **leitura que pode voltar cortada**.
+ */
+const VERBOS_DE_ESCRITA = [".insert(", ".upsert(", ".update(", ".delete("];
+
+/**
+ * A CONSULTA, e só ela: da linha do `.from(...)` enquanto durar o
+ * encadeamento.
+ *
+ * O critério é a linha seguinte começar com `.` — que é como este
+ * repositório escreve consulta quebrada em várias linhas. Fechar no primeiro
+ * `;` não serve: dentro de um `Promise.all([...])` não existe `;` entre um
+ * elemento e o outro, e o trecho engolia a consulta vizinha. Foi assim que
+ * a segunda leitura de `contacts` do Placar da Equipe passou batida —
+ * herdando o `.range(de, ate)` do `lerTudo` do elemento de baixo.
+ */
+/**
+ * O bloco de comentário colado na consulta — o que um humano escreveu SOBRE
+ * ELA.
+ *
+ * Sobe da linha do `.from(...)` pulando no máximo três linhas de código (o
+ * cabeçalho da consulta: `const x = await supabase`, `lerTudo<T>(`,
+ * `(de, ate) => supabase`) e, ao achar comentário, absorve o bloco inteiro.
+ * A primeira linha de código depois disso fecha — então o bloco pertence a
+ * esta consulta e não pode ser o de outra.
+ */
+function comentarioColado(linhasBrutas, i) {
+  const ehComentario = (l) => /^\s*(\/\/|\*|\/\*)/.test(l);
+  let k = i - 1;
+  let pulos = 0;
+  while (k >= 0 && !ehComentario(linhasBrutas[k]) && pulos < 3) { k--; pulos++; }
+  const bloco = [];
+  while (k >= 0 && ehComentario(linhasBrutas[k])) { bloco.unshift(linhasBrutas[k]); k--; }
+  return bloco.join(NL);
+}
+
+function instrucao(linhas, i, ate) {
+  const trecho = [linhas[i]];
+  for (let k = i + 1; k < ate; k++) {
+    if (!linhas[k].trim().startsWith(".")) break;
+    trecho.push(linhas[k]);
+  }
+  return trecho.join(NL);
 }
 
 let suspeitas = 0;
@@ -121,15 +218,37 @@ for (const arq of arquivos(RAIZ)) {
     if (!tabela) continue;
 
     // A consulta é encadeada em várias linhas: a janela cobre o encadeamento
-    // nos dois sentidos. O `paginacao-ok:` é procurado no texto BRUTO, porque
-    // é lá que o comentário existe.
+    // nos dois sentidos, mas serve só para achar o que é escrito EM VOLTA da
+    // consulta (o nome do `lerTudo` e o comentário de liberação). Tudo que é
+    // propriedade da consulta em si é procurado dentro dela.
     const de = Math.max(0, i - 6);
     const ate = Math.min(linhas.length, i + 14);
     const janela = linhas.slice(de, ate).join(NL);
-    const janelaBruta = linhasBrutas.slice(de, ate).join(NL);
-    if (ESCAPES.some((e) => janela.includes(e) || janelaBruta.includes(e))) continue;
+    const stmt = instrucao(linhas, i, ate);
 
-    const lim = janela.match(/\.limit\(\s*(\d+)\s*\)/);
+    // ESCRITA sem `.select()` não devolve linhas — não há o que cortar.
+    // Olhada só para a FRENTE, a partir do `.from(...)`: o verbo vem logo
+    // depois dele, e olhar para trás faria uma escrita vizinha absolver a
+    // leitura da linha de cima.
+    if (VERBOS_DE_ESCRITA.some((v) => stmt.includes(v)) && !stmt.includes(".select(")) continue;
+
+    if (ESCAPES_DA_CONSULTA.some((e) => stmt.includes(e))) continue;
+
+    // ⚠ PAGINAÇÃO DE VERDADE DEIXA DUAS MARCAS, e as duas são exigidas: o
+    // nome do helper em volta e o `.range(de, ate)` DENTRO da consulta. Só o
+    // nome não basta — foi assim que um `lerTudo` de uma linha vizinha
+    // absolveu a consulta ao lado.
+    if (stmt.includes(".range(") && janela.includes("lerTudo")) continue;
+
+    // A liberação escrita à mão vale no COMENTÁRIO GRUDADO NA CONSULTA — o
+    // bloco imediatamente acima dela, inteiro, por mais longo que seja.
+    //
+    // Nem janela fixa larga (que faz uma consulta perdoar a vizinha) nem
+    // janela fixa curta (que não cabe um motivo escrito de verdade, e motivo
+    // que não cabe vira motivo que ninguém escreve).
+    if (comentarioColado(linhasBrutas, i).includes("paginacao-ok:")) continue;
+
+    const lim = stmt.match(/\.limit\(\s*(\d+)\s*\)/);
     if (lim && Number(lim[1]) < TETO_HONESTO) continue;
 
     suspeitas++;

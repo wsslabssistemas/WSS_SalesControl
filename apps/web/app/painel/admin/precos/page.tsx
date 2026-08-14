@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPlatformAdmin } from "@/lib/platform";
+import { lerTudo } from "@/lib/paginado";
 import {
   sugerirPreco,
   margemDe,
@@ -54,22 +55,33 @@ export default async function PrecosPage({
   const politica = politicaDaUrl(await searchParams);
   const admin = createAdminClient();
 
-  const [{ data: tenants }, { data: members }, { data: contacts }, { data: interactions }, { data: usage }, { data: payments }] =
+  // ⚠ AS TRÊS PAGINADAS SÃO AS TRÊS QUE CRESCEM SEM TETO — e esta tela existe
+  // para decidir PREÇO. Atendimentos por empresa (a base da cobrança), custo
+  // de IA e tamanho da base saem daqui: cortados em 1.000 linhas, a margem
+  // aparece melhor do que é e o preço sugerido sai barato demais.
+  //
+  // `interactions` e `usage_ledger` não têm filtro de período de propósito
+  // (a tela compara o acumulado), então são exatamente as leituras onde o
+  // teto de 1.000 chega primeiro.
+  const [{ data: tenants }, { data: members }, cs, is, us, { data: payments }] =
     await Promise.all([
       admin.from("tenants").select("id, name, slug, skill_key, plan"),
       admin.from("memberships").select("tenant_id").eq("status", "active"),
-      admin.from("contacts").select("tenant_id").is("deleted_at", null),
-      admin.from("interactions").select("tenant_id, occurred_at"),
-      admin.from("usage_ledger").select("tenant_id, cost_cents, occurred_at"),
+      lerTudo<{ tenant_id: string }>((de, ate) => admin
+        .from("contacts").select("tenant_id").is("deleted_at", null)
+        .order("id").range(de, ate), { rotulo: "contatos de todas as empresas" }),
+      lerTudo<{ tenant_id: string; occurred_at: string }>((de, ate) => admin
+        .from("interactions").select("tenant_id, occurred_at")
+        .order("id").range(de, ate), { rotulo: "atendimentos de todas as empresas" }),
+      lerTudo<{ tenant_id: string; cost_cents: number; occurred_at: string }>((de, ate) => admin
+        .from("usage_ledger").select("tenant_id, cost_cents, occurred_at")
+        .order("id").range(de, ate), { rotulo: "uso de IA de todas as empresas" }),
       admin.from("tenant_payments").select("tenant_id, amount_cents, status, paid_at"),
     ]);
 
   type T = { id: string; name: string; slug: string; skill_key: string; plan: string };
   const ts = (tenants as T[] | null) ?? [];
   const ms = (members as { tenant_id: string }[] | null) ?? [];
-  const cs = (contacts as { tenant_id: string }[] | null) ?? [];
-  const is = (interactions as { tenant_id: string; occurred_at: string }[] | null) ?? [];
-  const us = (usage as { tenant_id: string; cost_cents: number; occurred_at: string }[] | null) ?? [];
   const ps = (payments as { tenant_id: string; amount_cents: number; status: string; paid_at: string | null }[] | null) ?? [];
 
   const agora = Date.now();

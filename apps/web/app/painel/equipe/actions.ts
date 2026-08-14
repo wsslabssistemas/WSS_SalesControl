@@ -6,6 +6,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { origemDoSite } from "@/lib/site";
+import { lerTudo } from "@/lib/paginado";
 
 async function requireAdmin() {
   const m = await getActiveTenant();
@@ -238,14 +239,28 @@ export async function removeMember(membershipId: string, formData: FormData) {
       .order("id");
     const destinos = ((ativos as { id: string }[] | null) ?? []).map((x) => x.id);
 
-    const { data: doSaindo } = await supabase
-      .from("contacts")
-      .select("id")
-      .eq("tenant_id", m.tenant!.id)
-      .eq("owner_id", membershipId)
-      .is("deleted_at", null)
-      .order("id");
-    const ids = ((doSaindo as { id: string }[] | null) ?? []).map((x) => x.id);
+    // ⚠ PAGINADO, e o corte aqui deixava CARTEIRA ÓRFÃ.
+    //
+    // Esta lista é quem vai ser redistribuído entre a equipe quando alguém
+    // sai. Cortada em 1.000, os contatos além disso continuavam apontando
+    // para um vínculo já desativado: some da carteira de todo mundo e não
+    // aparece em lista nenhuma — exatamente a dor que este fluxo existe para
+    // evitar, e na forma silenciosa dela, porque a remoção "deu certo".
+    //
+    // Com 9 mil cadastros divididos entre três recepcionistas, o primeiro
+    // desligamento já passaria do teto.
+    const doSaindo = await lerTudo<{ id: string }>(
+      (de, ate) => supabase
+        .from("contacts")
+        .select("id")
+        .eq("tenant_id", m.tenant!.id)
+        .eq("owner_id", membershipId)
+        .is("deleted_at", null)
+        .order("id")
+        .range(de, ate),
+      { rotulo: "carteira de quem sai" },
+    );
+    const ids = doSaindo.map((x) => x.id);
 
     if (destinos.length && ids.length) {
       for (const [destino, fatia] of fatiar(ids, destinos)) {

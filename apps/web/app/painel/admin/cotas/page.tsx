@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPlatformAdmin } from "@/lib/platform";
 import { computeEntitlements } from "@/lib/entitlements";
+import { lerTudo } from "@/lib/paginado";
 import {
   limitesEfetivos, avaliarCota, alertaDePerfil, custoProjetadoCents,
   CENTAVOS_POR_RESPOSTA, PERFIS, type Limites, type PerfilKey,
@@ -31,16 +32,21 @@ export default async function CotasPage() {
   inicioDoMes.setDate(1);
   inicioDoMes.setHours(0, 0, 0, 0);
 
-  const [{ data: tenantsData }, { data: limitesData }, { data: usoData }] = await Promise.all([
+  const [{ data: tenantsData }, { data: limitesData }, uso] = await Promise.all([
     admin.from("tenants").select("id, name, slug, skill_key, settings").order("name"),
     admin.from("ai_limits").select("tenant_id, respostas_mes, teto_mes_cents, prospeccao_dia, teto_global_mes_cents"),
-    admin.from("usage_ledger").select("tenant_id, feature, cost_cents, occurred_at")
-      .gte("occurred_at", inicioDoMes.toISOString()),
+    // ⚠ PAGINADO. Esta é a tela que decide QUANDO A IA PARA. `respostasDe` e
+    // `custoDe` contam linha por linha deste array; cortado em 1.000, a cota
+    // consumida aparece menor do que é e uma empresa passa do teto sem que a
+    // tela mostre isso. O erro anda na direção de gastar, não de bloquear.
+    lerTudo<Uso>((de, ate) => admin
+      .from("usage_ledger").select("tenant_id, feature, cost_cents, occurred_at")
+      .gte("occurred_at", inicioDoMes.toISOString())
+      .order("id").range(de, ate), { rotulo: "uso de IA do mes" }),
   ]);
 
   const tenants = (tenantsData as Tenant[] | null) ?? [];
   const linhas = (limitesData as Linha[] | null) ?? [];
-  const uso = (usoData as Uso[] | null) ?? [];
 
   const global = linhas.find((l) => l.tenant_id === null) ?? null;
   const doTenant = (id: string) => linhas.find((l) => l.tenant_id === id) ?? null;

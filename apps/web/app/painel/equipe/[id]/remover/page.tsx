@@ -36,18 +36,26 @@ export default async function RemoverMembroPage({
     .select("id, user:profiles(full_name, email)")
     .eq("tenant_id", tenant.id)
     .eq("status", "active");
-  const { data: contacts } = await supabase
+  // ⚠ CONTAR NO BANCO, NÃO EM MEMÓRIA. Isto aqui lia a tabela inteira de
+  // contatos para depois filtrar um dono em JavaScript — e sem paginação, o
+  // que voltava eram 1.000 linhas. O número na frase *"o que fazer com os N
+  // contatos dele"* saía menor que o real, numa tela de decisão destrutiva.
+  //
+  // `count: "exact", head: true` devolve o número certo sem trazer linha
+  // nenhuma: some o corte e some a leitura desnecessária de uma vez. É a
+  // mesma forma já usada em `equipe/actions.ts`.
+  const { count } = await supabase
     .from("contacts")
-    .select("owner_id")
+    .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenant.id)
+    .eq("owner_id", id)
     .is("deleted_at", null);
+  const nContatos = count ?? 0;
 
   const team = (members as Member[] | null) ?? [];
   const alvo = team.find((m) => m.id === id);
   if (!alvo) notFound();
 
-  const owned = (contacts as { owner_id: string | null }[] | null) ?? [];
-  const nContatos = owned.filter((c) => c.owner_id === id).length;
   const outros = team.filter((m) => m.id !== id);
 
   const nome = alvo.user?.full_name ?? alvo.user?.email ?? "este membro";

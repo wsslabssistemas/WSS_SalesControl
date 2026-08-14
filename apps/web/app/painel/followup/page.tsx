@@ -32,12 +32,19 @@ export default async function FollowUpPage({
   const { stages, cadences } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
 
-  const [{ data: cData }, ixData, { data: mData }] = await Promise.all([
-    supabase
+  const [cData, ixData, { data: mData }] = await Promise.all([
+    // ⚠ PAGINADO, e a metade que faltava. Em 14/ago as `interactions` desta
+    // tela foram paginadas e os `contacts` não — e é a lista de contatos que
+    // decide QUEM aparece. Cortada em 1.000, a pessoa que devia toque
+    // simplesmente não estava na tela: sem linha, sem aviso, sem como
+    // desconfiar.
+    lerTudo<Contact>((de, ate) => supabase
       .from("contacts")
       .select("id, name, phone, owner_id, journey_stage, stage_entered_at")
       .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
+      .is("deleted_at", null)
+      .order("id")
+      .range(de, ate), { rotulo: "contatos do follow-up" }),
     // ⚠ PAGINADO. `ultimo` sai daqui e decide quem esta devendo toque. Cortado
     // em 1.000 linhas arbitrarias, quem ja foi contatado voltaria para a lista.
     lerTudo<{ contact_id: string | null; occurred_at: string; direction: string }>((de, ate) => supabase
@@ -53,7 +60,7 @@ export default async function FollowUpPage({
       .eq("status", "active"),
   ]);
 
-  const contacts = (cData as Contact[] | null) ?? [];
+  const contacts = cData;
   const ix = ixData;
   const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
     .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }))

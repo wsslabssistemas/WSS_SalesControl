@@ -72,17 +72,37 @@ transformaria 9.151 pessoas em alunas.
 
 ---
 
-## 🔴 ABERTO AGORA — a sincronização não grava (14/ago)
+## 🟡 A SINCRONIZAÇÃO — era TAMANHO, e o conserto está no ar (14/ago)
 
-`/painel/sincronizar` lê os dois relatórios, compara e **mostra certo** — mas
-o fundador reportou que **não salva**. Diagnóstico e hipóteses no §0 do
-`ESTADO_DO_PROJETO.md`. A suspeita mais forte é **tamanho do corpo da server
-action**: o `.xls` de recebimentos tem 4,3 MB de texto.
+**O teste do fundador separou as hipóteses:** o arquivo de matrículas (86 KB)
+importou; o de recebimentos (4,2 MB) não. Era tamanho, e não a lógica do botão.
 
-**Teste que separa as hipóteses:** subir SÓ o de matrículas (86 KB). Se gravar,
-é tamanho. Se não gravar, é lógica do botão.
+**O que era:** a tela mandava o TEXTO INTEIRO do arquivo para o servidor. O
+corpo de uma requisição para função serverless na Vercel tem teto de
+plataforma que o `serverActions.bodySizeLimit` do Next **não move** — subir
+aquele número para 12 MB não resolveu nada, porque quem recusava era a camada
+de baixo. E recusava **sem mensagem na tela**, que é como "não está salvando"
+se apresenta.
 
-**O que já está medido e esperando para entrar no banco** (rodado contra o
+**O que passou a ser:** o arquivo é lido *e interpretado* no navegador, e só o
+RESULTADO sobe — os 1.548 pagantes viram ~200 KB em vez de 4,2 MB. O arquivo
+em si nunca sai do computador dele. Como efeito, erro de planilha (coluna
+faltando) aparece na hora, sem ida ao servidor.
+
+**Junto, três coisas que iam morder depois:**
+- As gravações vão **em paralelo limitado**: 1.548 UPDATEs em fila indiana
+  estouram o tempo da função, e função interrompida grava metade e some.
+- **Conta pessoas distintas**, não eventos: quem está nos dois arquivos era
+  contado duas vezes e a tela diria "1.800 atualizados" numa base de 1.548.
+- **Recusa do banco aparece.** Antes só o sucesso era contado: 1.500 gravados
+  com 48 recusados era relatado como 1.500 gravados.
+
+**⚠ Falta o teste dele com o arquivo grande.** Se ainda não gravar, a próxima
+suspeita continua sendo a CHAVE: conferir se `custom.codigo_sistema` de um
+contato bate com a coluna `Codigo` da planilha — a sincronização só atualiza
+quem já existe, ela não cria contato.
+
+**O que está medido e esperando para entrar no banco** (rodado contra o
 arquivo real, sem gravar): 12 entraram · **3 renovaram** · 4 ajuste de data ·
 **11 encerraram**. E dos recebimentos: 1.548 pagantes, R$ 1.548.051 de
 faturamento histórico, atraso habitual por pessoa.

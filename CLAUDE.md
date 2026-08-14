@@ -87,6 +87,10 @@ vazar para produção ou biblioteca faltar em ambiente novo:
 - Todo seed de demonstração usa slug com prefixo `demo-`, para que um `delete`
   jamais alcance um tenant real.
 - Todo teste declara o valor esperado em comentário. "Parece certo" não é critério.
+- **Verificação que lê arquivo normaliza `\r\n` antes de casar padrão.** Os
+  arquivos aqui estão em CRLF e o CI roda em LF: duas travas já mediram coisa
+  diferente na máquina do fundador e no CI — uma falhando à toa, a outra
+  medindo errado em silêncio. Trava que discorda do CI é trava que se desliga.
 - O nome da query salva no Supabase é igual ao nome do arquivo, sem extensão.
 
 ---
@@ -126,15 +130,29 @@ parece inocente e é a mais exposta.
 
 - Leitura de tabela que cresce (`interactions`, `contacts`,
   `contact_stage_history`, `services_rendered`, `usage_ledger`,
-  `course_progress`) usa **`lerTudo`** de `lib/paginado.ts`.
+  `course_progress`) usa **`lerTudo`** de `lib/paginado.ts` — **com `ORDER BY`
+  estável**, senão a própria paginação pula e repete linha entre as páginas.
 - `.limit(n)` pequeno continua legítimo — é "os 6 da tela", decisão de produto.
 - Se a tabela de fato não pode crescer, escreva **`// paginacao-ok: <motivo>`**.
-- `paginacao_check.mjs` está no CI, com linha de base: **dívida nova reprova**.
+- `paginacao_check.mjs` está no CI e a **linha de base é ZERO** (a varredura
+  fechou em 14/ago/2026). Não existe dívida tolerada: consulta nova ou usa
+  `lerTudo`, ou escreve o motivo.
+
+**Escrever não é ler.** `insert`, `update` e `delete` sem `.select()` não
+devolvem linha — não há o que cortar, e o UPDATE alcança tudo que o filtro
+alcança. Mas `update().select()` DEVOLVE linhas: contar `data.length` para
+dizer "N atualizados" reportaria 1.000 com 3.000 alterados.
 
 Custou três vezes. A última foi em 14/ago/2026, ao vivo: o Analista de Gestão
 afirmou ao fundador que fazia 20 dias que ninguém usava o sistema, quando havia
 32 interações no dia anterior. Ele só pegou porque conhece a operação de cor —
 **ninguém tem como desconfiar de um dado que não apareceu.**
+
+**E consertar a ocorrência não fecha a classe:** naquele dia as `interactions`
+de quatro telas foram paginadas e os `contacts` das mesmas quatro ficaram como
+estavam — a metade que dá o DENOMINADOR de leads, carteira e conversão.
+Denominador cortado faz a conversão **subir** sozinha. Ao paginar uma consulta,
+**pagine as vizinhas da mesma tela ou explique por que não.**
 
 ---
 

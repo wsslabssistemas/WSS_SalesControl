@@ -30,6 +30,25 @@ import { readdirSync, readFileSync } from "node:fs";
 
 const DIR = new URL("../../skills/", import.meta.url);
 
+/**
+ * ⚠ LÊ NORMALIZANDO A QUEBRA DE LINHA, e a falta disto quebrava a trava
+ * INTEIRA no Windows (achado em 14/ago/2026).
+ *
+ * O bloco de campos é achado por `/\ndna_sections:\n/`. No repositório os
+ * arquivos estão em CRLF, então o que existe no disco do fundador é
+ * `\r\ndna_sections:\r\n` — o padrão não casa, `bloco` vem nulo, o `continue`
+ * pula todo segmento e a trava termina com "nenhum campo de texto
+ * encontrado". No CI, que roda em Linux com os arquivos em LF, ela passa.
+ *
+ * **Trava que dá resultado diferente na máquina de quem desenvolve e no CI é
+ * trava que a pessoa aprende a ignorar** — e o `ESTADO_DO_PROJETO` manda
+ * rodar estas verificações localmente, na seção 6.
+ *
+ * A mesma causa estava mascarando o `paginacao_check`, e lá era pior: em vez
+ * de falhar, ele MEDIA ERRADO em silêncio.
+ */
+const lerTexto = (url) => readFileSync(url, "utf8").replace(/\r\n/g, "\n");
+
 /** Campos que são dado único da empresa — sugestão não faz sentido. */
 const SEM_SUGESTAO = new Set(["address", "whatsapp", "instagram", "site", "email", "endereco"]);
 
@@ -40,7 +59,7 @@ let abertos = 0, comSugestao = 0;
 for (const seg of readdirSync(DIR)) {
   let txt;
   try {
-    txt = readFileSync(new URL(`${seg}/manifest.yaml`, DIR), "utf8");
+    txt = lerTexto(new URL(`${seg}/manifest.yaml`, DIR));
   } catch {
     continue;
   }

@@ -63,23 +63,34 @@ export default async function GestaoPage({
   const startISO = new Date(Date.now() - dias * 86400000).toISOString();
   const supabase = await createClient();
 
-  const [{ data: cData }, ixData, hData, { data: mData }, { data: srData }] = await Promise.all([
-    supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null),
+  const [cData, ixData, hData, { data: mData }, srData] = await Promise.all([
+    // ⚠ PAGINADO — a METADE QUE FICOU PARA TRÁS em 14/ago. Naquele dia as
+    // `interactions` desta tela foram corrigidas e os `contacts` não, e é o
+    // array de contatos que dá o DENOMINADOR: leads do período, carteira em
+    // aberto, conversão. Denominador cortado em 1.000 faz a conversão subir
+    // sozinha — o erro anda na direção que agrada, que é a pior de todas.
+    lerTudo<Contact>((de, ate) => supabase.from("contacts").select("id, name, journey_stage, source, owner_id, created_at").eq("tenant_id", tenant.id).is("deleted_at", null).order("id").range(de, ate), { rotulo: "contatos da gestao" }),
     // ⚠ PAGINADO. Todo numero desta tela — conversao, tempo de resposta,
     // ranking de vendedor — sai deste array. Com `.limit()` ele vinha cortado
     // em 1.000 linhas ARBITRARIAS e os numeros saiam plausiveis e errados.
     lerTudo<Ix>((de, ate) => supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome, schools").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "interacoes da gestao" }),
     lerTudo<Hist>((de, ate) => supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "historico de etapa" }),
     supabase.from("memberships").select("id, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
-    supabase
+    // ⚠ PAGINADO. O `.limit(5000)` que estava aqui é literalmente o que o
+    // `ESTADO_DO_PROJETO` chama de "impressão de que alguém pensou no
+    // assunto": o teto de 1.000 é do servidor, e um limite maior não o move.
+    // Daqui sai o faturamento por atendimento — número que ninguém confere
+    // duas vezes porque ele "parece certo".
+    lerTudo<{ performed_by: string | null; service: string; value_cents: number }>((de, ate) => supabase
       .from("services_rendered")
       .select("performed_by, service, value_cents, occurred_at")
       .eq("tenant_id", tenant.id)
       .gte("occurred_at", startISO)
-      .limit(5000),
+      .order("occurred_at", { ascending: false })
+      .range(de, ate), { rotulo: "atendimentos da gestao" }),
   ]);
 
-  const contacts = (cData as Contact[] | null) ?? [];
+  const contacts = cData;
   const ix = ixData;
   const hist = hData;
 
@@ -99,7 +110,7 @@ export default async function GestaoPage({
       etapa: origemDe.get(i.contact_id ?? "")?.etapa ?? null,
     }));
   const members = (mData as Member[] | null) ?? [];
-  const servicos = (srData as { performed_by: string | null; service: string; value_cents: number; occurred_at: string }[] | null) ?? [];
+  const servicos = srData;
 
   // Faturamento: total, por profissional e por serviço.
   const receitaTotal = servicos.reduce((s, x) => s + (x.value_cents ?? 0), 0);

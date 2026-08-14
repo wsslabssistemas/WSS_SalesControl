@@ -116,6 +116,11 @@ export async function exemploDoRamo(
 /** Progresso da pessoa (RLS: só o dela, dentro da própria empresa). */
 export async function carregarProgresso(tenantId: string): Promise<Map<string, ProgressoLicao>> {
   const supabase = await createClient();
+  // paginacao-ok: a policy `course_progress_own` (0037) filtra por
+  // `user_id = auth.uid()`, e a chave é (tenant, user, LIÇÃO). O teto real
+  // desta consulta é o número de lições do curso — 45 hoje, 122 se cada
+  // pergunta virasse lição. Para passar de 1.000 o curso teria que ter mil
+  // aulas, e nesse dia isto aqui não é o primeiro problema.
   const { data } = await supabase
     .from("course_progress")
     .select("lesson_key, completed_at, score")
@@ -244,6 +249,10 @@ export async function carregarRepescagem(tenantId: string): Promise<PerguntaRepe
   // `user_id` aqui daria a impressão de que o isolamento é da aplicação.
   const supabase = await createClient();
 
+  // paginacao-ok: as duas policies (`course_progress_own` e
+  // `course_review_own`, 0037) filtram por `user_id = auth.uid()`. Uma linha
+  // por LIÇÃO feita (45) e uma por PERGUNTA agendada (122) — os dois tetos são
+  // do conteúdo do curso, não da operação, e nenhum deles se aproxima de mil.
   const [{ data: progresso }, { data: revisoes }] = await Promise.all([
     supabase
       .from("course_progress")

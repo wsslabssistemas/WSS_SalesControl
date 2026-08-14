@@ -46,22 +46,30 @@ export async function GET(
 
   if (!tenant) return new Response("Endereço inválido.", { status: 404 });
 
-  const [{ data: skill }, { data: contatos }] = await Promise.all([
+  const [{ data: skill }, contatos] = await Promise.all([
     admin.from("skills").select("manifest").eq("key", tenant.skill_key).maybeSingle(),
-    admin
-      .from("contacts")
-      .select("id, name, phone, owner_id, journey_stage, stage_entered_at, custom")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null),
+    // ⚠ PAGINADO. Este feed é assinado no Google/Apple/Outlook e ninguém o
+    // abre para conferir — ele aparece pronto no calendário. Cortado em 1.000
+    // contatos, o compromisso de quem ficou de fora nunca chega, e a ausência
+    // de um evento num calendário é indistinguível de não haver compromisso.
+    lerTudo<{
+      id: string; name: string; phone: string | null; owner_id: string | null;
+      journey_stage: string; stage_entered_at: string; custom: Record<string, unknown> | null;
+    }>(
+      (de, ate) => admin
+        .from("contacts")
+        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, custom")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .order("id")
+        .range(de, ate),
+      { rotulo: "contatos do calendario" },
+    ),
   ]);
 
   const manifest = (skill?.manifest as { journey?: { stages?: Stage[] }; recurrence?: Record<string, unknown> } | null) ?? {};
   const stages = manifest.journey?.stages ?? [];
-  const contacts =
-    (contatos as {
-      id: string; name: string; phone: string | null; owner_id: string | null;
-      journey_stage: string; stage_entered_at: string; custom: Record<string, unknown> | null;
-    }[] | null) ?? [];
+  const contacts = contatos;
 
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const eventos: IcsEvent[] = [];

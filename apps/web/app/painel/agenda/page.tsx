@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { computeAlerts } from "@/lib/agenda";
+import { lerTudo } from "@/lib/paginado";
 import AgendaCalendar, { type CalItem } from "./AgendaCalendar";
 import AssinarCalendario from "./AssinarCalendario";
 import { gerarEnderecoCalendario, removerEnderecoCalendario } from "./actions";
@@ -38,12 +39,20 @@ export default async function AgendaPage({
   const phasedKeys = stages.filter((s) => s.phases?.length).map((s) => s.key);
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("contacts")
-    .select("id, name, journey_stage, stage_entered_at")
-    .eq("tenant_id", tenant.id)
-    .is("deleted_at", null)
-    .in("journey_stage", phasedKeys.length ? phasedKeys : ["__none__"]);
+  // ⚠ PAGINADO. Daqui saem os compromissos do calendário. Cortada em 1.000
+  // linhas, a agenda simplesmente NÃO MOSTRA a visita marcada de quem ficou de
+  // fora — e agenda que esconde compromisso não parece quebrada, parece vazia.
+  const data = await lerTudo<{ id: string; name: string; journey_stage: string; stage_entered_at: string }>(
+    (de, ate) => supabase
+      .from("contacts")
+      .select("id, name, journey_stage, stage_entered_at")
+      .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
+      .in("journey_stage", phasedKeys.length ? phasedKeys : ["__none__"])
+      .order("id")
+      .range(de, ate),
+    { rotulo: "contatos da agenda" },
+  );
 
   // Endereço secreto do calendário (assinatura no Google/Apple/Outlook).
   const { data: tRow } = await supabase
@@ -96,10 +105,7 @@ export default async function AgendaPage({
       .sort((a, b) => a.nome.localeCompare(b.nome));
   }
 
-  const alerts = computeAlerts(
-    (data as { id: string; name: string; journey_stage: string; stage_entered_at: string }[]) ?? [],
-    stages,
-  );
+  const alerts = computeAlerts(data, stages);
 
   const items: CalItem[] = alerts.map((a) => ({
     contactId: a.contactId,
