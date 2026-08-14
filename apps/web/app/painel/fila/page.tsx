@@ -42,9 +42,9 @@ type Contact = {
 export default async function FilaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ resp?: string }>;
+  searchParams: Promise<{ resp?: string; mais?: string }>;
 }) {
-  const { resp = "" } = await searchParams;
+  const { resp = "", mais = "" } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -138,10 +138,23 @@ export default async function FilaPage({
   // Ela só governa a lista de UMA pessoa. Na visão de equipe (gestor) a fila
   // aparece inteira, porque ali a pergunta é "a operação está em dia?" e
   // esconder o acervo de quem decide seria esconder o problema.
-  const teto = lerRacao((tRow?.settings ?? null) as Record<string, unknown> | null);
+  //
+  // ⚠ A RAÇÃO É O PISO DO DIA, NÃO UMA JAULA. Pergunta do fundador: *"e se
+  // eles responderem 10 e tiverem tempo para mais, vão fazer o quê?"* — quem
+  // quer trabalhar mais não pode esbarrar numa trava que existe para quem
+  // trabalha de menos. `?mais=1` libera outra leva do mesmo tamanho.
+  const levas = Math.max(1, Math.min(20, Number(mais) || 1));
+  const teto = lerRacao((tRow?.settings ?? null) as Record<string, unknown> | null) * levas;
   const feitosHoje = alvo ? (toquesDeHoje(ixData, hojeISO)[alvo] ?? 0) : 0;
   const racao = estadoDaRacao({ teto, feitos: feitosHoje, naFila: fila.length });
   const doDia = alvo ? fila.slice(0, racao.restam) : fila.slice(0, 40);
+
+  // ⚠ NINGUÉM PODE FICAR INVISÍVEL. Desde que a fila abre na carteira de quem
+  // está logado, contato sem responsável não aparece para pessoa nenhuma — e
+  // o webhook do WhatsApp criava lead órfão justamente assim. A origem foi
+  // corrigida (`lib/carteira.ts`); isto aqui é a rede embaixo dela, porque
+  // origem corrigida não conserta o que já entrou nem a próxima porta nova.
+  const orfaos = todos.filter((c) => !c.owner_id).length;
 
   return (
     <main>
@@ -174,13 +187,25 @@ export default async function FilaPage({
       {alvo && (
         <div className="card mt-16" style={{ borderColor: racao.cumprida ? "var(--success)" : "var(--border-brand)" }}>
           {racao.cumprida ? (
-            <p style={{ margin: 0, fontSize: 15 }}>
-              <strong>Dia em dia.</strong> {racao.feitos} de {racao.teto} feitos
-              {nomeDoAlvo && !ehGestor ? "" : nomeDoAlvo ? ` — ${nomeDoAlvo}` : ""}.
+            <>
+              <p style={{ margin: 0, fontSize: 15 }}>
+                <strong>Dia em dia.</strong> {racao.feitos} de {racao.teto} feitos
+                {nomeDoAlvo && !ehGestor ? "" : nomeDoAlvo ? ` — ${nomeDoAlvo}` : ""}.
+                {racao.aguardando > 0 && (
+                  <span className="text-faint"> Mais {racao.aguardando} esperam a vez.</span>
+                )}
+              </p>
               {racao.aguardando > 0 && (
-                <span className="text-faint"> Mais {racao.aguardando} esperam a vez, amanhã.</span>
+                <p style={{ margin: "10px 0 0" }}>
+                  <Link
+                    href={`/painel/fila?${resp ? `resp=${resp}&` : ""}mais=${levas + 1}`}
+                    className="btn btn-sm"
+                  >
+                    Tenho tempo, quero mais
+                  </Link>
+                </p>
               )}
-            </p>
+            </>
           ) : (
             <p style={{ margin: 0, fontSize: 15 }}>
               <strong>Seu dia: {racao.feitos} de {racao.teto}.</strong>{" "}
@@ -191,6 +216,20 @@ export default async function FilaPage({
               </span>
             </p>
           )}
+        </div>
+      )}
+
+      {/* A rede embaixo da carteira: contato sem dono não aparece na fila de
+          ninguém, e some sem dar sinal. Aqui ele vira uma linha visível. */}
+      {orfaos > 0 && (
+        <div className="card mt-16" style={{ borderColor: "var(--warn)" }}>
+          <p style={{ margin: 0, fontSize: 14 }}>
+            <span className="badge badge-warn" style={{ marginRight: 8 }}>Sem responsável</span>
+            <strong>{orfaos}</strong> {orfaos === 1 ? "contato não está" : "contatos não estão"} na
+            carteira de ninguém — e por isso não {orfaos === 1 ? "aparece" : "aparecem"} na fila de
+            nenhum vendedor.{" "}
+            <Link href="/painel/contatos">Distribuir agora →</Link>
+          </p>
         </div>
       )}
 

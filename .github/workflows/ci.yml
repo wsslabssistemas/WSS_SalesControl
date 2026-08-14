@@ -160,6 +160,10 @@ jobs:
       # conclui que esta tudo em dia.
       - name: Racao — o teto do que o sistema pede por dia
         run: node packages/db/tests/racao_test.mjs
+      # Contato sem responsavel nao aparece na fila de NINGUEM. O webhook do
+      # WhatsApp criava lead orfao exatamente assim — sem erro e sem aviso.
+      - name: Carteira — quem recebe o contato que chega sozinho
+        run: node packages/db/tests/carteira_test.mjs
       # A medicao que fecha o ciclo tecnica -> desfecho, e que existe para
       # dizer "ainda nao sei" na maior parte das vezes.
       - name: Aprendizado — o piso de amostra e o silencio

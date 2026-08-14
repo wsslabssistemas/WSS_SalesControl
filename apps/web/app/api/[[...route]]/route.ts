@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { variantesArmazenadas } from "@/lib/phone";
+import { escolherResponsavel } from "@/lib/carteira";
 import {
   assinaturaConfere,
   respostaDoDesafio,
@@ -95,6 +96,52 @@ async function registrar(mensagens: MensagemRecebida[]) {
   if (!mensagens.length) return;
   const admin = createAdminClient();
 
+  /**
+   * Quem recebe um lead que chegou sozinho pelo canal.
+   *
+   * Cache por empresa dentro do lote: um pacote da Meta pode trazer várias
+   * mensagens, e consultar a equipe inteira por mensagem seria caro à toa. O
+   * desequilíbrio dentro de um lote é de poucas unidades e a próxima chamada
+   * já corrige, porque a escolha é sempre a MENOR carteira.
+   */
+  const carteirasPorTenant = new Map<string, string | null>();
+  async function donoParaContatoNovo(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cliente: any,
+    tenantId: string,
+  ): Promise<string | null> {
+    if (carteirasPorTenant.has(tenantId)) return carteirasPorTenant.get(tenantId)!;
+
+    const { data: mems } = await cliente
+      .from("memberships")
+      .select("id, role")
+      .eq("tenant_id", tenantId)
+      .eq("status", "active")
+      .order("id");
+    const ativos = ((mems as { id: string; role: string }[] | null) ?? []);
+    // Agente é quem atende. Sem nenhum, o dono da empresa recebe — melhor com
+    // quem responde pela empresa do que com ninguém.
+    const alvos = ativos.filter((m) => m.role === "agent");
+    const agentes = alvos.length ? alvos : ativos;
+
+    // paginacao-ok: só o TAMANHO de cada carteira, sem trazer linha nenhuma —
+    // é o `count` do PostgREST, que não sofre o corte de 1.000.
+    const carga: Record<string, number> = {};
+    for (const a of agentes) {
+      const { count } = await cliente
+        .from("contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
+        .eq("owner_id", a.id)
+        .is("deleted_at", null);
+      carga[a.id] = count ?? 0;
+    }
+
+    const escolhido = escolherResponsavel(agentes, carga);
+    carteirasPorTenant.set(tenantId, escolhido);
+    return escolhido;
+  }
+
   // O `phone_number_id` diz de qual EMPRESA é o número que recebeu. Ele vem
   // do pacote, mas não é o pacote que decide o tenant: procuramos o número
   // no nosso cadastro, e o que não estiver cadastrado é descartado. Sem isso,
@@ -135,16 +182,29 @@ async function registrar(mensagens: MensagemRecebida[]) {
     if (!contactId) {
       // Quem escreve e não está cadastrado É UM LEAD. Descartar seria perder
       // exatamente o contato que o produto existe para não perder.
-      const { data: novo } = await admin
+      //
+      // ⚠ E ELE PRECISA NASCER COM DONO. Este insert não tinha `owner_id`, e
+      // desde que a Fila passou a abrir na carteira de quem está logado, um
+      // contato órfão não aparece para NINGUÉM. O lead que acabou de escrever
+      // é o mais quente que existe — sumir justo ele é o pior caso.
+      //
+      // Não dá erro, não dá aviso: a pessoa simplesmente não está em lista
+      // nenhuma. Ver `lib/carteira.ts`.
+      const responsavel = await donoParaContatoNovo(admin, tenantId);
+      const { data: novo, error: erroNovo } = await admin
         .from("contacts")
         .insert({
           tenant_id: tenantId,
           name: msg.nome ?? msg.de,
           phone: msg.de,
           source: "whatsapp",
+          owner_id: responsavel,
         })
         .select("id")
         .maybeSingle();
+      // O erro era engolido junto com o resto: sem contato, a mensagem do
+      // cliente era descartada em silêncio pelo `continue` abaixo.
+      if (erroNovo) console.error(`[webhook] falha ao criar lead de ${msg.de}: ${erroNovo.message}`);
       contactId = (novo as { id: string } | null)?.id ?? null;
       if (!contactId) continue;
     }

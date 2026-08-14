@@ -242,6 +242,34 @@ registram pouco — problemas diferentes, soluções opostas.
 6. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
    ação dele; ver `COS_Plano_de_Execucao.md` §F1 e §F4.
 
+### ⚠ OS "MATRICULADOS" QUE NÃO SÃO — e não foi a importação (14/ago)
+
+O fundador desconfiou: *"havia pessoas na fila marcadas como matriculado que
+não estavam. Estou com medo que a importação de recebíveis tenha considerado
+todos que já pagaram como matriculados."*
+
+**A importação está inocente** — ela nunca toca `journey_stage`, só escreve
+`contract_end` e `custom`. Conferido no banco: **1 pessoa** entrou em
+"matriculado" no dia. A causa é outra, e vale mais:
+
+**`convertido` nunca é revogado.** Uma vez matriculado, matriculado para
+sempre. Dos 312:
+
+- **11 estão como matriculados SEM `codigo_sistema`** — vieram do piloto
+  Base44, onde alguém marcou "matriculou", e o sistema da academia não
+  confirma. **A sincronização não alcança essas pessoas: sem chave, não há
+  como comparar.** São as que ele viu.
+- **5 têm contrato até 2027 e ZERO pagamento no relatório** (Debora Franciele,
+  Keyla Maluf, Mateus Verch, Simao da Silva Oliva, Virginia). Isso **não é
+  erro de dado**: é o "fechado sem pagar", que já estava na fila de estados a
+  construir. Contrato assinado e nenhuma parcela paga é sinal comercial, e dos
+  bons — só que hoje o sistema fala com essa pessoa como se ela fosse aluna.
+
+**A lição de método:** a suspeita dele apontava para a importação e o defeito
+estava no estado que NUNCA MUDA. Vale a regra geral — **etapa que só avança é
+etapa que mente com o tempo**, e ninguém procura o erro numa etapa que já foi
+verdade um dia.
+
 ### ⚠ O QUE FALTA PARA O SISTEMA SER AUTÔNOMO — a pergunta do fundador
 
 Ele fixou o critério e ele é bom: *"se o sistema hoje fosse automático, ele
@@ -1151,6 +1179,7 @@ node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa
 node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
 node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 13/13
 node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
+node packages/db/tests/carteira_test.mjs   # quem recebe o contato que chega sozinho: 6/6
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql
