@@ -126,6 +126,25 @@ export type Renovacao = {
   /** Já passou da data. É o caso mais caro e por isso vem primeiro. */
   vencido: boolean;
   /**
+   * ⚠ QUANDO ESTA JANELA ABRIU (ISO) — é o que permite QUITAR o toque.
+   *
+   * Sem isto a renovação era o único dos quatro motivos da fila que **nunca
+   * quitava**: ela é calculada só a partir de `contract_end`, então a pessoa
+   * ficava na lista todo dia até o contrato mudar, mesmo tendo sido contatada.
+   *
+   * Foi assim que a Luciana viu a Bruna Cristina de volta na fila depois de
+   * ter mandado a mensagem (15/ago). O padrão da casa outra vez: nada quebrou,
+   * a lista só não encolheu — e lista que não encolhe parece trabalho
+   * acumulado, não defeito. É exatamente o que já tinha acontecido com o
+   * `combinado`, e o comentário de `lib/fila.ts` afirmava que "as outras três
+   * origens já quitavam sozinhas" sem reparar que a renovação não é uma delas.
+   *
+   * A régua: **um toque por janela.** Falou depois que a janela abriu, está
+   * feito — e volta a aparecer quando a janela seguinte abrir (60 → 30 → 7 →
+   * vencido), que é uma conversa nova, com outro texto.
+   */
+  janelaAbriuEm: string;
+  /**
    * A fonte foi conferida DEPOIS do vencimento?
    *
    * `false` significa "não sei se venceu ou renovou" — e a diferença entre os
@@ -210,6 +229,8 @@ export function computeRenovacoes(
           : `A vigência registrada terminou${conferido ? ` e a fonte não é conferida desde ${conferido.slice(0, 10).split("-").reverse().join("/")}` : " e nunca foi conferida na fonte"}. O sistema NÃO sabe se ele renovou. Confirme antes de falar — e não escreva nada que afirme que o contrato venceu.`,
         vencido: true,
         vencimentoConfirmado: confirmado,
+        // A janela do vencido abre no próprio dia do vencimento.
+        janelaAbriuEm: c.contract_end.slice(0, 10),
       });
       continue;
     }
@@ -225,6 +246,10 @@ export function computeRenovacoes(
       diasParaVencer: dias, janela: janela.key,
       titulo: janela.titulo, intencao: janela.intencao,
       vencido: false,
+      // A janela abre `diasAntes` antes do vencimento — e é a partir daqui que
+      // uma conversa quita este toque. `diasAntes` sai do manifesto quando o
+      // segmento sobrescreve, então a data é derivada dele, nunca fixa.
+      janelaAbriuEm: diaISO(new Date(Date.parse(c.contract_end) - janela.diasAntes * 86400000)),
     });
   }
 

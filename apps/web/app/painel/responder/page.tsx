@@ -13,6 +13,10 @@ import { MoverEtapa } from "./MoverEtapa";
 import Abordar from "./Abordar";
 import { logInteraction } from "./actions";
 
+// Tela que chama IA declara o tempo da função: sem isto a Vercel mata a
+// geração no meio e o botão fica girando sem erro nenhum. Ver `fila/page.tsx`.
+export const maxDuration = 60;
+
 type Entry = {
   id: string;
   category: string;

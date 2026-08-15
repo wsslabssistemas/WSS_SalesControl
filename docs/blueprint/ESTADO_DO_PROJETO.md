@@ -242,6 +242,32 @@ registram pouco — problemas diferentes, soluções opostas.
 6. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
    ação dele; ver `COS_Plano_de_Execucao.md` §F1 e §F4.
 
+### ⚠ DOIS DEFEITOS RELATADOS PELA LUCIANA (15/ago) — e nenhum deu erro
+
+Primeiro relato de uso vindo de quem opera, não do fundador. Os dois se
+apresentaram como silêncio, como sempre.
+
+**1. "Mandei para a Bruna Cristina e ela continua como se não tivesse."**
+Verdade: a mensagem foi registrada às 15:32 e a pessoa seguia na fila.
+**A renovação era o único dos quatro motivos que nunca quitava** — ela é
+calculada só a partir de `contract_end`, então a pessoa ficava na lista todo
+dia até o contrato mudar. Idêntico ao defeito do `combinado` de 10/ago, e o
+comentário do `lib/fila.ts` afirmava que "as outras três origens já quitavam
+sozinhas" sem reparar que a renovação não era uma delas. **Corrigir ocorrência
+não fecha classe.** Hoje cada janela (60 → 30 → 7 → vencido) quita com uma
+conversa posterior à abertura dela: um toque por janela, e a próxima é outra
+conversa. `fila_test.mjs` 25/25.
+
+**2. "Duas pessoas ficam só preparando a mensagem e não geram nada."**
+Não era cota (R$21 de R$130) nem erro de IA. **Nenhuma tela que chama IA
+declarava `maxDuration`** — a Vercel usa o padrão dela, mata a função no meio
+de uma geração que leva 5 a 25 segundos, e **não devolve resposta nenhuma**: o
+botão gira para sempre. Por isso parecia aleatório: uma gerou, as duas
+seguintes não. É a MESMA classe do arquivo de 4,2 MB da sincronização — limite
+de plataforma que se apresenta como silêncio, duas vezes em dois dias.
+**Regra que fica: tela que chama IA declara `maxDuration`.** Feito em fila,
+responder, gestão e licitações.
+
 ### ⚠ OS "MATRICULADOS" QUE NÃO SÃO — e não foi a importação (14/ago)
 
 O fundador desconfiou: *"havia pessoas na fila marcadas como matriculado que
@@ -1176,7 +1202,7 @@ node packages/db/tests/planilha_test.mjs   # leitor de aba: recusa adivinhar a c
 node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (linha de base: 0)
 node packages/db/tests/sugestoes_dna_check.mjs # campo aberto de DNA sem sugestão: 229/229
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
-node packages/db/tests/fila_test.mjs       # quitacao, motivo unico e a regra do pretexto: 20/20
+node packages/db/tests/fila_test.mjs       # quitacao (as QUATRO origens), motivo unico e pretexto: 25/25
 node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 15/15
 node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
 node packages/db/tests/carteira_test.mjs   # quem recebe o contato que chega sozinho: 6/6

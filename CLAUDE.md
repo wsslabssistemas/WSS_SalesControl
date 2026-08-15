@@ -110,6 +110,15 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   `required_facts`; os números vêm de `commercial_dna`.
 - **Trava anti-invenção.** Falta fato exigido, o motor devolve `escalate` e
   **não redige**. Prompt não resolve essa classe de erro; verificação estrutural resolve.
+- **Todo motivo da fila precisa de uma data a partir da qual uma conversa o
+  CUMPRE.** Sem isso a pessoa fica na lista para sempre e a lista nunca
+  encolhe — que não parece defeito, parece trabalho acumulado. Já aconteceu
+  duas vezes: `combinado` (10/ago) e `renovacao` (15/ago), e na segunda o
+  comentário do código afirmava que só o primeiro tinha o problema.
+- **Tela que chama IA declara `maxDuration`.** O padrão da Vercel mata a
+  função no meio da geração e não devolve nada: o botão gira para sempre, sem
+  erro. Mesma classe do corpo de 4,2 MB da sincronização — limite de
+  plataforma que se apresenta como silêncio.
 - **A lista de trabalho tem ração diária** (`lib/racao.ts`). A tela de quem
   executa mostra o teto do dia e o progresso, **nunca o acervo inteiro** —
   dívida de três dígitos toda manhã é o que faz alguém parar de executar. O

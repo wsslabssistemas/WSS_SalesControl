@@ -253,9 +253,25 @@ export function construirFila(params: {
   }
 
   // 2. RENOVAÇÃO — receita já vendida saindo pela porta.
+  //
+  // ⚠ ELA TAMBÉM QUITA, e a falta disso era um bug ao vivo (15/ago). A
+  // Luciana mandou a mensagem para a Bruna Cristina e a viu de volta na fila:
+  // a renovação é calculada só a partir de `contract_end`, então a pessoa
+  // ficava na lista **todos os dias** até o contrato mudar.
+  //
+  // Era o mesmo defeito do `combinado`, no único dos quatro motivos que tinha
+  // escapado — e o comentário acima afirmava que "as outras três já quitavam
+  // sozinhas" sem reparar que a renovação não era uma delas. Ocorrência
+  // corrigida não fecha classe; a classe aqui é **todo motivo precisa de uma
+  // data a partir da qual uma conversa o cumpre.**
+  //
+  // Um toque por janela: falou depois que a janela abriu, está feito, e volta
+  // quando a próxima abrir (60 → 30 → 7 → vencido). Cada janela é uma conversa
+  // diferente, com outro texto — por isso a seguinte não fica quitada junto.
   for (const r of deps.computeRenovacoes(contatos, foraDeJogo, undefined, renewal)) {
     const c = porId.get(r.contactId);
     if (!c) continue;
+    if (r.janelaAbriuEm && quitado(ultimoContato[r.contactId], r.janelaAbriuEm)) continue;
     itens.push({
       contactId: r.contactId, name: r.name, phone: r.phone, ownerId: c.owner_id,
       motivo: "renovacao", intencao: r.intencao,
@@ -354,7 +370,7 @@ export type DepsDaFila = {
   stagesForaDeJogo: (s: EtapaDaFila[]) => Set<string>;
   stagesWithoutRecurrence: (s: EtapaDaFila[]) => Set<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean; vencimentoConfirmado?: boolean }[];
+  computeRenovacoes: (c: any, fora: Set<string>, hoje?: Date, renewal?: any) => { contactId: string; name: string; phone: string | null; intencao: string; diasParaVencer: number; vencido: boolean; vencimentoConfirmado?: boolean; janelaAbriuEm?: string }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computeDueTouches: (c: any, ultimo: Record<string, string>, s: any, cad: any, toques?: Record<string, number>) => { contactId: string; name: string; phone: string | null; ownerId: string | null; intent: string; stepNumber: number; totalSteps: number; overdueDays: number; daysSince: number; semCadencia: boolean }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

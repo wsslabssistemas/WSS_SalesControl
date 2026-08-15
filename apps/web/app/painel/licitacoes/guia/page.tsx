@@ -7,6 +7,9 @@ import Assistente from "./Assistente";
 
 export const metadata = { title: "Guia de vendas ao governo" };
 
+// Assistente de IA nesta tela. Ver a nota em `fila/page.tsx`.
+export const maxDuration = 60;
+
 export default async function GuiaPage() {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;

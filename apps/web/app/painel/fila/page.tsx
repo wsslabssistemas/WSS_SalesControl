@@ -13,6 +13,23 @@ import { ItemDaFila } from "./ItemDaFila";
 
 export const metadata = { title: "Fila de envio" };
 
+/**
+ * ⚠ O TEMPO DA FUNÇÃO — e a falta disto era o "fica só preparando a mensagem,
+ * mas não gera nada" que a Luciana relatou em 15/ago.
+ *
+ * `prepararToque` chama o modelo de IA, e uma geração leva de 5 a 25 segundos.
+ * Sem `maxDuration` declarado, a Vercel usa o padrão dela (dezenas de segundos
+ * a menos que isto), **mata a função no meio e não devolve resposta nenhuma**:
+ * o botão fica girando para sempre. Não vem erro, não vem aviso — e por isso
+ * parece "às vezes funciona, às vezes não", que foi exatamente o relato: uma
+ * pessoa gerou e as duas seguintes não.
+ *
+ * É a MESMA classe do arquivo de 4,2 MB da sincronização: **limite de
+ * plataforma que se apresenta como silêncio.** Custou duas vezes em dois dias,
+ * então fica a regra: *tela que chama IA declara `maxDuration`.*
+ */
+export const maxDuration = 60;
+
 type Contact = {
   id: string;
   name: string;

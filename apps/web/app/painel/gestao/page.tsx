@@ -12,6 +12,10 @@ import { lerTudo } from "@/lib/paginado";
 
 export const metadata = { title: "Gestão" };
 
+// O Analista chama IA sobre um prompt grande — é a geração mais lenta do
+// produto. Ver a nota em `fila/page.tsx`: sem isto a função morre calada.
+export const maxDuration = 60;
+
 type Contact = { id: string; name: string; journey_stage: string; source: string | null; owner_id: string | null; created_at: string };
 type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string 
   /** Desfecho canônico (0044) e as escolas usadas — o par que fecha o ciclo. */

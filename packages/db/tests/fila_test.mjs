@@ -27,7 +27,7 @@
  * lista simplesmente não encolhia, e lista que não encolhe parece trabalho
  * acumulado, não defeito.
  *
- * ESPERADO: 14/14.
+ * ESPERADO: 25/25.
  *
  *   node packages/db/tests/fila_test.mjs
  */
@@ -197,5 +197,50 @@ verifica("e o pretexto passa a ser o certo",
 verifica("a anotação sobrevive à dedução, como contexto",
   noeli.observacao, 'anotado na ficha: "Continuar conversa e descobrir necessidades"');
 
-console.log(falhas === 0 ? "\nOK — 20/20" : `\nFALHOU — ${falhas} de 20`);
+// ⚠ A RENOVAÇÃO TAMBÉM QUITA — o bug que a Luciana pegou em 15/ago.
+//
+// Ela mandou a mensagem para a Bruna Cristina (contrato até 22/set, janela de
+// 60 dias aberta) e a viu de volta na fila. A renovação é calculada só a
+// partir de `contract_end`, então a pessoa ficava na lista TODOS OS DIAS até o
+// contrato mudar — o mesmo defeito do `combinado`, no único dos quatro motivos
+// que tinha escapado.
+//
+// E o comentário deste arquivo afirmava que "as outras três origens já
+// quitavam sozinhas", sem reparar que a renovação não era uma delas. Corrigir
+// ocorrência não fecha classe: **todo motivo precisa de uma data a partir da
+// qual uma conversa o cumpre.**
+const comRenovacao = {
+  ...DEPS_VAZIAS,
+  computeRenovacoes: () => [{
+    contactId: "p1", name: "Bruna Cristina", phone: "51999999999",
+    intencao: "Fale do RESULTADO dela, não da renovação.",
+    diasParaVencer: 38, vencido: false,
+    // Janela de 60 dias de um contrato que vence em 22/set: abriu em 24/jul.
+    janelaAbriuEm: "2026-07-24",
+  }],
+};
+const semCombinado = { next_action_at: null, next_action_note: null, next_action: null };
+const filaRenov = (ultimo) => construirFila({
+  contatos: [pessoa(semCombinado)], ultimoContato: ultimo, stages: STAGES, cadences: [],
+  recurrence: null, hojeISO: "2026-08-10", deps: comRenovacao,
+});
+
+verifica("sem conversa depois da janela abrir, a renovação é devida",
+  filaRenov({}).length, 1);
+verifica("e o motivo é renovação", filaRenov({})[0]?.motivo, "renovacao");
+
+// O caso da Bruna: falado DEPOIS que a janela abriu.
+verifica("falou depois que a janela abriu — sai da fila",
+  filaRenov({ p1: "2026-08-10T15:32:00Z" }).length, 0);
+
+// Conversa ANTES da janela abrir não vale: aquele papo era sobre outra coisa,
+// a janela de renovação nem existia ainda.
+verifica("conversa anterior à janela não quita",
+  filaRenov({ p1: "2026-07-01T10:00:00Z" }).length, 1);
+
+// No próprio dia em que a janela abre, a conversa do dia conta.
+verifica("conversa no dia em que a janela abriu conta",
+  filaRenov({ p1: "2026-07-24T09:00:00Z" }).length, 0);
+
+console.log(falhas === 0 ? "\nOK — 25/25" : `\nFALHOU — ${falhas} de 25`);
 process.exit(falhas === 0 ? 0 : 1);
