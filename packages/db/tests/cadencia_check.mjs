@@ -73,6 +73,24 @@ for (const seg of segmentos) {
     // O outro lado da moeda continua valendo, e está escrito em
     // `ESTADO_DO_PROJETO.md`: **cadência declarada em etapa terminal é dado
     // morto** — foi assim que a carteira fiel da barbearia sumiu da recompra.
+    // ⚠ ANTES DE PULAR: CADÊNCIA DECLARADA TEM QUE EXISTIR, viva ou não.
+    //
+    // Esta verificação nasceu de um erro cometido aqui mesmo, em 15/ago: a
+    // etapa `ex_aluno` da academia foi escrita com `cadence: reativacao` e a
+    // cadência se chama `rescue_inactive`. A trava passou — porque `ex_aluno`
+    // é `lost` e o filtro abaixo a pulava antes de conferir qualquer coisa.
+    //
+    // O efeito de uma referência solta é exatamente o silêncio de sempre:
+    // `computeDueTouches` não acha a chave, cai no ramo do `goal` genérico, e
+    // **a régua curada simplesmente não roda**. Nada quebra, nada avisa — só a
+    // curadoria deixa de existir na tela.
+    //
+    // Etapa `lost` não-terminal RECEBE cadência (é o caso do ex-aluno), então
+    // a checagem tem que vir antes do filtro de "etapa viva".
+    if (st.cadence && !cadencias.has(st.cadence)) {
+      erro(`${seg}/${st.key} — declara \`cadence: ${st.cadence}\` e não existe cadência com essa chave. O motor cai no texto genérico e a régua curada nunca roda.`);
+    }
+
     if (st.terminal || st.lost) continue;
     vivas++;
 

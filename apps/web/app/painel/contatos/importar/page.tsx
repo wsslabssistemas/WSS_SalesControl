@@ -32,6 +32,23 @@ export default async function ImportarPage({
         </label>
         <input id="origem" name="origem" type="text" placeholder="Ex.: Planilha Instagram" defaultValue="Importação" />
 
+        {/* ⚠ MARCADO POR PADRÃO, e é decisão de produto.
+            Sem divisão, tudo entra no nome de quem importou — e a Fila abre na
+            carteira de quem está logado, então uma carga inteira ficaria
+            invisível para o time. Quem importa costuma ser quem administra,
+            não quem atende. */}
+        <label className="row" style={{ gap: 8, marginTop: 16, alignItems: "flex-start" }}>
+          <input type="checkbox" name="dividir" value="1" defaultChecked style={{ marginTop: 3 }} />
+          <span style={{ fontSize: 14 }}>
+            <strong>Dividir entre a equipe</strong>
+            <span className="text-faint" style={{ display: "block", fontSize: 12 }}>
+              Cada contato vai para quem tem a menor carteira no momento. Desmarque
+              para tudo ficar com você — e lembre que a fila de cada pessoa mostra
+              só a carteira dela.
+            </span>
+          </span>
+        </label>
+
         <button type="submit" className="btn btn-primary mt-24">Importar</button>
       </form>
 

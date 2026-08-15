@@ -19,6 +19,23 @@ export type Cadence = {
   steps?: CadenceStep[];
   stop_on?: string[];
   max_attempts?: number;
+  /**
+   * O passo expira quando o seguinte vence? **Padrão: sim.**
+   *
+   * Régua presa a um EVENTO REAL expira: *"primeira semana: como foi vir"* não
+   * pode chegar para quem está há três anos na academia, e é isso que o padrão
+   * protege.
+   *
+   * Régua que NÃO tem evento não deve expirar — reativação é o caso. O passo 1
+   * dela é "abrir por um gancho do histórico dele", verdade hoje ou daqui a um
+   * ano. Com expiração, importar 1.200 ex-alunos de uma vez faria a régua
+   * vencer para a maioria antes de a ração diária alcançá-los, e a curadoria
+   * seria jogada fora justamente na lista para a qual foi escrita.
+   *
+   * Quem sabe a diferença é o MANIFESTO, não o núcleo: é o segmento que
+   * conhece o evento (Lei 1).
+   */
+  steps_expire?: boolean;
 };
 
 export type DueTouch = {
@@ -199,8 +216,12 @@ export function computeDueTouches(
         return entrada + (steps[i].offset_days + sobra) * DAY;
       };
 
+      // `steps_expire: false` desliga a expiração para réguas sem evento —
+      // ver a nota no tipo `Cadence`. O padrão continua sendo expirar.
       let idx = dados;
-      while (idx < steps.length && hoje > fimDaJanela(idx)) idx++;
+      if (cad?.steps_expire !== false) {
+        while (idx < steps.length && hoje > fimDaJanela(idx)) idx++;
+      }
 
       // Todos os passos venceram e passaram: a régua não tem mais o que
       // dizer sobre esta pessoa. Ela não some — cai no alarme de silêncio

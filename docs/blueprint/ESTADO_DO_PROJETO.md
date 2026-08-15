@@ -242,6 +242,48 @@ registram pouco — problemas diferentes, soluções opostas.
 6. **SMTP** (Resend recomendado) e **motor proativo** — os dois dependem de
    ação dele; ver `COS_Plano_de_Execucao.md` §F1 e §F4.
 
+### EX-ALUNO virou estado, e a régua dele já existia (15/ago)
+
+A jornada ia de lead a matriculado e saía por "parou de responder" ou "disse
+não". **Quem pagou e saiu não tinha casa** — e jogar essa pessoa em "parou de
+responder" faz a IA escrever *"vamos continuar nossa conversa para eu entender
+o que você procura"* para quem treinou dois anos.
+
+- **`ex_aluno`**: `lost: true` e **não** terminal. `lost` tira da conversão e
+  da carteira em aberto (ele já foi contado como ganho no dia da matrícula);
+  não-terminal mantém o motor alcançando, porque **etapa terminal desliga a
+  cadência** — foi assim que a carteira fiel da barbearia sumiu da recompra.
+- **A régua já estava escrita e órfã.** `rescue_inactive` existia no manifesto
+  e **nenhuma etapa a declarava**, então nunca disparou. Ganhou dono em vez de
+  uma segunda régua: duas cadências para a mesma coisa é o defeito de
+  `phases` × `cadence` outra vez.
+- **Prazos alargados para 0 / 7 / 21 / 45.** As outras réguas da academia são
+  curtas porque quem pesquisa entra em outra em uma semana; **quem saiu não
+  está nesse relógio.** 4 e 11 dias em cima de quem saiu é a cobrança de
+  ausência que a entrada curada proíbe na primeira linha.
+- **`steps_expire: false`** — a exceção que faz a coisa funcionar de verdade.
+  Por padrão um passo expira quando o seguinte vence, e isso protege o toque
+  preso a um EVENTO ("primeira semana"). Reativação não tem evento: o passo 1
+  vale hoje ou daqui a um ano. Sem esta linha, importar 1.200 ex-alunos faria a
+  régua expirar para a maioria antes de a ração de 10/dia alcançá-los, e a
+  curadoria seria jogada fora justamente na lista para a qual foi escrita.
+- **A sincronização passou a MOVER quem saiu.** `contrato_encerrado_em` existia
+  e nada lia — o comentário ao lado dela dizia que servia para tirar a pessoa
+  da fila, e não havia uma linha fazendo isso. A chave da etapa vem de
+  `contract.ended_stage` no manifesto (Lei 1); sem ela declarada, o
+  encerramento é carimbado e a etapa não muda. **A prévia avisa antes**, porque
+  mover dezenas de pessoas de etapa é a mudança mais visível da operação.
+- **A importação divide a carteira** (marcado por padrão). Tudo entrava no nome
+  de quem importou — e quem importa é o fundador, então a carga de ex-alunos
+  cairia inteira na carteira dele, invisível para os três recepcionistas.
+
+**⚠ E a trava não pegou um erro meu.** Escrevi a etapa com `cadence: reativacao`
+enquanto a cadência se chama `rescue_inactive`, e o `cadencia_check` passou:
+ele pulava etapas `lost` antes de conferir qualquer coisa. Referência solta
+falha do jeito silencioso — o motor cai no texto genérico e **a régua curada
+simplesmente não roda**. Hoje a existência da cadência é verificada antes do
+filtro, viva ou não, e a trava foi testada quebrando a referência de propósito.
+
 ### ⚠ DOIS DEFEITOS RELATADOS PELA LUCIANA (15/ago) — e nenhum deu erro
 
 Primeiro relato de uso vindo de quem opera, não do fundador. Os dois se
@@ -1203,7 +1245,7 @@ node packages/db/tests/paginacao_check.mjs # o corte silencioso do PostgREST (li
 node packages/db/tests/sugestoes_dna_check.mjs # campo aberto de DNA sem sugestão: 229/229
 node scripts/diagnostico-aprendizado.mjs be-fitness  # o que funciona nesta casa (nao escreve)
 node packages/db/tests/fila_test.mjs       # quitacao (as QUATRO origens), motivo unico e pretexto: 25/25
-node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 15/15
+node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 19/19
 node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
 node packages/db/tests/carteira_test.mjs   # quem recebe o contato que chega sozinho: 6/6
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12

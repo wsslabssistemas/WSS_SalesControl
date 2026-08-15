@@ -34,7 +34,11 @@
  *     "ninguém fala com ele há N dias".
  * Toques dados >= passos da régua → cadência esgotada, some da fila.
  *
- * ESPERADO: 15/15.
+ * E a EXCEÇÃO da terceira, declarada no manifesto: régua sem evento real não
+ * expira — `steps_expire: false`. Reativação é o caso: "abra por um gancho do
+ * histórico dele" vale hoje ou daqui a um ano.
+ *
+ * ESPERADO: 19/19.
  *
  *   node packages/db/tests/cadencia_test.mjs
  */
@@ -175,6 +179,46 @@ eq("e o texto passa a ser o OBJETIVO da etapa, do manifesto",
 // nenhum toque. O dia 1 já passou do prazo, o dia 4 ainda vale.
 eq("passo cuja janela passou é PULADO, não repetido",
   () => passos([pessoa("meio", 6)], {}, {}), [2]);
+
+// ------------------------- ⚠ RÉGUA SEM EVENTO NÃO EXPIRA (`steps_expire: false`)
+//
+// A expiração protege o passo preso a um EVENTO REAL: "primeira semana" não
+// pode chegar para quem está há três anos. Reativação não tem evento nenhum —
+// "abra por um gancho do histórico dele" é verdade hoje ou daqui a um ano.
+//
+// Sem esta exceção, importar 1.200 ex-alunos de uma vez faria a régua expirar
+// para a maioria ANTES de a ração diária (10 por vendedor) alcançá-los: eles
+// cairiam no aviso genérico de silêncio, jogando fora a curadoria justamente
+// na lista para a qual ela foi escrita.
+const REATIVACAO = [{
+  key: "reativacao",
+  steps_expire: false,
+  steps: [
+    { offset_days: 0, intent: "Gancho concreto do histórico dele" },
+    { offset_days: 7, intent: "O que mudou desde que ele saiu" },
+    { offset_days: 21, intent: "Retorno sem risco" },
+  ],
+}];
+const ETAPA_EX = [{ key: "ex_aluno", label: "Ex-aluno", lost: true, cadence: "reativacao", goal: "Foi aluno e saiu." }];
+const exAluno = (dias) => ({
+  id: "ex", name: "ex", phone: "51999999999", owner_id: "m1",
+  journey_stage: "ex_aluno", stage_entered_at: diasAtras(dias),
+});
+
+eq("ex-aluno importado há 90 dias ainda recebe o PRIMEIRO toque curado",
+  () => computeDueTouches([exAluno(90)], {}, ETAPA_EX, REATIVACAO, {}).map((t) => t.stepNumber), [1]);
+
+eq("e o texto é o da régua, não o aviso genérico de silêncio",
+  () => computeDueTouches([exAluno(90)], {}, ETAPA_EX, REATIVACAO, {})[0].intent,
+  "Gancho concreto do histórico dele");
+
+// A régua não expirar não quer dizer que ela não avança: depois do toque 1,
+// o toque 2 vence 7 dias depois da conversa, como em qualquer outra.
+eq("depois do primeiro toque, o segundo respeita o intervalo",
+  () => computeDueTouches([exAluno(97)], { ex: diasAtras(7) }, ETAPA_EX, REATIVACAO, { ex: 1 }).map((t) => t.stepNumber), [2]);
+
+eq("e não reaparece no dia seguinte ao toque",
+  () => computeDueTouches([exAluno(91)], { ex: diasAtras(1) }, ETAPA_EX, REATIVACAO, { ex: 1 }).length, 0);
 
 // ------------------------------------------ RESPOSTA DO CLIENTE ADIA, NÃO EXECUTA
 // Ela entra no `ultimo` (adia o próximo toque) mas não conta como toque nosso.

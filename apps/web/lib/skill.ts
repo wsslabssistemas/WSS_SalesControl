@@ -61,7 +61,19 @@ export async function getSkillFormConfig(skillKey: string) {
       // Vigência de contrato: nem todo ramo tem. Academia, curso, escola
       // esportiva e software vendem PERÍODO; barbearia vende corte. O núcleo
       // sabe o que é "contrato com vigência" — não o que é matrícula (Lei 1).
-      contract?: { enabled?: boolean; label?: string; renewal?: RenewalConfig };
+      contract?: {
+        enabled?: boolean;
+        label?: string;
+        renewal?: RenewalConfig;
+        /**
+         * A etapa de quem SAIU — a chave vem do manifesto porque o núcleo não
+         * pode conhecer o vocabulário do ramo (Lei 1). Sem ela declarada, a
+         * sincronização marca o encerramento e **não mexe na etapa**, que é o
+         * comportamento seguro: mover gente de etapa por engano é pior que
+         * deixar parado.
+         */
+        ended_stage?: string;
+      };
     } | null) ?? {};
 
   return {

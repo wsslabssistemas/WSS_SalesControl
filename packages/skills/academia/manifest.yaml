@@ -84,6 +84,34 @@ journey:
     #
     # As duas etapas agora espelham a enum canônica de desfecho do `0044`:
     # `perdido` = perdeu_silencio, `recusou` = perdeu_decisao.
+    # ⚠ EX-ALUNO É ESTADO PRÓPRIO, e a falta dele era um buraco na jornada.
+    #
+    # A jornada ia de lead a matriculado e saía por "parou de responder" ou
+    # "disse não". Quem PAGOU e saiu não tinha casa nenhuma — e jogar essa
+    # pessoa em "parou de responder" faz o motor tratá-la como um lead que
+    # sumiu: a IA escreveria "vamos continuar nossa conversa para eu entender o
+    # que você procura" para quem treinou dois anos aqui.
+    #
+    # A própria biblioteca já sabia da diferença. A entrada de reativação diz,
+    # com todas as letras: *"verifique o histórico: se a pessoa nunca foi
+    # cliente, é primeira oportunidade, não retorno."* Faltava o estado para
+    # ela poder olhar.
+    #
+    # `lost: true` e NÃO terminal, e as duas metades importam:
+    #   • `lost` tira da conversão e da carteira em aberto — ex-aluno já foi
+    #     contado como ganho no dia em que matriculou, e contar de novo
+    #     inflaria o funil com gente que não está em negociação.
+    #   • não-terminal mantém o motor alcançando: etapa terminal DESLIGA a
+    #     cadência, e foi assim que a carteira fiel da barbearia sumiu da
+    #     recompra no segmento cuja tese é recompra.
+    - key: ex_aluno
+      label: "Ex-aluno"
+      lost: true
+      # A régua é a `rescue_inactive`, que já existia curada e órfã. Escrever
+      # uma segunda seria repetir o defeito de `phases` × `cadence`: a mesma
+      # coisa declarada duas vezes, divergindo em silêncio.
+      cadence: rescue_inactive
+      goal: "Foi aluno e saiu. Nunca abra cobrando a ausência: gere culpa e ele some de vez. Abra por um gancho concreto do histórico dele."
     - key: perdido
       label: "Parou de responder"
       lost: true
@@ -140,6 +168,12 @@ services:
 contract:
   enabled: true
   label: "Plano"
+  # PARA ONDE VAI QUEM SAIU. A sincronização detecta a ausência na planilha e
+  # precisa saber em que etapa colocar a pessoa — e a chave é vocabulário do
+  # ramo, então mora aqui e não no núcleo (Lei 1). Sem esta linha o
+  # encerramento continua sendo marcado, só não move ninguém de etapa: mover
+  # por engano é pior que deixar parado.
+  ended_stage: ex_aluno
   # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
   #
   # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
@@ -395,14 +429,42 @@ cadences:
       - { offset_days: 90, intent: "Três meses: pedir o retrato do ganho — e a indicação, que só faz sentido depois do resultado" }
     stop_on: [opted_out, lost]
 
+  # ⚠ A RÉGUA DO EX-ALUNO — e ela já existia aqui, sem etapa nenhuma usando.
+  #
+  # `rescue_inactive` estava escrita e órfã: nenhuma etapa declarava esta
+  # cadência, então ela nunca disparou. Ganhou dono em ago/2026, quando
+  # `ex_aluno` passou a existir. **Escrever uma segunda régua de reativação
+  # teria sido o defeito de `phases` × `cadence` de novo** — a mesma coisa
+  # declarada duas vezes, com as duas divergindo em silêncio.
+  #
+  # OS PRAZOS SÃO MAIS LARGOS QUE OS DA VENDA, e é de propósito. As outras
+  # réguas daqui são curtas porque quem pesquisa academia entra em outra numa
+  # semana. Quem SAIU não está nesse relógio: ele decidiu parar, e voltar é
+  # decisão nova. Régua de 4 e 11 dias em cima de quem saiu é a cobrança de
+  # ausência que a entrada curada proíbe na primeira linha.
+  #
+  # ⚠ `steps_expire: false` — E ESTA LINHA É A QUE MAIS IMPORTA.
+  #
+  # Por padrão um passo VENCE E EXPIRA: o toque "primeira semana" não pode
+  # chegar para quem está há três anos na academia. Isso vale quando o passo
+  # está preso a um EVENTO REAL (a matrícula, o início do trial).
+  #
+  # Reativação não tem evento nenhum: o passo 1 é "abrir por um gancho do
+  # histórico dele", e isso é verdade hoje, daqui a um mês ou daqui a um ano.
+  # Sem esta linha, importar 1.200 ex-alunos de uma vez faria a régua expirar
+  # para a maioria antes de a ração chegar neles — e eles cairiam no aviso
+  # genérico de silêncio, jogando fora a curadoria justamente na lista que ela
+  # foi escrita para atender.
   - key: rescue_inactive
     applies_to: reactivation
     steps:
-      - { offset_days: 0,  intent: "Gancho pessoal e concreto, sem cobrar ausência" }
-      - { offset_days: 4,  intent: "Prova social + retorno sem risco" }
-      - { offset_days: 11, intent: "Encerrar com porta aberta" }
+      - { offset_days: 0,  intent: "Gancho concreto do histórico DELE — o que treinava, o turno em que vinha. Sem oferta e sem cobrar a ausência: cobrança gera culpa, e culpa gera silêncio." }
+      - { offset_days: 7,  intent: "O que MUDOU desde que ele saiu — grade, equipamento, horário, professor. Novidade é motivo para voltar; saudade não é." }
+      - { offset_days: 21, intent: "Retorno sem risco, com a condição de entrada que existe no DNA. Se ela não existir, ESCALE em vez de inventar." }
+      - { offset_days: 45, intent: "Encerrar com porta aberta e sem culpa — 'deixo por aqui, me chama quando fizer sentido'. Encerrar bem é o que permite tentar de novo lá na frente." }
     stop_on: [replied, converted, opted_out]
-    max_attempts: 3
+    max_attempts: 4
+    steps_expire: false
 
 # ---------------------------------------------------------------------
 # REGRAS PERMANENTES DO SEGMENTO

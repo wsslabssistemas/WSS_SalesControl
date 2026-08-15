@@ -169,6 +169,16 @@ export function Sincronizador() {
             </p>
           )}
 
+          {/* O que muda ALÉM dos campos, escrito antes do botão. Mudar a etapa
+              de dezenas de pessoas é a consequência mais visível desta
+              gravação, e a tela de dois passos existe para ninguém ser
+              surpreendido por ela. */}
+          {p.aviso && (
+            <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left", marginTop: 12 }}>
+              {p.aviso}
+            </p>
+          )}
+
           {/* ⚠ O BLOQUEIO VEM ANTES DE TUDO E SUBSTITUI O BOTÃO. Mostrar o
               aviso e deixar o botão do lado é o mesmo que não ter aviso. */}
           {/* ⚠ O BOTÃO DE APLICAR NÃO PODE DEPENDER DE `resumo`.

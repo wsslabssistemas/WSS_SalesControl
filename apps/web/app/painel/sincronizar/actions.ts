@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
+import { getSkillFormConfig } from "@/lib/skill";
 import { lerTudo } from "@/lib/paginado";
 import { mapLimit } from "@/lib/concorrencia";
 import type { Leitura, LeituraRecebimentos, Pagante } from "@/lib/planilha";
@@ -74,6 +75,15 @@ export type Previsao = {
   resumo?: { entraram: number; renovaram: number; ajustaram: number; encerraram: number; reapareceram: number; recuaram: number };
   eventos?: { chave: string; tipo: string; descricao: string }[];
   pagantes?: { total: number; comHabito: number; descartadas: string[] };
+  /**
+   * O que a aplicação vai fazer ALÉM de gravar campo — hoje, mover de etapa.
+   *
+   * A tela de dois passos existe para ninguém ser surpreendido pelo que a
+   * gravação faz. Mudar a etapa de dezenas de pessoas é a mudança mais visível
+   * que esta operação provoca (some da carteira em aberto, entra na régua de
+   * reativação), então ela precisa estar escrita ANTES do botão.
+   */
+  aviso?: string;
 };
 
 async function contexto() {
@@ -170,11 +180,28 @@ export async function prever(d: DadosLidos): Promise<Previsao> {
     };
   }
 
-  return { ok: true, bloqueio, entendeu, resumo, eventos, pagantes };
+  // O aviso do que muda além dos campos. Sai do manifesto: o núcleo não sabe
+  // como este ramo chama a etapa de quem saiu.
+  let aviso: string | undefined;
+  const encerraram = resumo?.encerraram ?? 0;
+  if (encerraram > 0) {
+    const { stages, contract } = await getSkillFormConfig(m.tenant!.skill_key);
+    const saida = contract?.ended_stage
+      ? stages.find((s) => s.key === contract.ended_stage)
+      : undefined;
+    aviso = saida
+      ? `${encerraram} ${encerraram === 1 ? "pessoa vai sair" : "pessoas vão sair"} da etapa atual e ${encerraram === 1 ? "passar" : "passar"} para "${saida.label}". Elas saem da carteira em aberto e entram na régua de reativação — a conversa muda de renovação para retorno.`
+      : `${encerraram} ${encerraram === 1 ? "pessoa será marcada" : "pessoas serão marcadas"} como encerradas. A etapa delas NÃO muda: este ramo não declara para onde vai quem sai.`;
+  }
+
+  return { ok: true, bloqueio, entendeu, resumo, eventos, pagantes, aviso };
 }
 
 /** Quantas gravações vão em paralelo. Ver `lib/concorrencia.ts`. */
 const EM_PARALELO = 8;
+
+/** O contato do lado do banco, na forma mínima que a aplicação precisa. */
+type Alvo = { id: string; custom: Record<string, unknown> | null; journey_stage: string };
 
 export async function aplicar(
   d: DadosLidos,
@@ -215,14 +242,18 @@ export async function aplicar(
     else tocados.add(id);
   };
 
+  // A etapa de quem saiu vem do manifesto do ramo, nunca do núcleo (Lei 1).
+  const { contract } = await getSkillFormConfig(m.tenant!.skill_key);
+  const ended_stage = contract?.ended_stage ?? null;
+
   /** Contatos desta empresa indexados pelo código do sistema da academia. */
   const porCodigo = async () => {
     // ⚠ PAGINADO. Esta leitura decide quem recebe UPDATE. Cortada em 1.000
     // linhas arbitrárias, parte da base ficaria sem sincronizar — e o que não
     // foi atualizado não aparece em lugar nenhum para alguém desconfiar.
-    const atuais = await lerTudo<{ id: string; custom: Record<string, unknown> | null }>(
+    const atuais = await lerTudo<Alvo>(
       (de, ate) => supabase
-        .from("contacts").select("id, custom")
+        .from("contacts").select("id, custom, journey_stage")
         .eq("tenant_id", m.tenant!.id).is("deleted_at", null).order("id").range(de, ate),
       { rotulo: "contatos para atualizar" },
     );
@@ -240,7 +271,7 @@ export async function aplicar(
   if (d.matriculas) {
     const alvos = d.matriculas.linhas
       .map((l) => ({ l, alvo: indice.get(l.chave) }))
-      .filter((x): x is { l: LinhaDaFonte; alvo: { id: string; custom: Record<string, unknown> | null } } => !!x.alvo);
+      .filter((x): x is { l: LinhaDaFonte; alvo: Alvo } => !!x.alvo);
     // criar contato novo é outro fluxo (importador) — por isso o filtro acima.
 
     await mapLimit(alvos, EM_PARALELO, async ({ l, alvo }) => {
@@ -260,22 +291,60 @@ export async function aplicar(
     });
 
     // O ENCERRAMENTO É O QUE A PLANILHA NÃO SABE CONTAR — ver `sincronizacao.ts`.
+    //
+    // ⚠ E ELE AGORA MOVE A PESSOA DE ETAPA, o que antes não acontecia.
+    //
+    // A marca `contrato_encerrado_em` existia e **nada a lia**: o comentário ao
+    // lado dela dizia que ela servia para tirar a pessoa da fila, e não havia
+    // uma linha de código fazendo isso. O efeito é o defeito medido na Be
+    // Fitness — 312 pessoas em "Matriculado", das quais boa parte já saiu,
+    // porque `convertido` nunca era revogado. **Etapa que só avança mente com
+    // o tempo**, e ninguém procura erro numa etapa que já foi verdade.
+    //
+    // A chave da etapa vem do MANIFESTO (`contract.ended_stage`), nunca daqui:
+    // "ex_aluno" é vocabulário de academia. Sem ela declarada, o encerramento
+    // continua sendo carimbado e a etapa fica como está — o comportamento
+    // seguro, porque mover gente de etapa por engano é pior que não mover.
+    const etapaDeSaida = ended_stage;
     const encerrados = (p.eventos ?? [])
       .filter((x) => x.tipo === "encerrou")
       .map((e) => indice.get(e.chave))
-      .filter((a): a is { id: string; custom: Record<string, unknown> | null } => !!a);
+      .filter((a): a is Alvo => !!a);
 
-    await mapLimit(encerrados, EM_PARALELO, (alvo) =>
-      gravar(alvo.id, {
+    await mapLimit(encerrados, EM_PARALELO, async (alvo) => {
+      const patch: Record<string, unknown> = {
         custom: { ...(alvo.custom ?? {}), contrato_encerrado_em: hoje, contrato_conferido_em: hoje },
-      }),
-    );
+      };
+      // Só mexe na etapa se o manifesto disser qual é, e só se a pessoa ainda
+      // não estiver lá — remover e reinserir na mesma etapa reiniciaria a
+      // régua de reativação dela do zero a cada importação semanal.
+      if (etapaDeSaida && alvo.journey_stage !== etapaDeSaida) {
+        patch.journey_stage = etapaDeSaida;
+        patch.stage_entered_at = new Date().toISOString();
+      }
+      await gravar(alvo.id, patch);
+
+      // O histórico da jornada é append-only e é o que permite responder
+      // "quando ele saiu?" depois. Falha aqui não derruba a sincronização: o
+      // fato principal já foi gravado.
+      if (patch.journey_stage) {
+        const { error } = await supabase.from("contact_stage_history").insert({
+          tenant_id: m.tenant!.id,
+          contact_id: alvo.id,
+          from_stage: alvo.journey_stage,
+          to_stage: etapaDeSaida,
+          reason: "Sumiu da planilha de matrículas — contrato encerrado.",
+          triggered_by: "system",
+        });
+        if (error) console.error(`[sincronizar] historico de etapa de ${alvo.id}: ${error.message}`);
+      }
+    });
   }
 
   if (d.recebimentos) {
     const pagantes = d.recebimentos.pagantes
       .map((pg) => ({ pg, alvo: indice.get(pg.chave) }))
-      .filter((x): x is { pg: Pagante; alvo: { id: string; custom: Record<string, unknown> | null } } => !!x.alvo);
+      .filter((x): x is { pg: Pagante; alvo: Alvo } => !!x.alvo);
 
     await mapLimit(pagantes, EM_PARALELO, ({ pg, alvo }) =>
       gravar(alvo.id, {

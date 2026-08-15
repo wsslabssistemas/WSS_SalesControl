@@ -6,6 +6,7 @@ import { getSkillFormConfig } from "@/lib/skill";
 import { normalizePhone } from "@/lib/phone";
 import { parseCsv, detectColumns, parseDataBR } from "@/lib/csv";
 import { lerTudo } from "@/lib/paginado";
+import { escolherResponsavel } from "@/lib/carteira";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,19 @@ export async function importContacts(formData: FormData) {
     redirect("/painel/contatos/importar?erro=Escolha+um+arquivo+CSV");
   }
   const origem = String(formData.get("origem") ?? "").trim() || "Importação";
+
+  // ⚠ PARA QUEM VAI A CARTEIRA — e o padrão anterior era um problema calado.
+  //
+  // Tudo entrava no nome de quem importou. Como quem importa é o fundador, a
+  // próxima carga de ex-alunos cairia inteira na carteira dele — e a Fila abre
+  // na carteira de quem está logado, então **nenhum dos três recepcionistas
+  // veria uma linha sequer** dela.
+  //
+  // A distribuição é redonda: quem tem a menor carteira recebe o próximo. É a
+  // mesma regra do lead que chega sozinho pelo canal (`lib/carteira.ts`), e
+  // não é sorteio — sorteio desequilibra com três pessoas, e rodízio precisaria
+  // guardar de quem foi a vez.
+  const dividir = String(formData.get("dividir") ?? "") === "1";
 
   const text = await (file as File).text();
   const rows = parseCsv(text);
@@ -57,6 +71,41 @@ export async function importContacts(formData: FormData) {
   );
   const known = new Set(existing.map((e) => e.phone).filter(Boolean) as string[]);
 
+  // A equipe que pode receber carteira, e o tamanho da carteira de cada um.
+  // Só é consultado quando a divisão foi pedida — importação para si mesmo
+  // não precisa saber da equipe.
+  const donos: { id: string; carteira: number }[] = [];
+  if (dividir) {
+    const { data: mems } = await supabase
+      .from("memberships")
+      .select("id, role")
+      .eq("tenant_id", tenant.id)
+      .eq("status", "active")
+      .order("id");
+    const ativos = ((mems as { id: string; role: string }[] | null) ?? []);
+    const agentes = ativos.filter((m) => m.role === "agent");
+    for (const a of (agentes.length ? agentes : ativos)) {
+      // paginacao-ok: só o TAMANHO da carteira, sem trazer linha nenhuma.
+      const { count } = await supabase
+        .from("contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id)
+        .eq("owner_id", a.id)
+        .is("deleted_at", null);
+      donos.push({ id: a.id, carteira: count ?? 0 });
+    }
+  }
+  /** Quem recebe o próximo. Sem divisão, é quem importou. */
+  const proximoDono = (): string => {
+    if (!donos.length) return membership!.membershipId;
+    // A carteira do escolhido cresce na hora, senão todos os 1.200 iriam para
+    // a mesma pessoa — a menor carteira só muda depois de gravar.
+    const escolhido = escolherResponsavel(donos, Object.fromEntries(donos.map((d) => [d.id, d.carteira])));
+    const alvo = donos.find((d) => d.id === escolhido);
+    if (alvo) alvo.carteira++;
+    return escolhido ?? membership!.membershipId;
+  };
+
   const seen = new Set<string>();
   const toInsert: Record<string, unknown>[] = [];
   let dup = 0;
@@ -70,7 +119,7 @@ export async function importContacts(formData: FormData) {
     if (phone) seen.add(phone);
     toInsert.push({
       tenant_id: tenant.id,
-      owner_id: membership!.membershipId,
+      owner_id: proximoDono(),
       name,
       phone,
       source: origem,
