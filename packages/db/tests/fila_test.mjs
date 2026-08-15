@@ -27,7 +27,7 @@
  * lista simplesmente não encolhia, e lista que não encolhe parece trabalho
  * acumulado, não defeito.
  *
- * ESPERADO: 29/29.
+ * ESPERADO: 32/32.
  *
  *   node packages/db/tests/fila_test.mjs
  */
@@ -277,5 +277,46 @@ verifica("nos outros motivos o mais atrasado continua primeiro",
   montarFila([item("novo", "followup", 2), item("velho", "followup", 90)]).map((i) => i.contactId),
   ["velho", "novo"]);
 
-console.log(falhas === 0 ? "\nOK — 29/29" : `\nFALHOU — ${falhas} de 29`);
+// ⚠ SÓ A ETAPA DE QUEM SAIU É REATIVAÇÃO — o erro que quase foi para o ar.
+//
+// A primeira versão marcou como reativação toda etapa `lost` não-terminal, e
+// isso apanhou o `perdido` junto: 174 pessoas que **nunca foram alunas**, só
+// pararam de responder. Duas coisas quebravam de uma vez — o rótulo passaria a
+// dizer "Ex-aluno" para quem nunca pisou lá (contra uma `hard_rule` explícita
+// do manifesto), e a prioridade cairia de 2 para 5, enterrando no fim da fila
+// o lead que acabou de esfriar. Silêncio é 8 de cada 9 perdas medidas: seria
+// enterrar a tese do produto para acomodar um caso novo.
+const ETAPAS_COM_SAIDA = [
+  { key: "convertido", label: "Matriculado", won: true },
+  { key: "ex_aluno", label: "Ex-aluno", lost: true },
+  { key: "perdido", label: "Parou de responder", lost: true },
+];
+const toque = (id) => ({
+  contactId: id, name: id, phone: "51999999999", ownerId: "m1",
+  intent: "-", stepNumber: 1, totalSteps: 3, overdueDays: 10, semCadencia: false,
+});
+const filaCom = (stage) => construirFila({
+  contatos: [pessoa({ id: "p1", journey_stage: stage, ...semCombinado })],
+  ultimoContato: {}, stages: ETAPAS_COM_SAIDA, cadences: [], recurrence: null,
+  etapaDeSaida: "ex_aluno", hojeISO: "2026-08-10",
+  deps: { ...DEPS_VAZIAS, computeDueTouches: () => [toque("p1")] },
+});
+
+verifica("quem está na etapa de saída vira reativação",
+  filaCom("ex_aluno")[0]?.motivo, "reativacao");
+
+verifica("quem só parou de responder CONTINUA follow-up",
+  filaCom("perdido")[0]?.motivo, "followup");
+
+// Sem `etapaDeSaida` declarada, ninguém vira reativação: o segmento que não
+// declara para onde vai quem sai não ganha o motivo por adivinhação.
+verifica("sem etapa de saída no manifesto, tudo continua follow-up",
+  construirFila({
+    contatos: [pessoa({ id: "p1", journey_stage: "ex_aluno", ...semCombinado })],
+    ultimoContato: {}, stages: ETAPAS_COM_SAIDA, cadences: [], recurrence: null,
+    hojeISO: "2026-08-10",
+    deps: { ...DEPS_VAZIAS, computeDueTouches: () => [toque("p1")] },
+  })[0]?.motivo, "followup");
+
+console.log(falhas === 0 ? "\nOK — 32/32" : `\nFALHOU — ${falhas} de 32`);
 process.exit(falhas === 0 ? 0 : 1);

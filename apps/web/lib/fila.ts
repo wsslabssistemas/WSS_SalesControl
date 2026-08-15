@@ -231,6 +231,14 @@ export function construirFila(params: {
   recurrence: unknown;
   /** `contract.renewal` do manifesto — o texto de cada janela, na voz do ramo. */
   renewal?: unknown;
+  /**
+   * `contract.ended_stage` do manifesto: a etapa de quem SAIU.
+   *
+   * É o que separa reativação de follow-up. Sem ela, todo mundo em etapa de
+   * perda viraria "ex-aluno" — inclusive o lead que só parou de responder e
+   * nunca foi cliente.
+   */
+  etapaDeSaida?: string | null;
   hojeISO: string;
   deps: DepsDaFila;
 }): ItemDaFila[] {
@@ -324,15 +332,31 @@ export function construirFila(params: {
   }
 
   // 3. FOLLOW-UP — a cadência do ramo, que é a maior perda medida do piloto.
-  // Etapa de PERDA com cadência é reativação, não follow-up: o ex-aluno entra
-  // por aqui, mas a conversa é outra e o lugar dele na fila é o último. A
-  // distinção sai do manifesto (`lost`), nunca de uma chave de etapa chumbada
-  // aqui — "ex_aluno" é vocabulário de academia (Lei 1).
-  const dePerda = new Set(stages.filter((s) => s.lost && !s.terminal).map((s) => s.key));
+  // ⚠ SÓ A ETAPA DE QUEM SAIU É REATIVAÇÃO — e a primeira versão disto errou
+  // feio, de um jeito que valia a pena escrever.
+  //
+  // Eu marquei como reativação toda etapa `lost` não-terminal. Isso apanhou o
+  // `perdido` junto, que na academia é *"Parou de responder"* — 174 pessoas
+  // que **nunca foram alunas**, só sumiram no meio da conversa. Duas coisas
+  // quebravam de uma vez:
+  //
+  //   • O RÓTULO passaria a dizer "Ex-aluno — trazer de volta" para quem nunca
+  //     pisou lá, e o manifesto tem `hard_rule` explícita contra isso: *"nunca
+  //     dizer 'voltar', 'retornar' ou 'novamente' para quem nunca foi aluno."*
+  //   • A PRIORIDADE cairia de 2 para 5, jogando para o fim da fila o lead que
+  //     acabou de esfriar — e silêncio é 8 de cada 9 perdas medidas no piloto.
+  //     Seria enterrar a tese do produto para acomodar um caso novo.
+  //
+  // A etapa certa é a que o manifesto declara em `contract.ended_stage`: a
+  // mesma chave que a sincronização usa para mover quem sumiu da planilha.
+  // Uma fonte só, e nenhuma chave de segmento escrita no núcleo (Lei 1).
+  const etapaDeSaida = params.etapaDeSaida ?? null;
   for (const t of deps.computeDueTouches(contatos, ultimoContato, stages, cadences, toquesNossos)) {
     itens.push({
       contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
-      motivo: dePerda.has(porId.get(t.contactId)?.journey_stage ?? "") ? "reativacao" : "followup",
+      motivo: etapaDeSaida && porId.get(t.contactId)?.journey_stage === etapaDeSaida
+        ? "reativacao"
+        : "followup",
       // O TEXTO VEM DO MANIFESTO NOS DOIS CAMINHOS. Antes, `semCadencia`
       // trocava a intenção por uma frase genérica escrita aqui no núcleo —
       // jogando fora o `goal` que o segmento já declarava. O que muda entre

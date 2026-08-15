@@ -145,7 +145,7 @@ export default async function FilaPage({
   // três lugares. Fila é lógica, não é tela.
   const fila = construirFila({
     contatos: contatos.map(comCarimbo), ultimoContato: ultimo, toquesNossos: toques,
-    stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
+    stages, cadences, recurrence, renewal: contract?.renewal, etapaDeSaida: contract?.ended_stage ?? null, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
   const porMotivo = (m: string) => fila.filter((f) => f.motivo === m).length;

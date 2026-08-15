@@ -147,7 +147,7 @@ export default async function PainelHome({
   const fila = construirFila({
     contatos: contacts.map(comCarimbo),
     ultimoContato: lastByContact, toquesNossos: toques,
-    stages, cadences, recurrence, renewal: contract?.renewal, hojeISO,
+    stages, cadences, recurrence, renewal: contract?.renewal, etapaDeSaida: contract?.ended_stage ?? null, hojeISO,
     deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
   });
 
