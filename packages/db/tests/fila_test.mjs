@@ -27,7 +27,7 @@
  * lista simplesmente não encolhia, e lista que não encolhe parece trabalho
  * acumulado, não defeito.
  *
- * ESPERADO: 25/25.
+ * ESPERADO: 29/29.
  *
  *   node packages/db/tests/fila_test.mjs
  */
@@ -242,5 +242,40 @@ verifica("conversa anterior à janela não quita",
 verifica("conversa no dia em que a janela abriu conta",
   filaRenov({ p1: "2026-07-24T09:00:00Z" }).length, 0);
 
-console.log(falhas === 0 ? "\nOK — 25/25" : `\nFALHOU — ${falhas} de 25`);
+// ⚠ REATIVAÇÃO É O ÚLTIMO MOTIVO, E ORDENA AO CONTRÁRIO DOS OUTROS.
+//
+// São 1.089 ex-alunos entrando contra ~600 contatos ativos. Com qualquer peso
+// maior, a reativação AFOGARIA a operação do dia: o vendedor passaria o
+// expediente falando com quem saiu enquanto o contrato de quem ficou vence sem
+// uma mensagem.
+//
+// E dentro dela a ordem inverte, por decisão do fundador em 15/ago ("entram,
+// mas ficam por último"): quem parou de pagar mês passado ainda lembra da
+// academia; quem parou em 2023 mudou de bairro, de rotina e de vida. Ordenar
+// pelo mais atrasado — a regra dos outros quatro motivos — colocaria os 180 de
+// 2023 na frente dos 160 de 2026.
+const rea = (id, atraso) => ({
+  contactId: id, name: `Ex ${id}`, phone: "51999999999", ownerId: "m1",
+  motivo: "reativacao", intencao: "-", atraso,
+});
+
+verifica("reativação fica atrás de todos os outros motivos",
+  montarFila([rea("velho", 900), item("a", "recompra", 5)]).map((i) => i.motivo),
+  ["recompra", "reativacao"]);
+
+verifica("e até atrás do lembrete, que já era o último",
+  PESO.reativacao > PESO.lembrete, true);
+
+// Saiu há 30 dias vem ANTES de quem saiu há 900.
+verifica("na reativação, quem saiu há MENOS tempo vem primeiro",
+  montarFila([rea("2023", 900), rea("2026", 30), rea("2025", 300)]).map((i) => i.contactId),
+  ["2026", "2025", "2023"]);
+
+// E a regra dos outros motivos continua sendo a oposta — inverter tudo teria
+// sido o conserto errado.
+verifica("nos outros motivos o mais atrasado continua primeiro",
+  montarFila([item("novo", "followup", 2), item("velho", "followup", 90)]).map((i) => i.contactId),
+  ["velho", "novo"]);
+
+console.log(falhas === 0 ? "\nOK — 29/29" : `\nFALHOU — ${falhas} de 29`);
 process.exit(falhas === 0 ? 0 : 1);

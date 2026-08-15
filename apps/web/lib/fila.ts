@@ -23,7 +23,7 @@
 //
 // Dentro de cada motivo, o mais atrasado primeiro.
 
-export type MotivoDaFila = "combinado" | "renovacao" | "followup" | "recompra" | "lembrete";
+export type MotivoDaFila = "combinado" | "renovacao" | "followup" | "recompra" | "lembrete" | "reativacao";
 
 export const PESO: Record<MotivoDaFila, number> = {
   combinado: 0,
@@ -34,6 +34,20 @@ export const PESO: Record<MotivoDaFila, number> = {
   // por quê — ela não sabe o motivo, então não pode mascarar quem sabe. Ver a
   // regra do pretexto abaixo.
   lembrete: 4,
+  /**
+   * ⚠ DEPOIS DE TUDO, e é o que protege a operação do dia.
+   *
+   * Reativação é o único motivo que fala com quem **não é cliente**. Os quatro
+   * primeiros são negócio corrente: gente que espera resposta, contrato saindo
+   * pela porta, lead esfriando. Com 1.200 ex-alunos entrando de uma vez contra
+   * ~600 contatos ativos, qualquer peso maior faria a reativação **afogar a
+   * operação** — e o vendedor passaria o dia falando com quem saiu enquanto o
+   * contrato de quem ficou vence sem uma mensagem.
+   *
+   * A ração de 10/dia é o outro lado disso: ela garante que sobre espaço para
+   * a reativação, sem que a reativação tome o espaço de ninguém.
+   */
+  reativacao: 5,
 };
 
 export const ROTULO: Record<MotivoDaFila, string> = {
@@ -42,7 +56,24 @@ export const ROTULO: Record<MotivoDaFila, string> = {
   followup: "Follow-up devido",
   recompra: "Hora de chamar de volta",
   lembrete: "Data marcada, sem motivo anotado",
+  reativacao: "Ex-aluno — trazer de volta",
 };
+
+/**
+ * ⚠ EM QUAL MOTIVO O MAIS ATRASADO VEM PRIMEIRO — e onde ele vem POR ÚLTIMO.
+ *
+ * Nos quatro motivos de negócio corrente, atraso é urgência: um combinado
+ * furado há 10 dias é pior que um de ontem.
+ *
+ * Na REATIVAÇÃO é o contrário, e a diferença é comercial, não estética. Quem
+ * parou de pagar mês passado ainda lembra da academia, do professor e do
+ * horário; quem parou em 2023 mudou de bairro, de rotina e de vida. Ordenar
+ * pelo mais atrasado colocaria os 201 de 2023 na frente dos 182 de 2026 —
+ * gastando o começo da operação na conversa mais fria que existe.
+ *
+ * Foi a decisão do fundador em 15/ago: *"entram, mas ficam por último."*
+ */
+const MAIS_RECENTE_PRIMEIRO = new Set<MotivoDaFila>(["reativacao"]);
 
 export type ItemDaFila = {
   contactId: string;
@@ -146,9 +177,16 @@ export function montarFila(itens: ItemDaFila[]): ItemDaFila[] {
     const v = melhor.get(id);
     if (v && !v.observacao) melhor.set(id, { ...v, observacao: obs });
   }
-  return [...melhor.values()].sort(
-    (a, b) => PESO[a.motivo] - PESO[b.motivo] || b.atraso - a.atraso || a.name.localeCompare(b.name, "pt-BR"),
-  );
+  return [...melhor.values()].sort((a, b) => {
+    const porMotivo = PESO[a.motivo] - PESO[b.motivo];
+    if (porMotivo !== 0) return porMotivo;
+    // Dentro do motivo: o mais atrasado primeiro — menos na reativação, onde
+    // quem saiu há MENOS tempo é quem tem mais chance de voltar.
+    const porTempo = MAIS_RECENTE_PRIMEIRO.has(a.motivo)
+      ? a.atraso - b.atraso
+      : b.atraso - a.atraso;
+    return porTempo || a.name.localeCompare(b.name, "pt-BR");
+  });
 }
 
 /**
@@ -286,10 +324,15 @@ export function construirFila(params: {
   }
 
   // 3. FOLLOW-UP — a cadência do ramo, que é a maior perda medida do piloto.
+  // Etapa de PERDA com cadência é reativação, não follow-up: o ex-aluno entra
+  // por aqui, mas a conversa é outra e o lugar dele na fila é o último. A
+  // distinção sai do manifesto (`lost`), nunca de uma chave de etapa chumbada
+  // aqui — "ex_aluno" é vocabulário de academia (Lei 1).
+  const dePerda = new Set(stages.filter((s) => s.lost && !s.terminal).map((s) => s.key));
   for (const t of deps.computeDueTouches(contatos, ultimoContato, stages, cadences, toquesNossos)) {
     itens.push({
       contactId: t.contactId, name: t.name, phone: t.phone, ownerId: t.ownerId,
-      motivo: "followup",
+      motivo: dePerda.has(porId.get(t.contactId)?.journey_stage ?? "") ? "reativacao" : "followup",
       // O TEXTO VEM DO MANIFESTO NOS DOIS CAMINHOS. Antes, `semCadencia`
       // trocava a intenção por uma frase genérica escrita aqui no núcleo —
       // jogando fora o `goal` que o segmento já declarava. O que muda entre
