@@ -219,6 +219,21 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
 export type Pagante = {
   chave: string;
   nome: string | null;
+  /**
+   * O CANAL. Entra, e o CPF não — e a diferença não é de sensibilidade, é de
+   * uso: o produto existe para decidir com quem falar e o que dizer, e sem
+   * telefone não se fala com ninguém. CPF não serve para nada aqui.
+   *
+   * ⚠ ELE NÃO ERA LIDO, e a falta quase virou um número falso no relatório.
+   * O diagnóstico de ex-alunos anunciou "1.200 sem telefone" — plausível,
+   * alarmante e mentira: o relatório TEM `Celular` e `Telefone-1-ou-2`, e
+   * quem não lia era este arquivo. Só apareceu porque os cabeçalhos foram
+   * conferidos antes de a conclusão ser reportada.
+   *
+   * `Celular` vem primeiro: é o número de WhatsApp, e o fixo não recebe
+   * mensagem.
+   */
+  telefone: string | null;
   /** Quantos pagamentos, no total do histórico. */
   pagamentos: number;
   /** Soma em centavos. Inteiro, nunca float — ver `lib/money.ts`. */
@@ -254,6 +269,9 @@ const REC_H = {
   pag: ["pagamento", "data-de-pagamento"],
   valor: ["valor"],
   recibo: ["codigo-do-recebimento", "recibo"],
+  // Ordem de preferência: celular recebe mensagem, fixo não.
+  celular: ["celular"],
+  telefone: ["telefone-1-ou-2", "telefone-1", "telefone"],
 };
 
 /**
@@ -300,6 +318,7 @@ export function lerRecebimentos(texto: string): LeituraRecebimentos {
   const i = {
     chave: acha(h, REC_H.chave), nome: acha(h, REC_H.nome), venc: acha(h, REC_H.venc),
     pag: acha(h, REC_H.pag), valor: acha(h, REC_H.valor), recibo: acha(h, REC_H.recibo),
+    celular: acha(h, REC_H.celular), telefone: acha(h, REC_H.telefone),
   };
   if (i.chave < 0 || i.pag < 0 || i.valor < 0) {
     return {
@@ -310,7 +329,7 @@ export function lerRecebimentos(texto: string): LeituraRecebimentos {
     };
   }
 
-  const porPessoa = new Map<string, { nome: string | null; pags: string[]; vencs: (string | null)[]; cents: number; recibos: Set<string> }>();
+  const porPessoa = new Map<string, { nome: string | null; telefone: string | null; pags: string[]; vencs: (string | null)[]; cents: number; recibos: Set<string> }>();
   const ignoradas: { linha: number; motivo: string }[] = [];
 
   for (let n = 1; n < linhas.length; n++) {
@@ -320,7 +339,7 @@ export function lerRecebimentos(texto: string): LeituraRecebimentos {
     const pago = parseDataBR(r[i.pag] ?? "");
     if (!pago) { ignoradas.push({ linha: n + 1, motivo: "sem data de pagamento — parcela em aberto ou linha de total" }); continue; }
 
-    const cur = porPessoa.get(chave) ?? { nome: null, pags: [], vencs: [], cents: 0, recibos: new Set<string>() };
+    const cur = porPessoa.get(chave) ?? { nome: null, telefone: null, pags: [], vencs: [], cents: 0, recibos: new Set<string>() };
     // RECIBO REPETIDO NÃO SOMA DUAS VEZES. No arquivo real são 7.991 linhas
     // para 7.648 recibos distintos — pagamento dividido compartilha o mesmo
     // número, e somar de novo inflaria o faturamento em silêncio.
@@ -332,6 +351,12 @@ export function lerRecebimentos(texto: string): LeituraRecebimentos {
       cur.cents += brlParaCents(r[i.valor] ?? "");
     }
     cur.nome = cur.nome ?? ((i.nome >= 0 ? (r[i.nome] ?? "").trim() : "") || null);
+    // A mesma pessoa aparece numa linha por parcela e nem toda linha traz o
+    // número. Fica o PRIMEIRO que aparecer preenchido, com o celular na frente.
+    cur.telefone = cur.telefone
+      ?? ((i.celular >= 0 ? (r[i.celular] ?? "").trim() : "") || null)
+      ?? null;
+    if (!cur.telefone && i.telefone >= 0) cur.telefone = (r[i.telefone] ?? "").trim() || null;
     cur.pags.push(pago);
     cur.vencs.push(i.venc >= 0 ? parseDataBR(r[i.venc] ?? "") : null);
     porPessoa.set(chave, cur);
@@ -352,6 +377,7 @@ export function lerRecebimentos(texto: string): LeituraRecebimentos {
     return {
       chave,
       nome: v.nome,
+      telefone: v.telefone,
       pagamentos: v.pags.length,
       totalCents: v.cents,
       ultimoPagamento: ordenados[ordenados.length - 1] ?? null,
