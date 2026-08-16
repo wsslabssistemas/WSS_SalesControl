@@ -64,10 +64,21 @@ app.get("/whatsapp/webhook", async (c) => {
         .maybeSingle()
     : { data: null };
 
-  const r = respostaDoDesafio(params, dono ? oferecido : process.env.WHATSAPP_VERIFY_TOKEN);
+  // ⚠ A RECUSA PRECISA DIZER QUAL DOS DOIS CASOS É, e a primeira versão dizia
+  // sempre "nenhum token cadastrado". Com um token OFERECIDO que não bate,
+  // essa frase manda a pessoa cadastrar o que ela acabou de cadastrar — e ela
+  // está na tela da Meta, sem acesso ao servidor, sem como distinguir.
+  //
+  // São duas causas com conserto oposto: não salvou ainda × salvou diferente
+  // (espaço no fim, letra trocada, colou o token errado).
+  const esperado = dono ? oferecido : process.env.WHATSAPP_VERIFY_TOKEN;
+  const r = respostaDoDesafio(params, esperado);
   if (!r.ok) {
-    console.warn(`[whatsapp] verificacao recusada: ${r.motivo}`);
-    return c.text(r.motivo, 403);
+    const motivo = !esperado && oferecido
+      ? `O token "${oferecido}" não confere com nenhum cadastrado. Confira se é exatamente o mesmo salvo em Automação → Canal oficial, no Kairós — sem espaço sobrando no começo ou no fim.`
+      : r.motivo;
+    console.warn(`[whatsapp] verificacao recusada: ${motivo}`);
+    return c.text(motivo, 403);
   }
   // Texto puro, não JSON: a Meta compara o corpo com o desafio que mandou.
   return c.text(r.desafio, 200);
