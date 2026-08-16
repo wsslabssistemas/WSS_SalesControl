@@ -75,7 +75,42 @@ export function Guia() {
       ),
     },
     {
-      titulo: "5. Troque pelo token permanente",
+      titulo: "5. Cadastre quem PODE receber (senão o teste falha)",
+      corpo: (
+        <>
+          Enquanto o app não estiver publicado, o número de teste da Meta só fala com números
+          que você cadastrar antes — <strong>até 5</strong>. Em{" "}
+          <strong>WhatsApp → Configuração da API</strong>, no campo <strong>Para</strong>,
+          clique em <strong>Gerenciar lista de números de telefone</strong> e adicione o seu.
+          Chega um código por WhatsApp para confirmar.
+          <br />
+          <span className="text-faint">
+            Sem isso o envio é recusado <em>mesmo com o token certo</em> — e o erro fala de
+            &ldquo;recipient&rdquo;, não de credencial, o que manda você procurar defeito no
+            lugar errado.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "6. Não mexa em “Permissões e recursos” agora",
+      corpo: (
+        <>
+          Se a página de permissões mostrar{" "}
+          <code>whatsapp_business_messaging</code> e <code>whatsapp_business_management</code>{" "}
+          como <strong>&ldquo;Pronto para teste&rdquo;</strong>, é o suficiente: esse é o acesso de
+          desenvolvimento, e ele já envia e recebe.
+          <br />
+          <span className="text-faint">
+            O botão &ldquo;Adicionar à análise do app&rdquo; serve para o acesso avançado, que
+            só faz falta ao publicar o app para clientes reais — e para o dia em que a WSS Labs
+            virar provedora e conectar empresas sozinha. Pedir análise agora só adiciona espera.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "7. Troque pelo token permanente",
       corpo: (
         <>
           O token do passo 3 morre em 24 horas. O definitivo sai em{" "}
@@ -92,7 +127,7 @@ export function Guia() {
       ),
     },
     {
-      titulo: "6. Verifique o negócio (CNPJ)",
+      titulo: "8. Verifique o negócio (CNPJ)",
       corpo: (
         <>
           Em <a href="https://business.facebook.com/settings" target="_blank" rel="noopener noreferrer">business.facebook.com/settings</a>{" "}
@@ -113,7 +148,7 @@ export function Guia() {
     <div className="card mt-24">
       <p className="eyebrow" style={{ marginBottom: 6 }}>Como conseguir a credencial na Meta</p>
       <p className="text-dim" style={{ fontSize: 13, marginTop: 0 }}>
-        Seis passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
+        Oito passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
         escolher o número.
       </p>
 
