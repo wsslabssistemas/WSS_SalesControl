@@ -115,14 +115,17 @@ export async function verifyTokenDoCanal(tenantId: string): Promise<string | nul
 /**
  * O que a TELA pode saber — e note o que não está aqui: o token.
  *
- * A tela precisa mostrar "configurado ✓" e ajudar a conferir se é a credencial
- * certa. Os quatro últimos dígitos do `phone_id` bastam para isso, e o token
- * nunca volta, nem mascarado: token mascarado na tela é token que alguém tenta
- * copiar e cola errado em outro lugar.
+ * O `phone_id` volta INTEIRO, e os segredos não voltam nunca — nem mascarados.
+ *
+ * A separação é por natureza, não por precaução: o Phone Number ID aparece
+ * aberto na própria tela da Meta, então esconder só criava dúvida sobre se
+ * tinha salvo. Já token e chave secreta mandam mensagem em nome da empresa —
+ * e token mascarado na tela é token que alguém tenta copiar e cola errado em
+ * outro lugar.
  */
 export async function statusDoCanal(tenantId: string): Promise<{
   configurado: boolean;
-  phoneIdFinal: string | null;
+  phoneId: string | null;
   temVerifyToken: boolean;
   temAppSecret: boolean;
   atualizadoEm: string | null;
@@ -138,7 +141,7 @@ export async function statusDoCanal(tenantId: string): Promise<{
   const phoneId = data?.whatsapp_phone_id?.trim() ?? null;
   return {
     configurado: !!data?.whatsapp_token?.trim() && !!phoneId,
-    phoneIdFinal: phoneId ? phoneId.slice(-4) : null,
+    phoneId,
     temVerifyToken: !!data?.whatsapp_verify_token?.trim(),
     temAppSecret: !!data?.whatsapp_app_secret?.trim(),
     atualizadoEm: data?.updated_at ?? null,

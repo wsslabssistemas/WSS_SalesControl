@@ -179,7 +179,7 @@ export default async function AutomacaoPage({
       {canEdit && (
         <Canal
           configurado={status.configurado}
-          phoneIdFinal={status.phoneIdFinal}
+          phoneId={status.phoneId}
           temVerifyToken={status.temVerifyToken}
           temAppSecret={status.temAppSecret}
           atualizadoEm={status.atualizadoEm}

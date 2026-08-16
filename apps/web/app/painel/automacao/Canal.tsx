@@ -16,14 +16,14 @@ import { salvarCanal, testarCanal } from "./canal-actions";
  */
 export function Canal({
   configurado,
-  phoneIdFinal,
+  phoneId,
   temVerifyToken,
   temAppSecret,
   atualizadoEm,
   urlDoWebhook,
 }: {
   configurado: boolean;
-  phoneIdFinal: string | null;
+  phoneId: string | null;
   temVerifyToken: boolean;
   temAppSecret: boolean;
   atualizadoEm: string | null;
@@ -50,7 +50,7 @@ export function Canal({
       <div className="row wrap" style={{ gap: 10, alignItems: "center" }}>
         <p className="eyebrow" style={{ margin: 0 }}>Canal oficial (WhatsApp Cloud API)</p>
         {configurado
-          ? <span className="badge badge-success">configurado · número …{phoneIdFinal}</span>
+          ? <span className="badge badge-success">configurado · número {phoneId}</span>
           : <span className="badge">não configurado — envio segue pelo link</span>}
       </div>
 
@@ -60,7 +60,7 @@ export function Canal({
         abrindo o WhatsApp para alguém enviar.
       </p>
 
-      <form action={salvarCanal} className="stack" style={{ gap: 10, marginTop: 14 }}>
+      <form action={salvarCanal} autoComplete="off" className="stack" style={{ gap: 10, marginTop: 14 }}>
         {/* ⚠ OS RÓTULOS SÃO OS DA META, PALAVRA POR PALAVRA — e a primeira
             versão inventou os próprios ("Token permanente", "ID do número").
             O fundador travou por causa disso: *"tem que usar a mesma
@@ -73,7 +73,7 @@ export function Canal({
           <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
             Na Meta: WhatsApp → Configuração da API → botão <strong>Gerar token</strong>
           </span>
-          <input type="password" name="token" autoComplete="off"
+          <input type="password" name="token" autoComplete="new-password"
             placeholder={configurado ? "já configurado — preencha só para trocar" : "EAAG..."} />
         </label>
         <label className="text-dim" style={{ fontSize: 13 }}>
@@ -81,8 +81,17 @@ export function Canal({
           <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
             Na Meta: mesma tela, ao lado do número de teste
           </span>
-          <input type="text" name="phone_id" autoComplete="off"
-            placeholder={phoneIdFinal ? `…${phoneIdFinal}` : "1072873705913820"} />
+          {/* ⚠ ESTE CAMPO MOSTRA O VALOR SALVO, e os outros três não — porque
+              ele NÃO é segredo: o Phone Number ID aparece na própria tela da
+              Meta, aberto. Mantê-lo escondido só criava dúvida sobre se tinha
+              salvo, e foi o que aconteceu.
+              `inputMode` numérico e `new-password` no `autoComplete` existem
+              porque o gerenciador de senhas do navegador via um campo de texto
+              ao lado de um campo de senha e enfiava o E-MAIL do usuário aqui.
+              O valor gravado estava certo; a tela é que mentia. */}
+          <input type="text" name="phone_id" autoComplete="new-password"
+            inputMode="numeric" defaultValue={phoneId ?? ""}
+            placeholder="1072873705913820" />
         </label>
         <label className="text-dim" style={{ fontSize: 13 }}>
           Verificar token {temVerifyToken && <span className="badge badge-success">definido</span>}
@@ -90,7 +99,7 @@ export function Canal({
             Este VOCÊ inventa. É o mesmo texto que vai no campo <strong>Verificar token</strong> da Meta,
             em WhatsApp → Configuração → Webhook
           </span>
-          <input type="text" name="verify_token" autoComplete="off"
+          <input type="text" name="verify_token" autoComplete="new-password"
             placeholder="ex.: befitness-kairos-2026" />
         </label>
         {/* ⚠ SEM ELE O WEBHOOK RECUSA TUDO — e recusar e o comportamento certo,
@@ -105,7 +114,7 @@ export function Canal({
             <strong> Configurações do app → Básico</strong>. O campo vem escondido — clique em{" "}
             <strong>Mostrar</strong> e confirme sua senha do Facebook.
           </span>
-          <input type="password" name="app_secret" autoComplete="off"
+          <input type="password" name="app_secret" autoComplete="new-password"
             placeholder={temAppSecret ? "já configurada — preencha só para trocar" : "32 caracteres, letras e números"} />
         </label>
         <p className="text-faint" style={{ fontSize: 12, margin: 0 }}>
