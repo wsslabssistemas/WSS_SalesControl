@@ -119,10 +119,20 @@ export async function testarCanal(
     // aponta para credencial e permissão e não diz uma palavra sobre versão.
     // O token estava certo e o ID do número também; a URL é que era velha.
     //
-    // A dica só aparece no erro 100, que é o que essa combinação produz.
-    const dica = err?.code === 100
-      ? ` ⚠ Esta chamada usou a API ${cred.versao}. Se o token e o ID do número estiverem certos, a versão pode estar aposentada — confira qual a Meta mostra no exemplo de código dela e me avise.`
-      : "";
+    // ⚠ O 190 É O MAIS COMUM DE TODOS E O QUE MENOS PARECE O QUE É.
+    //
+    // O token que a Meta gera na tela de Configuração da API é TEMPORÁRIO e
+    // morre num HORÁRIO FIXO — não 24 horas depois de você clicar. Quem gerou
+    // às 11h da manhã descobre à tarde que "parou de funcionar", e a mensagem
+    // em inglês fala de "session", palavra que ninguém associa a token colado
+    // num formulário.
+    //
+    // A frase da Meta traz a hora exata da expiração, então ela vai inteira.
+    const dica = err?.code === 190
+      ? " ⚠ O TOKEN EXPIROU. O da tela de Configuração da API é temporário e morre num horário fixo. Gere outro na Meta (WhatsApp → Configuração da API → Gerar token), cole aqui e salve — leva um minuto. Para não repetir todo dia, o passo 8 do guia acima mostra como criar o permanente."
+      : err?.code === 100
+        ? ` ⚠ Esta chamada usou a API ${cred.versao}. Se o token e o ID do número estiverem certos, a versão pode estar aposentada — confira qual a Meta mostra no exemplo de código dela e me avise.`
+        : "";
 
     return {
       ok: false,
