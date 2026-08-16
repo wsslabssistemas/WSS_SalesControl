@@ -26,6 +26,22 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // arquivo num componente de cliente, o build QUEBRA em vez de vazar o token
 // para o bundle.
 
+/**
+ * ⚠ A VERSÃO DA GRAPH API — e ela causou uma tarde de diagnóstico errado.
+ *
+ * Estava fixa em `v21.0`, escrita quando o provedor foi redigido contra a
+ * documentação. A Meta aposenta versão antiga, e chamar uma aposentada devolve
+ * **"Object with ID ... does not exist, cannot be loaded due to missing
+ * permissions"** — uma mensagem que aponta para credencial e permissão, e não
+ * diz uma palavra sobre versão. O token estava certo (302 caracteres,
+ * começando em `EAA`) e o ID do número também; a URL é que era velha.
+ *
+ * O valor vem do que o console da própria Meta gera hoje, no snippet de curl
+ * daquela conta. Quando a Meta subir de novo, este número sobe junto — e a
+ * variável de ambiente continua existindo para trocar sem esperar deploy.
+ */
+export const VERSAO_GRAPH = process.env.WHATSAPP_API_VERSION ?? "v25.0";
+
 export type CredencialCanal = {
   token: string;
   phoneId: string;
@@ -59,7 +75,7 @@ export async function credencialDoCanal(tenantId: string): Promise<CredencialCan
   const phoneId = data?.whatsapp_phone_id?.trim();
   if (!token || !phoneId) return null;
 
-  return { token, phoneId, versao: process.env.WHATSAPP_API_VERSION ?? "v21.0" };
+  return { token, phoneId, versao: VERSAO_GRAPH };
 }
 
 /**

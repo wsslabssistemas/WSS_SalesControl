@@ -157,7 +157,7 @@ export async function enviarPelaCloudAPI(
   credencial: CredencialDoCanal,
 ): Promise<EnvioProvedor> {
   const { token, phoneId } = credencial;
-  const versao = credencial.versao ?? "v21.0";
+  const versao = credencial.versao ?? "v25.0";
 
   if (!token || !phoneId) {
     return { ok: false, motivo: "Canal oficial ligado mas sem credencial desta empresa." };

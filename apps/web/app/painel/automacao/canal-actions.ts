@@ -111,9 +111,22 @@ export async function testarCanal(
     // "modelo não existe") e resumir isso num "falhou" transformaria dez
     // minutos de conserto numa tarde de adivinhação.
     const err = (corpo as { error?: { message?: string; code?: number; error_subcode?: number } })?.error;
+
+    // ⚠ A VERSÃO DA API VAI NA MENSAGEM, e custou uma tarde não estar lá.
+    //
+    // Com a versão aposentada, a Meta responde *"Object with ID ... does not
+    // exist, cannot be loaded due to missing permissions"* — uma frase que
+    // aponta para credencial e permissão e não diz uma palavra sobre versão.
+    // O token estava certo e o ID do número também; a URL é que era velha.
+    //
+    // A dica só aparece no erro 100, que é o que essa combinação produz.
+    const dica = err?.code === 100
+      ? ` ⚠ Esta chamada usou a API ${cred.versao}. Se o token e o ID do número estiverem certos, a versão pode estar aposentada — confira qual a Meta mostra no exemplo de código dela e me avise.`
+      : "";
+
     return {
       ok: false,
-      mensagem: `A Meta recusou (HTTP ${resp.status}): ${err?.message ?? JSON.stringify(corpo).slice(0, 300)}${err?.code ? ` [código ${err.code}${err.error_subcode ? `/${err.error_subcode}` : ""}]` : ""}`,
+      mensagem: `A Meta recusou (HTTP ${resp.status}): ${err?.message ?? JSON.stringify(corpo).slice(0, 300)}${err?.code ? ` [código ${err.code}${err.error_subcode ? `/${err.error_subcode}` : ""}]` : ""}${dica}`,
     };
   } catch (e) {
     return { ok: false, mensagem: `Não consegui falar com a Meta: ${e instanceof Error ? e.message : String(e)}` };
