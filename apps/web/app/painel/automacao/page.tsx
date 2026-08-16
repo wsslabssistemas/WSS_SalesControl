@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { readAutomation, MODE_LABEL, MODE_HINT, type AutomationMode } from "@/lib/automation";
 import { saveAutomation } from "./actions";
+import { statusDoCanal } from "@/lib/credenciais";
+import { origemDoSite } from "@/lib/site";
+import { Canal } from "./Canal";
+
+// Chamada de rede para a Meta no teste de conexao. Ver a nota em
+// `fila/page.tsx`: tela que fala com servico externo declara o tempo.
+export const maxDuration = 60;
 
 const FIELDS: { key: keyof ReturnType<typeof readAutomation>; label: string; hint: string; min: number; max: number }[] = [
   { key: "max_per_day", label: "Máx. de mensagens por dia", hint: "Limite total gerado pela automação em 24h", min: 0, max: 1000 },
@@ -17,9 +24,9 @@ const FIELDS: { key: keyof ReturnType<typeof readAutomation>; label: string; hin
 export default async function AutomacaoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ salvo?: string; erro?: string }>;
+  searchParams: Promise<{ salvo?: string; erro?: string; canal?: string }>;
 }) {
-  const { salvo, erro } = await searchParams;
+  const { salvo, erro, canal } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -35,6 +42,7 @@ export default async function AutomacaoPage({
   const { data } = await supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle();
   const a = readAutomation(data?.settings);
   const canEdit = ["owner", "admin"].includes(membership!.role);
+  const status = await statusDoCanal(tenant.id);
 
   const banner: Record<AutomationMode, { cls: string; txt: string }> = {
     off: { cls: "badge", txt: "A automação está desligada — nenhuma mensagem é gerada ou enviada." },
@@ -56,6 +64,8 @@ export default async function AutomacaoPage({
       </div>
 
       {salvo && <p className="badge badge-success mt-16">Regras salvas.</p>}
+      {canal === "salvo" && <p className="badge badge-success mt-16">Credencial do canal salva. Teste antes de usar com cliente.</p>}
+      {canal === "desligado" && <p className="badge mt-16">Canal desligado — o envio voltou para o link humano.</p>}
       {erro && <p className="badge badge-danger mt-16">{erro}</p>}
 
       <form action={saveAutomation} className="card mt-24">
@@ -164,6 +174,16 @@ export default async function AutomacaoPage({
           igual com a automação ligada.
         </p>
       </div>
+
+      {canEdit && (
+        <Canal
+          configurado={status.configurado}
+          phoneIdFinal={status.phoneIdFinal}
+          temVerifyToken={status.temVerifyToken}
+          atualizadoEm={status.atualizadoEm}
+          urlDoWebhook={`${await origemDoSite()}/api/whatsapp/webhook`}
+        />
+      )}
 
       <div className="card mt-16">
         <p className="eyebrow" style={{ marginBottom: 8 }}>Histórico de execuções</p>

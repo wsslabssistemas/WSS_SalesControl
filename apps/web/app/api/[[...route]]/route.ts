@@ -34,13 +34,41 @@ app.get("/health", (c) =>
 // falha: é alguém que não deveria estar ali.
 // =====================================================================
 
-/** Verificação de posse do endereço — a Meta chama uma vez, no cadastro. */
-app.get("/whatsapp/webhook", (c) => {
-  const r = respostaDoDesafio(
-    new URL(c.req.url).searchParams,
-    process.env.WHATSAPP_VERIFY_TOKEN,
-  );
-  if (!r.ok) return c.text(r.motivo, 403);
+/**
+ * Verificação de posse do endereço — a Meta chama uma vez, no cadastro.
+ *
+ * ⚠ O TOKEN É DE CADA EMPRESA, e tem que ser.
+ *
+ * O endereço do webhook é UM só para o produto inteiro, mas cada cliente tem o
+ * app dele na Meta, verificado no CNPJ dele, com o token de verificação que ELE
+ * escolheu. Um token de ambiente só serviria para a primeira empresa — a
+ * segunda não conseguiria concluir o cadastro na Meta, e o sintoma seria um 403
+ * sem explicação numa tela da Meta, longe daqui.
+ *
+ * Então o desafio é aceito se o token bater com o de QUALQUER empresa. Não é
+ * afrouxamento: quem acerta um token que só existe no nosso banco e no Business
+ * Manager daquele cliente já provou a posse que esta chamada verifica. Quem
+ * decide o que fazer com as MENSAGENS continua sendo a assinatura do pacote,
+ * abaixo — essa sim, por app.
+ */
+app.get("/whatsapp/webhook", async (c) => {
+  const params = new URL(c.req.url).searchParams;
+  const oferecido = params.get("hub.verify_token");
+  const admin = createAdminClient();
+  // paginacao-ok: procura exata pelo token oferecido — no máximo uma linha.
+  const { data: dono } = oferecido
+    ? await admin
+        .from("tenant_secrets")
+        .select("tenant_id")
+        .eq("whatsapp_verify_token", oferecido)
+        .maybeSingle()
+    : { data: null };
+
+  const r = respostaDoDesafio(params, dono ? oferecido : process.env.WHATSAPP_VERIFY_TOKEN);
+  if (!r.ok) {
+    console.warn(`[whatsapp] verificacao recusada: ${r.motivo}`);
+    return c.text(r.motivo, 403);
+  }
   // Texto puro, não JSON: a Meta compara o corpo com o desafio que mandou.
   return c.text(r.desafio, 200);
 });

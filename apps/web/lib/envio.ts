@@ -40,16 +40,24 @@ export type ResultadoEnvio =
   | { ok: false; motivo: string };
 
 /**
- * O canal ativo.
+ * O canal ativo — **por empresa**, e isso mudou em 15/ago/2026.
  *
- * Sai de variável de ambiente e não de banco porque é decisão de
- * INFRAESTRUTURA, não de cliente: nenhuma empresa deve poder se colocar num
- * canal que a plataforma não opera. Quando houver mais de um canal em
- * produção ao mesmo tempo, isto vira coluna em `tenants` — e só então.
+ * Era `WHATSAPP_CANAL` no ambiente: uma chave global para o sistema inteiro. O
+ * comentário antigo dizia que canal é decisão de infraestrutura e não de
+ * cliente, e isso continua verdade para o PROVEDOR — mas não para o NÚMERO.
+ * Cada empresa tem o seu, verificado no CNPJ dela, e a entrada já era assim (o
+ * webhook acha o tenant pelo `phone_number_id` do pacote). Saída global com
+ * entrada por empresa é a inconsistência que quebraria no segundo cliente.
+ *
+ * Sem credencial, o canal é o link humano — que não é degradação, é o modo
+ * padrão do produto: *a inteligência é nossa, o envio é humano.*
  */
-export function canalAtivo(): Canal {
-  return process.env.WHATSAPP_CANAL === "cloud_api" ? "cloud_api" : "link_humano";
+export function canalDe(credencial: CredencialDoCanal | null | undefined): Canal {
+  return credencial?.token && credencial?.phoneId ? "cloud_api" : "link_humano";
 }
+
+/** O mínimo que o envio precisa saber. Vem de `lib/credenciais.ts`. */
+export type CredencialDoCanal = { token: string; phoneId: string; versao?: string };
 
 /**
  * Prepara (ou faz) o envio de uma mensagem.
@@ -58,17 +66,20 @@ export function canalAtivo(): Canal {
  * telas de lista, e uma exceção por telefone mal cadastrado derrubaria a fila
  * inteira por causa de uma linha.
  */
-export async function enviarMensagem(destino: Destino): Promise<ResultadoEnvio> {
+export async function enviarMensagem(
+  destino: Destino,
+  credencial?: CredencialDoCanal | null,
+): Promise<ResultadoEnvio> {
   const texto = (destino.texto ?? "").trim();
   if (!texto) return { ok: false, motivo: "Mensagem vazia." };
 
   const num = paraE164BR(destino.telefone);
   if (!num.ok) return { ok: false, motivo: num.motivo };
 
-  const canal = canalAtivo();
+  const canal = canalDe(credencial);
 
   if (canal === "cloud_api") {
-    const r = await enviarPelaCloudAPI(num.digitos, texto);
+    const r = await enviarPelaCloudAPI(num.digitos, texto, credencial!);
     return r.ok
       ? { ok: true, modo: "automatico", canal, id: r.id, e164: num.e164, ajuste: num.ajuste }
       : { ok: false, motivo: r.motivo };
@@ -118,17 +129,16 @@ export function linkDeWhatsApp(telefone: string | null | undefined, texto?: stri
 
 type EnvioProvedor = { ok: true; id: string } | { ok: false; motivo: string };
 
-async function enviarPelaCloudAPI(digitos: string, texto: string): Promise<EnvioProvedor> {
-  const token = process.env.WHATSAPP_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_ID;
-  const versao = process.env.WHATSAPP_API_VERSION ?? "v21.0";
+export async function enviarPelaCloudAPI(
+  digitos: string,
+  texto: string,
+  credencial: CredencialDoCanal,
+): Promise<EnvioProvedor> {
+  const { token, phoneId } = credencial;
+  const versao = credencial.versao ?? "v21.0";
 
   if (!token || !phoneId) {
-    return {
-      ok: false,
-      motivo:
-        "Canal oficial ligado mas sem credencial: faltam WHATSAPP_TOKEN e WHATSAPP_PHONE_ID.",
-    };
+    return { ok: false, motivo: "Canal oficial ligado mas sem credencial desta empresa." };
   }
 
   try {
