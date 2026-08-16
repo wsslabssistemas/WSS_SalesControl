@@ -61,20 +61,37 @@ export function Canal({
       </p>
 
       <form action={salvarCanal} className="stack" style={{ gap: 10, marginTop: 14 }}>
+        {/* ⚠ OS RÓTULOS SÃO OS DA META, PALAVRA POR PALAVRA — e a primeira
+            versão inventou os próprios ("Token permanente", "ID do número").
+            O fundador travou por causa disso: *"tem que usar a mesma
+            nomenclatura do Meta, senão complica"*. Ele tem razão. Quem
+            configura está com duas telas abertas e copia de uma para a outra;
+            nome diferente vira um problema de tradução no meio de uma tarefa
+            que já é difícil. */}
         <label className="text-dim" style={{ fontSize: 13 }}>
-          Token permanente
+          Token de acesso
+          <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
+            Na Meta: WhatsApp → Configuração da API → botão <strong>Gerar token</strong>
+          </span>
           <input type="password" name="token" autoComplete="off"
             placeholder={configurado ? "já configurado — preencha só para trocar" : "EAAG..."} />
         </label>
         <label className="text-dim" style={{ fontSize: 13 }}>
-          ID do número (Phone number ID)
+          Phone Number ID
+          <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
+            Na Meta: mesma tela, ao lado do número de teste
+          </span>
           <input type="text" name="phone_id" autoComplete="off"
-            placeholder={phoneIdFinal ? `…${phoneIdFinal}` : "1234567890"} />
+            placeholder={phoneIdFinal ? `…${phoneIdFinal}` : "1072873705913820"} />
         </label>
         <label className="text-dim" style={{ fontSize: 13 }}>
-          Token de verificação do webhook {temVerifyToken && <span className="badge badge-success">definido</span>}
+          Verificar token {temVerifyToken && <span className="badge badge-success">definido</span>}
+          <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
+            Este VOCÊ inventa. É o mesmo texto que vai no campo <strong>Verificar token</strong> da Meta,
+            em WhatsApp → Configuração → Webhook
+          </span>
           <input type="text" name="verify_token" autoComplete="off"
-            placeholder="você escolhe — o mesmo que colar na Meta" />
+            placeholder="ex.: befitness-kairos-2026" />
         </label>
         {/* ⚠ SEM ELE O WEBHOOK RECUSA TUDO — e recusar e o comportamento certo,
             porque liberar sem conferir a assinatura abriria o unico endereco
@@ -82,9 +99,14 @@ export function Canal({
             cliente. Enquanto isso era variavel de ambiente, a Meta dizia
             "nao foi possivel entregar a mensagem, confira seus webhooks". */}
         <label className="text-dim" style={{ fontSize: 13 }}>
-          Chave secreta do app (App secret) {temAppSecret && <span className="badge badge-success">definida</span>}
+          Chave Secreta do Aplicativo {temAppSecret && <span className="badge badge-success">definida</span>}
+          <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
+            <strong>Não é o token.</strong> Fica noutro lugar: no menu da esquerda, lá embaixo,
+            <strong> Configurações do app → Básico</strong>. O campo vem escondido — clique em{" "}
+            <strong>Mostrar</strong> e confirme sua senha do Facebook.
+          </span>
           <input type="password" name="app_secret" autoComplete="off"
-            placeholder={temAppSecret ? "já configurada — preencha só para trocar" : "Configurações do app → Básico → Chave secreta"} />
+            placeholder={temAppSecret ? "já configurada — preencha só para trocar" : "32 caracteres, letras e números"} />
         </label>
         <p className="text-faint" style={{ fontSize: 12, margin: 0 }}>
           Campo em branco <strong>não apaga</strong> o que já está salvo. Sem a chave

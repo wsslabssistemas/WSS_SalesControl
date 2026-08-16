@@ -110,7 +110,23 @@ export function Guia() {
       ),
     },
     {
-      titulo: "7. Troque pelo token permanente",
+      titulo: "7. Pegue a Chave Secreta do Aplicativo",
+      corpo: (
+        <>
+          <strong>Não é o token</strong>, e não fica junto dele — é o que valida que o pacote
+          veio mesmo da Meta. Sem ela o sistema <strong>recusa tudo</strong> que a Meta manda,
+          e a Meta mostra &ldquo;não foi possível entregar a mensagem, confira seus
+          webhooks&rdquo;.
+          <br />
+          No menu da esquerda, bem embaixo (ícone de engrenagem):{" "}
+          <strong>Configurações do app → Básico</strong>. O campo{" "}
+          <strong>Chave Secreta do Aplicativo</strong> vem escondido — clique em{" "}
+          <strong>Mostrar</strong>, confirme a senha do Facebook, e copie.
+        </>
+      ),
+    },
+    {
+      titulo: "8. Só depois, troque pelo token permanente",
       corpo: (
         <>
           O token do passo 3 morre em 24 horas. O definitivo sai em{" "}
@@ -127,7 +143,7 @@ export function Guia() {
       ),
     },
     {
-      titulo: "8. Verifique o negócio (CNPJ)",
+      titulo: "9. Verifique o negócio (CNPJ)",
       corpo: (
         <>
           Em <a href="https://business.facebook.com/settings" target="_blank" rel="noopener noreferrer">business.facebook.com/settings</a>{" "}
@@ -148,7 +164,7 @@ export function Guia() {
     <div className="card mt-24">
       <p className="eyebrow" style={{ marginBottom: 6 }}>Como conseguir a credencial na Meta</p>
       <p className="text-dim" style={{ fontSize: 13, marginTop: 0 }}>
-        Oito passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
+        Nove passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
         escolher o número.
       </p>
 
