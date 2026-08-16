@@ -63,6 +63,9 @@ export default async function PainelLayout({
     { href: "/painel/automacao", label: "Automação" },
     { href: "/painel/tutorial", label: "Tutorial" },
     ...(showManager ? [{ href: "/painel/sincronizar", label: "Sincronizar" }] : []),
+    // Fica COLADA na Sincronizar de propósito: é ali que as contradições
+    // nascem e é ali que o gestor está quando pensa em dado de origem.
+    ...(showManager ? [{ href: "/painel/contradicoes", label: "Conferir" }] : []),
     ...(showManager ? [{ href: "/painel/aparencia", label: "Aparência" }] : []),
     ...(showAdmin ? [{ href: "/painel/admin", label: "Fabricante" }] : []),
   ];

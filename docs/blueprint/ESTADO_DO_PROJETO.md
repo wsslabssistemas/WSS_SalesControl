@@ -1248,6 +1248,7 @@ node packages/db/tests/fila_test.mjs       # quitacao (as QUATRO origens), motiv
 node packages/db/tests/cadencia_test.mjs   # qual passo vem agora, e quando (o acervo): 19/19
 node packages/db/tests/racao_test.mjs      # o teto do que o sistema pede por dia: 12/12
 node packages/db/tests/carteira_test.mjs   # quem recebe o contato que chega sozinho: 6/6
+node packages/db/tests/contradicoes_test.mjs # o que o sistema afirma e a fonte nao confirma: 12/12
 node packages/db/tests/aparencia_test.mjs  # cor e logo aceitas: 12/12
 node packages/db/tests/curso_render_test.mjs # 45 lições renderizam (precisa do banco)
 node scripts/seed-curso.mjs packages/db/migrations/0036_curso_conteudo_m7_m8_m9.sql

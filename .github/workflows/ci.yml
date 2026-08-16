@@ -162,6 +162,11 @@ jobs:
         run: node packages/db/tests/racao_test.mjs
       # Contato sem responsavel nao aparece na fila de NINGUEM. O webhook do
       # WhatsApp criava lead orfao exatamente assim — sem erro e sem aviso.
+      # O que o sistema AFIRMA e a fonte nao confirma. Guarda a regra que mais
+      # importa ali: nao acusar sobre AUSENCIA de dado — "nunca pagou" so pode
+      # ser dito se os recebimentos foram conferidos.
+      - name: Contradicoes — o que o sistema afirma sem base
+        run: node packages/db/tests/contradicoes_test.mjs
       - name: Carteira — quem recebe o contato que chega sozinho
         run: node packages/db/tests/carteira_test.mjs
       # A medicao que fecha o ciclo tecnica -> desfecho, e que existe para
