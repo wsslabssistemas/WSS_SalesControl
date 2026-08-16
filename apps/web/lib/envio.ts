@@ -40,20 +40,42 @@ export type ResultadoEnvio =
   | { ok: false; motivo: string };
 
 /**
- * O canal ativo — **por empresa**, e isso mudou em 15/ago/2026.
+ * ⚠ TER CREDENCIAL NÃO PODE LIGAR O CANAL SOZINHO — e a primeira versão disto
+ * ligava (achado em 16/ago/2026, a partir de uma pergunta do fundador).
  *
- * Era `WHATSAPP_CANAL` no ambiente: uma chave global para o sistema inteiro. O
- * comentário antigo dizia que canal é decisão de infraestrutura e não de
- * cliente, e isso continua verdade para o PROVEDOR — mas não para o NÚMERO.
- * Cada empresa tem o seu, verificado no CNPJ dela, e a entrada já era assim (o
- * webhook acha o tenant pelo `phone_number_id` do pacote). Saída global com
- * entrada por empresa é a inconsistência que quebraria no segundo cliente.
+ * Ele perguntou se, com a Be Fitness no automático, os vendedores poderiam
+ * continuar usando o sistema normalmente — eles atendem pelo número ANTIGO da
+ * academia, o do aplicativo. A pergunta expôs o defeito: `canalDe` devolvia
+ * `cloud_api` assim que existisse credencial. Ou seja, **salvar o token trocaria
+ * o número de saída da empresa inteira**, em silêncio, no mesmo instante.
+ *
+ * O efeito no cliente é o pior possível: ele receberia a mensagem do sistema
+ * por um número novo e a resposta da recepcionista por outro. Do lado dele não
+ * são dois canais da academia — são dois desconhecidos.
+ *
+ * São DUAS decisões diferentes e o código tratava como uma:
+ *   • **por onde SAI** (link que abre o WhatsApp da pessoa × número do sistema);
+ *   • **quem DISPARA** (uma pessoa clicando × o motor sozinho).
+ *
+ * A segunda é `automation.mode`. Esta função responde só a primeira, e o padrão
+ * é o link humano mesmo com credencial salva: ligar exige alguém escolher.
+ *
+ * E A CREDENCIAL É POR EMPRESA desde 15/ago. Era `WHATSAPP_CANAL` no ambiente,
+ * uma chave global: o comentário antigo dizia que canal é decisão de
+ * infraestrutura e não de cliente, e isso continua verdade para o PROVEDOR —
+ * mas não para o NÚMERO. Cada empresa tem o seu, verificado no CNPJ dela, e a
+ * entrada já era assim (o webhook acha o tenant pelo `phone_number_id`).
  *
  * Sem credencial, o canal é o link humano — que não é degradação, é o modo
  * padrão do produto: *a inteligência é nossa, o envio é humano.*
  */
-export function canalDe(credencial: CredencialDoCanal | null | undefined): Canal {
-  return credencial?.token && credencial?.phoneId ? "cloud_api" : "link_humano";
+export function canalDe(
+  credencial: CredencialDoCanal | null | undefined,
+  usarNumeroDoSistema = false,
+): Canal {
+  return usarNumeroDoSistema && credencial?.token && credencial?.phoneId
+    ? "cloud_api"
+    : "link_humano";
 }
 
 /** O mínimo que o envio precisa saber. Vem de `lib/credenciais.ts`. */

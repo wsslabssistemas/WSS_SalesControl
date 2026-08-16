@@ -5,6 +5,7 @@ import { saveAutomation } from "./actions";
 import { statusDoCanal } from "@/lib/credenciais";
 import { origemDoSite } from "@/lib/site";
 import { Canal } from "./Canal";
+import { Guia } from "./Guia";
 
 // Chamada de rede para a Meta no teste de conexao. Ver a nota em
 // `fila/page.tsx`: tela que fala com servico externo declara o tempo.

@@ -1,0 +1,148 @@
+import Link from "next/link";
+
+/**
+ * O PASSO A PASSO DA META — dentro do produto, não num chat.
+ *
+ * ⚠ POR QUE ISTO É TELA E NÃO MENSAGEM. O fundador pediu o roteiro para ligar
+ * o canal da Be Fitness. A mesma sequência vale para o segundo cliente, o
+ * terceiro, e para o dia em que ele não lembrar por que o número da recepção
+ * não serve. Roteiro que mora numa conversa some com a conversa.
+ *
+ * Os endereços apontam para a RAIZ de cada ferramenta (o painel de apps, as
+ * configurações do negócio) e o caminho de dentro está escrito em texto. É de
+ * propósito: a Meta reorganiza as telas com frequência, e link fundo que quebra
+ * é pior que instrução que exige um clique a mais — link quebrado faz a pessoa
+ * achar que o passo não existe mais.
+ */
+export function Guia() {
+  const passos: { titulo: string; corpo: React.ReactNode }[] = [
+    {
+      titulo: "1. Separe um número novo — não use o da recepção",
+      corpo: (
+        <>
+          Um número registrado na plataforma <strong>sai do aplicativo do WhatsApp</strong>. Ele
+          continua recebendo ligação e SMS, mas some do WhatsApp Messenger — e um número que
+          já está no WhatsApp só entra se for apagado de lá antes. Se você registrar o número
+          da recepção, a equipe perde o aplicativo que usa hoje.
+          <br />
+          <span className="text-faint">
+            Um chip novo resolve. Guarde o aparelho: a Meta manda um código de verificação por
+            SMS ou ligação.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "2. Crie o app",
+      corpo: (
+        <>
+          Vá em <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a>{" "}
+          e clique em <strong>Criar app</strong>. No caso de uso, escolha{" "}
+          <strong>&ldquo;Conectar-se a clientes pelo WhatsApp&rdquo;</strong>. Dê um nome
+          (o cliente nunca vê) e vincule ao portfólio de negócios da empresa.
+        </>
+      ),
+    },
+    {
+      titulo: "3. Pegue o ID do número e o token de teste",
+      corpo: (
+        <>
+          No app, menu da esquerda: <strong>WhatsApp → Configuração da API</strong>.
+          Nessa página aparecem, um embaixo do outro:
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+            <li><strong>Token de acesso temporário</strong> — vale 24 horas, serve para testar hoje.</li>
+            <li><strong>Identificação do número de telefone</strong> — é o &ldquo;ID do número&rdquo; que você cola aqui embaixo.</li>
+          </ul>
+          <span className="text-faint">
+            A Meta já cria um <strong>número de teste</strong> nessa tela. Use ele primeiro: dá
+            para provar a ligação inteira sem tocar em nenhum número real da empresa.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "4. Ligue o webhook",
+      corpo: (
+        <>
+          Ainda no app, <strong>WhatsApp → Configuração</strong> (Configuration), campo{" "}
+          <strong>Webhook</strong>. Cole o endereço que aparece na caixa abaixo desta lista e,
+          no campo <strong>Token de verificação</strong>, o mesmo texto que você salvou aqui no
+          Kairós — <em>você inventa esse texto</em>, ele não vem da Meta.
+          <br />
+          Depois clique em <strong>Gerenciar</strong> e assine o campo <strong>messages</strong>.
+          Sem essa assinatura o sistema nunca recebe o que o cliente escreve.
+        </>
+      ),
+    },
+    {
+      titulo: "5. Troque pelo token permanente",
+      corpo: (
+        <>
+          O token do passo 3 morre em 24 horas. O definitivo sai em{" "}
+          <a href="https://business.facebook.com/settings" target="_blank" rel="noopener noreferrer">business.facebook.com/settings</a>{" "}
+          → <strong>Usuários do sistema</strong> → <strong>Adicionar</strong>. Dê controle total
+          sobre o app e sobre a conta do WhatsApp, clique em <strong>Gerar token</strong> e marque
+          as três permissões: <code>whatsapp_business_messaging</code>,{" "}
+          <code>whatsapp_business_management</code> e <code>business_management</code>.
+          <br />
+          <span className="text-faint">
+            Ele aparece UMA vez. Copie e cole aqui na hora — se perder, é só gerar outro.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "6. Verifique o negócio (CNPJ)",
+      corpo: (
+        <>
+          Em <a href="https://business.facebook.com/settings" target="_blank" rel="noopener noreferrer">business.facebook.com/settings</a>{" "}
+          → <strong>Central de Segurança</strong> → <strong>Iniciar verificação</strong>.
+          Vai o CNPJ da empresa, com um comprovante em que o nome e o endereço batam
+          exatamente com o cadastro.
+          <br />
+          <span className="text-faint">
+            Dá para testar antes da verificação sair. Ela é o que destrava volume e o limite de
+            números.
+          </span>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="card mt-24">
+      <p className="eyebrow" style={{ marginBottom: 6 }}>Como conseguir a credencial na Meta</p>
+      <p className="text-dim" style={{ fontSize: 13, marginTop: 0 }}>
+        Seis passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
+        escolher o número.
+      </p>
+
+      <ol style={{ listStyle: "none", padding: 0, margin: "16px 0 0" }}>
+        {passos.map((p, i) => (
+          <li key={i} style={{ padding: "12px 0", borderTop: i ? "1px solid var(--border)" : "none" }}>
+            <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 600 }}>{p.titulo}</p>
+            <div className="text-dim" style={{ fontSize: 13 }}>{p.corpo}</div>
+          </li>
+        ))}
+      </ol>
+
+      {/* ⚠ O LIMITE QUE DECIDE O RITMO, e ele conversa com a ração do dia. */}
+      <div className="card mt-16" style={{ background: "var(--bg-elev)" }}>
+        <p className="eyebrow" style={{ marginBottom: 6 }}>O que esperar do começo</p>
+        <p className="text-dim" style={{ fontSize: 13, margin: 0 }}>
+          Número novo começa em <strong>250 mensagens entregues</strong>. Sobe para 1.000 e
+          depois 2.000 conforme a empresa entrega mensagem com qualidade boa ao longo de 30
+          dias. Com a ração em 10 por vendedor, três pessoas dão ~900 por mês — cabe no
+          primeiro degrau. <strong>Uma lista de mil ex-alunos não cabe</strong>, e é por isso
+          que a reativação é o último motivo da fila.
+        </p>
+        <p className="text-dim" style={{ fontSize: 13, marginTop: 8, marginBottom: 0 }}>
+          E fora da janela de 24 horas só sai <strong>modelo aprovado</strong> pela Meta.
+          Responder quem escreveu é texto livre; começar conversa exige cadastrar o texto e
+          esperar aprovação — trabalho de cadastro, não de código.{" "}
+          <Link href="/painel/fila">A fila continua funcionando pelo link</Link> enquanto isso.
+        </p>
+      </div>
+    </div>
+  );
+}
