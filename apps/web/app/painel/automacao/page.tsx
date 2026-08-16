@@ -181,6 +181,7 @@ export default async function AutomacaoPage({
           configurado={status.configurado}
           phoneIdFinal={status.phoneIdFinal}
           temVerifyToken={status.temVerifyToken}
+          temAppSecret={status.temAppSecret}
           atualizadoEm={status.atualizadoEm}
           urlDoWebhook={`${await origemDoSite()}/api/whatsapp/webhook`}
         />

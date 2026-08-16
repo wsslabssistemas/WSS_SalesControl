@@ -3,10 +3,12 @@ import { handle } from "hono/vercel";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { variantesArmazenadas } from "@/lib/phone";
 import { escolherResponsavel } from "@/lib/carteira";
+import { empresaDoNumero } from "@/lib/credenciais";
 import {
   assinaturaConfere,
   respostaDoDesafio,
   desmontarPacote,
+  phoneNumberIdDoPacote,
   type MensagemRecebida,
 } from "@/lib/whatsapp-webhook";
 
@@ -90,13 +92,34 @@ app.post("/whatsapp/webhook", async (c) => {
   // pacote legítimo.
   const cru = await c.req.text();
 
+  // ⚠ O SEGREDO É POR EMPRESA, ENTÃO O CORPO É LIDO ANTES DE SER CONFERIDO —
+  // e a distinção que torna isso seguro cabe numa frase: **ler para escolher a
+  // chave é diferente de confiar no conteúdo.**
+  //
+  // Cada cliente tem o próprio app na Meta, com o próprio segredo. Qual usar
+  // depende de saber de quem é o pacote, e a única pista está dentro dele
+  // (`phone_number_id`). Um atacante pode mentir esse campo à vontade: no
+  // máximo ele escolhe contra QUAL segredo vai ser conferido, e aí a
+  // assinatura dele não vai bater com nenhum. Nada do corpo é usado para
+  // decidir coisa alguma antes da linha de verificação abaixo.
+  //
+  // Enquanto isso era `process.env.WHATSAPP_APP_SECRET`, o efeito era total e
+  // silencioso: sem variável configurada, `assinaturaConfere` recusa — a regra
+  // certa — e **todo pacote da Meta voltava 403**. Confirmação de entrega,
+  // status e, mais tarde, a mensagem do cliente. Na tela da Meta isso apareceu
+  // como *"não foi possível entregar a mensagem, confira seus webhooks"*.
+  const dono = await empresaDoNumero(phoneNumberIdDoPacote(cru) ?? "");
+
   const assin = assinaturaConfere(
     cru,
     c.req.header("x-hub-signature-256"),
-    process.env.WHATSAPP_APP_SECRET,
+    dono?.appSecret ?? process.env.WHATSAPP_APP_SECRET,
   );
   if (!assin.ok) {
-    console.warn(`[whatsapp] pacote recusado: ${assin.motivo}`);
+    console.warn(
+      `[whatsapp] pacote recusado: ${assin.motivo}` +
+      (dono ? "" : " (nenhuma empresa tem esse numero cadastrado em Automacao → Canal oficial)"),
+    );
     return c.text("assinatura invalida", 403);
   }
 

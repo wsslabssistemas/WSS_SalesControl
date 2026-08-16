@@ -18,12 +18,14 @@ export function Canal({
   configurado,
   phoneIdFinal,
   temVerifyToken,
+  temAppSecret,
   atualizadoEm,
   urlDoWebhook,
 }: {
   configurado: boolean;
   phoneIdFinal: string | null;
   temVerifyToken: boolean;
+  temAppSecret: boolean;
   atualizadoEm: string | null;
   urlDoWebhook: string;
 }) {
@@ -74,8 +76,20 @@ export function Canal({
           <input type="text" name="verify_token" autoComplete="off"
             placeholder="você escolhe — o mesmo que colar na Meta" />
         </label>
+        {/* ⚠ SEM ELE O WEBHOOK RECUSA TUDO — e recusar e o comportamento certo,
+            porque liberar sem conferir a assinatura abriria o unico endereco
+            publico do produto para qualquer um escrever no historico de um
+            cliente. Enquanto isso era variavel de ambiente, a Meta dizia
+            "nao foi possivel entregar a mensagem, confira seus webhooks". */}
+        <label className="text-dim" style={{ fontSize: 13 }}>
+          Chave secreta do app (App secret) {temAppSecret && <span className="badge badge-success">definida</span>}
+          <input type="password" name="app_secret" autoComplete="off"
+            placeholder={temAppSecret ? "já configurada — preencha só para trocar" : "Configurações do app → Básico → Chave secreta"} />
+        </label>
         <p className="text-faint" style={{ fontSize: 12, margin: 0 }}>
-          Campo em branco <strong>não apaga</strong> o que já está salvo.
+          Campo em branco <strong>não apaga</strong> o que já está salvo. Sem a chave
+          secreta o sistema <strong>recusa tudo que a Meta manda</strong> — inclusive as
+          respostas dos clientes.
         </p>
         <button type="submit" className="btn btn-sm" style={{ alignSelf: "flex-start" }}>
           Salvar credencial

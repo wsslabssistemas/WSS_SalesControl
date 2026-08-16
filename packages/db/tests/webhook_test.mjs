@@ -15,6 +15,7 @@ import {
   respostaDoDesafio,
   desmontarPacote,
   janelaDeAtendimento,
+  phoneNumberIdDoPacote,
 } from "../../../apps/web/lib/whatsapp-webhook.ts";
 import { variantesArmazenadas } from "../../../apps/web/lib/phone.ts";
 
@@ -186,7 +187,34 @@ eq("fixo tem só duas formas", variantesArmazenadas("555133334444").sort(),
   ["5133334444", "555133334444"].sort());
 
 // ---------------------------------------------------------------------
+// ================= DE QUEM E O PACOTE, ANTES DE CONFERIR A ASSINATURA =====
+//
+// O app secret e POR EMPRESA (cada cliente tem o proprio app na Meta), entao
+// descobrir qual segredo usar exige ler o `phone_number_id` de dentro do corpo
+// — ou seja, ANTES de a assinatura ser conferida.
+//
+// Isso e seguro por um motivo especifico: ler para ESCOLHER A CHAVE e diferente
+// de confiar no conteudo. Quem mentir esse campo so escolhe contra qual segredo
+// vai ser conferido, e a assinatura dele nao bate com nenhum.
+//
+// O que estes casos guardam e o LADO PARA O QUAL SE ERRA: qualquer formato
+// inesperado devolve `null`, e `null` leva a recusa.
+const pacoteCom = (id) => JSON.stringify({
+  entry: [{ changes: [{ value: { metadata: { phone_number_id: id } } }] }],
+});
+
+eq("acha o id do numero no pacote", phoneNumberIdDoPacote(pacoteCom("1072873705913820")), "1072873705913820");
+eq("JSON invalido devolve null, e null recusa", phoneNumberIdDoPacote("{isso nao e json"), null);
+eq("pacote sem metadata devolve null", phoneNumberIdDoPacote(JSON.stringify({ entry: [] })), null);
+eq("id vazio conta como ausente", phoneNumberIdDoPacote(pacoteCom("   ")), null);
+eq("id que nao e texto nao vira texto", phoneNumberIdDoPacote(pacoteCom(12345)), null);
+
+// ⚠ O TOTAL É CALCULADO AQUI, no fim. Ele morava no meio do arquivo e por isso
+// contava só as asserções escritas ACIMA dele: a saída dizia "46/41", com mais
+// aprovados do que existem. Número que soma errado num teste é o pior lugar
+// possível para um número errado — é o instrumento de medida.
 const total = passou + falhas.length;
+
 if (falhas.length) {
   console.error(`\n✗ FALHOU — ${passou}/${total}\n`);
   for (const f of falhas) console.error(`  ✗ ${f}\n`);

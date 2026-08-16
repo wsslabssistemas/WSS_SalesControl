@@ -35,6 +35,31 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * lento e chato, e é exatamente por isso que ninguém percebe que está
  * acontecendo.
  */
+/**
+ * De qual NÚMERO o pacote fala — lido do corpo cru, sem confiar nele.
+ *
+ * ⚠ ISTO RODA ANTES DA ASSINATURA SER CONFERIDA, e é a única coisa que pode.
+ * O segredo que valida a assinatura é da empresa, e descobrir a empresa exige
+ * ler o `phone_number_id`, que só existe dentro do corpo. Ler para ESCOLHER A
+ * CHAVE é diferente de confiar no conteúdo: quem mentir esse campo só escolhe
+ * contra qual segredo vai ser conferido, e a assinatura dele não bate com
+ * nenhum.
+ *
+ * Devolve `null` em qualquer formato inesperado — inclusive JSON inválido. A
+ * consequência de `null` é a recusa, que é o lado certo para errar.
+ */
+export function phoneNumberIdDoPacote(corpoCru: string): string | null {
+  try {
+    const p = JSON.parse(corpoCru) as {
+      entry?: { changes?: { value?: { metadata?: { phone_number_id?: unknown } } }[] }[];
+    };
+    const id = p?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
+    return typeof id === "string" && id.trim() ? id.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function assinaturaConfere(
   corpoCru: string,
   cabecalho: string | null | undefined,

@@ -35,6 +35,7 @@ export async function salvarCanal(formData: FormData) {
     token: String(formData.get("token") ?? ""),
     phoneId: String(formData.get("phone_id") ?? ""),
     verifyToken: String(formData.get("verify_token") ?? ""),
+    appSecret: String(formData.get("app_secret") ?? ""),
   });
 
   revalidatePath("/painel/automacao");

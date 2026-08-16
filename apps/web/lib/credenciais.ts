@@ -62,6 +62,46 @@ export async function credencialDoCanal(tenantId: string): Promise<CredencialCan
   return { token, phoneId, versao: process.env.WHATSAPP_API_VERSION ?? "v21.0" };
 }
 
+/**
+ * O app secret da empresa — o que valida a assinatura do webhook.
+ *
+ * ⚠ SEM ELE, O WEBHOOK RECUSA TUDO, e isso é de propósito: `assinaturaConfere`
+ * nega quando não há segredo, porque liberar sem conferência transformaria o
+ * único endereço público do produto numa porta para escrever no histórico de
+ * um cliente pagante. Foi essa recusa (correta) que apareceu na tela da Meta
+ * como *"não foi possível entregar a mensagem, confira seus webhooks"* enquanto
+ * o segredo ainda era variável de ambiente.
+ */
+export async function appSecretDoCanal(tenantId: string): Promise<string | null> {
+  const admin = createAdminClient();
+  // paginacao-ok: uma linha, chave primária.
+  const { data } = await admin
+    .from("tenant_secrets").select("whatsapp_app_secret")
+    .eq("tenant_id", tenantId).maybeSingle();
+  return data?.whatsapp_app_secret?.trim() || null;
+}
+
+/**
+ * De quem é o número que recebeu — e o app secret dele, para conferir a
+ * assinatura.
+ *
+ * O webhook precisa dos dois ANTES de confiar no corpo do pacote, e o
+ * `phone_number_id` é a única pista de origem que existe.
+ */
+export async function empresaDoNumero(
+  phoneNumberId: string,
+): Promise<{ tenantId: string; appSecret: string | null } | null> {
+  const admin = createAdminClient();
+  // paginacao-ok: busca exata pelo id do número — no máximo uma linha.
+  const { data } = await admin
+    .from("tenant_secrets")
+    .select("tenant_id, whatsapp_app_secret")
+    .eq("whatsapp_phone_id", phoneNumberId)
+    .maybeSingle();
+  if (!data) return null;
+  return { tenantId: data.tenant_id, appSecret: data.whatsapp_app_secret?.trim() || null };
+}
+
 /** O token de verificação do webhook, escolhido por quem configurou. */
 export async function verifyTokenDoCanal(tenantId: string): Promise<string | null> {
   const admin = createAdminClient();
@@ -84,13 +124,14 @@ export async function statusDoCanal(tenantId: string): Promise<{
   configurado: boolean;
   phoneIdFinal: string | null;
   temVerifyToken: boolean;
+  temAppSecret: boolean;
   atualizadoEm: string | null;
 }> {
   const admin = createAdminClient();
   // paginacao-ok: uma linha, chave primária.
   const { data } = await admin
     .from("tenant_secrets")
-    .select("whatsapp_token, whatsapp_phone_id, whatsapp_verify_token, updated_at")
+    .select("whatsapp_token, whatsapp_phone_id, whatsapp_verify_token, whatsapp_app_secret, updated_at")
     .eq("tenant_id", tenantId)
     .maybeSingle();
 
@@ -99,6 +140,7 @@ export async function statusDoCanal(tenantId: string): Promise<{
     configurado: !!data?.whatsapp_token?.trim() && !!phoneId,
     phoneIdFinal: phoneId ? phoneId.slice(-4) : null,
     temVerifyToken: !!data?.whatsapp_verify_token?.trim(),
+    temAppSecret: !!data?.whatsapp_app_secret?.trim(),
     atualizadoEm: data?.updated_at ?? null,
   };
 }
@@ -113,7 +155,7 @@ export async function statusDoCanal(tenantId: string): Promise<{
 export async function salvarCredencial(
   tenantId: string,
   membershipId: string,
-  campos: { token?: string; phoneId?: string; verifyToken?: string },
+  campos: { token?: string; phoneId?: string; verifyToken?: string; appSecret?: string },
 ): Promise<{ ok: boolean; erro?: string }> {
   const admin = createAdminClient();
   const patch: Record<string, unknown> = {
@@ -124,6 +166,7 @@ export async function salvarCredencial(
   if (campos.token?.trim()) patch.whatsapp_token = campos.token.trim();
   if (campos.phoneId?.trim()) patch.whatsapp_phone_id = campos.phoneId.trim();
   if (campos.verifyToken?.trim()) patch.whatsapp_verify_token = campos.verifyToken.trim();
+  if (campos.appSecret?.trim()) patch.whatsapp_app_secret = campos.appSecret.trim();
 
   const { error } = await admin.from("tenant_secrets").upsert(patch, { onConflict: "tenant_id" });
   if (error) return { ok: false, erro: error.message };
