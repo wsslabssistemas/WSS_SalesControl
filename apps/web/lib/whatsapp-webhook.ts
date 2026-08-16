@@ -67,9 +67,24 @@ export function respostaDoDesafio(
   params: URLSearchParams,
   tokenEsperado: string | null | undefined,
 ): { ok: true; desafio: string } | { ok: false; motivo: string } {
-  if (!tokenEsperado) return { ok: false, motivo: "WHATSAPP_VERIFY_TOKEN não configurado." };
+  // ⚠ A MENSAGEM É LIDA NA TELA DA META, POR QUEM ESTÁ CONFIGURANDO — e a
+  // versão anterior mandava a pessoa procurar uma variável de ambiente que não
+  // é mais o caminho. Quem vê isto está no Business Manager, travado, sem
+  // acesso ao servidor: a instrução tem que dizer o que fazer NO PRODUTO.
+  //
+  // E a ORDEM é a armadilha real: a Meta valida o token no instante em que se
+  // clica "Verificar e salvar", então ele precisa já estar salvo aqui ANTES.
+  // Quem faz na ordem inversa recebe 403 e conclui que o endereço está errado.
+  const comoResolver =
+    "Salve o mesmo token em Automação → Canal oficial, no Kairós, ANTES de clicar em " +
+    "\"Verificar e salvar\" aqui. A Meta confere na hora do clique.";
+  if (!tokenEsperado) {
+    return { ok: false, motivo: `Nenhum token de verificação cadastrado. ${comoResolver}` };
+  }
   if (params.get("hub.mode") !== "subscribe") return { ok: false, motivo: "Modo inesperado." };
-  if (params.get("hub.verify_token") !== tokenEsperado) return { ok: false, motivo: "Token de verificação errado." };
+  if (params.get("hub.verify_token") !== tokenEsperado) {
+    return { ok: false, motivo: `Token de verificação diferente do que está salvo. ${comoResolver}` };
+  }
   const desafio = params.get("hub.challenge");
   if (!desafio) return { ok: false, motivo: "Sem desafio." };
   return { ok: true, desafio };
