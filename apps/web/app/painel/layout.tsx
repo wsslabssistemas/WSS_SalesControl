@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireUser, getActiveTenant, listMemberships } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/platform";
 import { loadEntitlements, MODULES } from "@/lib/entitlements";
 import { BRAND_NAME, MAKER } from "@/lib/brand";
@@ -38,6 +39,39 @@ export default async function PainelLayout({
   const teste = estadoDoTeste(ent?.trialEndsAt ?? null);
   const moduleNav = (ent?.unlocked ?? []).map((m) => ({ href: MODULES[m].href, label: MODULES[m].label }));
 
+  /**
+   * ⚠ O CATÁLOGO SÓ APARECE PARA QUEM USA CATÁLOGO.
+   *
+   * Pedido do fundador: *"a Be Fitness não precisa dela, então retira — já tem
+   * muitas abas."* Ele está certo, e a regra generaliza: uma academia vende
+   * plano, não produto com preço e estoque. Distribuidora e oficina vendem.
+   *
+   * A condição é a mais honesta possível — **tem item cadastrado?** Aba que
+   * responde uma tela vazia é pior que aba ausente: ela ocupa espaço na
+   * navegação, ensina que o produto tem coisas que não servem, e some da
+   * atenção junto com as que servem.
+   *
+   * E ela se acende sozinha: no dia em que a empresa importar um catálogo, a
+   * aba volta. O caminho para o primeiro item continua existindo em
+   * `/painel/catalogo`, e é para lá que o Responder manda quem esbarra na
+   * trava de preço — o motor recusa falar de valor que não está no catálogo, e
+   * a mensagem de recusa diz onde cadastrar.
+   *
+   * `head: true` não traz linha nenhuma: é uma contagem, no caminho mais
+   * quente do sistema (toda página do painel passa por aqui).
+   */
+  let temCatalogo = false;
+  if (membership?.tenant) {
+    const supabase = await createClient();
+    // paginacao-ok: só o número, sem trazer linha — e o teto de 1.000 do
+    // PostgREST não alcança `count`.
+    const { count } = await supabase
+      .from("catalog_items")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", membership.tenant.id);
+    temCatalogo = (count ?? 0) > 0;
+  }
+
   // SEM EMPRESA, A NAVEGACAO E UMA SO. Mostrar Responder, Contatos, Funil e
   // Agenda para quem ainda nao criou empresa oferece dez portas que respondem
   // todas "sem empresa vinculada" — e faz a pessoa procurar o defeito em vez
@@ -56,7 +90,7 @@ export default async function PainelLayout({
     { href: "/painel/funil", label: "Funil" },
     { href: "/painel/agenda", label: "Agenda" },
     ...moduleNav,
-    { href: "/painel/catalogo", label: "Catálogo" },
+    ...(temCatalogo ? [{ href: "/painel/catalogo", label: "Catálogo" }] : []),
     ...(showManager ? [{ href: "/painel/gestao", label: "Gestão" }] : []),
     { href: "/painel/equipe", label: "Equipe" },
     { href: "/painel/dna", label: "DNA" },
