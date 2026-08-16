@@ -19,7 +19,7 @@ export type AskResult =
   | { ok: false; limite: true; mensagem: string };
 
 type Contact = { id: string; name: string; journey_stage: string; source: string | null; owner_id: string | null; created_at: string };
-type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string; outcome: string | null };
+type Ix = { contact_id: string | null; direction: string; input_kind: string | null; occurred_at: string; outcome: string | null; created_by: string | null };
 type Hist = { contact_id: string; to_stage: string; occurred_at: string };
 type Member = { id: string; role: string; user: { full_name: string | null; email: string | null } | null };
 
@@ -77,7 +77,7 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       // A licao ja estava escrita no ESTADO_DO_PROJETO ("limite que nao
       // reclama e o pior tipo") e reapareceu aqui. Corrigir ocorrencia nao
       // fecha classe: ver `paginacao_check.mjs`.
-      lerTudo<Ix>((de, ate) => supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "interacoes da gestao" }),
+      lerTudo<Ix>((de, ate) => supabase.from("interactions").select("contact_id, direction, input_kind, occurred_at, outcome, created_by").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "interacoes da gestao" }),
       lerTudo<Hist>((de, ate) => supabase.from("contact_stage_history").select("contact_id, to_stage, occurred_at").eq("tenant_id", tenant.id).gte("occurred_at", startISO).order("occurred_at", { ascending: false }).range(de, ate), { rotulo: "historico de etapa" }),
       supabase.from("memberships").select("id, role, user:profiles(full_name, email)").eq("tenant_id", tenant.id).eq("status", "active"),
     ]);
@@ -108,6 +108,27 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
     const fechados = new Set<string>();
     for (const h of hist) if (wonKeys.has(h.to_stage)) fechados.add(h.contact_id);
     const ownerOf = new Map(contacts.map((c) => [c.id, c.owner_id] as const));
+
+    /**
+     * ⚠ QUEM FEZ ≠ DE QUEM É O CONTATO — e o relatório confundia os dois.
+     *
+     * A atribuição era `dono do contato`, sempre. Então "Nycolas: 11 enviadas"
+     * queria dizer *"11 mensagens para contatos da carteira do Nycolas"*, e uma
+     * mensagem que a Luciana mandou para um contato do João contava para o
+     * João. Num relatório que o dono usa para cobrar produtividade, isso não é
+     * impreciso: é atribuir o trabalho de uma pessoa a outra.
+     *
+     * `created_by` é quem registrou. Ele nem sempre existe — as 2.105
+     * interações importadas do piloto não têm — então o dono continua sendo o
+     * recurso, e o prompt DECLARA que parte foi estimada. Número sem
+     * procedência declarada é o que este produto existe para não produzir.
+     */
+    const membrosPorId = new Set(members.map((m) => m.id));
+    const autorDe = (i: Ix): { nome: string; estimado: boolean } =>
+      i.created_by && membrosPorId.has(i.created_by)
+        ? { nome: nomeDe(i.created_by), estimado: false }
+        : { nome: nomeDe(ownerOf.get(i.contact_id ?? "") ?? null), estimado: true };
+    const estimadas = ix.filter((i) => !i.created_by || !membrosPorId.has(i.created_by)).length;
 
     // Equipe
     const equipe = members.map((m) => {
@@ -182,7 +203,7 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
       for (const i of ix) {
         if (!i.contact_id) continue;
         const k = chave(i.occurred_at);
-        const dono = nomeDe(ownerOf.get(i.contact_id) ?? null);
+        const dono = autorDe(i).nome;
         const porDono = m.get(k) ?? new Map();
         const cur = porDono.get(dono) ?? { saidas: 0, entradas: 0 };
         if (i.direction === "outbound") cur.saidas++; else cur.entradas++;
@@ -213,6 +234,70 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
         return `- ${k}: ${detalhe || "sem atividade"}`;
       });
 
+    // ------------------------------------------- CADASTROS POR DIA, POR PESSOA
+    //
+    // ⚠ O ANALISTA PEDIU ISTO SOZINHO, e estava certo: *"não tenho esse número
+    // quebrado por dia… o sistema só me dá o acumulado do período."* Era
+    // verdade — `contacts.created_at` vinha na consulta e era usado só para
+    // somar leads do mês.
+    //
+    // É a MESMA falha de 14/ago com as interações, e ela reapareceu ao lado:
+    // corrigi a granularidade das mensagens e deixei a dos cadastros. Quando o
+    // motor disser "não tenho esse dado", a primeira pergunta continua sendo se
+    // ele não tem ou se **quem monta o prompt não mandou.**
+    //
+    // ⚠ E A ORIGEM VAI JUNTO, por um motivo específico desta base. O relatório
+    // de 15/ago afirmou "580 leads novos em 30 dias" — e 349 deles eram uma
+    // IMPORTAÇÃO do piloto, não captação. Cadastro em massa entra com a data
+    // do dia em que foi carregado e vira "resultado comercial" na leitura de
+    // quem confia no total. Quebrando por origem, um pico de 349 numa origem
+    // só, num dia só, se denuncia.
+    const cadastroPorDia = new Map<string, Map<string, number>>();
+    const origemPorDia = new Map<string, Map<string, number>>();
+    for (const c of contacts) {
+      if (!c.created_at || c.created_at < startISO) continue;
+      const k = diaDe(c.created_at);
+      const dono = nomeDe(c.owner_id);
+      const pd = cadastroPorDia.get(k) ?? new Map();
+      pd.set(dono, (pd.get(dono) ?? 0) + 1);
+      cadastroPorDia.set(k, pd);
+      const org = c.source?.trim() || "sem origem";
+      const po = origemPorDia.get(k) ?? new Map();
+      po.set(org, (po.get(org) ?? 0) + 1);
+      origemPorDia.set(k, po);
+    }
+    const blocoCadastros = `CADASTROS NOVOS POR DIA, POR QUEM É RESPONSÁVEL (últimos 14 dias com movimento)
+${[...cadastroPorDia.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14).map(([k, pd]) => {
+  const quem = [...pd.entries()].sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n}: ${v}`).join(" | ");
+  const orgs = [...(origemPorDia.get(k) ?? new Map()).entries()].sort((a, b) => b[1] - a[1]).map(([o, v]) => `${o} ${v}`).join(", ");
+  return `- ${k}: ${quem}  (origens: ${orgs})`;
+}).join("\n") || "- nenhum cadastro no período"}
+⚠ Um dia com dezenas ou centenas de cadastros de uma origem só é IMPORTAÇÃO de
+planilha, não captação. Diga isso quando acontecer, em vez de somar no total de
+leads — e não credite o volume ao vendedor que aparece como responsável, porque
+a importação distribui a carteira automaticamente.`;
+
+    /**
+     * ⚠ A MAIOR CARGA DE UM DIA SÓ — o que denuncia importação virando "lead".
+     *
+     * O relatório de 15/ago afirmou **"580 leads novos em 30 dias"** e o
+     * fundador leu como captação. Eram 349 contatos de UMA origem, carregados
+     * de UMA vez, do piloto antigo. O número não estava errado no cálculo:
+     * estava errado no significado, que é a forma cara de errar aqui.
+     *
+     * O teto de 40 é o que separa um dia bom de balcão de uma carga: nenhuma
+     * academia cadastra 40 pessoas da mesma origem num dia trabalhando.
+     */
+    const maiorCarga = (() => {
+      let melhor: { dia: string; origem: string; n: number } | null = null;
+      for (const [dia, porOrigem] of origemPorDia) {
+        for (const [origem, n] of porOrigem) {
+          if (n >= 40 && (!melhor || n > melhor.n)) melhor = { dia, origem, n };
+        }
+      }
+      return melhor;
+    })();
+
     const porDia = agrupar(diaDe);
     const porSemana = agrupar(semanaDe);
     const hojeKey = new Date().toISOString().slice(0, 10);
@@ -220,7 +305,16 @@ export async function perguntarGestao(question: string, dias = 90): Promise<AskR
 ${linhasDe(porDia, true).slice(0, 14).join("\n") || "- nenhuma interação registrada no período"}
 Obs.: conta interações REGISTRADAS no sistema. Conversa que aconteceu no
 WhatsApp e não foi registrada não aparece aqui — se um vendedor aparece com
-zero e você sabe que ele trabalhou, o buraco é o registro, não o vendedor.`;
+zero e você sabe que ele trabalhou, o buraco é o registro, não o vendedor.
+Obs. 2 — DE QUEM É O NÚMERO: quando a interação diz quem a registrou, ela é
+creditada a essa pessoa. Quando não diz (registro antigo, importado), cai no
+RESPONSÁVEL pelo contato, que é uma estimativa. Neste período isso vale para
+${estimadas} de ${ix.length} interações — se a proporção for alta, diga que a
+atribuição por pessoa é aproximada em vez de apresentá-la como medida.
+Obs. 3 — "enviadas" e "recebidas" quase iguais NÃO indicam integração
+automática: quando o vendedor registra um atendimento no Responder, ele grava a
+mensagem do cliente e a resposta dele no mesmo ato. O par é do formulário, não
+do WhatsApp.`;
 
     const blocoSemanal = `ATIVIDADE POR SEMANA, POR VENDEDOR (semana começa na segunda)
 ${linhasDe(porSemana, true).join("\n") || "- nenhuma interação registrada no período"}`;
@@ -272,9 +366,9 @@ FATURAMENTO NO PERÍODO
 NÚMEROS GERAIS
 - Contatos na base: ${contacts.length}
 - Em aberto (não finalizados): ${contacts.filter((c) => !terminalKeys.has(c.journey_stage)).length}
-- Leads novos no período: ${leadsPeriodo.length}
+- Leads novos no período: ${leadsPeriodo.length}${maiorCarga ? ` ⚠ dos quais ${maiorCarga.n} entraram em ${maiorCarga.dia} pela origem "${maiorCarga.origem}" — volume desse tamanho num dia só é IMPORTAÇÃO de planilha, não captação. Diga isso e informe o número SEM ela (${leadsPeriodo.length - maiorCarga.n}) quando falar de resultado comercial.` : ""}
 - Fechamentos no período: ${fechados.size}
-- Conversão (fechamentos ÷ leads do período): ${pct(fechados.size, leadsPeriodo.length)}
+- Conversão (fechamentos ÷ leads do período): ${pct(fechados.size, leadsPeriodo.length)}${maiorCarga ? " ⚠ este percentual está diluído pela importação acima — recalcule sobre os leads reais antes de comentar." : ""}
 - Interações registradas no período: ${ix.length}
 - Tempo de resposta ao cliente — mediana: ${fmtDuration(median(rmins))} | p90: ${fmtDuration(percentile(rmins, 90))} (${rmins.length} medições)
 
@@ -292,6 +386,8 @@ ${desfechos.join("\n")}
 
 CONTATOS EM ABERTO PARADOS HÁ MAIS TEMPO
 ${parados.join("\n") || "- nenhum"}
+
+${blocoCadastros}
 
 ${blocoDiario}
 ${blocoSemanal}
