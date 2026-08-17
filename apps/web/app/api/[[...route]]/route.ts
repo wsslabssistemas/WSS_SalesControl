@@ -208,18 +208,33 @@ async function registrar(mensagens: MensagemRecebida[]) {
   // do pacote, mas não é o pacote que decide o tenant: procuramos o número
   // no nosso cadastro, e o que não estiver cadastrado é descartado. Sem isso,
   // um pacote forjado escolheria em qual empresa escrever.
+  //
+  // ⚠ ESTA BUSCA LIA `tenants.settings` E O NÚMERO PASSOU A MORAR EM
+  // `tenant_secrets` (0056) — eu movi a fonte e deixei este leitor para trás.
+  //
+  // O efeito foi o silêncio mais bem disfarçado da série: a Meta ENTREGOU, a
+  // assinatura foi conferida e passou, o endpoint respondeu **200**, e a
+  // mensagem foi descartada aqui dentro. Do lado da Meta, sucesso. No banco,
+  // nada. Só apareceu no log da Vercel — *"numero 1202699839603007 nao
+  // pertence a nenhuma empresa"* — porque essa linha existia.
+  //
+  // A lição que fica, e ela vale para toda mudança de lugar: **mover a fonte
+  // de verdade é fácil; achar todos os leitores é o trabalho.** A assinatura
+  // já usava `tenant_secrets`; esta busca, dois blocos abaixo, ainda usava o
+  // lugar antigo. Agora as duas leem a mesma coluna.
   const ids = [...new Set(mensagens.map((m) => m.phoneNumberId).filter(Boolean))];
   if (!ids.length) return;
 
-  const { data: tenants } = await admin
-    .from("tenants")
-    .select("id, settings")
-    .in("settings->whatsapp->>phone_number_id", ids);
+  // paginacao-ok: busca exata por uma lista de ids de número — no máximo uma
+  // linha por número, e são poucos por pacote.
+  const { data: donos } = await admin
+    .from("tenant_secrets")
+    .select("tenant_id, whatsapp_phone_id")
+    .in("whatsapp_phone_id", ids);
 
   const porNumero = new Map<string, string>();
-  for (const t of (tenants as { id: string; settings: Record<string, unknown> }[] | null) ?? []) {
-    const w = t.settings?.whatsapp as { phone_number_id?: string } | undefined;
-    if (w?.phone_number_id) porNumero.set(w.phone_number_id, t.id);
+  for (const d of (donos as { tenant_id: string; whatsapp_phone_id: string }[] | null) ?? []) {
+    if (d.whatsapp_phone_id) porNumero.set(d.whatsapp_phone_id, d.tenant_id);
   }
 
   for (const msg of mensagens) {
