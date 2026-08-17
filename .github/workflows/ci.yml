@@ -156,6 +156,13 @@ jobs:
       # um vendedor, em silencio.
       - name: Roteamento — por onde cada motivo sai
         run: node packages/db/tests/roteamento_test.mjs
+      # O custo das mensagens da Meta. Guarda o arredondamento (utilidade custa
+      # 3,4 centavos, e arredondar por linha erra de 12% a 100% para MENOS,
+      # sempre) e a data de 1/out/2026, em que ate a resposta passa a ser
+      # cobrada — escrita como data no codigo, para a estimativa parar de estar
+      # errada sozinha.
+      - name: Custo de mensagem — tarifa, arredondamento e o prazo de outubro
+        run: node packages/db/tests/custo_mensagem_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base

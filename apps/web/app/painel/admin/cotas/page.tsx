@@ -9,6 +9,7 @@ import {
   CENTAVOS_POR_RESPOSTA, PERFIS, type Limites, type PerfilKey,
 } from "@/lib/cota";
 import { salvarLimiteGlobal, salvarLimiteDaEmpresa, aplicarPerfil, seguirPadrao } from "./actions";
+import { gastoDeMensagensNoMes } from "@/lib/custo_mensagem-db";
 
 export const metadata = { title: "Cota de IA" };
 
@@ -53,6 +54,13 @@ export default async function CotasPage() {
 
   const respostasDe = (id: string) => uso.filter((u) => u.tenant_id === id && u.feature === "responder_ai").length;
   const custoDe = (id: string) => uso.filter((u) => u.tenant_id === id).reduce((s, u) => s + (u.cost_cents ?? 0), 0);
+  // O gasto de mensagem NÃO sai do array acima: `cost_cents` das linhas de
+  // WhatsApp é zero de propósito (ver `lib/custo_mensagem-db.ts`), e o dinheiro
+  // é calculado a partir da CONTAGEM, com a tarifa vigente. Contagem por
+  // `head: true` no servidor — mil reativações passariam do teto de 1.000 do
+  // PostgREST em dias.
+  const gastoMsg = await gastoDeMensagensNoMes(null);
+
   const custoGlobal = uso.reduce((s, u) => s + (u.cost_cents ?? 0), 0);
   const tetoGlobal = global?.teto_global_mes_cents ?? null;
   const usoGlobalPct = tetoGlobal ? Math.min(100, Math.round((custoGlobal / tetoGlobal) * 100)) : null;
@@ -70,6 +78,43 @@ export default async function CotasPage() {
         <strong>cockpit manual continua ilimitado e sem custo</strong>: nenhuma empresa
         fica sem produto.
       </p>
+
+      {/* -------------------------------------------------- O OUTRO BOLSO
+          ⚠ ESTA TELA MEDIA UM CUSTO E IGNORAVA O OUTRO.
+
+          Enquanto o envio era humano pelo `wa.me`, isso não importava: mandar
+          mensagem era grátis, porque não passava pela Meta. Deixou de ser. E
+          o buraco tem prazo — em 1º/out/2026 até a RESPOSTA passa a ser
+          cobrada, e a premissa que sustenta o teto de IA ("o manual custa
+          zero") deixa de valer sozinha.
+
+          Os dois bolsos aparecem separados de propósito. Somá-los faria o
+          gasto de mensagem desligar a IA, que é o freio errado: quem gasta ali
+          não é a IA, e as mensagens continuariam saindo. */}
+      <div className="card mt-24" style={{ borderColor: "var(--border-brand)" }}>
+        <div className="between" style={{ alignItems: "baseline" }}>
+          <strong>Mensagens da Meta — o outro bolso</strong>
+          <span className="badge badge-warn">estimativa</span>
+        </div>
+        <p style={{ fontSize: 28, fontWeight: 600, margin: "8px 0 0" }}>
+          {reais(gastoMsg.gastoCents)}
+        </p>
+        <p className="text-dim" style={{ fontSize: 14, marginTop: 4 }}>
+          {gastoMsg.totalMensagens} mensagem(ns) pelo número do sistema neste mês, em
+          todas as empresas — {gastoMsg.contagem.marketing ?? 0} de marketing,{" "}
+          {gastoMsg.contagem.utilidade ?? 0} de utilidade e{" "}
+          {gastoMsg.contagem.servico ?? 0} de serviço (resposta em texto livre).
+        </p>
+        <p className="text-faint" style={{ fontSize: 12, marginBottom: 0 }}>
+          <strong>Por que "estimativa":</strong> a tarifa usada é a do Brasil em dólar
+          (US$ 0,0625 marketing · US$ 0,0068 utilidade) convertida a R$ 5,00 redondos —
+          não é o rate card em reais, que existe desde 1º/jul/2026 e só quem tem acesso
+          à conta da Meta baixa. O que está gravado é a CONTAGEM, não o dinheiro:
+          corrigir a tarifa corrige o histórico inteiro. Serviço é grátis até{" "}
+          <strong>1º/out/2026</strong>; a partir dali passa a custar a tarifa de
+          utilidade, e a conta acima muda sozinha.
+        </p>
+      </div>
 
       {/* -------------------------------------------------- TETO DO FABRICANTE */}
       <div className="card mt-24">
