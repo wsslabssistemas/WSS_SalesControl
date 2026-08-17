@@ -149,6 +149,13 @@ jobs:
       # (uma DATA nao e um MOTIVO).
       - name: Fila — quitacao, motivo unico e pretexto
         run: node packages/db/tests/fila_test.mjs
+      # Por qual numero cada motivo sai. Guarda tres coisas faceis de desfazer:
+      # o padrao quase todo no link humano (separacao por PUBLICO, nao por
+      # ferramenta), credencial nao ligar canal, e "bloqueado" nao cair de
+      # volta no wa.me — que despejaria mil reativacoes no celular pessoal de
+      # um vendedor, em silencio.
+      - name: Roteamento — por onde cada motivo sai
+        run: node packages/db/tests/roteamento_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base

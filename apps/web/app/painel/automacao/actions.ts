@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { readAutomation, type AutomationSettings } from "@/lib/automation";
+import { MOTIVOS } from "@/lib/roteamento";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -37,9 +38,24 @@ export async function saveAutomation(formData: FormData) {
     },
   });
 
+  const settingsAtuais = (cur?.settings as Record<string, unknown> | null) ?? {};
+
+  // ⚠ MESCLAR, NUNCA SUBSTITUIR — e a versão anterior substituía.
+  //
+  // `readAutomation` devolve só os NOVE campos que ele conhece. Gravar o
+  // resultado dele por cima de `automation` apaga tudo o que mora ali e não
+  // está neste formulário — hoje `canal_por_motivo` e `modelos`, amanhã o que
+  // vier. E apaga em silêncio: a tela diz "salvo", o roteamento volta ao
+  // padrão, e a empresa descobre quando a reativação sair pelo número errado.
+  //
+  // É a irmã da regra do formulário que regrava valor velho por cima do novo:
+  // lá o problema era o campo reenviar o que já existe, aqui é o gravador
+  // esquecer o que existe. Nos dois o sintoma é o mesmo — perda silenciosa
+  // numa tela que reportou sucesso.
+  const automacaoAtual = (settingsAtuais.automation as Record<string, unknown> | null) ?? {};
   const settings = {
-    ...((cur?.settings as Record<string, unknown> | null) ?? {}),
-    automation: incoming,
+    ...settingsAtuais,
+    automation: { ...automacaoAtual, ...incoming },
   };
 
   const { error } = await supabase
@@ -49,5 +65,56 @@ export async function saveAutomation(formData: FormData) {
 
   if (error) redirect(`/painel/automacao?erro=${encodeURIComponent(error.message)}`);
   revalidatePath("/painel/automacao");
+  redirect("/painel/automacao?salvo=1");
+}
+
+/**
+ * POR ONDE CADA MOTIVO SAI, e qual modelo aprovado ele usa.
+ *
+ * Ação separada da política de automação de propósito: são decisões de níveis
+ * diferentes e com consequências diferentes. Mudar `max_per_day` altera o
+ * ritmo; mudar o roteamento altera **o número que o cliente final vê** e
+ * liga o relógio do custo por mensagem. Juntar as duas num formulário só faria
+ * um salvamento de rotina carregar a decisão cara junto.
+ */
+export async function salvarRoteamento(formData: FormData) {
+  const membership = await getActiveTenant();
+  const tenant = membership?.tenant;
+  if (!tenant) redirect("/painel");
+  if (!["owner", "admin"].includes(membership!.role)) {
+    redirect("/painel/automacao?erro=Sem+permissao");
+  }
+
+  const supabase = await createClient();
+  const { data: cur } = await supabase
+    .from("tenants")
+    .select("settings")
+    .eq("id", tenant.id)
+    .maybeSingle();
+
+  const canal: Record<string, boolean> = {};
+  const modelos: Record<string, string> = {};
+  for (const m of MOTIVOS) {
+    canal[m] = formData.get(`canal_${m}`) === "on";
+    const nome = String(formData.get(`modelo_${m}`) ?? "").trim();
+    if (nome) modelos[m] = nome;
+  }
+
+  const settingsAtuais = (cur?.settings as Record<string, unknown> | null) ?? {};
+  const automacaoAtual = (settingsAtuais.automation as Record<string, unknown> | null) ?? {};
+
+  const { error } = await supabase
+    .from("tenants")
+    .update({
+      settings: {
+        ...settingsAtuais,
+        automation: { ...automacaoAtual, canal_por_motivo: canal, modelos },
+      },
+    })
+    .eq("id", tenant.id);
+
+  if (error) redirect(`/painel/automacao?erro=${encodeURIComponent(error.message)}`);
+  revalidatePath("/painel/automacao");
+  revalidatePath("/painel/fila");
   redirect("/painel/automacao?salvo=1");
 }

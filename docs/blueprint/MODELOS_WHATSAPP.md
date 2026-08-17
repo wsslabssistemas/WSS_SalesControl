@@ -277,9 +277,14 @@ custou caro aqui — a escrita que falha em silêncio.
 4. **Registrar o envio como interação.** Modelo enviado é toque dado — se não
    entrar em `interactions`, a cadência não quita e a pessoa volta na fila
    amanhã, que é o defeito do `combinado` de novo.
-5. **O nome do modelo é por empresa.** Modelos vivem na WABA do cliente. A
-   ligação motivo → nome do modelo mora junto da credencial, em
-   `tenant_secrets`, nunca em `tenants.settings`.
+5. **O nome do modelo é por empresa, e mora em `tenants.settings.automation`.**
+   Modelos vivem na WABA do cliente, então a ligação motivo → nome do modelo é
+   por empresa. ⚠ **Correção do que eu escrevi aqui antes:** eu havia mandado
+   guardar isso em `tenant_secrets`, "junto da credencial". Está errado, e a
+   regra da casa não diz isso. Credencial mora lá porque um token da Meta manda
+   mensagem em nome da empresa; **o nome de um modelo não faz nada nas mãos de
+   quem o leia.** Ele é política, e mora junto da política — ao lado do modo,
+   da janela de horário e do teto diário. Implementado em `lib/roteamento.ts`.
 
 ---
 
