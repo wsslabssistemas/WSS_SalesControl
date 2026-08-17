@@ -1,5 +1,5 @@
 # ESTADO DO PROJETO — COS (WSS Kairós)
-**Última atualização:** 14 de agosto de 2026
+**Última atualização:** 17 de agosto de 2026
 **Fabricante:** WSS Labs · **Fundador:** William
 
 > Este documento existe para que qualquer conversa nova possa retomar o projeto
@@ -15,11 +15,82 @@
 
 ---
 
-## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 14 de agosto de 2026
+## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 16/17 de agosto de 2026
 
 > Escrito no fim de uma conversa longa, para a próxima começar sabendo. O que
 > está aqui é **o que quebrou, o que foi consertado e o que continua aberto** —
 > nesta ordem, porque o aberto é o que decide o próximo passo.
+
+### 🟢 O CANAL OFICIAL ESTÁ NO AR, e o ciclo fechou de ponta a ponta
+
+**A Be Fitness envia e recebe pelo WhatsApp oficial.** Provado com mensagem
+real em 17/ago 03:20 UTC: *"Oi Claude, obrigado por me ajudar!"* entrou pelo
+webhook, criou o contato com o nome do perfil, **atribuiu dono pela menor
+carteira** e ficou registrada como `customer_message`.
+
+| | |
+|---|---|
+| Número | **+55 51 9419-3412** — `CLOUD_API`, `CONNECTED`, `VERIFIED` |
+| Conta (WABA) | **Be Fitness2** — `1038933932365273` |
+| Phone Number ID | `1202699839603007` |
+| App | **WSS Kairós** — `2909761702713885` |
+| Token | usuário do sistema, **sem expiração** |
+| App inscrito na WABA | ✅ (feito via API; **não mexer no botão da tela**) |
+
+⚠ **O número da recepção (+55 51 8251-2270) NÃO foi tocado** e não pode ser:
+número registrado na plataforma **sai do aplicativo do WhatsApp**. Ele está
+numa WABA antiga (`1375051220965685`), `DISCONNECTED` e `ON_PREMISE`.
+
+### ⚠ A CLASSE DE DEFEITO QUE DOMINOU ESTES DOIS DIAS
+
+**Escrita sem erro conferido é escrita que você ACHA que fez.** Três
+ocorrências, todas encontradas por comparação com o banco, nenhuma por teste
+ou revisão:
+
+1. `marcarEnviado` da fila não gravava `created_by` — o toque não contava para
+   ninguém no placar.
+2. O insert do lead no webhook engolia o erro.
+3. **A pior:** a mensagem do cliente usava `upsert` com `onConflict` sobre um
+   índice **parcial** (`WHERE external_id IS NOT NULL`, 0052). O Postgres não
+   infere índice parcial sem repetir o predicado, e o PostgREST não sabe
+   expressar isso — **toda gravação falhava**, e o erro não era lido. O efeito:
+   contato criado com nome e dono certos, **frase do cliente sumindo**, 200
+   para a Meta, tudo verde por fora. Ninguém procura por uma mensagem que não
+   sabe que existiu.
+
+E a irmã dela: **mover a fonte de verdade é fácil; achar todos os leitores é o
+trabalho.** O `0056` levou o `phone_number_id` para `tenant_secrets` e a busca
+do tenant no webhook continuou lendo `tenants.settings` — a Meta entregava, a
+assinatura passava, e a mensagem era descartada dois blocos adiante. **Só
+apareceu no log da Vercel**, por causa de um `console.warn` escrito quando o
+webhook nasceu.
+
+### O que o fundador achou questionando, não testando
+
+Vale registrar porque muda como conduzir a próxima:
+
+- *"Tem que usar a mesma nomenclatura do Meta, senão complica."* Os campos da
+  tela tinham nomes inventados ("Token permanente") para valores que a pessoa
+  **copia de outra tela**. Nome diferente vira problema de tradução no meio de
+  uma tarefa difícil. Hoje são "Token de acesso", "Phone Number ID",
+  "Verificar token" e "Chave Secreta do Aplicativo", palavra por palavra.
+- *"Se a página da Meta também não funciona, o problema não é seu código."*
+  Estava certo, e essa frase encurtou o diagnóstico em horas.
+- *"O que meus vendedores vão fazer se tirar o manual?"* Derrubou a palavra
+  "substituir" — a aba de conversas **não substitui vendedor**, tira dele o
+  trabalho de LEMBRAR de registrar.
+
+### ⚠ O TOKEN TEMPORÁRIO DA META EXPIRA EM HORÁRIO FIXO
+
+Não são 24h a partir do clique: ele morre às 13h, às 15h. Custou uma tarde
+inteira de diagnóstico errado, porque o token vencia no meio de cada tentativa
+e o erro (`190`) fala de *"session"*, palavra que ninguém associa a um token
+colado num formulário. **Use o token de usuário do sistema desde o começo.**
+
+E o `100/33` — *"Object with ID ... does not exist"* — **não fala de
+credencial**: ele aparece quando o token não alcança aquela WABA. O
+`debug_token` mostra em `granular_scopes` quais contas o token cobre, e foi
+isso que revelou que o número e o token eram de contas diferentes.
 
 ### ✅ A SINCRONIZAÇÃO: era TAMANHO — e o limite não era o do Next
 
@@ -215,6 +286,40 @@ registram pouco — problemas diferentes, soluções opostas.
 | **Leitor de planilha** (CSV e o `.xls` que é HTML), recusa adivinhar a chave | `lib/planilha.ts` |
 | **Custo de IA por período** no painel do fabricante | `/painel/admin` |
 | **"Gerar acesso"** na Equipe — ninguém mais espera e-mail | `/painel/equipe` |
+
+### O QUE FALTA NO CANAL — em ordem, e os dois primeiros dependem dele
+
+1. **Trocar o nome de exibição.** O número aparece como **"Be Fitness2"** para
+   quem recebe (o "2" era só para diferenciar a conta). `name_status` está
+   `AVAILABLE_WITHOUT_REVIEW`, então a troca não passa por análise. WhatsApp
+   Manager → o número → Perfil. A foto também é ali.
+2. **Adicionar forma de pagamento na conta da Meta.** Está pendente e é o que
+   destrava **mensagem iniciada pela empresa** — ou seja, TODO o toque proativo
+   (follow-up, renovação, reativação). Sem cartão, só dá para responder.
+3. **Publicar o app.** Em desenvolvimento, a Meta limita a entrega de webhooks.
+   Funcionou com o número do fundador porque ele é administrador; com cliente
+   real pode não chegar.
+4. **Cadastrar os modelos de mensagem.** Fora da janela de 24h só sai modelo
+   aprovado. Cada passo da régua vira um modelo — é trabalho de cadastro, não
+   de código. **A reativação dos 1.089 ex-alunos depende disto.**
+5. **A aba de conversas** (decidida em conceito, não construída). Quem escreveu
+   e ainda não foi respondido, mais antigo primeiro, respondendo dali pelo
+   número da academia e **com registro automático**. Serve às duas versões do
+   produto: no manual mostra quem espera; no automático é onde a pessoa assume
+   quando a conversa sai do script.
+6. **O motor proativo** (Inngest). Único item que precisa de infraestrutura
+   nova.
+
+### A DECISÃO DE OPERAÇÃO JÁ TOMADA: separar por PÚBLICO, não por ferramenta
+
+O número novo cuida dos **ex-alunos** (1.089 pessoas que os recepcionistas não
+tocam); a recepção segue no número antigo com a operação corrente. Zero
+sobreposição, e prova o automático onde errar custa pouco.
+
+**O conflito real nunca foi de sistema — é ter dois números falando com a mesma
+pessoa.** O sistema só enxerga o que passa por ele: conversa que a Luciana tem
+no aplicativo do número antigo não existe para o Kairós, então o motor pode
+abordar quem ela acabou de atender, por outro número.
 
 ### Os próximos passos, em ordem
 

@@ -8,7 +8,7 @@
 > segmentos e o Kairós vendendo o Kairós estão fora daqui de propósito — cada
 > item que não é para agora é ruído para quem está tentando entregar.
 >
-> Atualizado: 10 de agosto de 2026.
+> Atualizado: 17 de agosto de 2026.
 
 ---
 
@@ -106,6 +106,27 @@ quem já existe, ela não cria contato.
 arquivo real, sem gravar): 12 entraram · **3 renovaram** · 4 ajuste de data ·
 **11 encerraram**. E dos recebimentos: 1.548 pagantes, R$ 1.548.051 de
 faturamento histórico, atraso habitual por pessoa.
+
+---
+
+## 🟢 O CANAL OFICIAL ESTÁ NO AR (17/ago)
+
+Envia e recebe, provado com mensagem real. O número **+55 51 9419-3412** está
+CLOUD_API, conectado e verificado; o token é permanente; a mensagem que entra
+cria o contato, atribui dono e fica registrada sozinha.
+
+⚠ **O número da recepção (+55 51 8251-2270) não foi tocado e não pode ser** —
+número registrado na plataforma sai do aplicativo do WhatsApp, e a equipe perde
+o que usa hoje.
+
+**Falta, em ordem:** trocar o nome de exibição (aparece "Be Fitness2" para o
+cliente), adicionar forma de pagamento na Meta (é o que destrava mensagem
+iniciada pela empresa), publicar o app, e cadastrar os modelos — a reativação
+dos 1.089 ex-alunos depende deles.
+
+**Decisão de operação:** o número novo cuida dos EX-ALUNOS; a recepção segue no
+número antigo. Separação por público, não por ferramenta — o conflito real é
+dois números falando com a mesma pessoa.
 
 ---
 

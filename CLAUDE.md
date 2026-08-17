@@ -110,6 +110,30 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   `required_facts`; os números vêm de `commercial_dna`.
 - **Trava anti-invenção.** Falta fato exigido, o motor devolve `escalate` e
   **não redige**. Prompt não resolve essa classe de erro; verificação estrutural resolve.
+- **⚠ ESCRITA SEM ERRO CONFERIDO É ESCRITA QUE VOCÊ ACHA QUE FEZ.** A classe
+  que mais custou em ago/2026, três vezes na mesma semana. O caso pior:
+  `upsert` com `onConflict` sobre índice **parcial** — o Postgres não infere
+  índice parcial sem repetir o predicado, o PostgREST não sabe expressar isso,
+  e **toda gravação falhava em silêncio**. O contato do cliente era criado e a
+  frase dele sumia, com 200 devolvido à Meta e tudo verde por fora.
+- **Mover a fonte de verdade é fácil; achar todos os LEITORES é o trabalho.**
+  O `phone_number_id` foi para `tenant_secrets` e a busca do tenant no webhook
+  continuou lendo `tenants.settings`: a mensagem chegava, a assinatura passava,
+  e era descartada dois blocos adiante. Ao mudar onde um dado mora,
+  `grep` pelo nome antigo antes de fechar.
+- **Credencial de canal é POR EMPRESA e mora em `tenant_secrets`** (0056/0057),
+  com RLS ligada e **nenhuma policy** — em Postgres isso nega a todos, e só o
+  `service_role` alcança. Nunca em `tenants.settings`: a policy `tenants_select`
+  libera a linha inteira para qualquer membro, e um token da Meta manda
+  mensagem em nome da empresa.
+- **Ter credencial não liga o canal.** Por onde SAI (link × número do sistema) e
+  quem DISPARA (pessoa × motor) são decisões diferentes; tratar como uma faria
+  salvar um token trocar o número de saída da empresa inteira, em silêncio.
+- **Campo que a pessoa COPIA de outra tela usa o nome da outra tela.** Rótulo
+  inventado vira problema de tradução no meio de uma tarefa difícil.
+- **Formulário não reenvia o que já existe.** Campo preenchido com o valor salvo
+  transforma aba antiga em máquina do tempo: ela regrava o valor velho por cima
+  do novo ao salvar qualquer outro campo. Mostre como texto; o campo só troca.
 - **Todo motivo da fila precisa de uma data a partir da qual uma conversa o
   CUMPRE.** Sem isso a pessoa fica na lista para sempre e a lista nunca
   encolhe — que não parece defeito, parece trabalho acumulado. Já aconteceu
