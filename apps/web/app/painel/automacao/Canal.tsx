@@ -79,7 +79,9 @@ export function Canal({
         <label className="text-dim" style={{ fontSize: 13 }}>
           Phone Number ID
           <span className="text-faint" style={{ display: "block", fontSize: 11 }}>
-            Na Meta: mesma tela, ao lado do número de teste
+            {phoneId
+              ? <>Salvo agora: <strong>{phoneId}</strong></>
+              : <>Na Meta: WhatsApp → Configuração da API, ao lado do número</>}
           </span>
           {/* ⚠ ESTE CAMPO MOSTRA O VALOR SALVO, e os outros três não — porque
               ele NÃO é segredo: o Phone Number ID aparece na própria tela da
@@ -89,9 +91,19 @@ export function Canal({
               porque o gerenciador de senhas do navegador via um campo de texto
               ao lado de um campo de senha e enfiava o E-MAIL do usuário aqui.
               O valor gravado estava certo; a tela é que mentia. */}
+          {/* ⚠ SEM `defaultValue`, E A RAZÃO É UM ACIDENTE REAL (16/ago/2026).
+              O campo vinha preenchido com o valor salvo, para a pessoa
+              conferir. Mas uma aba aberta ANTES de o número mudar guarda o
+              valor VELHO — e ao salvar qualquer outro campo, ela regrava o
+              velho por cima do novo, em silêncio. Foi o que aconteceu: o
+              fundador trocou o número, salvou o token numa aba antiga, e o
+              sistema voltou a apontar para o número de teste.
+              O valor salvo agora é TEXTO (não dá para reenviar sem querer) e o
+              campo só serve para trocar. Formulário que reenvia o que já
+              existe transforma "salvar uma coisa" em "regravar tudo". */}
           <input type="text" name="phone_id" autoComplete="new-password"
-            inputMode="numeric" defaultValue={phoneId ?? ""}
-            placeholder="1072873705913820" />
+            inputMode="numeric"
+            placeholder={phoneId ? "preencha só para TROCAR de número" : "1202699839603007"} />
         </label>
         <label className="text-dim" style={{ fontSize: 13 }}>
           Verificar token {temVerifyToken && <span className="badge badge-success">definido</span>}
