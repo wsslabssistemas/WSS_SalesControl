@@ -36,8 +36,47 @@ Então cada modelo faz **uma pergunta fácil de responder**. Quando a pessoa
 responde, a janela abre, o texto livre é liberado, e aí sim o motor entra com
 o DNA e a biblioteca. **O modelo é a chave, não a conversa.**
 
-Isto tem um efeito bom no custo: `UTILITY` entregue dentro de uma janela de
-atendimento aberta é gratuito desde julho de 2025.
+Isto tem um efeito bom no custo — **com prazo de validade, e o prazo é curto.**
+Ver a seção de preço logo abaixo antes de usar "é grátis" em qualquer conta.
+
+---
+
+## ⚠ O PREÇO, E A DATA QUE MUDA A CONTA: 1º DE OUTUBRO DE 2026
+
+Conferido na documentação da Meta em 17/ago/2026. **A tabela de hoje não é a
+tabela de daqui a 45 dias**, e a diferença não é de centavos: é a mudança de
+"responder é grátis" para "toda mensagem custa".
+
+| O quê | Hoje (ago/2026) | A partir de 1º/out/2026 |
+|---|---|---|
+| Modelo `MARKETING` | ~R$ 0,31 | igual |
+| Modelo `UTILITY` (fora da janela) | ~R$ 0,034 | igual |
+| Modelo `UTILITY` **dentro** da janela | **grátis** | **cobrado** |
+| Resposta em texto livre (serviço) | **grátis** | **cobrado**, à tarifa de utilidade |
+
+A frase da Meta é literal: *"Any non-template message is charged as of
+October 1, 2026."*
+
+**Por que isto importa mais do que o valor.** O argumento de custo do produto
+era: o disparo custa, a conversa não — então o valor está na conversa. Em
+outubro **a conversa passa a custar**. A tese continua de pé (a conversa é onde
+o dinheiro é feito), mas ela deixa de ser gratuita, e todo cálculo de margem
+por cliente feito antes de outubro está errado depois dele.
+
+⚠ **A tarifa em REAIS ainda precisa ser conferida na conta.** R$ 0,3125 e
+R$ 0,0340 são as tarifas em dólar do Brasil (US$ 0,0625 e US$ 0,0068)
+convertidas a R$ 5,00 redondos — não vieram do rate card em reais. A Meta abriu
+faturamento em BRL para o Brasil em 1º/jul/2026 (Facebook Brasil), então **a
+moeda da WABA decide qual dos dois vale**: em USD o custo oscila com o câmbio;
+em BRL vale o rate card da Meta, que só quem tem acesso à conta baixa.
+Conferir no Gerenciador de Negócios antes de prometer preço a cliente.
+
+**A ordem de grandeza, que não depende dessa ressalva:** a reativação dos 1.089
+custa ~R$ 340 no primeiro toque. A operação corrente (ração de 10 × 3 vendedores
+× 22 dias = 660/mês) custa ~R$ 206/mês como marketing e ~R$ 22/mês como
+utilidade. **A diferença de 9,2× entre as duas categorias é escrita, não
+técnica** — é o texto que decide em qual o modelo cai, e é por isso que a
+recategorização silenciosa da Meta é um problema de custo e não de forma.
 
 ---
 

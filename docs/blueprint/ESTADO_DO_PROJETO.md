@@ -44,6 +44,32 @@ toque proativo da fila — follow-up, recompra, renovação, reativação — vi
 dela por definição e depende de modelo aprovado, que ainda não foi submetido.
 **Canal no ar não é motor no ar.**
 
+### ⚠ ABERTO — o freio de custo não enxerga a Meta, e o prazo é 1º/out/2026
+
+Conferido no código em 17/ago: **todo `insert` em `usage_ledger` está colado
+numa chamada de IA** (`responder_ai`, gestão, licitações, fila). Nenhuma
+mensagem enviada pela Meta é registrada. O teto de `lib/cota.ts` mede um custo
+e ignora o outro.
+
+**A boa notícia é que não é schema.** `usage_ledger` já tem `feature text`
+livre, `cost_cents` genérico e `tokens_*` com default 0 — cabe uma linha
+`feature: "whatsapp_template"` sem migration nenhuma. O que falta é escrever e
+decidir a semântica.
+
+**A má notícia é o que isso faz com a regra 1 da cota.** O teto hoje bloqueia a
+IA e deixa o produto de pé porque *"o modo manual custa ZERO"* — é a válvula de
+escape inteira do desenho. Em **1º de outubro de 2026 essa premissa morre**: a
+Meta passa a cobrar toda mensagem não-template, e a resposta em texto livre —
+hoje grátis — vira custo. Ou seja, **bloquear a IA deixa de ser um degrau
+seguro**, porque o que sobra também gasta.
+
+Não é urgente hoje: o canal não dispara sozinho e a resposta ainda é grátis.
+**Precisa estar resolvido antes do motor proativo E antes de outubro**, o que
+vier primeiro — senão é o erro que o teto de IA existe para evitar, repetido
+no canal: sucesso comercial virando prejuízo, sem como perceber a tempo.
+
+Preço, prazos e a ressalva de câmbio estão em `MODELOS_WHATSAPP.md`.
+
 ⚠ **O número da recepção (+55 51 8251-2270) NÃO foi tocado** e não pode ser:
 número registrado na plataforma **sai do aplicativo do WhatsApp**. Ele está
 numa WABA antiga (`1375051220965685`), `DISCONNECTED` e `ON_PREMISE`.
