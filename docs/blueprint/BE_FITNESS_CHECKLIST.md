@@ -124,6 +124,20 @@ cliente), adicionar forma de pagamento na Meta (é o que destrava mensagem
 iniciada pela empresa), publicar o app, e cadastrar os modelos — a reativação
 dos 1.089 ex-alunos depende deles.
 
+**⚠ Os modelos têm um relógio que não é nosso.** A Meta revisa cada um, e o
+relógio só começa quando o texto é submetido. Por isso eles saíram na frente da
+aba de conversas: **os cinco textos estão prontos para colar em
+`MODELOS_WHATSAPP.md`**, com a categoria de cada um, os exemplos de variável que
+a Meta pede e a ordem de submissão. Falta só o cadastro no WhatsApp Manager e a
+forma de pagamento — sem ela, modelo aprovado não entrega nada.
+
+O que ficou decidido junto e não é detalhe: **o modelo abre a janela, não
+vende.** Material de venda dentro de um `UTILITY` faz a Meta recategorizar em
+silêncio e cobrar como marketing, e argumento fixo é o oposto do que a
+biblioteca curada existe para fazer. E **o motivo `lembrete` não terá modelo** —
+data marcada sem motivo anotado não tem pretexto conhecido, e texto fixo ali só
+poderia inventar um.
+
 **Decisão de operação:** o número novo cuida dos EX-ALUNOS; a recepção segue no
 número antigo. Separação por público, não por ferramenta — o conflito real é
 dois números falando com a mesma pessoa.

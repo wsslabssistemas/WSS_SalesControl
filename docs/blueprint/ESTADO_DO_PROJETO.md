@@ -36,6 +36,13 @@ carteira** e ficou registrada como `customer_message`.
 | App | **WSS Kairós** — `2909761702713885` |
 | Token | usuário do sistema, **sem expiração** |
 | App inscrito na WABA | ✅ (feito via API; **não mexer no botão da tela**) |
+| Modelos de mensagem | textos prontos em `MODELOS_WHATSAPP.md`, **não submetidos** |
+
+⚠ **O que sai hoje é só texto livre, ou seja: só RESPOSTA.** `enviarPelaCloudAPI`
+manda `type: "text"`, que a Meta só entrega dentro da janela de 24h. Todo o
+toque proativo da fila — follow-up, recompra, renovação, reativação — vive fora
+dela por definição e depende de modelo aprovado, que ainda não foi submetido.
+**Canal no ar não é motor no ar.**
 
 ⚠ **O número da recepção (+55 51 8251-2270) NÃO foi tocado** e não pode ser:
 número registrado na plataforma **sai do aplicativo do WhatsApp**. Ele está

@@ -134,19 +134,25 @@ export function linkDeWhatsApp(telefone: string | null | undefined, texto?: stri
 // ---------------------------------------------------------------------
 // PROVEDOR: WhatsApp Cloud API (Meta)
 //
-// ⚠ ESCRITO CONTRA A DOCUMENTAÇÃO, NUNCA EXECUTADO CONTRA A API REAL.
-// Não há conta Meta configurada até agora, então este caminho não tem prova
-// de campo — só o formato do pedido. Ele fica DESLIGADO por padrão
-// (`canalAtivo()` só o escolhe com `WHATSAPP_CANAL=cloud_api`), e a primeira
-// coisa a fazer quando houver credencial é mandar UMA mensagem para o próprio
-// número antes de ligar para qualquer contato real.
+// ✅ PROVADO EM CAMPO em 17/ago/2026 — a Be Fitness envia e recebe por aqui,
+// com mensagem real de ida e volta. O comentário anterior dizia "nunca
+// executado contra a API real" e citava uma `canalAtivo()` que não existe mais
+// (quem decide o canal é `canalDe`, acima, e a chave global virou credencial
+// por empresa). Ficou mentindo por uma entrega inteira: comentário desatualizado
+// é a mesma armadilha do estado duplicado — apodrece em silêncio e ensina o
+// errado para toda conversa nova.
 //
 // A JANELA DE 24 HORAS é a regra que decide o custo e o que pode ser dito:
 // responder quem escreveu nas últimas 24h é texto livre; iniciar conversa
-// fora disso exige MODELO aprovado pela Meta e é cobrado. Esta função manda
-// texto livre — ou seja, serve para RESPONDER. O toque proativo da fila
-// (follow-up, recompra, renovação) vai precisar de modelo aprovado, e isso é
-// trabalho de cadastro, não de código.
+// fora disso exige MODELO aprovado pela Meta e é cobrado. **Esta função manda
+// texto livre — ou seja, ela só serve para RESPONDER.**
+//
+// O toque proativo da fila (follow-up, recompra, renovação, reativação) vive
+// FORA da janela por definição, e precisa de `type: "template"`, que ainda não
+// existe aqui. Os textos já estão escritos e esperando aprovação da Meta em
+// `docs/blueprint/MODELOS_WHATSAPP.md` — inclusive a decisão de que o modelo
+// ABRE a janela e não vende, e a recusa deliberada de criar modelo para o
+// motivo `lembrete`.
 // ---------------------------------------------------------------------
 
 type EnvioProvedor = { ok: true; id: string } | { ok: false; motivo: string };
