@@ -10,6 +10,7 @@ import { paraE164BR } from "@/lib/phone";
 import { lerTudo } from "@/lib/paginado";
 import { lerRacao, estadoDaRacao, toquesDeHoje } from "@/lib/racao";
 import { ItemDaFila } from "./ItemDaFila";
+import { lerRoteamento } from "@/lib/roteamento";
 
 export const metadata = { title: "Fila de envio" };
 
@@ -162,6 +163,7 @@ export default async function FilaPage({
   // trabalha de menos. `?mais=1` libera outra leva do mesmo tamanho.
   const levas = Math.max(1, Math.min(20, Number(mais) || 1));
   const teto = lerRacao((tRow?.settings ?? null) as Record<string, unknown> | null) * levas;
+  const roteamento = lerRoteamento(tRow?.settings ?? null);
   const feitosHoje = alvo ? (toquesDeHoje(ixData, hojeISO)[alvo] ?? 0) : 0;
   const racao = estadoDaRacao({ teto, feitos: feitosHoje, naFila: fila.length });
   const doDia = alvo ? fila.slice(0, racao.restam) : fila.slice(0, 40);
@@ -288,6 +290,11 @@ export default async function FilaPage({
                   intencao={f.intencao}
                   observacao={f.observacao}
                   atraso={f.atraso}
+                  // Se ESTE motivo sai pelo número da empresa. Decidido em
+                  // Automação, por motivo — o padrão manda quase tudo pelo
+                  // link, porque a operação corrente já tem conversa aberta
+                  // com uma pessoa. Ver `lib/roteamento.ts`.
+                  saiPeloSistema={roteamento[f.motivo]}
                 />
               );
             })}

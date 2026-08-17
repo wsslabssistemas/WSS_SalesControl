@@ -163,6 +163,12 @@ jobs:
       # errada sozinha.
       - name: Custo de mensagem — tarifa, arredondamento e o prazo de outubro
         run: node packages/db/tests/custo_mensagem_test.mjs
+      # As variaveis de um modelo aprovado. A Meta recusa a mensagem INTEIRA se
+      # o valor tiver quebra de linha, tabulacao ou mais de 4 espacos seguidos
+      # — e os nomes vieram da planilha da academia, com espaco duplo e caixa
+      # alta. Derivar o primeiro nome nunca grava, como o paraE164BR.
+      - name: Modelo — higiene das variaveis e o primeiro nome
+        run: node packages/db/tests/modelo_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base

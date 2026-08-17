@@ -20,6 +20,9 @@
 // o MODO, e a tela é obrigada a lidar com os dois.
 
 import { paraE164BR } from "./phone";
+import { higienizarParametro } from "./modelo";
+
+export { higienizarParametro, primeiroNome } from "./modelo";
 
 export type Canal = "link_humano" | "cloud_api";
 
@@ -195,6 +198,113 @@ export async function enviarPelaCloudAPI(
       // resolve o problema — o código dela diz se é token vencido, número não
       // registrado ou janela de 24h fechada, e cada um tem conserto diferente.
       const detalhe = corpo?.error?.message ?? `HTTP ${resp.status}`;
+      return { ok: false, motivo: `A Meta recusou: ${detalhe}` };
+    }
+
+    const id = corpo?.messages?.[0]?.id;
+    if (!id) return { ok: false, motivo: "A Meta aceitou mas não devolveu identificador da mensagem." };
+    return { ok: true, id };
+  } catch (e) {
+    return { ok: false, motivo: `Falha de rede ao falar com a Meta: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+// ---------------------------------------------------------------------
+// ENVIO POR MODELO — o que abre conversa fora da janela de 24 horas.
+//
+// É a outra metade do canal, e a que o produto precisa: a fila vive FORA da
+// janela por definição, porque ela existe para falar com quem parou de falar.
+//
+// ⚠ O MODELO NÃO CARREGA A MENSAGEM, ELE CARREGA A CHAVE. O texto é fixo e
+// aprovado pela Meta; só as variáveis mudam. Quem responde abre a janela, e a
+// conversa de verdade — com o DNA e a biblioteca — acontece em texto livre
+// depois. Ver `docs/blueprint/MODELOS_WHATSAPP.md`, inclusive o porquê de o
+// modelo não vender: material de venda dentro de um `UTILITY` faz a Meta
+// recategorizar em silêncio e cobrar 9,2× mais.
+// ---------------------------------------------------------------------
+
+export type ResultadoModelo =
+  | { ok: true; id: string }
+  | {
+      ok: false;
+      motivo: string;
+      /**
+       * `131049` — a PESSOA atingiu o limite de marketing dela, que é
+       * adaptativo pela taxa de leitura. **Não é falha nossa e não é erro de
+       * configuração.** Tratar como erro genérico e reenviar é o caminho para
+       * bloqueio temporário de entrega: a Meta pune a insistência, não a
+       * tentativa. Quem chama deve deixar a pessoa para outro dia.
+       */
+      limitePorUsuario?: boolean;
+    };
+
+export async function enviarModeloPelaCloudAPI(
+  digitos: string,
+  modelo: string,
+  /** Os valores de `{{1}}`, `{{2}}`… NA ORDEM. Já higienizados. */
+  parametros: string[],
+  credencial: CredencialDoCanal,
+  idioma = "pt_BR",
+): Promise<ResultadoModelo> {
+  const { token, phoneId } = credencial;
+  const versao = credencial.versao ?? "v25.0";
+
+  if (!token || !phoneId) {
+    return { ok: false, motivo: "Canal oficial ligado mas sem credencial desta empresa." };
+  }
+  if (!modelo.trim()) {
+    return { ok: false, motivo: "Sem nome de modelo aprovado para este motivo." };
+  }
+
+  // A higienização acontece de novo aqui, e de propósito: esta função é
+  // pública e alguém vai chamá-la de outro lugar. Trava que depende de quem
+  // chama lembrar dela não é trava.
+  const limpos: string[] = [];
+  for (const p of parametros) {
+    const h = higienizarParametro(p);
+    if (!h.ok) return { ok: false, motivo: h.motivo };
+    limpos.push(h.valor);
+  }
+
+  try {
+    const resp = await fetch(`https://graph.facebook.com/${versao}/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: digitos,
+        type: "template",
+        template: {
+          name: modelo,
+          language: { code: idioma },
+          components: limpos.length
+            ? [{ type: "body", parameters: limpos.map((text) => ({ type: "text", text })) }]
+            : [],
+        },
+      }),
+    });
+
+    const corpo = (await resp.json().catch(() => null)) as
+      | { messages?: { id: string }[]; error?: { message?: string; code?: number } }
+      | null;
+
+    if (!resp.ok) {
+      const code = corpo?.error?.code;
+      const detalhe = corpo?.error?.message ?? `HTTP ${resp.status}`;
+      if (code === 131049) {
+        return {
+          ok: false,
+          limitePorUsuario: true,
+          motivo:
+            "A Meta segurou esta mensagem: esta pessoa já recebeu o limite de mensagens de " +
+            "marketing dela neste período. Não é erro de configuração — ela volta para a fila " +
+            "e a próxima tentativa deve esperar pelo menos 24h.",
+        };
+      }
+      // O erro da Meta vai INTEIRO para quem está na tela, pelo mesmo motivo
+      // do envio de texto: o código dela diz se é modelo não aprovado, número
+      // não registrado ou variável recusada, e cada um tem conserto diferente.
       return { ok: false, motivo: `A Meta recusou: ${detalhe}` };
     }
 

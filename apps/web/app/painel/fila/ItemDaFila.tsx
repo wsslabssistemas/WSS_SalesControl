@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AvisoDeCota } from "@/app/painel/AvisoDeCota";
 import { linkDeEnvio, ROTULO, type MotivoDaFila } from "@/lib/fila";
-import { prepararToque, marcarEnviado } from "./actions";
+import { prepararToque, marcarEnviado, enviarPeloSistema } from "./actions";
 
 /**
  * UMA LINHA DA FILA — preparar, enviar, marcar.
@@ -28,6 +28,7 @@ export function ItemDaFila({
   intencao,
   observacao,
   atraso,
+  saiPeloSistema = false,
 }: {
   contactId: string;
   nome: string;
@@ -49,6 +50,15 @@ export function ItemDaFila({
    */
   observacao?: string;
   atraso: number;
+  /**
+   * Este motivo sai pelo número da EMPRESA (Cloud API), decidido em Automação.
+   *
+   * ⚠ Quando é `true`, o botão do número oficial aparece **ao lado** do link
+   * humano, nunca no lugar dele. Substituir tiraria de quem está na tela a
+   * escolha de mandar do próprio WhatsApp — que continua sendo gratuita e, na
+   * maior parte da operação, a certa. Ver `lib/roteamento.ts`.
+   */
+  saiPeloSistema?: boolean;
 }) {
   const [texto, setTexto] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -58,6 +68,40 @@ export function ItemDaFila({
   const [faltam, setFaltam] = useState<string[]>([]);
   const [enviado, setEnviado] = useState(false);
   const [combinado, setCombinado] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
+  const [limiteDaPessoa, setLimiteDaPessoa] = useState(false);
+
+  /**
+   * ⚠ SUCESSO AQUI MARCA `enviado` SOZINHO — e é obrigatório que marque.
+   *
+   * `enviarPeloSistema` já grava a interação no servidor. Se a tela continuasse
+   * pedindo "Marquei como enviado", a pessoa clicaria e o toque contaria duas
+   * vezes: dois registros para uma mensagem, cadência quitada por engano no
+   * lugar errado e placar inflado. Registro em dois caminhos precisa de um
+   * dono só.
+   *
+   * E o erro fica NA LINHA, não num alerta que some. `131049` não é falha de
+   * configuração — é o limite de marketing daquela PESSOA, e quem está na tela
+   * precisa entender que não adianta tentar de novo hoje.
+   */
+  const enviarPelaEmpresa = async () => {
+    setEnviando(true);
+    setErroEnvio(null);
+    setLimiteDaPessoa(false);
+    try {
+      const r = await enviarPeloSistema(contactId, motivo, texto ?? "");
+      if (r.ok) setEnviado(true);
+      else {
+        setErroEnvio(r.motivo);
+        setLimiteDaPessoa(!!r.limitePorUsuario);
+      }
+    } catch (e) {
+      setErroEnvio(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const preparar = async () => {
     setCarregando(true);
@@ -158,6 +202,32 @@ export function ItemDaFila({
                   Gerar outra
                 </button>
               </div>
+
+              {/* O NÚMERO DA EMPRESA — ao lado do link, nunca no lugar dele. */}
+              {saiPeloSistema && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={enviarPelaEmpresa}
+                    disabled={enviando}
+                  >
+                    {enviando ? "enviando…" : "Enviar pelo número da empresa"}
+                  </button>
+                  <p className="text-faint" style={{ fontSize: 11, marginTop: 6, marginBottom: 0 }}>
+                    Sai do número do sistema e é cobrado pela Meta. O botão verde acima
+                    sai do seu WhatsApp e não custa nada.
+                  </p>
+                  {erroEnvio && (
+                    <p
+                      className={limiteDaPessoa ? "badge badge-warn" : "badge badge-danger"}
+                      style={{ marginTop: 8, whiteSpace: "normal", textAlign: "left" }}
+                    >
+                      {erroEnvio}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <p className="text-faint" style={{ fontSize: 11, marginTop: 10, marginBottom: 0 }}>
                 Leia antes de enviar. O sistema escreve; quem manda é você.
