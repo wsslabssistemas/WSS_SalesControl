@@ -95,6 +95,10 @@ export default async function PainelLayout({
     { href: "/painel/equipe", label: "Equipe" },
     { href: "/painel/dna", label: "DNA" },
     { href: "/painel/automacao", label: "Automação" },
+    // COLADA na Automação de propósito: é ali que o canal é ligado, e é aqui
+    // que se vê se ele está entregando. Configurar e conferir o resultado são
+    // a mesma tarefa em dois momentos.
+    { href: "/painel/conversas", label: "Canal oficial" },
     { href: "/painel/tutorial", label: "Tutorial" },
     ...(showManager ? [{ href: "/painel/sincronizar", label: "Sincronizar" }] : []),
     // Fica COLADA na Sincronizar de propósito: é ali que as contradições

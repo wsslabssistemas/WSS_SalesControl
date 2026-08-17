@@ -37,6 +37,9 @@ carteira** e ficou registrada como `customer_message`.
 | Token | usuário do sistema, **sem expiração** |
 | App inscrito na WABA | ✅ (feito via API; **não mexer no botão da tela**) |
 | Modelos de mensagem | textos prontos em `MODELOS_WHATSAPP.md`, **não submetidos** |
+| Envio por modelo | `enviarModeloPelaCloudAPI` existe; **sem prova de campo** |
+| Roteamento por motivo | `lib/roteamento.ts` — só `reativacao` no número oficial |
+| Status de entrega | `0058` — gravado e visível em `/painel/conversas` |
 
 ⚠ **O que sai hoje é só texto livre, ou seja: só RESPOSTA.** `enviarPelaCloudAPI`
 manda `type: "text"`, que a Meta só entrega dentro da janela de 24h. Todo o

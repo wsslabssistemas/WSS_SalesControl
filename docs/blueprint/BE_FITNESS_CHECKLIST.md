@@ -142,6 +142,18 @@ poderia inventar um.
 número antigo. Separação por público, não por ferramenta — o conflito real é
 dois números falando com a mesma pessoa.
 
+**Isso virou código em 17/ago** (`lib/roteamento.ts`): cada motivo da fila
+escolhe por qual número sai, em Automação. O padrão manda só a `reativacao`
+pelo número oficial — é o único motivo que fala com quem não é cliente. E o
+custo cai do mesmo lado: o `wa.me` não passa pela Meta, então a operação de
+todo dia continua de graça.
+
+**A aba "Canal oficial" existe** (`/painel/conversas`) e mostra o que saiu, o
+que chegou e **o que falhou**. Ela nasceu de um achado: a Meta já mandava
+`sent`, `delivered`, `read` e `failed` desde que o webhook existe, e a rota
+**descartava o array inteiro**. Numa campanha paga, `failed` é dinheiro gasto
+sem conversa — invisível até agora.
+
 ---
 
 ## ❌ O que falta — 10 de agosto de 2026, fim do dia

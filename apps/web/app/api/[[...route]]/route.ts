@@ -10,6 +10,7 @@ import {
   desmontarPacote,
   phoneNumberIdDoPacote,
   type MensagemRecebida,
+  type StatusDeEnvio,
 } from "@/lib/whatsapp-webhook";
 
 // Rota catch-all única: a Vercel limita o número de funções, então toda a API
@@ -144,8 +145,84 @@ app.post("/whatsapp/webhook", async (c) => {
     console.error(`[whatsapp] falha ao gravar: ${e instanceof Error ? e.message : String(e)}`);
   }
 
+  try {
+    await registrarStatus(pacote.status);
+  } catch (e) {
+    console.error(`[whatsapp] falha ao gravar status: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
   return c.text("ok", 200);
 });
+
+/**
+ * Grava o status de entrega nas mensagens que JÁ saíram por nós.
+ *
+ * ⚠ ISTO CHEGAVA E ERA JOGADO FORA. `desmontarPacote` interpreta `sent`,
+ * `delivered`, `read` e `failed` desde que o webhook nasceu, e a rota só
+ * chamava `registrar(pacote.mensagens)`. Enquanto o envio era humano pelo
+ * `wa.me` isso era irrelevante — a Meta não tinha o que reportar sobre uma
+ * mensagem que saiu do celular do vendedor. Com o canal oficial no ar,
+ * `failed` passa a ser o dado mais importante que existe: dinheiro gasto sem
+ * conversa, invisível.
+ *
+ * ⚠ `update`, NUNCA `upsert`. A chave é `(tenant_id, external_id)`, cujo
+ * índice é PARCIAL (0052). O Postgres não infere índice parcial sem repetir o
+ * predicado e o PostgREST não sabe expressar isso — foi assim que toda
+ * gravação da mensagem do cliente falhou em silêncio em ago/2026.
+ *
+ * ⚠ E LINHA NÃO ENCONTRADA NÃO É ERRO. A Meta reporta status de mensagens que
+ * podem não ter registro nosso: enviadas antes de existir `external_id`, ou de
+ * outra ferramenta na mesma conta. O certo é CONTAR e seguir — mas contar, e
+ * não ignorar, porque "nenhum status pousou" e "nenhum status chegou" são
+ * problemas diferentes e se parecem exatamente igual no silêncio.
+ */
+async function registrarStatus(status: StatusDeEnvio[]) {
+  if (!status.length) return;
+  const admin = createAdminClient();
+
+  // O tenant vem do `phone_number_id`, como nas mensagens: nada do corpo
+  // decide de quem é a linha. Cache por número dentro do lote.
+  const donoPorNumero = new Map<string, string | null>();
+  let gravados = 0;
+  let semDono = 0;
+  let semLinha = 0;
+
+  for (const s of status) {
+    if (!donoPorNumero.has(s.phoneNumberId)) {
+      const dono = await empresaDoNumero(s.phoneNumberId);
+      donoPorNumero.set(s.phoneNumberId, dono?.tenantId ?? null);
+    }
+    const tenantId = donoPorNumero.get(s.phoneNumberId) ?? null;
+    if (!tenantId) { semDono++; continue; }
+
+    // `.select("id")` é o que torna a escrita CONFERÍVEL: sem ele o PostgREST
+    // não devolve linha e não há como distinguir "atualizei" de "não achei".
+    // paginacao-ok: no máximo uma linha, endereçada por chave única.
+    const { data, error } = await admin
+      .from("interactions")
+      .update({
+        delivery_status: s.status,
+        delivery_error: s.erro,
+        delivery_at: s.quando.toISOString(),
+      })
+      .eq("tenant_id", tenantId)
+      .eq("external_id", s.wamid)
+      .select("id");
+
+    if (error) {
+      console.error(`[whatsapp] status ${s.status} de ${s.wamid} recusado: ${error.message}`);
+      continue;
+    }
+    if (!data || data.length === 0) { semLinha++; continue; }
+    gravados++;
+  }
+
+  if (semDono || semLinha) {
+    console.info(
+      `[whatsapp] status: ${gravados} gravado(s), ${semLinha} sem mensagem nossa, ${semDono} sem empresa dona do numero`,
+    );
+  }
+}
 
 /**
  * Grava as mensagens recebidas como `interactions` inbound.
