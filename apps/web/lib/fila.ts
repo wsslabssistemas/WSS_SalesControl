@@ -456,9 +456,15 @@ export type DepsDaFila = {
  * Devolve `null` sem telefone: link de WhatsApp sem número abre uma tela de
  * erro, e tela de erro no meio de uma fila faz a pessoa abandonar a fila.
  */
-export function linkDeEnvio(numeroE164Digits: string | null, texto: string): string | null {
+// O TEXTO É OPCIONAL, e isso não é conveniência: é o caminho de quem vai
+// escrever à mão. Quando a trava anti-invenção escala, não existe texto para
+// levar — e o vendedor ainda precisa abrir a conversa. Link sem texto abre o
+// WhatsApp na pessoa certa e deixa o resto com quem sabe.
+export function linkDeEnvio(numeroE164Digits: string | null, texto?: string): string | null {
   if (!numeroE164Digits) return null;
-  return `https://wa.me/${numeroE164Digits}?text=${encodeURIComponent(texto)}`;
+  return texto
+    ? `https://wa.me/${numeroE164Digits}?text=${encodeURIComponent(texto)}`
+    : `https://wa.me/${numeroE164Digits}`;
 }
 // NOTA: esta função recebe o número JÁ derivado (`lib/phone.ts` → `paraE164BR`)
 // e por isso continua burra de propósito — quem sabe converter é um lugar só.

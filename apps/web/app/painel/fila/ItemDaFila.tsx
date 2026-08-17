@@ -78,7 +78,11 @@ export function ItemDaFila({
     }
   };
 
-  const link = texto && !escalar ? linkDeEnvio(numero, texto) : null;
+  // Dois links, e a diferença é o que este arquivo errou por uma entrega
+  // inteira: um leva o texto que o motor escreveu, o outro só abre a conversa
+  // para quem vai escrever à mão. O segundo existe sempre que há telefone.
+  const linkComTexto = texto && !escalar ? linkDeEnvio(numero, texto) : null;
+  const linkSimples = linkDeEnvio(numero);
 
   return (
     <li style={{ padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
@@ -129,15 +133,15 @@ export function ItemDaFila({
           ) : (
             <>
               <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: 14 }}>{texto}</p>
-              {link && ajusteNoNumero && (
+              {linkComTexto && ajusteNoNumero && (
                 <p className="badge badge-warn" style={{ marginTop: 10, whiteSpace: "normal", textAlign: "left" }}>
                   {ajusteNoNumero}
                 </p>
               )}
               <div className="row wrap" style={{ gap: 8, marginTop: 12, alignItems: "center" }}>
-                {link ? (
+                {linkComTexto ? (
                   <a
-                    href={link}
+                    href={linkComTexto}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-sm"
@@ -155,58 +159,118 @@ export function ItemDaFila({
                 </button>
               </div>
 
-              {/* ⚠ A PERGUNTA VAI AQUI, no momento em que a resposta é sabida.
-                  `next_action_note` existia desde sempre e só dava para
-                  preencher três telas adiante, na edição do contato — e o
-                  resultado está medido: 257 contatos com data e ZERO com nota.
-                  Campo que exige desvio é campo que ninguém preenche.
-
-                  O prazo é uma lista pronta, não um campo de data: data em
-                  pt-BR já é armadilha conhecida aqui (`03/08` vira 8 de março
-                  no JavaScript), e escolher é mais fácil que digitar — o
-                  mesmo princípio da régua de descoberta do manifesto. */}
-              <form
-                action={marcarEnviado}
-                onSubmit={() => setEnviado(true)}
-                className="stack"
-                style={{ gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}
-              >
-                <input type="hidden" name="contact_id" value={contactId} />
-                <input type="hidden" name="texto" value={texto} />
-                <label className="text-dim" style={{ fontSize: 12 }}>
-                  Ficou combinado alguma coisa?{" "}
-                  <span className="text-faint">(opcional, mas é o que faz o sistema saber o assunto da próxima vez)</span>
-                  <input
-                    type="text"
-                    name="combinado"
-                    value={combinado}
-                    onChange={(e) => setCombinado(e.target.value)}
-                    placeholder="ex.: vai passar sábado de manhã para conhecer"
-                    style={{ marginTop: 4 }}
-                  />
-                </label>
-                {combinado.trim() && (
-                  <label className="text-dim" style={{ fontSize: 12 }}>
-                    Voltar a falar com ele
-                    <select name="em_dias" defaultValue="7" style={{ marginTop: 4, width: "auto" }}>
-                      <option value="2">em 2 dias</option>
-                      <option value="7">em 1 semana</option>
-                      <option value="15">em 15 dias</option>
-                      <option value="30">em 1 mês</option>
-                    </select>
-                  </label>
-                )}
-                <button type="submit" className="btn btn-sm">
-                  {combinado.trim() ? "Enviei e anotei o combinado" : "Marquei como enviado"}
-                </button>
-              </form>
-
               <p className="text-faint" style={{ fontSize: 11, marginTop: 10, marginBottom: 0 }}>
                 Leia antes de enviar. O sistema escreve; quem manda é você.
               </p>
             </>
           )}
         </div>
+      )}
+
+      {/* ⚠ REGISTRAR NÃO PODE DEPENDER DE A MÁQUINA TER ESCRITO.
+          ESTE FORMULÁRIO ERA FILHO DO TEXTO GERADO, e o defeito chegou pela
+          Luciana em 17/ago: ela mandava mensagem para gente da fila e as
+          pessoas continuavam lá. Catarina Wey e Carolina Souza Lourenço,
+          nominalmente.
+
+          A causa é a pior espécie — uma trava CERTA com uma saída faltando.
+          As duas caíram no alarme de silêncio, cujo assunto é o `goal`
+          genérico da etapa, e o motor fez o que lhe mandam fazer: escalou, em
+          vez de escrever mensagem simpática sem assunto. Só que o ramo
+          `escalar` da tela mostrava o aviso e MAIS NADA — sem link, sem
+          botão. A recepcionista abria o WhatsApp dela, escrevia à mão (ela
+          sabe o que dizer, é o trabalho dela) e voltava para uma tela que não
+          tinha onde registrar. A pessoa ficava na fila para sempre.
+
+          Do lado de fora isso não parece defeito: parece que a fila não
+          funciona. E foi assim que apareceu — por alguém usando, não por
+          revisão de código, como todo o resto desta classe.
+
+          O erro de modelagem, escrito para não voltar: **a fila é uma lista de
+          CONVERSAS DEVIDAS, não uma lista de mensagens geradas por IA.** A IA
+          é um acelerador opcional no meio do caminho. Amarrar o registro a ela
+          fez o produto parar de funcionar exatamente onde ele foi mais
+          honesto. Por isso o formulário vive fora, e aparece sempre. */}
+      {!enviado && (
+        <form
+          action={marcarEnviado}
+          onSubmit={() => setEnviado(true)}
+          className="stack"
+          style={{ gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}
+        >
+          <input type="hidden" name="contact_id" value={contactId} />
+          {/* Sem texto gerado, vai vazio — e `marcarEnviado` grava "(toque da
+              fila, sem texto registrado)". O toque conta igual; o que não
+              existe é a cópia do que foi dito. */}
+          <input type="hidden" name="texto" value={escalar ? "" : texto ?? ""} />
+
+          {/* A saída de quem vai escrever à mão. Só aparece quando não há
+              texto para levar — com mensagem pronta, o botão verde acima já
+              é o caminho, e dois links verdes lado a lado só criam dúvida. */}
+          {!linkComTexto && linkSimples && (
+            <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
+              <a
+                href={linkSimples}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-ghost"
+              >
+                Abrir a conversa no WhatsApp
+              </a>
+              {ajusteNoNumero && (
+                <span className="text-faint" style={{ fontSize: 11 }}>{ajusteNoNumero}</span>
+              )}
+            </div>
+          )}
+
+          {/* ⚠ A PERGUNTA VAI AQUI, no momento em que a resposta é sabida.
+              `next_action_note` existia desde sempre e só dava para preencher
+              três telas adiante, na edição do contato — e o resultado está
+              medido: 257 contatos com data e ZERO com nota. Campo que exige
+              desvio é campo que ninguém preenche.
+
+              O prazo é uma lista pronta, não um campo de data: data em pt-BR
+              já é armadilha conhecida aqui (`03/08` vira 8 de março no
+              JavaScript), e escolher é mais fácil que digitar — o mesmo
+              princípio da régua de descoberta do manifesto. */}
+          <label className="text-dim" style={{ fontSize: 12 }}>
+            Ficou combinado alguma coisa?{" "}
+            <span className="text-faint">(opcional, mas é o que faz o sistema saber o assunto da próxima vez)</span>
+            <input
+              type="text"
+              name="combinado"
+              value={combinado}
+              onChange={(e) => setCombinado(e.target.value)}
+              placeholder="ex.: vai passar sábado de manhã para conhecer"
+              style={{ marginTop: 4 }}
+            />
+          </label>
+          {combinado.trim() && (
+            <label className="text-dim" style={{ fontSize: 12 }}>
+              Voltar a falar com ele
+              <select name="em_dias" defaultValue="7" style={{ marginTop: 4, width: "auto" }}>
+                <option value="2">em 2 dias</option>
+                <option value="7">em 1 semana</option>
+                <option value="15">em 15 dias</option>
+                <option value="30">em 1 mês</option>
+              </select>
+            </label>
+          )}
+          {/* O RÓTULO DIZ O QUE DE FATO ACONTECEU. Com texto preparado, ela
+              acabou de enviar o que está na tela. Sem texto, ela falou com a
+              pessoa por fora — e "Já falei com ele" é o que ela faria mesmo
+              sem o sistema existir. Rótulo que promete a mesma coisa nos dois
+              casos ensina a desconfiar do registro. */}
+          <button
+            type="submit"
+            className={linkComTexto ? "btn btn-sm" : "btn btn-sm btn-ghost"}
+            style={{ alignSelf: "flex-start" }}
+          >
+            {linkComTexto
+              ? combinado.trim() ? "Enviei e anotei o combinado" : "Marquei como enviado"
+              : combinado.trim() ? "Já falei com ele e anotei o combinado" : "Já falei com ele"}
+          </button>
+        </form>
       )}
     </li>
   );
