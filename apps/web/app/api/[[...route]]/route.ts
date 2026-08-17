@@ -289,24 +289,43 @@ async function registrar(mensagens: MensagemRecebida[]) {
     // `external_id` é a chave contra duplicata: a Meta REENVIA o mesmo pacote
     // quando não recebe 200 a tempo, e sem isso a mesma frase do cliente
     // apareceria duas vezes no histórico — e contaria duas vezes na métrica.
-    await admin.from("interactions").upsert(
-      {
-        tenant_id: tenantId,
-        contact_id: contactId,
-        direction: "inbound",
-        // PAPEL, não meio. Mensagem que o cliente escreveu é
-        // `customer_message` — e não é rótulo à toa: a Gestão calcula tempo de
-        // resposta filtrando exatamente por este valor. Inventar um
-        // `input_kind: "whatsapp"` faria as mensagens do canal novo sumirem
-        // silenciosamente da métrica que mede o produto.
-        input_kind: "customer_message",
-        channel: "whatsapp",
-        content: msg.texto,
-        occurred_at: msg.quando.toISOString(),
-        external_id: msg.wamid,
-      },
-      { onConflict: "tenant_id,external_id", ignoreDuplicates: true },
-    );
+    //
+    // ⚠ ERA UM `upsert` COM `onConflict`, E ELE NUNCA FUNCIONOU.
+    //
+    // O índice único é PARCIAL (`... WHERE external_id IS NOT NULL`, no 0052)
+    // e o `ON CONFLICT` do Postgres não infere índice parcial sem repetir o
+    // predicado — coisa que o PostgREST não sabe expressar. Toda gravação
+    // falhava com "no unique or exclusion constraint matching".
+    //
+    // E o erro era ENGOLIDO: o resultado do `upsert` não era conferido. O
+    // efeito foi o pior desta série — a primeira mensagem real de um cliente
+    // criou o contato, com nome e dono certos, e **a frase dele sumiu**. Do
+    // lado de fora, sucesso total: 200 para a Meta, contato novo na tela, e
+    // zero interações. Ninguém procuraria por uma mensagem que não sabe que
+    // existiu.
+    //
+    // Agora é INSERT com o erro lido. Duplicata (23505) é o caso esperado do
+    // reenvio da Meta e passa em silêncio; qualquer outro erro vai para o log,
+    // porque a alternativa é perder mensagem de cliente sem rastro.
+    const { error: erroMsg } = await admin.from("interactions").insert({
+      tenant_id: tenantId,
+      contact_id: contactId,
+      direction: "inbound",
+      // PAPEL, não meio. Mensagem que o cliente escreveu é
+      // `customer_message` — e não é rótulo à toa: a Gestão calcula tempo de
+      // resposta filtrando exatamente por este valor. Inventar um
+      // `input_kind: "whatsapp"` faria as mensagens do canal novo sumirem
+      // silenciosamente da métrica que mede o produto.
+      input_kind: "customer_message",
+      channel: "whatsapp",
+      content: msg.texto,
+      occurred_at: msg.quando.toISOString(),
+      external_id: msg.wamid,
+    });
+
+    if (erroMsg && erroMsg.code !== "23505") {
+      console.error(`[whatsapp] MENSAGEM PERDIDA de ${msg.de} (${msg.wamid}): ${erroMsg.message}`);
+    }
   }
 }
 
