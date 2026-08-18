@@ -180,13 +180,45 @@ sem conversa — invisível até agora.
 
 ---
 
-## ⚠ O número que importa mais que a lista
+## ⚠ O número que importa mais que a lista — CORRIGIDO em 18/ago/2026
 
-**`decisions` = 0.** Em toda a plataforma, **nenhuma resposta com IA foi gerada
-para um cliente real**. O sistema está carregado, dividido, configurado, com 88
-renovações devidas esperando — e ninguém apertou o botão ainda.
+**A versão anterior desta seção estava ERRADA, e o erro é o mais instrutivo do
+projeto.** Ela dizia: *"`decisions` = 0. Em toda a plataforma, nenhuma resposta
+com IA foi gerada para um cliente real."*
 
-Não é pendência de construção. É a única coisa que decide se o produto presta.
+Isso é falso. O fundador contestou — *"já medimos sim, é a versão manual"* — e
+a conferência no banco deu razão a ele:
+
+| | |
+|---|---|
+| Chamadas de IA na Be Fitness (`responder_ai`) | **161**, de 26/jul a 18/ago |
+| Saídas registradas no período | **548**, para **227 pessoas distintas** |
+| Mudanças de etapa no período | 25 |
+| **Vendas registradas no período** | **0** |
+| Linhas em `decisions` | 0 — **porque NADA escreve nessa tabela** |
+
+**`decisions` está vazia porque nenhuma linha de código insere nela.** A tabela
+nasceu no `0001` e nunca ganhou escritor. Ou seja: o "número que importa mais
+que a lista" era **um campo vazio com aparência de medição** — exatamente a
+classe de defeito que este projeto documenta em todo lugar, cometida no
+documento que existe para evitá-la.
+
+**O que de fato falta não é a IA falar — ela fala há três semanas. É o
+DESFECHO.** 548 toques, 227 pessoas, e zero venda registrada. Ou nada
+converteu, ou as vendas acontecem e ninguém registra (mais provável:
+`services_rendered` depende de alguém preencher à mão).
+
+Sem desfecho, não dá para dizer se a IA é boa nem se a operação está
+funcionando — e essa cegueira **já existe hoje**, com humano no meio. Ela não é
+argumento contra automatizar; é o item que precisa ser resolvido de qualquer
+jeito, automatizando ou não.
+
+⚠ **E a lição de método:** eu afirmei ao fundador um número que não tinha
+conferido, apoiado num documento que também não tinha. Ele desconfiou porque
+conhece a operação. É a segunda vez — a primeira foi o Analista dizendo que
+fazia 20 dias que ninguém usava o sistema, quando havia 32 interações no dia
+anterior. **Número que ninguém consegue contestar é o mais perigoso que
+existe.**
 
 ---
 
