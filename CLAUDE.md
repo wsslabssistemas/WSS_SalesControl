@@ -139,6 +139,16 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   encolhe — que não parece defeito, parece trabalho acumulado. Já aconteceu
   duas vezes: `combinado` (10/ago) e `renovacao` (15/ago), e na segunda o
   comentário do código afirmava que só o primeiro tinha o problema.
+- **`npx next build` ANTES do push, sempre que mexer em rota, página ou ação.**
+  `tsc --noEmit` não vê as regras do Next: em 18/ago o typecheck passou limpo e
+  a Vercel quebrou em 20 segundos com `exited with 1`, porque um arquivo
+  `"use server"` exportava uma constante (`maxDuration`) — e arquivo de ação só
+  pode exportar função assíncrona. O fundador recebeu o e-mail de falha e
+  perguntou se precisava contratar plano por falta de memória. **Não era**:
+  falha em 20 segundos é compilação; estouro de memória demora e falha
+  diferente. **Typecheck verde não é build verde.**
+- **`maxDuration` mora na PÁGINA, nunca no arquivo de ações.** É a página que
+  governa a duração das ações invocadas a partir dela.
 - **Tela que chama IA declara `maxDuration`.** O padrão da Vercel mata a
   função no meio da geração e não devolve nada: o botão gira para sempre, sem
   erro. Mesma classe do corpo de 4,2 MB da sincronização — limite de
