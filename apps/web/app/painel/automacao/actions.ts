@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { readAutomation, type AutomationSettings } from "@/lib/automation";
 import { MOTIVOS } from "@/lib/roteamento";
+import { parseMoneyToCents } from "@/lib/money";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -100,6 +101,11 @@ export async function salvarRoteamento(formData: FormData) {
     if (nome) modelos[m] = nome;
   }
 
+  // Campo em REAIS na tela, centavos no banco — a regra de `lib/money.ts`.
+  // Vazio ou zero significa SEM TETO, que e o padrao declarado.
+  const tetoBruto = String(formData.get('teto_mensagens') ?? '').trim();
+  const tetoCents = tetoBruto ? parseMoneyToCents(tetoBruto) ?? 0 : 0;
+
   const settingsAtuais = (cur?.settings as Record<string, unknown> | null) ?? {};
   const automacaoAtual = (settingsAtuais.automation as Record<string, unknown> | null) ?? {};
 
@@ -108,7 +114,15 @@ export async function salvarRoteamento(formData: FormData) {
     .update({
       settings: {
         ...settingsAtuais,
-        automation: { ...automacaoAtual, canal_por_motivo: canal, modelos },
+        automation: {
+          ...automacaoAtual,
+          canal_por_motivo: canal,
+          modelos,
+          // Guardado aqui e NAO em `readAutomation`: se estivesse la, salvar
+          // as regras anti-bloqueio zeraria o teto em silencio. Ver a nota em
+          // `lerTetoDeMensagens`.
+          teto_mensagens_mes_cents: tetoCents,
+        },
       },
     })
     .eq("id", tenant.id);

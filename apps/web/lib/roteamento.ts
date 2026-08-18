@@ -123,29 +123,95 @@ export function rotaDoToque(entrada: {
     };
   }
 
+  return pelaJanela(janelaAberta, modelos[motivo] ?? null, semModelo(motivo));
+}
+
+/**
+ * A CAUDA COMPARTILHADA — a parte que não depende de POR QUE estamos falando.
+ *
+ * Toque proativo e resposta são perguntas diferentes (uma escolhe por motivo,
+ * a outra não escolhe nada), mas as duas terminam na mesma regra da Meta:
+ * dentro da janela, texto livre; fora dela, só modelo aprovado. Escrever isso
+ * duas vezes seria a receita de as duas divergirem em silêncio — que é
+ * literalmente o defeito de `phases` × `cadence` que o manifesto já pagou.
+ */
+function pelaJanela(janelaAberta: boolean, modelo: string | null, motivoDoBloqueio: string): Rota {
   if (janelaAberta) {
     return {
       via: "cloud_api_texto",
       porque: "Ele escreveu nas últimas 24h: texto livre sai pelo número do sistema.",
     };
   }
-
-  const modelo = modelos[motivo];
   if (modelo) {
     return {
       via: "cloud_api_modelo",
       modelo,
-      porque: "Fora da janela de 24h — sai pelo modelo aprovado deste motivo.",
+      porque: "Fora da janela de 24h — sai pelo modelo aprovado.",
+    };
+  }
+  return { via: "bloqueado", porque: motivoDoBloqueio };
+}
+
+function semModelo(motivo: MotivoDaFila): string {
+  return (
+    `O motivo "${motivo}" está configurado para sair pelo número oficial, mas faz mais de 24h que ` +
+    "ele escreveu e não há modelo aprovado cadastrado para este motivo. Cadastre o modelo " +
+    "na Meta e informe o nome dele em Automação — ou envie por aqui mesmo, à mão."
+  );
+}
+
+/**
+ * POR ONDE UMA **RESPOSTA** SAI — e aqui não há escolha a fazer.
+ *
+ * ⚠ A REGRA É OUTRA, E ISSO É O CERNE DESTE ARQUIVO.
+ *
+ * O toque proativo escolhe por MOTIVO, porque é uma decisão comercial: falar
+ * com ex-aluno pelo número da empresa e com o lead do vendedor pelo número
+ * dele. Resposta não é decisão nenhuma: **ela sai por onde a conversa está.**
+ *
+ * Responder de um número diferente daquele em que a pessoa escreveu é
+ * exatamente o defeito que o fundador nomeou em 16/ago — do lado dela não são
+ * dois canais da academia, são dois desconhecidos. E no caso que mais importa,
+ * o cliente que pede para falar com um humano, é pior ainda: ela pediu ajuda e
+ * o socorro chega de um número estranho.
+ *
+ * Por isso não existe configuração aqui. Se a conversa está no número oficial,
+ * a resposta sai por ele; se nunca passou por ele, sai pelo WhatsApp de quem
+ * atende. Uma chave para desligar isso seria uma chave para quebrar conversa.
+ *
+ * ⚠ E FORA DA JANELA A RESPOSTA É `bloqueado`, NÃO um modelo qualquer.
+ * Passadas 24h, aquilo já não é resposta — é retomada, e retomada tem motivo,
+ * que é trabalho da fila. Emendar um modelo aqui faria o sistema "responder"
+ * com um texto fixo aprovado dias antes, sem relação com o que a pessoa
+ * perguntou. Fluente e errado, de novo.
+ */
+export function rotaDaResposta(entrada: {
+  temCredencial: boolean;
+  /** A pessoa já escreveu para o número oficial alguma vez. */
+  conversaNoCanalOficial: boolean;
+  /** Ela escreveu nas últimas 24h — ver `janelaDeAtendimento`. */
+  janelaAberta: boolean;
+}): Rota {
+  const { temCredencial, conversaNoCanalOficial, janelaAberta } = entrada;
+
+  if (!temCredencial) {
+    return { via: "link_humano", porque: "O canal oficial desta empresa não está configurado." };
+  }
+  if (!conversaNoCanalOficial) {
+    return {
+      via: "link_humano",
+      porque:
+        "Esta pessoa nunca escreveu para o número do sistema — a conversa dela é com quem " +
+        "atende, e a resposta tem que sair do mesmo lugar.",
     };
   }
 
-  return {
-    via: "bloqueado",
-    porque:
-      "Este motivo está configurado para sair pelo número oficial, mas faz mais de 24h que " +
-      "ele escreveu e não há modelo aprovado cadastrado para este motivo. Cadastre o modelo " +
-      "na Meta e informe o nome dele em Automação — ou envie por aqui mesmo, à mão.",
-  };
+  return pelaJanela(
+    janelaAberta,
+    null,
+    "Faz mais de 24h que ele escreveu, então a Meta não entrega texto livre. Isto deixou de " +
+      "ser resposta e virou retomada: ela vai aparecer na fila, com um motivo e o modelo certo.",
+  );
 }
 
 /**

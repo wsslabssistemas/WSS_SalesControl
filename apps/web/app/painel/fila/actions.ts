@@ -17,7 +17,8 @@ import { janelaDeAtendimento } from "@/lib/whatsapp-webhook";
 import { enviarPelaCloudAPI, enviarModeloPelaCloudAPI } from "@/lib/envio";
 import { primeiroNome, higienizarParametro } from "@/lib/modelo";
 import { paraE164BR } from "@/lib/phone";
-import { registrarEnvio } from "@/lib/custo_mensagem-db";
+import { registrarEnvio, gastoDeMensagensNoMes } from "@/lib/custo_mensagem-db";
+import { avaliarTetoDeMensagens, lerTetoDeMensagens } from "@/lib/custo_mensagem";
 import { revalidatePath } from "next/cache";
 
 export type ToqueResult =
@@ -401,6 +402,28 @@ export async function enviarPeloSistema(
 
   if (rota.via === "link_humano") return { ok: false, motivo: rota.porque };
   if (rota.via === "bloqueado") return { ok: false, motivo: rota.porque };
+
+  // ---------------------------------------------- O FREIO DE CUSTO
+  //
+  // ⚠ VERIFICAR ANTES DA CHAMADA, NUNCA DEPOIS — a mesma regra da cota de IA.
+  // Verificar depois é medir o prejuízo: a mensagem já saiu e a conta já
+  // existe.
+  //
+  // E este teto só freia o que ELE governa: o disparo pelo número do sistema.
+  // Bloqueado, a fila continua funcionando pelo `wa.me`, que não passa pela
+  // Meta e não custa nada. Bloqueio não é erro — é a mesma regra 1 da cota.
+  //
+  // ⚠ Ele NÃO se soma ao teto de IA de propósito. Lá o freio é parar de gerar,
+  // e isso só é um degrau seguro porque o manual custa zero. Se os dois
+  // dividissem o mesmo número, estourar por causa de mensagem desligaria a IA
+  // — e as mensagens continuariam saindo, que é o freio errado puxado com
+  // força. Ver `lib/custo_mensagem.ts`.
+  const teto = lerTetoDeMensagens(settings);
+  if (teto !== null) {
+    const gasto = await gastoDeMensagensNoMes(tenant.id);
+    const veredito = avaliarTetoDeMensagens(gasto.gastoCents, teto);
+    if (!veredito.ok) return { ok: false, motivo: veredito.motivo };
+  }
 
   const num = paraE164BR(contact.phone);
   if (!num.ok) return { ok: false, motivo: num.motivo };

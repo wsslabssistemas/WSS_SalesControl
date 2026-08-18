@@ -29,7 +29,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const { rotaDoToque, lerRoteamento, lerModelos, ROTEAMENTO_PADRAO } = await import(
+const { rotaDoToque, rotaDaResposta, lerRoteamento, lerModelos, ROTEAMENTO_PADRAO } = await import(
   pathToFileURL(path.join(ROOT, "apps/web/lib/roteamento.ts")).href
 );
 
@@ -198,6 +198,60 @@ verifica(
     }).via,
   ),
   ["bloqueado", "bloqueado", "bloqueado", "bloqueado", "bloqueado", "bloqueado"],
+);
+
+// ---------------------------------------------------------------------
+// 5. A RESPOSTA — que nao escolhe nada: sai por onde a conversa esta
+//
+// A PROPRIEDADE QUE ESTE BLOCO GUARDA: `rotaDaResposta` NAO tem chave de
+// configuracao. Se alguem acrescentar uma, responder de um numero diferente
+// daquele em que a pessoa escreveu volta a ser possivel — e e o defeito de
+// 16/ago: do lado dela nao sao dois canais da academia, sao dois
+// desconhecidos. Pior no caso que mais importa: o cliente que pede um humano
+// pede socorro e recebe resposta de um numero estranho.
+// ---------------------------------------------------------------------
+
+// Esperado: "cloud_api_texto". Escreveu no oficial e a janela esta aberta —
+// texto livre, sem modelo, e hoje de graca. E a UNICA peca do canal que
+// funciona antes de qualquer modelo ser aprovado.
+verifica(
+  "conversa no oficial dentro da janela responde por texto livre",
+  rotaDaResposta({ temCredencial: true, conversaNoCanalOficial: true, janelaAberta: true }).via,
+  "cloud_api_texto",
+);
+
+// Esperado: "link_humano". Nunca escreveu para o numero do sistema, entao a
+// conversa dela e com quem atende — e a resposta sai do mesmo lugar.
+verifica(
+  "quem nunca escreveu para o oficial e respondido pelo link humano",
+  rotaDaResposta({ temCredencial: true, conversaNoCanalOficial: false, janelaAberta: false }).via,
+  "link_humano",
+);
+
+// Esperado: "link_humano". Sem credencial nada sai pela API, como em canalDe.
+verifica(
+  "sem credencial a resposta cai no link humano",
+  rotaDaResposta({ temCredencial: false, conversaNoCanalOficial: true, janelaAberta: true }).via,
+  "link_humano",
+);
+
+// Esperado: "bloqueado", e NUNCA "cloud_api_modelo". Passadas 24h aquilo
+// deixou de ser resposta e virou retomada — retomada tem motivo, e motivo e
+// trabalho da fila. Emendar um modelo aqui faria o sistema "responder" com um
+// texto fixo aprovado dias antes, sem relacao com o que a pessoa perguntou.
+verifica(
+  "fora da janela a resposta bloqueia em vez de emendar um modelo",
+  rotaDaResposta({ temCredencial: true, conversaNoCanalOficial: true, janelaAberta: false }).via,
+  "bloqueado",
+);
+
+// Esperado: o texto explica que ela volta pela fila. Bloqueio sem saida se le
+// como "o sistema quebrou" — a regra 1 da cota de IA valendo aqui.
+verifica(
+  "o bloqueio da resposta diz que a pessoa volta pela fila",
+  rotaDaResposta({ temCredencial: true, conversaNoCanalOficial: true, janelaAberta: false })
+    .porque.includes("fila"),
+  true,
 );
 
 console.log(falhas === 0 ? "\nroteamento: tudo certo." : `\nroteamento: ${falhas} falha(s).`);

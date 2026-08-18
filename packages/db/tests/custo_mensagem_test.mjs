@@ -29,7 +29,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const {
   TARIFA_BR, tarifaVigente, custoMicroReais, paraCentavos,
-  avaliarTetoDeMensagens, categoriaDoEnvio, featureDaMensagem, reais,
+  avaliarTetoDeMensagens, categoriaDoEnvio, featureDaMensagem, reais, lerTetoDeMensagens,
 } = await import(pathToFileURL(path.join(ROOT, "apps/web/lib/custo_mensagem.ts")).href);
 
 let falhas = 0;
@@ -140,6 +140,23 @@ verifica(
   avaliarTetoDeMensagens(20_000, 10_000).motivo.includes("não custa nada"),
   true,
 );
+
+// ---------------------------------------------------------------------
+// 5. A LEITURA DO TETO — e por que ele mora fora do readAutomation
+// ---------------------------------------------------------------------
+
+// Esperado: null. Empresa que nunca configurou nao pode ter teto por acidente.
+verifica("settings vazio = sem teto", lerTetoDeMensagens(null), null);
+
+// Esperado: null. ZERO significa "sem teto", que e o padrao declarado.
+verifica("zero significa sem teto", lerTetoDeMensagens({ automation: { teto_mensagens_mes_cents: 0 } }), null);
+
+// Esperado: null. Valor invalido nao pode virar um teto minusculo que trava a
+// campanha — falha na direcao de deixar passar, que aqui e a segura.
+verifica("valor invalido nao vira teto", lerTetoDeMensagens({ automation: { teto_mensagens_mes_cents: "abc" } }), null);
+
+// Esperado: 5000 (R$ 50,00).
+verifica("teto valido e lido", lerTetoDeMensagens({ automation: { teto_mensagens_mes_cents: 5000 } }), 5000);
 
 verifica("formatação de dinheiro", reais(34031), "R$ 340,31");
 

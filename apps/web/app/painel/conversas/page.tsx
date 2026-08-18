@@ -4,6 +4,10 @@ import { getActiveTenant } from "@/lib/auth";
 import { statusDoCanal } from "@/lib/credenciais";
 import { gastoDeMensagensNoMes } from "@/lib/custo_mensagem-db";
 import { reais } from "@/lib/custo_mensagem";
+import { janelaDeAtendimento } from "@/lib/whatsapp-webhook";
+import { rotaDaResposta } from "@/lib/roteamento";
+import { credencialDoCanal } from "@/lib/credenciais";
+import { Responder } from "./Responder";
 
 export const metadata = { title: "Canal oficial" };
 
@@ -33,9 +37,9 @@ export const metadata = { title: "Canal oficial" };
 export default async function ConversasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filtro?: string }>;
+  searchParams: Promise<{ filtro?: string; contato?: string }>;
 }) {
-  const { filtro } = await searchParams;
+  const { filtro, contato } = await searchParams;
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
   if (!tenant) {
@@ -140,6 +144,45 @@ export default async function ConversasPage({
     .order("occurred_at", { ascending: false })
     .limit(40);
 
+  // ---------------------------------------------------------------- AS CONVERSAS
+  //
+  // ⚠ A LISTA É DE **ENTRADAS**, não de mensagens quaisquer, e a diferença
+  // decide se o número está certo. É a última mensagem DELE pelo canal que
+  // abre a janela de 24h — a nossa não abre nada. Montar a lista a partir de
+  // "últimas mensagens" faria uma conversa em que só nós falamos aparecer com
+  // janela aberta, e a resposta seria recusada pela Meta com um erro que se lê
+  // como credencial errada.
+  //
+  // `.limit(40)` é decisão de produto ("as 40 conversas mais recentes"), não
+  // leitura de tabela que cresce: quem passa disso não precisa de lista, e o
+  // placar acima já diz o tamanho.
+  const { data: entradas } = await supabase
+    .from("interactions")
+    .select("id, occurred_at, content, contact_id, contacts(name)")
+    .eq("tenant_id", tenant.id)
+    .eq("direction", "inbound")
+    .not("external_id", "is", null)
+    .order("occurred_at", { ascending: false })
+    .limit(40);
+
+  // O FIO da conversa selecionada. Aqui entra tudo — inclusive o que foi
+  // registrado à mão —, porque quem vai responder precisa do contexto inteiro,
+  // não só do que passou pela Meta.
+  const { data: fio } = contato
+    ? await supabase
+        .from("interactions")
+        .select("id, occurred_at, direction, input_kind, content, delivery_status, delivery_error")
+        .eq("tenant_id", tenant.id)
+        .eq("contact_id", contato)
+        .order("occurred_at", { ascending: false })
+        .limit(30)
+    : { data: null };
+
+  type Fio = {
+    id: string; occurred_at: string; direction: string; input_kind: string;
+    content: string; delivery_status?: string | null; delivery_error?: string | null;
+  };
+
   type Linha = {
     id: string; occurred_at: string; direction?: string; content: string;
     delivery_status?: string | null; delivery_error?: string | null; delivery_at?: string | null;
@@ -160,6 +203,26 @@ export default async function ConversasPage({
     read: { txt: "lida", cls: "badge badge-success" },
     failed: { txt: "FALHOU", cls: "badge badge-danger" },
   };
+
+  // UMA LINHA POR PESSOA, a entrada mais recente dela. Sem isso, quem mandou
+  // cinco mensagens seguidas ocuparia a lista inteira — e é justamente quem
+  // está esperando resposta.
+  const porContato = new Map<string, Linha>();
+  for (const e of ((entradas as Linha[] | null) ?? [])) {
+    if (!porContato.has(e.contact_id)) porContato.set(e.contact_id, e);
+  }
+  const conversas = [...porContato.values()];
+
+  // O estado da conversa selecionada: a janela vem da última ENTRADA dela.
+  const selecionada = contato ? porContato.get(contato) ?? null : null;
+  const janelaSel = selecionada ? janelaDeAtendimento(selecionada.occurred_at) : null;
+  const rotaSel = contato
+    ? rotaDaResposta({
+        temCredencial: !!(await credencialDoCanal(tenant.id)),
+        conversaNoCanalOficial: !!selecionada,
+        janelaAberta: janelaSel?.aberta ?? false,
+      })
+    : null;
 
   const fs = (listaFalhas as Linha[] | null) ?? [];
   const rs = (recentes as Linha[] | null) ?? [];
@@ -242,6 +305,118 @@ export default async function ConversasPage({
           </ul>
         </div>
       )}
+
+      {/* ---------------------------------------------------- AS CONVERSAS
+          ⚠ ESTA É A METADE QUE FALTAVA DO CANAL.
+
+          O produto sabia MANDAR pelo número da empresa e não sabia RESPONDER
+          por ele: quem escrevesse para o número do sistema só podia ser
+          atendido pelo WhatsApp pessoal de um vendedor — outro número, e do
+          lado do cliente outra pessoa. O caso que expõe isso é o cliente que
+          pede para falar com um humano: ele pede socorro e o socorro chega de
+          um desconhecido.
+
+          O relógio da janela aparece em cada linha porque passadas 24h a Meta
+          não entrega texto livre, e quem vai responder precisa saber disso
+          ANTES de escrever. */}
+      <div className="card mt-24">
+        <div className="between" style={{ alignItems: "baseline" }}>
+          <strong>Conversas no número do sistema</strong>
+          <span className="text-faint" style={{ fontSize: 12 }}>
+            {conversas.length === 0 ? "nenhuma ainda" : `${conversas.length} pessoa(s)`}
+          </span>
+        </div>
+
+        {conversas.length === 0 ? (
+          <p className="text-dim" style={{ fontSize: 14, marginBottom: 0 }}>
+            Ninguém escreveu para o número do sistema ainda. Quando a primeira pessoa
+            escrever, ela aparece aqui e dá para responder por este mesmo número.
+          </p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>
+            {conversas.map((c) => {
+              const j = janelaDeAtendimento(c.occurred_at);
+              const aberto = contato === c.contact_id;
+              return (
+                <li key={c.contact_id} style={{ padding: "10px 0", borderTop: "1px solid var(--border)" }}>
+                  <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
+                    <Link
+                      href={aberto ? "/painel/conversas" : `/painel/conversas?contato=${c.contact_id}`}
+                      className="grow"
+                      style={{ fontSize: 14, minWidth: 130, fontWeight: aberto ? 600 : undefined }}
+                    >
+                      {aberto ? "▾ " : "▸ "}{nomeDe(c)}
+                    </Link>
+                    <span className="text-faint" style={{ fontSize: 12 }}>{quando(c.occurred_at)}</span>
+                    {j.aberta ? (
+                      <span className={j.minutosRestantes !== null && j.minutosRestantes <= 120 ? "badge badge-warn" : "badge badge-success"}>
+                        {j.minutosRestantes !== null && j.minutosRestantes < 60
+                          ? `${j.minutosRestantes} min`
+                          : `${Math.floor((j.minutosRestantes ?? 0) / 60)}h`}
+                      </span>
+                    ) : (
+                      <span className="badge">janela fechada</span>
+                    )}
+                  </div>
+                  <p className="text-dim" style={{ fontSize: 13, margin: "4px 0 0" }}>
+                    {c.content.length > 120 ? `${c.content.slice(0, 120)}…` : c.content}
+                  </p>
+
+                  {/* O FIO E A RESPOSTA, abertos na própria linha. Navegar para
+                      outra tela para responder faria perder o contexto de quem
+                      está atendendo cinco conversas. */}
+                  {aberto && (
+                    <div style={{ marginTop: 12 }}>
+                      <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px" }}>
+                        {[...(((fio as Fio[] | null) ?? []))].reverse().map((m) => (
+                          <li
+                            key={m.id}
+                            style={{
+                              padding: "6px 10px",
+                              margin: "4px 0",
+                              borderRadius: 8,
+                              background: m.direction === "inbound" ? "var(--bg-elev)" : "transparent",
+                              borderLeft: m.direction === "inbound" ? "3px solid var(--border-brand)" : "3px solid var(--border)",
+                            }}
+                          >
+                            <div className="row wrap" style={{ gap: 6, alignItems: "baseline" }}>
+                              <span className="text-faint" style={{ fontSize: 11 }}>
+                                {m.direction === "inbound" ? "ele" : "nós"} · {quando(m.occurred_at)}
+                              </span>
+                              {m.delivery_status && (
+                                <span className={ROTULO_STATUS[m.delivery_status]?.cls ?? "badge"} style={{ fontSize: 10 }}>
+                                  {ROTULO_STATUS[m.delivery_status]?.txt ?? m.delivery_status}
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: 13, margin: "2px 0 0", whiteSpace: "pre-wrap" }}>{m.content}</p>
+                            {m.delivery_error && (
+                              <p className="badge badge-danger" style={{ marginTop: 4, whiteSpace: "normal" }}>
+                                {m.delivery_error}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Responder
+                        contactId={c.contact_id}
+                        podeResponder={rotaSel?.via === "cloud_api_texto"}
+                        motivoDoBloqueio={rotaSel && rotaSel.via !== "cloud_api_texto" ? rotaSel.porque : null}
+                        aviso={janelaSel?.aviso ?? null}
+                      />
+
+                      <p className="text-faint" style={{ fontSize: 11, marginTop: 8 }}>
+                        <Link href={`/painel/contatos/${c.contact_id}`}>Abrir a ficha completa →</Link>
+                      </p>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* ---------------------------------------------------- A ATIVIDADE */}
       <div className="card mt-24">

@@ -160,3 +160,28 @@ export function featureDaMensagem(c: CategoriaMensagem): string {
 export const FEATURES_DE_MENSAGEM: string[] = (
   ["marketing", "utilidade", "autenticacao", "servico"] as CategoriaMensagem[]
 ).map(featureDaMensagem);
+
+/**
+ * O TETO DE GASTO COM MENSAGEM, por empresa. `null` = sem teto.
+ *
+ * ⚠ MORA EM `tenants.settings.automation` E **FORA** DE `readAutomation`, e
+ * isso não é desleixo de organização — é a correção de um defeito real.
+ *
+ * `readAutomation` devolve apenas os nove campos que ele conhece, e o
+ * formulário de regras da automação grava o resultado dele. Se este teto
+ * entrasse ali, salvar as regras anti-bloqueio **zeraria o teto de gasto em
+ * silêncio**, com a tela dizendo "salvo" — exatamente o que acontecia com
+ * `canal_por_motivo` antes de 17/ago. Dois formulários escrevendo o mesmo
+ * objeto precisam de donos separados por campo, não de boa vontade.
+ *
+ * ZERO SIGNIFICA SEM TETO, e é o padrão. Teto inventado que morde no meio de
+ * uma campanha é pior que teto nenhum: quem descobre é o vendedor, no meio do
+ * trabalho, sem saber por quê.
+ */
+export function lerTetoDeMensagens(settings: unknown): number | null {
+  const v = (settings as { automation?: { teto_mensagens_mes_cents?: unknown } } | null)
+    ?.automation?.teto_mensagens_mes_cents;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n);
+}

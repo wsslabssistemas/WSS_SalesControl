@@ -1,0 +1,97 @@
+"use client";
+
+import { useState } from "react";
+import { responderPeloCanal } from "./actions";
+
+/**
+ * A CAIXA DE RESPOSTA — e o relógio da janela ao lado dela.
+ *
+ * ⚠ O RELÓGIO NÃO É ENFEITE. Passadas 24h desde a última mensagem do cliente,
+ * a Meta simplesmente não entrega texto livre. Quem está escrevendo precisa
+ * saber disso ANTES de escrever, não depois de perder a mensagem — o aviso de
+ * "menos de 2h" existe porque esse é o intervalo em que a pessoa monta a
+ * resposta, sai para o café e volta com a janela fechada.
+ *
+ * E o campo não guarda rascunho entre recargas de propósito: rascunho salvo é
+ * o começo da aba antiga que regrava valor velho por cima do novo.
+ */
+export function Responder({
+  contactId,
+  podeResponder,
+  motivoDoBloqueio,
+  aviso,
+}: {
+  contactId: string;
+  podeResponder: boolean;
+  motivoDoBloqueio: string | null;
+  aviso: string | null;
+}) {
+  const [texto, setTexto] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviado, setEnviado] = useState(false);
+
+  if (!podeResponder) {
+    return (
+      <div className="card" style={{ background: "var(--bg-elev)" }}>
+        <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left", margin: 0 }}>
+          {motivoDoBloqueio ?? "Não dá para responder por aqui agora."}
+        </p>
+      </div>
+    );
+  }
+
+  const enviar = async () => {
+    setEnviando(true);
+    setErro(null);
+    try {
+      const r = await responderPeloCanal(contactId, texto);
+      if (r.ok) {
+        setEnviado(true);
+        setTexto("");
+      } else setErro(r.motivo);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="card" style={{ background: "var(--bg-elev)" }}>
+      {aviso && (
+        <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left" }}>
+          {aviso}
+        </p>
+      )}
+      <textarea
+        value={texto}
+        onChange={(e) => { setTexto(e.target.value); setEnviado(false); }}
+        placeholder="Escreva a resposta — ela sai pelo mesmo número em que ele escreveu."
+        rows={3}
+        style={{ width: "100%", marginTop: aviso ? 8 : 0 }}
+        disabled={enviando}
+      />
+      <div className="row wrap" style={{ gap: 8, alignItems: "center", marginTop: 8 }}>
+        <button
+          type="button"
+          className="btn btn-sm btn-primary"
+          onClick={enviar}
+          disabled={enviando || !texto.trim()}
+        >
+          {enviando ? "enviando…" : "Responder pelo número da empresa"}
+        </button>
+        {enviado && <span className="badge badge-success">enviada</span>}
+      </div>
+      {erro && (
+        <p className="badge badge-danger" style={{ marginTop: 8, whiteSpace: "normal", textAlign: "left" }}>
+          {erro}
+        </p>
+      )}
+      <p className="text-faint" style={{ fontSize: 11, marginTop: 8, marginBottom: 0 }}>
+        Sai do número do sistema, no mesmo fio da conversa. Dentro da janela de 24h é
+        texto livre e hoje não custa nada.
+      </p>
+    </div>
+  );
+}

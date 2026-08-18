@@ -17,10 +17,13 @@ export function Roteamento({
   roteamento,
   modelos,
   temCredencial,
+  tetoCents,
 }: {
   roteamento: RoteamentoPorMotivo;
   modelos: ModelosPorMotivo;
   temCredencial: boolean;
+  /** Teto de gasto do mês, em centavos. `null` = sem teto. */
+  tetoCents: number | null;
 }) {
   const efeito: Record<MotivoDaFila, string> = {
     combinado: "Conversa já aberta com quem atendeu. Trocar o número aqui costuma atrapalhar.",
@@ -99,6 +102,29 @@ export function Roteamento({
           no número pessoal em silêncio seria despejar a fila inteira no celular de
           alguém.
         </p>
+
+        {/* O TETO DE GASTO, junto das decisões que o gastam.
+            Ele NÃO se soma ao teto de IA: lá o freio é parar de gerar, e isso
+            só é seguro porque o manual custa zero. Se os dois dividissem o
+            mesmo número, estourar por mensagem desligaria a IA — e as
+            mensagens continuariam saindo. */}
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+          <label className="label" htmlFor="teto_mensagens">Teto de gasto com mensagens por mês</label>
+          <input
+            id="teto_mensagens"
+            name="teto_mensagens"
+            type="text"
+            inputMode="decimal"
+            defaultValue={tetoCents ? (tetoCents / 100).toFixed(2).replace(".", ",") : ""}
+            placeholder="deixe vazio para não ter teto"
+            style={{ maxWidth: 200 }}
+          />
+          <p className="text-faint" style={{ fontSize: 11, marginTop: 4 }}>
+            Atingido o teto, o envio pelo número do sistema para até virar o mês — e a
+            fila volta a sair pelo WhatsApp de quem atende, que não custa nada. Vazio
+            significa sem teto.
+          </p>
+        </div>
 
         <button type="submit" className="btn btn-primary mt-16" style={{ alignSelf: "flex-start" }}>
           Salvar roteamento

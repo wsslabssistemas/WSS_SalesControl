@@ -8,6 +8,7 @@ import { Canal } from "./Canal";
 import { Guia } from "./Guia";
 import { Roteamento } from "./Roteamento";
 import { lerRoteamento, lerModelos } from "@/lib/roteamento";
+import { lerTetoDeMensagens } from "@/lib/custo_mensagem";
 
 // Chamada de rede para a Meta no teste de conexao. Ver a nota em
 // `fila/page.tsx`: tela que fala com servico externo declara o tempo.
@@ -194,6 +195,7 @@ export default async function AutomacaoPage({
           roteamento={lerRoteamento(data?.settings)}
           modelos={lerModelos(data?.settings)}
           temCredencial={status.configurado}
+          tetoCents={lerTetoDeMensagens(data?.settings)}
         />
       )}
 
