@@ -187,10 +187,10 @@ O ciclo do cliente venceu. **Sem número inventado:** "faz um tempo" em vez de
 errar isso é ser específico e falso na frente do cliente.
 
 ```
-Oi, {{1}}! Aqui é da {{2}}.
+Oi, {{1}}! Aqui é da {{2}} — este é o número novo de atendimento da gente.
 
-Faz um tempo desde o seu último atendimento com a gente e eu lembrei de você.
-Quer que eu veja um horário para esta semana?
+Faz um tempo desde o seu último atendimento e eu lembrei de você. Quer que eu
+veja um horário para esta semana?
 ```
 
 | Variável | O que é | Exemplo para a Meta |
@@ -216,12 +216,22 @@ Três decisões dentro do texto:
   academia.** Não temos os dois fatos com confiança para 1.089 pessoas.
 
 ```
-Oi, {{1}}! Aqui é da {{2}}.
+Oi, {{1}}! Aqui é da {{2}} — estou falando de um número novo, que é o canal de
+atendimento que a gente passou a usar.
 
-Você já treinou com a gente em algum momento e acabou parando. Sem compromisso
-nenhum: quer que eu te conte como está a academia hoje, ou prefere que eu não
-te chame mais por aqui?
+Você já treinou com a gente e acabou parando. Sem compromisso nenhum: quer que
+eu te conte como está a academia hoje, ou prefere que eu não te chame mais por
+aqui?
 ```
+
+⚠ **A primeira linha existe por causa de uma observação do fundador**, e ela
+vale mais que educação: o ex-aluno conhece o número ANTIGO da recepção. Um
+número desconhecido chegando depois de meses, mesmo simpático, é lido como
+golpe — e em 2026 essa desconfiança é o padrão, não a exceção. Explicar por que
+o número é outro custa uma linha e é o que separa "quem é?" de uma resposta.
+
+Isso também é o que torna a migração possível mais adiante: a pessoa que
+recebe essa mensagem passa a ter o número novo salvo como sendo da academia.
 
 | Variável | O que é | Exemplo para a Meta |
 |---|---|---|
