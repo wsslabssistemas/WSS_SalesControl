@@ -88,7 +88,7 @@ Conferidas na documentação em 17/ago/2026, não de memória:
 |---|---|
 | Nome em minúsculas, números e `_` | `reativacao_ex_aluno`, nunca `Reativação` |
 | Idioma `pt_BR` | Um modelo por idioma; não existe "genérico" |
-| Corpo até 1024 caracteres; rodapé até 60 | Os daqui usam menos de 300 |
+| Corpo até **1.036** caracteres; rodapé até 60 | Contado na tela da Meta em 18/ago (a documentação dizia 1.024). Os daqui usam menos de 300 |
 | **O corpo não pode começar nem terminar com variável** | Por isso todos começam com "Oi," e terminam em pergunta |
 | **Duas variáveis não podem ser vizinhas** | Sempre há texto entre `{{1}}` e `{{2}}` |
 | Exemplo obrigatório para cada variável | Estão na tabela de cada modelo |
@@ -111,10 +111,27 @@ cliente marcou) e a `renovacao` (contrato que ele assinou).
 
 ## Os modelos
 
-### 1. `combinado_retorno` — `UTILITY`
+### 1. `combinado_retorno` — `MARKETING`
 
-O cliente marcou uma data. Estamos cumprindo o que **ele** combinou, o que é a
-definição de utility.
+⚠ **CORRIGIDO EM 18/AGO, PELA PRÓPRIA META.** Eu classifiquei como `UTILITY`
+com o argumento "o cliente marcou a data, então estamos cumprindo o que ELE
+combinou". Ao criar o modelo, o classificador da Meta abriu a caixa *"A
+categoria não corresponde"*, recomendou `MARKETING` e avisou em vermelho:
+**"Este modelo de mensagem será rejeitado."**
+
+Ela está certa e o motivo está no próprio texto: ele termina em *"se ainda faz
+sentido para você seguirmos com isso"* — **pergunta de venda**, não aviso sobre
+uma conta ou pedido existente. `UTILITY` exige referência a uma transação
+concreta; "combinado de retomar o contato" é conversa comercial.
+
+**A boa notícia é que isso quase não custa**, e é mérito do roteamento por
+motivo: `combinado` sai pelo **link humano** por padrão, não pelo número
+oficial. A recategorização só passaria a pesar se alguém marcasse esse motivo
+para sair pela empresa.
+
+⚠ **E o aviso apareceu ANTES da submissão**, que é o bom caso. O perigoso é o
+contrário — o modelo passa como utility e a Meta reclassifica depois, em
+silêncio, cobrando 9,2× mais sem ninguém perceber.
 
 ```
 Oi, {{1}}! Aqui é da {{2}}.
@@ -145,9 +162,27 @@ Elas continuam saindo pela fila manual, com texto livre.
 ```
 Oi, {{1}}! Aqui é da {{2}}.
 
-Seu plano vence em {{3}}. Queria confirmar com você antes da data para não
-deixar passar: quer seguir com a gente no próximo ciclo?
+Passando um aviso sobre o seu plano: ele vence em {{3}}. Se quiser deixar a
+renovação encaminhada antes dessa data, é só me responder por aqui.
 ```
+
+⚠ **O TEXTO MUDOU EM 18/AGO PARA SOBREVIVER COMO `UTILITY`**, e a diferença
+entre as duas versões é a lição inteira desta seção.
+
+A versão anterior terminava em *"quer seguir com a gente no próximo ciclo?"* —
+que é **pergunta de venda**, e foi exatamente o que fez a Meta reclassificar o
+`combinado_retorno`. A versão nova é **aviso sobre uma conta existente** mais
+uma ação sobre essa mesma conta: informa a data e oferece encaminhar a
+renovação. Não persuade, não pergunta se ele quer continuar, não vende.
+
+**Por que vale o esforço só neste:** é o único modelo que fala com quem PAGA,
+mês após mês. Como `UTILITY` custa ~R$ 0,034; como `MARKETING`, ~R$ 0,31. Numa
+base de 327 planos vigentes, a diferença anual é de centenas de reais por uma
+frase.
+
+Se mesmo assim a caixa *"A categoria não corresponde"* aparecer, **aceite
+Marketing e siga** — o classificador é a autoridade, e insistir custa um ciclo
+de revisão.
 
 | Variável | O que é | Exemplo para a Meta |
 |---|---|---|
