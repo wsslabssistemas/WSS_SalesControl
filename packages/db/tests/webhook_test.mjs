@@ -113,14 +113,38 @@ eq("phone_number_id — é ele que diz de qual empresa é", p.mensagens[0]?.phon
 eq("epoch em SEGUNDOS vira o instante certo, não 1970",
   p.mensagens[0]?.quando.toISOString(), QUANDO.toISOString());
 
-// Áudio e imagem: CONTADOS, não engolidos.
+// ⚠ ÁUDIO E IMAGEM VIRAM INTERAÇÃO — e esta regra MUDOU em 18/ago/2026.
+//
+// Este teste guardava o comportamento antigo ("áudio não vira interação") e
+// falhou quando a regra mudou, que é exatamente o que ele existe para fazer.
+// O que ele guarda agora é o motivo da mudança, que é maior do que "o vendedor
+// não via a foto":
+//
+// **Qualquer mensagem do cliente abre a janela de 24 horas.** Descartar o
+// áudio fazia o sistema achar que a janela continuava fechada — o cliente
+// respondia por áudio, a janela abria de verdade na Meta, e o produto se
+// recusava a responder alegando que precisava de modelo aprovado. Quem
+// responde por áudio não podia ser atendido, e responder por áudio é o caso
+// mais comum que existe no WhatsApp brasileiro.
+//
+// A mídia NÃO é baixada: baixar custa, exige armazenamento e guarda dado
+// pessoal sem necessidade. Fica o registro de que algo chegou, com o tipo.
 const comAudio = structuredClone(pacoteReal);
 comAudio.entry[0].changes[0].value.messages = [
   { id: "wamid.B", from: "5551982512270", timestamp: EPOCH_SEG, type: "audio", audio: { id: "x" } },
 ];
 const pa = desmontarPacote(comAudio);
-eq("áudio não vira interação", pa.mensagens.length, 0);
-eq("mas fica registrado como ignorado", pa.ignorados, ['mensagem do tipo "audio"']);
+eq("áudio VIRA interação, senão a janela de 24h não abre", pa.mensagens.length, 1);
+eq("com uma descrição legível no lugar do conteúdo",
+  pa.mensagens[0]?.texto, "(áudio recebido — ouça no WhatsApp)");
+eq("e o tipo preservado, para a operação saber o que chegou", pa.mensagens[0]?.tipo, "audio");
+// Continua contado: se metade das respostas for áudio, isso muda o que o
+// produto precisa fazer, e esse número não pode sumir.
+eq("e continua contado como mídia", pa.ignorados, ['mensagem do tipo "audio"']);
+
+// Texto continua sendo texto, e agora com o tipo marcado. (O corpo já é
+// conferido lá em cima — não repetir a mesma asserção duas vezes.)
+eq("texto tem tipo text", p.mensagens[0]?.tipo, "text");
 
 // Status de entrega
 const comStatus = {

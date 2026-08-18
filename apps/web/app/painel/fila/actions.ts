@@ -11,14 +11,7 @@ import { checkRequiredFacts } from "@/lib/facts";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
 import { ROTULO, type MotivoDaFila } from "@/lib/fila";
-import { credencialDoCanal } from "@/lib/credenciais";
-import { lerRoteamento, lerModelos, rotaDoToque } from "@/lib/roteamento";
-import { janelaDeAtendimento } from "@/lib/whatsapp-webhook";
-import { enviarPelaCloudAPI, enviarModeloPelaCloudAPI } from "@/lib/envio";
-import { primeiroNome, higienizarParametro } from "@/lib/modelo";
-import { paraE164BR } from "@/lib/phone";
-import { registrarEnvio, gastoDeMensagensNoMes } from "@/lib/custo_mensagem-db";
-import { avaliarTetoDeMensagens, lerTetoDeMensagens } from "@/lib/custo_mensagem";
+import { despacharToque } from "@/lib/despacho";
 import { revalidatePath } from "next/cache";
 
 export type ToqueResult =
@@ -324,199 +317,41 @@ export async function marcarEnviado(formData: FormData) {
 }
 
 // =====================================================================
-// ENVIO PELO NÚMERO DO SISTEMA — o que fecha o ciclo.
+// ENVIO PELO NÚMERO DO SISTEMA — o invólucro com sessão.
 //
-// Até aqui a fila preparava o texto e uma PESSOA clicava no `wa.me`. Esta ação
-// é o outro caminho: o toque sai pelo número oficial da empresa, pela Cloud
-// API, e volta com o identificador da Meta.
-//
-// ⚠ ELA NÃO SUBSTITUI O CAMINHO HUMANO, E NÃO PODE. O roteamento
-// (`lib/roteamento.ts`) decide por motivo, e o padrão manda quase tudo pelo
-// link — porque a operação corrente já tem uma conversa aberta com uma PESSOA,
-// e trocar o número no meio dela é o defeito que o fundador nomeou em 16/ago.
-//
-// A ORDEM DAS TRAVAS aqui não é estética; cada uma nasceu de um defeito desta
-// casa:
-//   1. rota → nunca enviar pelo número errado por engano;
-//   2. telefone → `paraE164BR` deriva e nunca grava;
-//   3. variáveis do modelo → a Meta recusa quebra de linha e caixa alta veio
-//      da planilha da academia;
-//   4. envio;
-//   5. **registro da interação** — sem ele a cadência não quita e a pessoa
-//      volta amanhã, que é o defeito do `combinado` de novo;
-//   6. **registro do custo** — o segundo bolso, que o teto de IA não vê.
-//
-// O passo 5 acontece mesmo que o 6 falhe: medição é best-effort, entrega não.
+// O núcleo mora em `lib/despacho.ts` e é o MESMO usado pelo motor proativo.
+// Aqui fica só o que depende de haver alguém logado: descobrir a empresa
+// ativa e assinar o toque com o `membershipId` de quem clicou — que é o que
+// faz o trabalho contar no placar da equipe e na ração do dia.
 // =====================================================================
 
-export type EnvioResult =
-  | { ok: true; id: string; modelo: string | null }
-  | { ok: false; motivo: string; limitePorUsuario?: boolean };
+export type { EnvioResult } from "@/lib/despacho";
 
 export async function enviarPeloSistema(
   contactId: string,
   motivo: MotivoDaFila,
-  /** O texto gerado. Só é usado DENTRO da janela de 24h. */
   texto: string,
-): Promise<EnvioResult> {
+) {
   const membership = await getActiveTenant();
   const tenant = membership?.tenant;
-  if (!tenant) return { ok: false, motivo: "Sem empresa vinculada." };
-  if (!contactId) return { ok: false, motivo: "Contato não informado." };
+  if (!tenant) return { ok: false as const, motivo: "Sem empresa vinculada." };
 
   const supabase = await createClient();
-  const admin = createAdminClient();
-
-  const [{ data: c }, { data: settingsRow }, credencial] = await Promise.all([
-    supabase.from("contacts").select("name, phone, next_action_at, contract_end")
-      .eq("id", contactId).eq("tenant_id", tenant.id).maybeSingle(),
-    supabase.from("tenants").select("settings, name").eq("id", tenant.id).maybeSingle(),
-    credencialDoCanal(tenant.id),
-  ]);
-
-  const contact = c as {
-    name: string; phone: string | null;
-    next_action_at: string | null; contract_end: string | null;
-  } | null;
-  if (!contact) return { ok: false, motivo: "Contato não encontrado." };
-
-  // A ÚLTIMA MENSAGEM DELE decide a janela de 24h, e só ela: `direction`
-  // inbound. Usar a última interação de qualquer direção faria a nossa própria
-  // mensagem reabrir a janela — e a Meta recusaria o texto livre seguinte com
-  // um erro que se lê como "credencial errada".
-  const { data: ultimaEntrada } = await supabase
-    .from("interactions").select("occurred_at")
-    .eq("tenant_id", tenant.id).eq("contact_id", contactId).eq("direction", "inbound")
-    .order("occurred_at", { ascending: false }).limit(1).maybeSingle();
-
-  const janela = janelaDeAtendimento((ultimaEntrada as { occurred_at: string } | null)?.occurred_at);
-  const settings = (settingsRow as { settings: unknown; name: string } | null)?.settings;
-
-  const rota = rotaDoToque({
+  const r = await despacharToque({
+    supabase,
+    tenantId: tenant.id,
+    tenantNome: tenant.name,
+    membershipId: membership!.membershipId,
+    contactId,
     motivo,
-    roteamento: lerRoteamento(settings),
-    temCredencial: !!credencial,
-    janelaAberta: janela.aberta,
-    modelos: lerModelos(settings),
+    texto,
   });
 
-  if (rota.via === "link_humano") return { ok: false, motivo: rota.porque };
-  if (rota.via === "bloqueado") return { ok: false, motivo: rota.porque };
-
-  // ---------------------------------------------- O FREIO DE CUSTO
-  //
-  // ⚠ VERIFICAR ANTES DA CHAMADA, NUNCA DEPOIS — a mesma regra da cota de IA.
-  // Verificar depois é medir o prejuízo: a mensagem já saiu e a conta já
-  // existe.
-  //
-  // E este teto só freia o que ELE governa: o disparo pelo número do sistema.
-  // Bloqueado, a fila continua funcionando pelo `wa.me`, que não passa pela
-  // Meta e não custa nada. Bloqueio não é erro — é a mesma regra 1 da cota.
-  //
-  // ⚠ Ele NÃO se soma ao teto de IA de propósito. Lá o freio é parar de gerar,
-  // e isso só é um degrau seguro porque o manual custa zero. Se os dois
-  // dividissem o mesmo número, estourar por causa de mensagem desligaria a IA
-  // — e as mensagens continuariam saindo, que é o freio errado puxado com
-  // força. Ver `lib/custo_mensagem.ts`.
-  const teto = lerTetoDeMensagens(settings);
-  if (teto !== null) {
-    const gasto = await gastoDeMensagensNoMes(tenant.id);
-    const veredito = avaliarTetoDeMensagens(gasto.gastoCents, teto);
-    if (!veredito.ok) return { ok: false, motivo: veredito.motivo };
+  // A invalidação de cache mora AQUI e não no núcleo: `revalidatePath` é API
+  // de Next e o motor proativo roda fora de qualquer requisição.
+  if (r.ok) {
+    revalidatePath("/painel/fila");
+    revalidatePath("/painel");
   }
-
-  const num = paraE164BR(contact.phone);
-  if (!num.ok) return { ok: false, motivo: num.motivo };
-
-  let resultado: { ok: true; id: string } | { ok: false; motivo: string; limitePorUsuario?: boolean };
-  let modeloUsado: string | null = null;
-
-  if (rota.via === "cloud_api_texto") {
-    if (!texto.trim()) return { ok: false, motivo: "Sem texto para enviar." };
-    resultado = await enviarPelaCloudAPI(num.digitos, texto, credencial!);
-  } else {
-    modeloUsado = rota.modelo;
-    const nome = primeiroNome(contact.name);
-    if (!nome.ok) return { ok: false, motivo: nome.motivo };
-
-    const empresa = higienizarParametro((settingsRow as { name: string } | null)?.name ?? tenant.name);
-    if (!empresa.ok) return { ok: false, motivo: "Empresa sem nome — o modelo abre com ele." };
-
-    const parametros = [nome.valor, empresa.valor];
-
-    // ⚠ A TRAVA ANTI-INVENÇÃO APLICADA AO CANAL. Dois modelos afirmam uma
-    // DATA, e não existe valor padrão aceitável para ela: sem o fato, a
-    // mensagem não sai. É a mesma regra do motor — falta fato exigido, não
-    // redige — só que aqui a consequência de inventar sairia no nome da
-    // empresa, para um cliente pagante.
-    const dataExigida: Partial<Record<MotivoDaFila, string | null>> = {
-      combinado: contact.next_action_at,
-      renovacao: contact.contract_end,
-    };
-    if (motivo in dataExigida) {
-      const iso = dataExigida[motivo];
-      if (!iso) {
-        return {
-          ok: false,
-          motivo:
-            `O modelo de "${ROTULO[motivo]}" afirma uma data, e este contato não tem essa data ` +
-            `registrada. Não dá para enviar sem inventar — preencha a ficha ou envie à mão.`,
-        };
-      }
-      parametros.push(porExtenso(iso));
-    }
-
-    resultado = await enviarModeloPelaCloudAPI(num.digitos, rota.modelo, parametros, credencial!);
-  }
-
-  if (!resultado.ok) {
-    return { ok: false, motivo: resultado.motivo, limitePorUsuario: resultado.limitePorUsuario };
-  }
-
-  // ---------------------------------------------- 5. A INTERAÇÃO
-  // A mensagem JÁ SAIU. Falhar aqui não desfaz o envio, então o erro sobe para
-  // a tela em vez de sumir: sem registro a cadência não quita, a pessoa volta
-  // amanhã e o vendedor conclui que a fila não funciona.
-  const { error: e1 } = await supabase.from("interactions").insert({
-    tenant_id: tenant.id,
-    contact_id: contactId,
-    direction: "outbound",
-    input_kind: "system_initiated",
-    channel: "whatsapp",
-    external_id: resultado.id,
-    content: modeloUsado ? `(modelo "${modeloUsado}")` : texto,
-    occurred_at: new Date().toISOString(),
-    created_by: membership!.membershipId,
-  });
-  if (e1) {
-    console.error(`[fila] mensagem ${resultado.id} SAIU mas não registrou: ${e1.message}`);
-    return {
-      ok: false,
-      motivo:
-        `A mensagem foi enviada, mas eu não consegui registrar isso: ${e1.message}. ` +
-        `Anote o contato — ele vai reaparecer na fila amanhã.`,
-    };
-  }
-
-  // ---------------------------------------------- 6. O CUSTO
-  // Best-effort, e é a diferença certa: medição que falha custa um número no
-  // painel; entrega que falha custa a conversa.
-  await registrarEnvio(tenant.id, { temModelo: !!modeloUsado });
-
-  revalidatePath("/painel/fila");
-  revalidatePath("/painel");
-  return { ok: true, id: resultado.id, modelo: modeloUsado };
-}
-
-/** "2026-08-24" → "24 de agosto". O modelo afirma a data; ela sai legível. */
-function porExtenso(iso: string): string {
-  const MES = [
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-  ];
-  // Fatiar a string em vez de `new Date(iso)`: data pura interpretada como UTC
-  // e exibida em fuso local vira o dia anterior — armadilha conhecida aqui.
-  const [a, m, d] = iso.slice(0, 10).split("-").map(Number);
-  if (!a || !m || !d) return iso.slice(0, 10);
-  return `${d} de ${MES[m - 1]}`;
+  return r;
 }

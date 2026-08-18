@@ -126,7 +126,16 @@ export type MensagemRecebida = {
   de: string;
   /** Nome do perfil do WhatsApp, quando vem. Útil para cadastrar quem é novo. */
   nome: string | null;
+  /**
+   * O texto da mensagem — ou, para mídia, uma DESCRIÇÃO do que chegou.
+   *
+   * Ver a nota de `desmontarPacote`: áudio e imagem não são baixados, mas
+   * precisam existir como interação. O conteúdo aqui é o que o vendedor lê na
+   * ficha para saber que há algo esperando no WhatsApp.
+   */
   texto: string;
+  /** `text` ou o tipo de mídia da Meta (`audio`, `image`, `document`…). */
+  tipo: string;
   quando: Date;
   /** O número DA EMPRESA que recebeu — é o que diz de qual tenant é. */
   phoneNumberId: string;
@@ -198,18 +207,48 @@ export function desmontarPacote(corpo: unknown): PacoteDoWebhook {
         };
         if (!mm.id || !mm.from) continue;
 
-        if (mm.type !== "text" || !mm.text?.body) {
-          // Áudio, imagem, figurinha, localização, botão. Chegou e não vira
-          // interação — mas fica contado.
-          out.ignorados.push(`mensagem do tipo "${mm.type ?? "desconhecido"}"`);
-          continue;
-        }
+        const tipo = mm.type ?? "desconhecido";
+        const corpo = mm.type === "text" ? mm.text?.body?.trim() : null;
+
+        // ⚠ MÍDIA VIRA INTERAÇÃO, e antes ela SUMIA — com um efeito muito
+        // pior do que "o vendedor não vê a foto".
+        //
+        // Qualquer mensagem do cliente ABRE A JANELA DE 24 HORAS. Descartar o
+        // áudio fazia o sistema achar que a janela continuava fechada: o
+        // cliente respondia por áudio, a janela abria de verdade na Meta, e o
+        // produto se recusava a responder dizendo que precisava de modelo
+        // aprovado. **Quem responde por áudio não podia ser atendido** — e
+        // responder por áudio é o caso mais comum que existe no WhatsApp
+        // brasileiro.
+        //
+        // NÃO BAIXAMOS A MÍDIA, de propósito: baixar exige armazenamento,
+        // custa, e guarda dado pessoal do cliente sem necessidade. O que fica
+        // registrado é que ALGO chegou, com o tipo — o suficiente para a
+        // janela abrir, para a cadência quitar e para o vendedor saber que há
+        // algo esperando no aplicativo.
+        const DESCRICAO: Record<string, string> = {
+          audio: "(áudio recebido — ouça no WhatsApp)",
+          image: "(imagem recebida — veja no WhatsApp)",
+          video: "(vídeo recebido — veja no WhatsApp)",
+          document: "(documento recebido — abra no WhatsApp)",
+          sticker: "(figurinha recebida)",
+          location: "(localização recebida — veja no WhatsApp)",
+          contacts: "(contato compartilhado — veja no WhatsApp)",
+        };
+
+        const texto = corpo || DESCRICAO[tipo] || `(mensagem do tipo "${tipo}" — veja no WhatsApp)`;
+
+        // Continua contado, porque "chegou mídia" é informação de operação: se
+        // metade das respostas for áudio, isso muda o que o produto precisa
+        // fazer. O que mudou é que agora ela também vira conversa.
+        if (!corpo) out.ignorados.push(`mensagem do tipo "${tipo}"`);
 
         out.mensagens.push({
           wamid: mm.id,
           de: mm.from,
           nome: perfis.get(mm.from) ?? null,
-          texto: mm.text.body,
+          texto,
+          tipo,
           quando: paraData(mm.timestamp),
           phoneNumberId,
         });

@@ -169,6 +169,13 @@ jobs:
       # alta. Derivar o primeiro nome nunca grava, como o paraE164BR.
       - name: Modelo — higiene das variaveis e o primeiro nome
         run: node packages/db/tests/modelo_test.mjs
+      # O motor proativo. As seis regras anti-bloqueio da tela de Automacao
+      # eram gravadas desde que ela nasceu e NENHUMA linha do sistema as lia —
+      # um formulario que salva e ninguem cumpre promete um freio que nao
+      # existe. Guarda tambem a janela que vira a meia-noite (22->6), onde uma
+      # comparacao ingenua devolve SEMPRE falso e a automacao nunca roda.
+      - name: Motor — as regras anti-bloqueio sendo obedecidas
+        run: node packages/db/tests/motor_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base
