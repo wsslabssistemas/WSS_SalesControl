@@ -11,6 +11,12 @@ import { Responder } from "./Responder";
 
 export const metadata = { title: "Canal oficial" };
 
+// A resposta pelo canal chama a Meta, e chamada de rede precisa de tempo
+// declarado: o padrão da Vercel mata a função no meio e devolve silêncio —
+// o botão gira para sempre, sem erro. É a PÁGINA que governa a duração das
+// ações invocadas a partir dela.
+export const maxDuration = 30;
+
 /**
  * O CANAL OFICIAL — o que saiu, o que chegou e o que FALHOU.
  *

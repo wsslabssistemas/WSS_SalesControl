@@ -10,9 +10,10 @@ import { paraE164BR } from "@/lib/phone";
 import { registrarEnvio } from "@/lib/custo_mensagem-db";
 import { revalidatePath } from "next/cache";
 
-// A chamada à Meta é rede. Tela que fala com serviço externo declara o tempo —
-// o padrão da Vercel mata a função no meio e devolve silêncio.
-export const maxDuration = 30;
+// ⚠ `maxDuration` NÃO PODE MORAR AQUI. Arquivo `"use server"` só exporta
+// função assíncrona — qualquer outra exportação quebra o BUILD, não o
+// typecheck. O tempo da função é declarado na PÁGINA que invoca a ação
+// (`conversas/page.tsx`), e é lá que ele está.
 
 export type RespostaResult =
   | { ok: true; id: string }
