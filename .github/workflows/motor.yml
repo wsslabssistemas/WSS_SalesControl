@@ -1,0 +1,87 @@
+name: Motor proativo
+
+# ⚠ POR QUE GITHUB ACTIONS, E NÃO VERCEL CRON.
+#
+# O CLAUDE.md fixou Inngest para jobs de fundo, com o argumento "motor proativo
+# não roda em serverless". Isso vale para milhares de disparos com repetição
+# automática — não para ~30 mensagens por empresa por dia.
+#
+# O Vercel Cron seria o caminho natural, mas no plano Hobby ele é limitado a
+# UMA execução por dia. O Actions é gratuito e ilimitado em repositório
+# público (este é), o agendamento fica versionado junto do código, e desligar é
+# apagar um arquivo.
+#
+# A ressalva honesta: o agendador do GitHub atrasa alguns minutos em horário de
+# pico. Para uma janela de operação de 9h às 19h isso é irrelevante.
+#
+# ⚠ NADA DE LÓGICA AQUI. Este arquivo só bate numa porta. Quem decide quem
+# recebe é `lib/motor.ts`, quem monta a lista é `lib/fila-db.ts`, quem manda é
+# `lib/despacho.ts` — as MESMAS peças que a tela usa. Um agendador que
+# começasse a decidir viraria uma segunda versão da regra.
+
+on:
+  schedule:
+    # ⚠ O CRON DO GITHUB É EM UTC. 12:00 UTC = 9h de Brasília, e 20:00 UTC =
+    # 17h. As duas caem dentro da janela padrão de operação (9h–19h) — e é o
+    # próprio motor que confere isso de novo, com o fuso da empresa
+    # (`lib/fuso.ts`), porque confiar no horário do agendador foi exatamente o
+    # defeito que fez a simulação voltar vazia às 18h.
+    - cron: "0 12 * * 1-5"
+    - cron: "0 20 * * 1-5"
+  # Permite rodar à mão pelo site do GitHub — com a opção de simular.
+  workflow_dispatch:
+    inputs:
+      simular:
+        description: "Rodar sem enviar nada (simulação)"
+        type: boolean
+        default: true
+
+jobs:
+  rodar:
+    name: Rodar o motor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar o gatilho
+        env:
+          SEGREDO: ${{ secrets.MOTOR_CRON_SECRET }}
+          BASE: ${{ vars.KAIROS_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SEGREDO:-}" ]; then
+            echo "::error::Falta o segredo MOTOR_CRON_SECRET nas configuracoes do repositorio."
+            exit 1
+          fi
+
+          BASE="${BASE:-https://kairos.wsslabs.com.br}"
+          SIMULAR="${{ github.event.inputs.simular || 'false' }}"
+          URL="$BASE/api/motor/rodar"
+          if [ "$SIMULAR" = "true" ]; then URL="$URL?simular=1"; fi
+
+          echo "Chamando $URL"
+
+          # `-w` guarda o codigo HTTP: sem isso um 401 devolveria corpo de erro
+          # com exit 0, e o job ficaria VERDE com a automacao sem rodar — que e
+          # a forma de falha que ninguem procura.
+          CODIGO=$(curl -sS -o resposta.json -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "Authorization: Bearer $SEGREDO" \
+            --max-time 300)
+
+          echo "HTTP $CODIGO"
+          cat resposta.json
+          echo
+
+          if [ "$CODIGO" != "200" ]; then
+            echo "::error::O motor respondeu $CODIGO."
+            exit 1
+          fi
+
+          # ⚠ FALHA DE ENVIO NAO PODE PASSAR EM VERDE. O relatorio volta 200
+          # mesmo quando a Meta recusou mensagens — e "rodou" nao e o mesmo que
+          # "entregou". Sem esta linha, o unico lugar onde a falha apareceria
+          # seria o log da Vercel, que ninguem abre.
+          FALHAS=$(grep -o '"falhas":[0-9]*' resposta.json | head -1 | cut -d: -f2 || echo 0)
+          if [ "${FALHAS:-0}" != "0" ]; then
+            echo "::warning::O motor rodou, mas houve $FALHAS falha(s) de envio. Veja a aba Canal oficial."
+          fi

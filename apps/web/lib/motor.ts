@@ -94,7 +94,18 @@ export function planejar(entrada: {
   candidatos: Candidato[];
   regras: RegrasDoMotor;
   enviadosHoje: number;
-  /** A hora local da empresa, 0–23. Quem converte o fuso é quem chama. */
+  /**
+   * A hora local DA EMPRESA, 0–23.
+   *
+   * ⚠ NUNCA `new Date().getHours()` DIRETO. O servidor da Vercel roda em UTC,
+   * e o Brasil é UTC-3: às 18h de Porto Alegre o processo acha que são 21h.
+   * Com a janela padrão de 9h–19h, isso significava **a automação nunca rodar
+   * à tarde** e rodar às 6h da manhã — e o sintoma foi o fundador dizendo
+   * "não estou conseguindo puxar a simulação, não gera lista nenhuma".
+   *
+   * Quem converte é `lib/motor-db.ts`, com o fuso da empresa. Esta função
+   * continua pura e recebe o número pronto.
+   */
   horaLocal: number;
 }): PlanoDoMotor {
   const { candidatos, regras, enviadosHoje, horaLocal } = entrada;

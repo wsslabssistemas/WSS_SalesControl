@@ -190,6 +190,12 @@ jobs:
       # so "Leticia" que casaria com quatro Leticias diferentes.
       - name: Gemeo ativo — nao oferecer retorno a quem ja e cliente
         run: node packages/db/tests/gemeo_test.mjs
+      # A hora local da EMPRESA. O servidor da Vercel roda em UTC e o Brasil e
+      # UTC-3: as 18h de Porto Alegre o processo lia 21h, se considerava fora
+      # da janela de 9h-19h e nao rodava. O sintoma foi "nao gera lista
+      # nenhuma" — nada quebrou, a lista voltava vazia com motivo plausivel.
+      - name: Fuso — a hora da empresa, nao a do servidor
+        run: node packages/db/tests/fuso_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base

@@ -5,6 +5,8 @@ import { variantesArmazenadas } from "@/lib/phone";
 import { escolherResponsavel } from "@/lib/carteira";
 import { empresaDoNumero } from "@/lib/credenciais";
 import { pediuParaSair } from "@/lib/optout";
+import { rodarTodasAsEmpresas } from "@/lib/motor-rota";
+import { timingSafeEqual } from "node:crypto";
 import {
   assinaturaConfere,
   respostaDoDesafio,
@@ -20,6 +22,59 @@ import {
 export const runtime = "nodejs";
 
 const app = new Hono().basePath("/api");
+
+/**
+ * O GATILHO DO MOTOR PROATIVO.
+ *
+ * ⚠ ESTE ENDEREÇO MANDA MENSAGEM EM NOME DE CLIENTE PAGANTE. É o mais
+ * perigoso do produto depois do webhook, e por um motivo diferente: o webhook
+ * ESCREVE no histórico; este aqui FALA com pessoas reais, cobrando da conta da
+ * empresa. Quem descobrir a URL e conseguir chamá-la dispara a campanha
+ * inteira de alguém.
+ *
+ * A defesa é um segredo em `MOTOR_CRON_SECRET`, comparado com
+ * `timingSafeEqual` — comparar com `===` vaza, pelo TEMPO da resposta, quantos
+ * caracteres iniciais estavam certos. É a mesma regra da assinatura da Meta,
+ * pelo mesmo motivo: é um ataque lento e chato, e por isso ninguém percebe.
+ *
+ * ⚠ SEM SEGREDO CONFIGURADO, RECUSA — nunca libera. "Ainda não configurei" não
+ * pode ser o estado em que o endereço fica aberto: seria a falha que se parece
+ * com trabalho pendente e deixa a porta destrancada.
+ *
+ * `?simular=1` roda sem enviar nada. É o que o agendador pode usar para provar
+ * que o caminho inteiro funciona antes de a primeira mensagem sair.
+ */
+app.post("/motor/rodar", async (c) => {
+  const segredo = process.env.MOTOR_CRON_SECRET;
+  if (!segredo) {
+    console.error("[motor] MOTOR_CRON_SECRET nao configurado — chamada recusada");
+    return c.json({ erro: "Gatilho do motor não configurado." }, 503);
+  }
+
+  const oferecido = (c.req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const a = Buffer.from(oferecido, "utf8");
+  const b = Buffer.from(segredo, "utf8");
+  const confere = a.length === b.length && timingSafeEqual(a, b);
+  if (!confere) {
+    console.warn("[motor] chamada recusada: segredo invalido");
+    return c.json({ erro: "não autorizado" }, 401);
+  }
+
+  const simular = new URL(c.req.url).searchParams.get("simular") === "1";
+  try {
+    const r = await rodarTodasAsEmpresas(simular);
+    // O relatório volta INTEIRO no corpo. O agendador guarda a resposta, e é
+    // dela que sai o "por que nada saiu hoje" sem ninguém abrir o painel.
+    console.info(`[motor] rodada: ${r.empresas} empresa(s), ${r.enviadas} enviada(s), ${r.falhas} falha(s)`);
+    return c.json(r, 200);
+  } catch (e) {
+    const erro = e instanceof Error ? e.message : String(e);
+    console.error(`[motor] rodada FALHOU: ${erro}`);
+    // 500 de propósito, ao contrário do webhook: aqui não há ninguém
+    // reenviando, e um agendador que recebe 200 numa falha nunca avisa.
+    return c.json({ erro }, 500);
+  }
+});
 
 app.get("/health", (c) =>
   c.json({ ok: true, service: "cos", ts: new Date().toISOString() }),

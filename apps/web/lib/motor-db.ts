@@ -5,6 +5,7 @@ import { despacharToque } from "@/lib/despacho";
 import { readAutomation } from "@/lib/automation";
 import { lerRoteamento } from "@/lib/roteamento";
 import { planejar, type Candidato, type PlanoDoMotor } from "@/lib/motor";
+import { lerFuso, horaLocal, diaLocalISO } from "@/lib/fuso";
 import type { MotivoDaFila } from "@/lib/fila";
 
 // O EXECUTOR DO MOTOR — lê, decide, e (só no automático) manda.
@@ -65,6 +66,7 @@ export async function rodarMotor(entrada: {
   const admin = createAdminClient();
   const carga = await carregarFila({ supabase: admin, tenantId, skillKey, ownerId: null });
 
+  const fuso = lerFuso(carga.settings);
   const regras = readAutomation(carga.settings);
   const roteamento = lerRoteamento(carga.settings);
 
@@ -87,13 +89,17 @@ export async function rodarMotor(entrada: {
   // mão. São bolsos diferentes: o teto da automação existe para proteger o
   // NÚMERO da empresa, e mensagem que sai do WhatsApp do vendedor não gasta
   // reputação do número do sistema.
-  const enviadosHoje = saidasDoCanalHoje(carga.interacoes, agora);
+  const enviadosHoje = saidasDoCanalHoje(carga.interacoes, agora, fuso);
 
   const plano = planejar({
     candidatos,
     regras: simular ? { ...regras, mode: "simulation" } : regras,
     enviadosHoje,
-    horaLocal: agora.getHours(),
+    // ⚠ A HORA DA EMPRESA, NÃO A DO SERVIDOR. `getHours()` aqui devolvia UTC
+    // — às 18h de Porto Alegre o processo lia 21h e se considerava fora da
+    // janela de 9h–19h. A automação nunca rodaria à tarde, e rodaria às 6h da
+    // manhã. Ver `lib/fuso.ts`.
+    horaLocal: horaLocal(agora, fuso),
   });
 
   const motivoPorContato: Record<string, MotivoDaFila> = {};
@@ -209,8 +215,10 @@ function diasDesdeEntradaDele(ix: Ix[], contactId: string, agora: Date): number 
  * empresa, e mensagem que sai do WhatsApp do vendedor nao gasta reputacao
  * desse numero. So tem `external_id` o que passou pela Meta.
  */
-function saidasDoCanalHoje(ix: Ix[], agora: Date): number {
-  const hoje = agora.toISOString().slice(0, 10);
+function saidasDoCanalHoje(ix: Ix[], agora: Date, fuso: string): number {
+  // O "hoje" da EMPRESA. Com `toISOString()` o dia virava às 21h de Brasília,
+  // e o teto do dia zerava no meio da noite de trabalho de quem opera até 22h.
+  const hoje = diaLocalISO(agora, fuso);
   let n = 0;
   for (const i of ix) {
     if (i.direction !== "outbound") continue;
