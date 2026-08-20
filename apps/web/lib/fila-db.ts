@@ -6,6 +6,8 @@ import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/rec
 import { computeRenovacoes } from "@/lib/renovacao";
 import { construirFila, comCarimbo, type ItemDaFila } from "@/lib/fila";
 import { lerTudo } from "@/lib/paginado";
+import { paraE164BR } from "@/lib/phone";
+import { idsComGemeoAtivo } from "@/lib/gemeo";
 
 // A CARGA DA FILA — ler o banco e montar a lista de conversas devidas.
 //
@@ -85,6 +87,8 @@ export type CargaDaFila = {
   hojeISO: string;
   /** Quantos contatos estao marcados como "nao contatar". Para a tela dizer. */
   naoContatar: number;
+  /** Cadastros velhos escondidos por ja existir a mesma pessoa como cliente. */
+  gemeosAtivos: number;
 };
 
 /**
@@ -158,9 +162,30 @@ export async function carregarFila(entrada: {
   // Fica DEPOIS do historico e ANTES da montagem, de proposito. O historico
   // precisa de todo mundo (senao a regua de quem sobra colapsa); a fila nao
   // pode ver quem esta marcado.
-  const elegiveis = cData.filter((c) => !c.do_not_contact);
-  const contatos = ownerId ? elegiveis.filter((c) => c.owner_id === ownerId) : elegiveis;
   const hojeISO = new Date().toISOString().slice(0, 10);
+
+  // ⚠ E QUEM JA E CLIENTE COM OUTRO CADASTRO TAMBEM SAI — o caso Lilian.
+  //
+  // Ela renovou, alguem cadastrou um contato NOVO em vez de achar o que
+  // existia, e o telefone foi digitado com um digito a menos. Ficaram duas
+  // linhas: uma matriculada com plano anual, outra parada em `ex_aluno`. A
+  // regua olhou a segunda e fez o que devia — o fundador viu na simulacao e
+  // nomeou: *"nao daria para automatizar e oferecer algo para alguem ja
+  // matriculado."*
+  //
+  // O sinal e o TELEFONE normalizado, nunca o nome: a base tem um contato
+  // chamado so "Leticia" que, por prefixo, casaria com quatro Leticias
+  // diferentes. Ver `lib/gemeo.ts`.
+  const comGemeo = idsComGemeoAtivo(
+    cData.map((c) => {
+      const n = paraE164BR(c.phone);
+      return { id: c.id, digitos: n.ok ? n.digitos : null, contract_end: c.contract_end };
+    }),
+    hojeISO,
+  );
+
+  const elegiveis = cData.filter((c) => !c.do_not_contact && !comGemeo.has(c.id));
+  const contatos = ownerId ? elegiveis.filter((c) => c.owner_id === ownerId) : elegiveis;
 
   // AS ORIGENS MORAM EM `lib/fila.ts`, não aqui. Este arquivo lê; ele decide.
   const fila = construirFila({
@@ -185,5 +210,7 @@ export async function carregarFila(entrada: {
     settings: (tRow?.settings ?? null) as Record<string, unknown> | null,
     hojeISO,
     naoContatar: cData.length - elegiveis.length,
+    /** Cadastros velhos escondidos porque a pessoa ja e cliente em outra linha. */
+    gemeosAtivos: comGemeo.size,
   };
 }
