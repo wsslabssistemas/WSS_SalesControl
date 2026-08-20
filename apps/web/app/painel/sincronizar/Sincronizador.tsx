@@ -40,6 +40,14 @@ export function Sincronizador() {
   const [nomeMat, setNomeMat] = useState("");
   const [nomeRec, setNomeRec] = useState("");
   const [p, setP] = useState<Previsao | null>(null);
+  /**
+   * "Conferi a exportação" — a saída deliberada da trava de desaparecidos.
+   *
+   * Zera a previsão ao mudar: marcar a caixa e continuar vendo o resultado
+   * antigo faria a pessoa aplicar em cima de uma conta que não é mais a que
+   * está na tela.
+   */
+  const [confirmado, setConfirmado] = useState(false);
   const [carregando, setCarregando] = useState<null | "lendo" | "prever" | "aplicar">(null);
   const [feito, setFeito] = useState<string | null>(null);
 
@@ -90,13 +98,13 @@ export function Sincronizador() {
 
   const rodarPrevisao = async () => {
     setCarregando("prever"); setFeito(null);
-    try { setP(await prever(dados)); } finally { setCarregando(null); }
+    try { setP(await prever(dados, confirmado)); } finally { setCarregando(null); }
   };
 
   const rodarAplicacao = async () => {
     setCarregando("aplicar");
     try {
-      const r = await aplicar(dados);
+      const r = await aplicar(dados, confirmado);
       if (r.ok) {
         // A falha parcial vem junto do sucesso, de propósito: "1.500
         // atualizados" escondendo 48 recusas é o mesmo defeito de sempre.
@@ -191,9 +199,46 @@ export function Sincronizador() {
             <div className="card mt-16" style={{ borderColor: "var(--danger)" }}>
               <p className="badge badge-danger">Não dá para aplicar</p>
               <p style={{ fontSize: 14, margin: "8px 0 0" }}>{p.bloqueio}</p>
-              <p className="text-faint" style={{ fontSize: 12, marginBottom: 0 }}>
+              <p className="text-faint" style={{ fontSize: 12 }}>
                 A lista abaixo mostra o que teria acontecido, para você conferir a exportação.
               </p>
+
+              {/* ⚠ A TRAVA GANHOU SAÍDA, e o motivo é do dia 20/ago.
+                  O fundador subiu a exportação certa — 393 linhas de 2023 a
+                  2026, a base inteira — e levou "não dá para aplicar: 78%
+                  sumiram". Quem estava inflado era o BANCO, com contratos
+                  velhos sem baixa.
+
+                  Trava sem saída transforma "confira antes de aplicar" em
+                  "nunca aplique", e quem precisa aplicar contorna por fora,
+                  editando planilha até caber no limite — que é o pior desfecho
+                  possível.
+
+                  Então o bloqueio continua sendo o padrão, e a saída é um
+                  SEGUNDO ATO deliberado: marcar a caixa e mandar prever de
+                  novo. Não é o mesmo botão com um clique a mais. */}
+              {!p.fonteVazia && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+                  <label className="row" style={{ gap: 8, alignItems: "flex-start", fontSize: 14 }}>
+                    <input
+                      type="checkbox"
+                      checked={confirmado}
+                      onChange={(e) => { setConfirmado(e.target.checked); setP(null); }}
+                      style={{ marginTop: 3 }}
+                    />
+                    <span>
+                      <strong>Conferi a exportação e ela está completa.</strong> Sei que isto
+                      vai dar baixa em quem não está no arquivo, e quero aplicar mesmo assim.
+                    </span>
+                  </label>
+                  {confirmado && (
+                    <p className="text-faint" style={{ fontSize: 12, margin: "8px 0 0" }}>
+                      Marcado. Clique em <strong>Ver o que vai acontecer</strong> de novo — a
+                      previsão é refeita no servidor, e só então o botão de aplicar aparece.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             (p.resumo || p.pagantes) && (

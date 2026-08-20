@@ -101,6 +101,23 @@ export type Resultado = {
  * Por isso a trava é por PROPORÇÃO e não por número absoluto, e por isso ela
  * bloqueia em vez de avisar: aviso em operação destrutiva é aviso que alguém
  * lê depois.
+ *
+ * ⚠ MAS ELA TEM SAÍDA — e essa parte faltava (20/ago/2026).
+ *
+ * O fundador subiu a exportação de matrículas e levou "não dá para aplicar:
+ * 1.129 de 1.439 sumiram da fonte (78%)". A trava fez o trabalho dela: ele foi
+ * conferir. E o arquivo estava **certo** — 393 linhas de 2023 a 2026, a base
+ * inteira, não um recorte. O que estava inflado era o BANCO, com contratos
+ * velhos que nunca receberam baixa.
+ *
+ * Trava sem saída transforma "confira antes de aplicar" em "nunca aplique". O
+ * objetivo dela é **fazer alguém olhar**, e quem olhou precisa poder seguir —
+ * senão a pessoa contorna por fora, editando planilha até caber no limite, que
+ * é o pior desfecho possível.
+ *
+ * Por isso o bloqueio continua sendo o padrão e passa a aceitar uma
+ * confirmação EXPLÍCITA, que diz em número o que vai acontecer. Confirmar é um
+ * segundo ato deliberado, não um clique a mais no mesmo botão.
  */
 export const LIMITE_DESAPARECIDOS = 0.15;
 
@@ -148,6 +165,15 @@ export function comparar(
   fonte: LinhaDaFonte[],
   banco: EstadoConhecido[],
   limite = LIMITE_DESAPARECIDOS,
+  /**
+   * A pessoa conferiu a exportação e assume a baixa em massa.
+   *
+   * ⚠ Só vale para o limite de desaparecidos. **Fonte VAZIA continua barrada
+   * sem saída**: nenhuma confirmação torna razoável dar baixa em todo mundo a
+   * partir de um arquivo sem uma linha — isso é sempre exportação quebrada,
+   * nunca a realidade.
+   */
+  confirmado = false,
 ): Resultado {
   const naFonte = new Map(fonte.map((l) => [l.chave, l]));
   const noBanco = new Map(banco.map((b) => [b.chave, b]));
@@ -221,7 +247,7 @@ export function comparar(
   const proporcao = vivosNoBanco.length ? sumidos.length / vivosNoBanco.length : 0;
   if (fonte.length === 0 && vivosNoBanco.length > 0) {
     bloqueio = `A fonte veio VAZIA e o sistema conhece ${vivosNoBanco.length} contratos ativos. Isso daria baixa em todos. Nada foi aplicado.`;
-  } else if (proporcao > limite) {
+  } else if (proporcao > limite && !confirmado) {
     bloqueio =
       `${sumidos.length} de ${vivosNoBanco.length} contratos ativos (${Math.round(proporcao * 100)}%) sumiram da fonte, ` +
       `acima do limite de ${Math.round(limite * 100)}%. Planilha parcial ou filtro aplicado dariam exatamente este resultado. ` +

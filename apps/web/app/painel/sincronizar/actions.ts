@@ -71,6 +71,15 @@ export type Previsao = {
   ok: boolean;
   erro?: string;
   bloqueio?: string | null;
+  /**
+   * O bloqueio veio de uma fonte SEM NENHUMA LINHA.
+   *
+   * ⚠ Este caso não tem saída, e é de propósito: nenhuma confirmação torna
+   * razoável dar baixa em todo mundo a partir de um arquivo vazio. Isso é
+   * sempre exportação quebrada, nunca a realidade. A tela usa isto para NÃO
+   * oferecer a caixa de "conferi a exportação".
+   */
+  fonteVazia?: boolean;
   entendeu?: { matriculas?: string; recebimentos?: string };
   resumo?: { entraram: number; renovaram: number; ajustaram: number; encerraram: number; reapareceram: number; recuaram: number };
   eventos?: { chave: string; tipo: string; descricao: string }[];
@@ -134,7 +143,18 @@ async function estadoConhecido(tenantId: string): Promise<EstadoConhecido[]> {
     }));
 }
 
-export async function prever(d: DadosLidos): Promise<Previsao> {
+export async function prever(
+  d: DadosLidos,
+  /**
+   * A pessoa conferiu a exportação e assume a baixa em massa.
+   *
+   * ⚠ Ela vem do CLIENTE, e por isso `aplicar` refaz tudo no servidor: a
+   * confirmação autoriza passar do limite, nunca dispensa a comparação. É a
+   * mesma razão de a previsão ser recalculada — a trava tem que valer no
+   * servidor, não no browser.
+   */
+  confirmado = false,
+): Promise<Previsao> {
   const m = await contexto();
   if (!m) return { ok: false, erro: "Só dono ou administrador pode sincronizar." };
 
@@ -145,6 +165,7 @@ export async function prever(d: DadosLidos): Promise<Previsao> {
   let resumo: Previsao["resumo"];
   let eventos: Previsao["eventos"] = [];
   let bloqueio: string | null = null;
+  let fonteVazia = false;
 
   if (d.matriculas) {
     const mat = d.matriculas;
@@ -153,8 +174,9 @@ export async function prever(d: DadosLidos): Promise<Previsao> {
       `${mat.entendeu.lidas} linhas → ${mat.linhas.length} pessoas` +
       (mat.ignoradas ? ` (${mat.ignoradas} linhas colapsadas ou ignoradas)` : "");
 
-    const cmp = comparar(mat.linhas, await estadoConhecido(m.tenant!.id));
+    const cmp = comparar(mat.linhas, await estadoConhecido(m.tenant!.id), undefined, confirmado);
     bloqueio = cmp.bloqueio;
+    fonteVazia = mat.linhas.length === 0;
     resumo = {
       entraram: cmp.resumo.entraram, renovaram: cmp.resumo.renovaram,
       ajustaram: cmp.resumo.ajustaram, encerraram: cmp.resumo.encerraram,
@@ -194,7 +216,7 @@ export async function prever(d: DadosLidos): Promise<Previsao> {
       : `${encerraram} ${encerraram === 1 ? "pessoa será marcada" : "pessoas serão marcadas"} como encerradas. A etapa delas NÃO muda: este ramo não declara para onde vai quem sai.`;
   }
 
-  return { ok: true, bloqueio, entendeu, resumo, eventos, pagantes, aviso };
+  return { ok: true, bloqueio, fonteVazia, entendeu, resumo, eventos, pagantes, aviso };
 }
 
 /** Quantas gravações vão em paralelo. Ver `lib/concorrencia.ts`. */
@@ -205,6 +227,8 @@ type Alvo = { id: string; custom: Record<string, unknown> | null; journey_stage:
 
 export async function aplicar(
   d: DadosLidos,
+  /** A pessoa marcou "conferi a exportação" na tela. */
+  confirmado = false,
 ): Promise<{ ok: boolean; erro?: string; gravados?: number; falhas?: number }> {
   const m = await contexto();
   if (!m) return { ok: false, erro: "Só dono ou administrador pode sincronizar." };
@@ -215,7 +239,7 @@ export async function aplicar(
   // previsto — por troca de aba, por clique duplo, ou por má-fé. Confiar na
   // previsão que o browser diz ter visto seria confiar no browser para decidir
   // uma gravação em massa. A trava tem que valer no servidor.
-  const p = await prever(d);
+  const p = await prever(d, confirmado);
   if (!p.ok) return { ok: false, erro: p.erro };
   if (p.bloqueio) return { ok: false, erro: p.bloqueio };
 
