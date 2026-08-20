@@ -39,6 +39,8 @@ export type ResultadoDoMotor = {
    * por que não vamos falar agora.
    */
   motivoPorContato: Record<string, MotivoDaFila>;
+  /** `tenants.settings` cru, para quem chama ler os nomes dos modelos. */
+  settings: Record<string, unknown> | null;
 };
 
 const HORA = 3_600_000;
@@ -98,7 +100,7 @@ export async function rodarMotor(entrada: {
   for (const f of doCanal) motivoPorContato[f.contactId] = f.motivo;
 
   if (plano.simulado || !plano.ativo) {
-    return { tenantId, plano, enviadas: 0, falhas: [], motivoPorContato };
+    return { tenantId, plano, enviadas: 0, falhas: [], motivoPorContato, settings: carga.settings };
   }
 
   const falhas: ResultadoDoMotor["falhas"] = [];
@@ -130,7 +132,7 @@ export async function rodarMotor(entrada: {
     else falhas.push({ contactId, motivo: r.motivo });
   }
 
-  return { tenantId, plano, enviadas, falhas, motivoPorContato };
+  return { tenantId, plano, enviadas, falhas, motivoPorContato, settings: carga.settings };
 }
 
 // ---------------------------------------------------------------------
@@ -138,7 +140,12 @@ export async function rodarMotor(entrada: {
 // banco, porque uma consulta por candidato seria N consultas por execução.
 // ---------------------------------------------------------------------
 
-type Ix = { contact_id: string | null; occurred_at: string; direction: string };
+type Ix = {
+  contact_id: string | null;
+  occurred_at: string;
+  direction: string;
+  external_id?: string | null;
+};
 
 function horasDesde(iso: string | undefined | null, agora: Date): number | null {
   if (!iso) return null;
@@ -186,12 +193,28 @@ function diasDesdeEntradaDele(ix: Ix[], contactId: string, agora: Date): number 
   return h === null ? null : Math.floor(h / 24);
 }
 
-/** O que saiu HOJE pelo canal oficial — o que o teto do dia governa. */
+/**
+ * O que saiu HOJE **pelo canal oficial** — o que o teto do dia governa.
+ *
+ * ⚠ O `external_id` NAO E DETALHE, e a falta dele foi um defeito reportado
+ * pelo fundador: ele configurou 10 mensagens por dia e a simulacao mostrou 9.
+ *
+ * A versao anterior contava TODA saida do dia, inclusive os toques que a
+ * equipe manda a mao pelo `wa.me`. Um unico toque manual registrado de manha
+ * comia uma vaga da automacao — e o comentario acima da funcao ja dizia "pelo
+ * canal oficial", ou seja, **o codigo discordava do proprio comentario em
+ * silencio**, que e a forma mais cara de errar nesta casa.
+ *
+ * Sao dois bolsos: o teto da automacao existe para proteger o NUMERO da
+ * empresa, e mensagem que sai do WhatsApp do vendedor nao gasta reputacao
+ * desse numero. So tem `external_id` o que passou pela Meta.
+ */
 function saidasDoCanalHoje(ix: Ix[], agora: Date): number {
   const hoje = agora.toISOString().slice(0, 10);
   let n = 0;
   for (const i of ix) {
     if (i.direction !== "outbound") continue;
+    if (!i.external_id) continue;
     if (i.occurred_at.slice(0, 10) !== hoje) continue;
     n++;
   }

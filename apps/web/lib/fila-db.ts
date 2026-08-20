@@ -47,6 +47,9 @@ export type ContatoDaCarga = {
   next_action_note: string | null;
   contract_end: string | null;
   custom: Record<string, unknown> | null;
+  /** Marcado como "nao contatar" (0059). Nao entra em lista proativa nenhuma. */
+  do_not_contact: boolean;
+  do_not_contact_reason: string | null;
 };
 
 export type InteracaoDaCarga = {
@@ -54,6 +57,15 @@ export type InteracaoDaCarga = {
   occurred_at: string;
   direction: string;
   created_by: string | null;
+  /**
+   * Identificador da mensagem no provedor (`wamid`). **NULO quando a interacao
+   * nao passou pela Meta** — toque registrado a mao, mensagem colada no
+   * Responder, envio pelo `wa.me`.
+   *
+   * ⚠ E o unico jeito de separar "saiu pelo numero da empresa" de "saiu do
+   * WhatsApp do vendedor", e essa distincao decide o teto do dia da automacao.
+   */
+  external_id: string | null;
 };
 
 export type CargaDaFila = {
@@ -71,6 +83,8 @@ export type CargaDaFila = {
   settings: Record<string, unknown> | null;
   /** A data de referência usada na montagem, em ISO curto. */
   hojeISO: string;
+  /** Quantos contatos estao marcados como "nao contatar". Para a tela dizer. */
+  naoContatar: number;
 };
 
 /**
@@ -100,7 +114,7 @@ export async function carregarFila(entrada: {
     lerTudo<ContatoDaCarga>(
       (de, ate) => supabase
         .from("contacts")
-        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action, next_action_note, contract_end, custom")
+        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action, next_action_note, contract_end, custom, do_not_contact, do_not_contact_reason")
         .eq("tenant_id", tenantId)
         .is("deleted_at", null)
         .order("id")
@@ -110,7 +124,7 @@ export async function carregarFila(entrada: {
     lerTudo<InteracaoDaCarga>(
       (de, ate) => supabase
         .from("interactions")
-        .select("contact_id, occurred_at, direction, created_by")
+        .select("contact_id, occurred_at, direction, created_by, external_id")
         .eq("tenant_id", tenantId)
         .order("occurred_at", { ascending: false })
         .range(de, ate),
@@ -133,7 +147,19 @@ export async function carregarFila(entrada: {
     Object.fromEntries(cData.map((c) => [c.id, c.stage_entered_at])),
   );
 
-  const contatos = ownerId ? cData.filter((c) => c.owner_id === ownerId) : cData;
+  // ⚠ "NAO CONTATAR" E FILTRADO AQUI, NUM PONTO SO — e esse ponto e o motivo
+  // de a carga ter sido extraida antes do motor.
+  //
+  // A tela e o motor usam esta mesma funcao, entao marcar alguem vale para os
+  // dois no mesmo instante. Se o filtro morasse na tela, o motor continuaria
+  // mandando para quem pediu para sair — e seria exatamente o caso em que o
+  // erro e mais caro: ninguem esta olhando quando a maquina manda.
+  //
+  // Fica DEPOIS do historico e ANTES da montagem, de proposito. O historico
+  // precisa de todo mundo (senao a regua de quem sobra colapsa); a fila nao
+  // pode ver quem esta marcado.
+  const elegiveis = cData.filter((c) => !c.do_not_contact);
+  const contatos = ownerId ? elegiveis.filter((c) => c.owner_id === ownerId) : elegiveis;
   const hojeISO = new Date().toISOString().slice(0, 10);
 
   // AS ORIGENS MORAM EM `lib/fila.ts`, não aqui. Este arquivo lê; ele decide.
@@ -158,5 +184,6 @@ export async function carregarFila(entrada: {
     toques,
     settings: (tRow?.settings ?? null) as Record<string, unknown> | null,
     hojeISO,
+    naoContatar: cData.length - elegiveis.length,
   };
 }

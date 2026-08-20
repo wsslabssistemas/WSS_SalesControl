@@ -176,6 +176,13 @@ jobs:
       # comparacao ingenua devolve SEMPRE falso e a automacao nunca roda.
       - name: Motor — as regras anti-bloqueio sendo obedecidas
         run: node packages/db/tests/motor_test.mjs
+      # Quem pediu para nao receber mais. Honrar descadastro e exigencia da
+      # LGPD e da politica do WhatsApp, e a marcacao e automatica porque a
+      # janela entre "ele pediu" e "alguem viu" e onde a denuncia acontece.
+      # Metade do teste guarda os FALSOS POSITIVOS: uma lista de palavras
+      # soltas silenciaria gente interessada por dizer "quero sair do plano".
+      - name: Descadastro — o que e pedido e o que nao pode ser confundido
+        run: node packages/db/tests/optout_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base

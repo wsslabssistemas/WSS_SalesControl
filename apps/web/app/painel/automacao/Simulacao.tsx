@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { simularMotor, type SimulacaoResult } from "./simular-actions";
+import { simularMotor, naoContatar, type SimulacaoResult } from "./simular-actions";
 
 /**
  * O BOTÃO QUE FALTAVA.
@@ -18,6 +18,28 @@ import { simularMotor, type SimulacaoResult } from "./simular-actions";
 export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
   const [r, setR] = useState<SimulacaoResult | null>(null);
   const [rodando, setRodando] = useState(false);
+  const [tirados, setTirados] = useState<Record<string, string>>({});
+  const [erroAoTirar, setErroAoTirar] = useState<string | null>(null);
+
+  /**
+   * ⚠ O MOTIVO É PEDIDO NA HORA, e não é burocracia.
+   *
+   * Marcação sem justificativa é a que ninguém tem coragem de desfazer seis
+   * meses depois, quando já não lembra por que aquela pessoa está de fora. Um
+   * `prompt` é feio, e é honesto: obriga a escrever antes de excluir, no
+   * momento em que a razão está fresca.
+   */
+  const tirar = async (contactId: string, nome: string) => {
+    const motivo = window.prompt(
+      `Por que ${nome} não deve receber mensagem?\n\nEx.: convênio, aluga sala, pediu para não receber, nunca foi aluno.`,
+      "",
+    );
+    if (motivo === null) return;
+    setErroAoTirar(null);
+    const res = await naoContatar(contactId, motivo);
+    if (res.ok) setTirados((t) => ({ ...t, [contactId]: motivo.trim() }));
+    else setErroAoTirar(res.erro);
+  };
 
   const rodar = async () => {
     setRodando(true);
@@ -75,6 +97,12 @@ export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
               lista vazia é indistinguível de um defeito. */}
           <p className="text-dim" style={{ fontSize: 13, marginTop: 8 }}>{r.porque}</p>
 
+          {erroAoTirar && (
+            <p className="badge badge-danger" style={{ marginTop: 8, whiteSpace: "normal", textAlign: "left" }}>
+              {erroAoTirar}
+            </p>
+          )}
+
           {r.avaliados === 0 ? (
             <p className="text-dim" style={{ fontSize: 14, marginBottom: 0 }}>
               Nenhum contato da fila está marcado para sair pelo número da empresa. Isso
@@ -84,28 +112,65 @@ export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
             </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>
-              {[...r.linhas].sort((a, b) => Number(b.sai) - Number(a.sai)).map((l, i) => (
-                <li
-                  key={`${l.nome}-${i}`}
-                  style={{ padding: "8px 0", borderTop: "1px solid var(--border)" }}
-                >
-                  <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
-                    <span
-                      className={l.sai ? "badge badge-success" : "badge"}
-                      style={{ minWidth: 64, justifyContent: "center" }}
-                    >
-                      {l.sai ? "sai" : "fica"}
-                    </span>
-                    <strong style={{ fontSize: 14 }}>{l.nome}</strong>
-                    <span className="text-faint" style={{ fontSize: 12 }}>{l.motivo}</span>
-                  </div>
-                  {!l.sai && (
-                    <p className="text-dim" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
-                      {l.motivoDaRecusa}
-                    </p>
-                  )}
-                </li>
-              ))}
+              {[...r.linhas].sort((a, b) => Number(b.sai) - Number(a.sai)).map((l) => {
+                const foraAgora = tirados[l.contactId];
+                return (
+                  <li
+                    key={l.contactId}
+                    style={{
+                      padding: "10px 0",
+                      borderTop: "1px solid var(--border)",
+                      opacity: foraAgora ? 0.5 : 1,
+                    }}
+                  >
+                    <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
+                      <span
+                        className={foraAgora ? "badge" : l.sai ? "badge badge-success" : "badge"}
+                        style={{ minWidth: 64, justifyContent: "center" }}
+                      >
+                        {foraAgora ? "fora" : l.sai ? "sai" : "fica"}
+                      </span>
+                      <strong style={{ fontSize: 14 }}>{l.nome}</strong>
+                      <span className="text-faint grow" style={{ fontSize: 12 }}>{l.motivo}</span>
+                      {!foraAgora && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost"
+                          onClick={() => tirar(l.contactId, l.nome)}
+                        >
+                          Não contatar
+                        </button>
+                      )}
+                    </div>
+
+                    {foraAgora && (
+                      <p className="text-faint" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
+                        Fora de todas as listas — motivo: &ldquo;{foraAgora}&rdquo;. Some da fila
+                        do vendedor também.
+                      </p>
+                    )}
+
+                    {!foraAgora && !l.sai && (
+                      <p className="text-dim" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
+                        {l.motivoDaRecusa}
+                      </p>
+                    )}
+
+                    {/* ⚠ O QUE VAI SER PREENCHIDO NESTA PESSOA.
+                        O corpo do modelo é fixo, mora na Meta e foi aprovado
+                        por ela — copiá-lo para cá criaria uma segunda fonte do
+                        mesmo texto, e as duas divergiriam no dia em que alguém
+                        editasse o modelo lá. O que varia, e o que de fato pode
+                        sair errado, são as variáveis. */}
+                    {!foraAgora && l.sai && (
+                      <p className="text-faint" style={{ fontSize: 11, margin: "4px 0 0 72px" }}>
+                        modelo <code>{l.modelo}</code> · {"{{1}}"} = <strong>{l.variaveis[0]}</strong>
+                        {" · "}{"{{2}}"} = <strong>{l.variaveis[1]}</strong>
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

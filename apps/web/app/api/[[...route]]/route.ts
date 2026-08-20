@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { variantesArmazenadas } from "@/lib/phone";
 import { escolherResponsavel } from "@/lib/carteira";
 import { empresaDoNumero } from "@/lib/credenciais";
+import { pediuParaSair } from "@/lib/optout";
 import {
   assinaturaConfere,
   respostaDoDesafio,
@@ -402,6 +403,43 @@ async function registrar(mensagens: MensagemRecebida[]) {
 
     if (erroMsg && erroMsg.code !== "23505") {
       console.error(`[whatsapp] MENSAGEM PERDIDA de ${msg.de} (${msg.wamid}): ${erroMsg.message}`);
+    }
+
+    // ⚠ PEDIDO DE DESCADASTRO E HONRADO AQUI, NO INSTANTE EM QUE CHEGA.
+    //
+    // Deixar para um humano marcar depois significa que, entre o pedido e a
+    // marcacao, o motor continua mandando — e o motor manda de madrugada, no
+    // fim de semana, sem ninguem lendo. Essa janela e justamente onde a
+    // denuncia acontece.
+    //
+    // Honrar isso e exigencia da LGPD e da politica do WhatsApp. E o custo de
+    // errar tem lado: parar de falar com quem nao pediu custa um lead; seguir
+    // falando com quem pediu custa a QUALIDADE DO NUMERO, que derruba a
+    // entrega de tudo — inclusive a renovacao de quem paga em dia.
+    //
+    // A marcacao e reversivel e guarda o motivo: a ficha mostra a frase que a
+    // pessoa escreveu, com data. Ver `lib/optout.ts`.
+    const pedido = pediuParaSair(msg.texto);
+    if (pedido) {
+      // `.select()` porque escrita sem erro conferido e escrita que voce ACHA
+      // que fez — e esta em particular tem valor juridico.
+      const { data: marcados, error: erroOptout } = await admin
+        .from("contacts")
+        .update({
+          do_not_contact: true,
+          do_not_contact_reason: `Pediu pelo WhatsApp: "${msg.texto.slice(0, 180)}"`,
+        })
+        .eq("id", contactId)
+        .eq("tenant_id", tenantId)
+        .select("id");
+
+      if (erroOptout) {
+        console.error(`[whatsapp] PEDIDO DE DESCADASTRO NAO GRAVADO de ${msg.de}: ${erroOptout.message}`);
+      } else if (!marcados || marcados.length === 0) {
+        console.error(`[whatsapp] PEDIDO DE DESCADASTRO sem linha alcancada de ${msg.de}`);
+      } else {
+        console.info(`[whatsapp] descadastro honrado para ${msg.de} — frase: "${pedido}"`);
+      }
     }
   }
 }
