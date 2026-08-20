@@ -15,7 +15,28 @@ import { despacharToque } from "@/lib/despacho";
 import { revalidatePath } from "next/cache";
 
 export type ToqueResult =
-  | { ok: true; texto: string; escalar: boolean; faltam: string[] }
+  | {
+      ok: true;
+      texto: string;
+      escalar: boolean;
+      faltam: string[];
+      /**
+       * QUEM recusou — e a distinção decide para onde a pessoa vai procurar.
+       *
+       * ⚠ NASCEU DE UM RELATO DA LUCIANA (20/ago): toda pessoa da fila
+       * mostrava "Escalar — falta fato no DNA". Ela foi procurar no DNA um
+       * fato que nunca estaria lá, porque não era fato da EMPRESA — era do
+       * ALUNO ("o ganho que ele mesmo contou").
+       *
+       * `dna`  — a biblioteca exige um fato da empresa que não está cadastrado.
+       *          Conserto: abrir o DNA e preencher.
+       * `assunto` — o DNA está completo; o motor é que não encontrou assunto
+       *          concreto para ESTA pessoa. Conserto: escrever à mão, ou
+       *          registrar o que faltou. Mandar essa pessoa para o DNA é
+       *          mandá-la para o lugar errado.
+       */
+      recusa: "dna" | "assunto" | null;
+    }
   | { ok: false; error: string }
   | { ok: false; limite: true; mensagem: string };
 
@@ -212,6 +233,10 @@ Escreva a mensagem.`;
       texto: obj.mensagem ?? "",
       escalar: !!obj.escalar,
       faltam: [...new Set([...trava.faltando, ...(obj.faltam_fatos ?? [])])],
+      // A trava estrutural tem prioridade: se ela disparou, o conserto É o DNA.
+      // Se não disparou e o motor escalou mesmo assim, o que falta não está no
+      // DNA — está no histórico daquela pessoa.
+      recusa: trava.travou ? "dna" : obj.escalar ? "assunto" : null,
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

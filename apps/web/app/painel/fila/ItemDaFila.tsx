@@ -66,6 +66,7 @@ export function ItemDaFila({
   const [limite, setLimite] = useState<string | null>(null);
   const [escalar, setEscalar] = useState(false);
   const [faltam, setFaltam] = useState<string[]>([]);
+  const [recusa, setRecusa] = useState<"dna" | "assunto" | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [combinado, setCombinado] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -113,6 +114,7 @@ export function ItemDaFila({
         setTexto(r.texto);
         setEscalar(r.escalar);
         setFaltam(r.faltam);
+        setRecusa(r.recusa);
       } else if ("limite" in r) setLimite(r.mensagem);
       else setErro(r.error);
     } catch (e) {
@@ -176,10 +178,31 @@ export function ItemDaFila({
         <div className="card" style={{ marginTop: 10, background: "var(--bg-elev)" }}>
           {escalar ? (
             <>
-              <span className="badge badge-warn">Escalar — falta fato no DNA</span>
+              {/* ⚠ A RECUSA TEM QUE MANDAR PARA O LUGAR CERTO.
+                  Esta tela dizia "falta fato no DNA" nos dois casos, e a
+                  Luciana foi procurar no DNA um fato que era do ALUNO. Recusa
+                  que aponta o lugar errado gasta o tempo de quem está
+                  trabalhando e ensina a desconfiar do aviso. */}
+              <span className="badge badge-warn">
+                {recusa === "dna"
+                  ? "Escalar — falta fato no DNA"
+                  : "Escrever à mão — o sistema não tem assunto para esta pessoa"}
+              </span>
               <p className="text-dim" style={{ fontSize: 13, marginTop: 8, marginBottom: 0 }}>
-                O motor não escreveu porque a biblioteca exige um fato que a empresa
-                não cadastrou — e ele não inventa.
+                {recusa === "dna" ? (
+                  <>
+                    O motor não escreveu porque a biblioteca exige um fato que{" "}
+                    <strong>a empresa</strong> não cadastrou — e ele não inventa. O
+                    conserto é preencher no <a href="/painel/dna">DNA</a>.
+                  </>
+                ) : (
+                  <>
+                    O DNA está completo. O que falta é <strong>desta pessoa</strong> — algo
+                    que ela disse e ninguém registrou. O motor prefere não escrever a
+                    inventar um assunto. Abra a conversa e escreva você: é rápido, e o que
+                    você anotar embaixo faz o sistema saber o assunto da próxima vez.
+                  </>
+                )}
               </p>
               {faltam.length > 0 && (
                 <ul className="text-dim" style={{ fontSize: 13, margin: "6px 0 0", paddingLeft: 18 }}>

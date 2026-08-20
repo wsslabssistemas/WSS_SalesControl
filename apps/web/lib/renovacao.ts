@@ -59,6 +59,28 @@ export const JANELAS = [
     titulo: "Abrir a continuidade",
     intencao:
       "Retome o ganho que ele mesmo disse e projete o próximo ciclo. Aqui a renovação entra como continuação, não como cobrança.",
+    /**
+     * ⚠ O CAMINHO PARA QUANDO O GANHO NÃO EXISTE — e ele é a regra, não a
+     * exceção.
+     *
+     * A intenção de cima manda "retomar o ganho que ele mesmo disse". Isso
+     * depende do toque de 60 dias ter acontecido E da resposta ter sido
+     * registrada. Nenhum dos dois é verdade numa base nova: a Be Fitness tem
+     * ZERO notas preenchidas em 257 contatos com data marcada.
+     *
+     * Sem esta linha, a trava anti-invenção fazia a coisa certa e o efeito era
+     * péssimo: o motor se recusava a escrever **para todo mundo**, e a Luciana
+     * via "Escalar — falta fato no DNA" em cada pessoa da fila. Ela foi
+     * procurar no DNA um fato que nunca vai estar lá, porque não é fato da
+     * EMPRESA — é do aluno.
+     *
+     * A saída não é afrouxar a trava nem inventar o ganho. É **fazer agora a
+     * pergunta que o toque de 60 dias faria**: quem não tem a resposta,
+     * pergunta. Genérico e honesto ganha de específico e falso — a mesma regra
+     * do alarme de silêncio da cadência.
+     */
+    intencaoSemHistorico:
+      "Ninguém registrou o que este contrato já entregou para ele, então NÃO afirme ganho nenhum e não invente resultado. Faça agora a pergunta que ficou para trás: o que ele já consegue fazer hoje e não conseguia quando começou. Registre a resposta — e só então fale de continuidade, na conversa seguinte.",
   },
   {
     key: "condicao",
@@ -81,7 +103,14 @@ export type Janela = (typeof JANELAS)[number]["key"];
  */
 export type RenewalConfig = {
   vencido?: { titulo?: string; intencao?: string };
-  janelas?: { key: Janela; dias_antes?: number; titulo?: string; intencao?: string }[];
+  janelas?: {
+    key: Janela;
+    dias_antes?: number;
+    titulo?: string;
+    intencao?: string;
+    /** Usada quando a janela depende de algo que o cliente disse e ninguém registrou. */
+    intencao_sem_historico?: string;
+  }[];
 };
 
 export type ContatoComContrato = {
@@ -112,6 +141,15 @@ export type ContatoComContrato = {
    * venceu ou se renovou, e dizer que venceu é inventar.
    */
   contrato_conferido_em?: string | null;
+  /**
+   * O que alguém anotou sobre o que o cliente disse (`next_action_note`).
+   *
+   * ⚠ É o que decide se a janela de continuidade pode "retomar o ganho que
+   * ele mesmo contou" ou se precisa PERGUNTAR primeiro. Vazio é o estado
+   * normal de uma base nova — 257 contatos da Be Fitness com data marcada e
+   * ZERO com nota.
+   */
+  next_action_note?: string | null;
 };
 
 export type Renovacao = {
@@ -184,6 +222,9 @@ export function computeRenovacoes(
       diasAntes: o?.dias_antes ?? j.diasAntes,
       titulo: o?.titulo ?? j.titulo,
       intencao: o?.intencao ?? j.intencao,
+      intencaoSemHistorico:
+        o?.intencao_sem_historico ??
+        ((j as { intencaoSemHistorico?: string }).intencaoSemHistorico ?? null),
     };
   // ⚠ ORDEM CRESCENTE, e o `.find` abaixo depende disso.
   //
@@ -244,7 +285,22 @@ export function computeRenovacoes(
     out.push({
       contactId: c.id, name: c.name, phone: c.phone,
       diasParaVencer: dias, janela: janela.key,
-      titulo: janela.titulo, intencao: janela.intencao,
+      titulo: janela.titulo,
+      // ⚠ SEM O GANHO REGISTRADO, A INTENÇÃO MUDA — não a trava.
+      //
+      // A janela de 30 dias manda "retomar o ganho que ele mesmo disse". Isso
+      // depende do toque de 60 dias ter sido dado E anotado, e numa base nova
+      // nenhum dos dois aconteceu. O motor então se recusava a escrever para
+      // TODO MUNDO, com um aviso que mandava procurar no DNA um fato que é do
+      // aluno, não da empresa.
+      //
+      // Aqui a intenção passa a ser "faça agora a pergunta que ficou para
+      // trás". Não afrouxa nada: continua proibido afirmar ganho. Só para de
+      // pedir ao motor uma coisa que ninguém deu a ele.
+      intencao:
+        (!c.next_action_note?.trim() && janela.intencaoSemHistorico)
+          ? janela.intencaoSemHistorico
+          : janela.intencao,
       vencido: false,
       // A janela abre `diasAntes` antes do vencimento — e é a partir daqui que
       // uma conversa quita este toque. `diasAntes` sai do manifesto quando o
