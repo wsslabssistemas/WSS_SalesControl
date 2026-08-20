@@ -139,6 +139,26 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   encolhe — que não parece defeito, parece trabalho acumulado. Já aconteceu
   duas vezes: `combinado` (10/ago) e `renovacao` (15/ago), e na segunda o
   comentário do código afirmava que só o primeiro tinha o problema.
+- **QUANDO O MOTOR SE RECUSA, A RECUSA TEM QUE APARECER NA TELA.** Ja custou
+  TRES relatos de "esta quebrado" para acertos do produto. O pior deles: a
+  trava anti-invencao devolve a mensagem **vazia** junto com `escalar: true`, e
+  a tela testava `{texto && ...}` — string vazia e falsa em JavaScript, entao
+  nao renderizava nem a mensagem nem o aviso. A pessoa clicava, o botao girava,
+  a tela ficava identica. **Trava silenciosa e indistinguivel de botao
+  quebrado.** Teste `!== null`, nunca a verdade do valor.
+- **Toda lista de trabalho precisa de TETO e de ESPACAMENTO.** O alarme de
+  silencio da fila nao tinha nenhum dos dois quando a etapa nao declarava
+  cadencia: a pessoa voltava a cada 5 dias, para sempre. `max_attempts` deixava
+  de existir exatamente onde a regua ja tinha desistido de saber o que dizer.
+  Intervalo fixo tambem e defeito — 5 dias serve para quem esfriou ontem, e e
+  perseguicao para quem esta calado ha tres meses.
+- **Toda chamada externa precisa de RELOGIO e de caminho de degradacao.** Em
+  19/ago o `getUser()` do middleware rodava em toda requisicao sem limite de
+  tempo: uma lentidao do Auth virou tela branca de 25s no produto inteiro,
+  **inclusive na tela de entrar**. E o middleware cobria `/api/*`, entao Auth
+  lento podia segurar o webhook da Meta ate ela DESATIVAR a assinatura. No
+  estouro, degradar (deixar passar) e melhor que redirecionar: a defesa dos
+  dados e a RLS, nao o middleware.
 - **`npx next build` ANTES do push, sempre que mexer em rota, página ou ação.**
   `tsc --noEmit` não vê as regras do Next: em 18/ago o typecheck passou limpo e
   a Vercel quebrou em 20 segundos com `exited with 1`, porque um arquivo

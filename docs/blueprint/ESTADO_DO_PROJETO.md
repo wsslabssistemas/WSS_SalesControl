@@ -15,7 +15,170 @@
 
 ---
 
-## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 16/17 de agosto de 2026
+## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 19 de agosto de 2026
+
+> Escrito no fim de uma conversa longa, para a proxima comecar sabendo. O que
+> esta aqui e **o que existe, o que quebrou e o que continua aberto** — nesta
+> ordem, porque o aberto e o que decide o proximo passo. O repasse de 16/17
+> continua abaixo, em §0.0, e as armadilhas dele seguem valendo.
+
+### 🟢 OS CINCO MODELOS FORAM APROVADOS PELA META (19/ago)
+
+E os nomes ja estao colados em **Automacao -> Por onde cada motivo sai**. Isso
+destrava a reativacao dos **1.088 ex-alunos** (1.051 com telefone).
+
+| Modelo | Categoria final |
+|---|---|
+| `combinado_retorno` | **MARKETING** ⚠ |
+| `renovacao_vencimento` | UTILITY |
+| `followup_retomada` | MARKETING |
+| `recompra_retorno` | MARKETING |
+| `reativacao_ex_aluno` | MARKETING |
+
+⚠ **O `combinado_retorno` foi recategorizado PELA META, na tela de criacao.**
+Eu havia classificado como UTILITY ("o cliente marcou a data"). O classificador
+abriu *"A categoria nao corresponde"* e avisou em vermelho que seria rejeitado.
+Ela estava certa: o texto terminava em pergunta de venda, e UTILITY exige
+transacao concreta. **O aviso veio ANTES da submissao, que e o bom caso** — o
+perigoso e passar como utility e ser reclassificado depois, em silencio,
+cobrando 9,2x mais. Custa quase nada porque `combinado` sai pelo link humano.
+
+Textos, configuracoes da tela da Meta e o limite real de 1.036 caracteres estao
+em `MODELOS_WHATSAPP.md`.
+
+### ⚠ O QUE FALTA PARA O MOTOR — e o fundador ja esbarrou nisso
+
+**Nao existe botao de simulacao, e ele tentou usar.** Configurou 10
+mensagens/dia, escolheu "Simulacao" e procurou onde apertar. Nao ha nada: o
+modo e gravado e **nada o le**. Eu descrevi um fluxo que nao construi.
+
+O que JA existe e esta testado:
+
+| Peca | Onde | Estado |
+|---|---|---|
+| A decisao de quem sai agora | `lib/motor.ts` | OK — puro, 26 testes |
+| As 6 regras anti-bloqueio | `lib/motor.ts` | OK — obedecidas de fato |
+| O nucleo de envio | `lib/despacho.ts` | OK — um so, tela e motor |
+| Envio por modelo | `lib/envio.ts` | OK — sem prova de campo |
+| Roteamento por motivo | `lib/roteamento.ts` | OK — 17 testes |
+| **O executor** | — | **NAO EXISTE** |
+| **O gatilho** | — | **NAO EXISTE** |
+| **A tela da simulacao** | — | **NAO EXISTE** |
+
+**Por que o executor nao foi feito:** ele precisa carregar a fila, e essa carga
+mora dentro da tela `/painel/fila`. Duplica-la criaria **uma segunda fila
+divergindo em silencio** — o defeito ja documentado do Painel inicial montando
+cinco listas proprias. O certo e extrair a carga primeiro (`lib/fila-db.ts`),
+com a tela passando a usa-la. Refatoracao de tela que funciona: merece passada
+propria.
+
+**A ordem combinada com o fundador:**
+
+1. Extrair a carga da fila — refatoracao pura, sem mudanca de comportamento.
+2. O executor, chamando `planejar` + `despacharToque`.
+3. A tela da simulacao: **a lista de quem sairia amanha, com o motivo de cada
+   um que foi barrado** — os `vereditos` de `planejar` existem para isso. Ele
+   quer ver isso ANTES de qualquer mensagem sair.
+4. O gatilho. **Decidido: Vercel Cron**, nao Inngest — o `CLAUDE.md` fixou
+   Inngest com o argumento "nao roda em serverless", que vale para milhares de
+   disparos com repeticao, nao para 30/dia. Sem conta nova, sem chave nova.
+   Registrado como desvio consciente de decisao fechada.
+
+### 🔴 O INCIDENTE DE 19/AGO — e a licao que vale mais que ele
+
+O fundador reportou *"o sistema parou de funcionar"*, com 504
+`FUNCTION_INVOCATION_TIMEOUT`. Ele fez a pergunta certa: *"hoje nao e problema
+porque so tenho a minha empresa, mas imagina cinco empresas e ninguem
+conseguindo usar."*
+
+**O que os logs mostraram:** 15 timeouts contra 33 respostas boas em 20 minutos
+— intermitente, nao caido. **Todos** em `error/edge-middleware`. E o mais
+revelador: **`/login` estava entre eles**, uma tela que nao toca em nada do
+produto.
+
+**O que NAO era:** build (deploy `READY`), Postgres (0,1s), Auth do Supabase
+(0,3s medido de fora), nem codigo novo.
+
+**O defeito era nosso.** `getUser()` rodava em TODA requisicao, **sem limite de
+tempo**. Qualquer lentidao virava tela branca de 25s — e como o middleware
+cobre tudo, ate a porta de entrada parava. **Um ponto unico de falha que
+ninguem sabia que existia.**
+
+Hoje ha relogio de 3s e, no estouro, **deixa passar**: redirecionar derrubaria
+a sessao de quem esta logado por um segundo ruim de rede. Nao abre buraco — a
+defesa real e a RLS (Lei 3).
+
+⚠ **E um risco maior que o incidente:** o matcher cobria `/api/*`, incluindo o
+webhook do WhatsApp. Auth lento segurando um pacote da Meta faz ela nao receber
+200 no prazo, **reenviar, e apos falhas repetidas DESATIVAR a assinatura**. Uma
+lentidao de login podia derrubar o recebimento de mensagens de um cliente
+pagante, por um caminho que ninguem ligaria com login. `api` saiu do matcher.
+
+**O que fica como metodo:** toda chamada externa precisa de **relogio e caminho
+de degradacao**. O mapa do que ainda nao tem:
+
+| Dependencia | Se travar hoje | Falta |
+|---|---|---|
+| Auth do Supabase | OK — segue sem sessao | — |
+| Postgres | tela de erro crua | mensagem honesta + repetir |
+| API da Meta | botao gira e morre | relogio + falha visivel na fila |
+| Provedor de IA | "Preparar" nao responde | relogio + cair no manual |
+
+E **nao existe alarme**: eu descobri por ele reclamar. Com o segundo cliente,
+isso deixa de ser aceitavel — o fabricante precisa saber antes do cliente.
+
+### ⚠ A CLASSE QUE JA APARECEU TRES VEZES: recusa correta que chega como defeito
+
+Dois relatos da Luciana em 19/ago, **uma causa so**: a fila pedia um toque que
+o motor se RECUSAVA a escrever, e a tela nao mostrava a recusa.
+
+1. **"O botao de preparar mensagem nao funciona."** Quando a trava
+   anti-invencao dispara, o motor devolve `escalar: true` e a mensagem
+   **vazia** — o comportamento certo. Mas `""` e falso em JavaScript, e o bloco
+   era `{texto && ...}`: nao renderizava nem a mensagem nem o aviso. Ela
+   clicava, o botao girava, a tela ficava identica. Hoje e `texto !== null`.
+2. **"As duas voltaram para a lista e nao tem cristo que faca elas sair."** O
+   alarme de silencio nao tinha **teto** quando a etapa nao declara cadencia —
+   a pessoa voltava a cada 5 dias, para sempre — e batia **sempre no mesmo
+   ritmo**. Hoje o intervalo cresce (5, 10, 15) e para em 3 toques, o mesmo
+   `max_attempts` das reguas curadas.
+
+**A regra que fica: quando o motor se recusa, a recusa TEM que aparecer na
+tela.** Trava silenciosa e indistinguivel de botao quebrado — e foi assim que
+um acerto do produto virou reclamacao tres vezes.
+
+### O que mais entrou em 18–19/ago
+
+- **Responder pelo numero oficial** (`/painel/conversas`). Era o buraco mais
+  serio: o produto sabia mandar pelo numero da empresa e nao sabia responder
+  por ele. O caso que expoe isso e o cliente que **pede para falar com um
+  humano** — pedia socorro e o socorro chegava de um numero desconhecido.
+  `rotaDaResposta` **nao tem configuracao**: a resposta sai por onde a conversa
+  esta. Fora da janela devolve `bloqueado`, nunca um modelo — passadas 24h
+  aquilo virou retomada, e retomada tem motivo, que e trabalho da fila.
+- **Status de entrega** (`0058`): a Meta ja mandava `sent/delivered/read/failed`
+  e a rota **descartava o array inteiro**. Trigger garante que o status nao
+  regride (a Meta nao garante ordem de webhook). Provado contra o banco real.
+- **Audio e imagem viram interacao.** Sumiam — e o efeito era pior que "nao ve
+  a foto": qualquer mensagem do cliente abre a janela de 24h, entao **quem
+  respondia por audio nao podia ser atendido**.
+- **Custo de mensagem medido** (`lib/custo_mensagem.ts`), em bolso separado do
+  custo de IA. ⚠ **1o/out/2026 a resposta em texto livre passa a ser cobrada** —
+  a data esta no codigo, nao em comentario, para a estimativa parar de estar
+  errada sozinha.
+- **Freio de custo ligado** em `enviarPeloSistema`, com teto por empresa.
+
+### ⚠ Um erro de processo que custou a producao
+
+`export const maxDuration` num arquivo `"use server"` quebrou o build. **O
+typecheck passou limpo** — ele nao conhece as regras do Next. Regra nova no
+`CLAUDE.md`: **`npx next build` antes do push**, sempre que mexer em rota,
+pagina ou acao. Typecheck verde nao e build verde.
+
+---
+
+## 0.0. Repasse anterior — 16/17 de agosto de 2026
+
 
 > Escrito no fim de uma conversa longa, para a próxima começar sabendo. O que
 > está aqui é **o que quebrou, o que foi consertado e o que continua aberto** —

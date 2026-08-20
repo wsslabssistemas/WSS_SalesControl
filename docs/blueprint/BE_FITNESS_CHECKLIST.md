@@ -8,7 +8,7 @@
 > segmentos e o Kairós vendendo o Kairós estão fora daqui de propósito — cada
 > item que não é para agora é ruído para quem está tentando entregar.
 >
-> Atualizado: 17 de agosto de 2026.
+> Atualizado: 19 de agosto de 2026.
 
 ---
 
@@ -119,24 +119,20 @@ cria o contato, atribui dono e fica registrada sozinha.
 número registrado na plataforma sai do aplicativo do WhatsApp, e a equipe perde
 o que usa hoje.
 
-**Falta, em ordem:** trocar o nome de exibição (aparece "Be Fitness2" para o
-cliente), adicionar forma de pagamento na Meta (é o que destrava mensagem
-iniciada pela empresa), publicar o app, e cadastrar os modelos — a reativação
-dos 1.089 ex-alunos depende deles.
+**🟢 OS CINCO MODELOS FORAM APROVADOS (19/ago)** e os nomes ja estao em
+Automacao. O cartao esta cadastrado na Meta. Isso destrava a reativacao dos
+**1.088 ex-alunos** (1.051 com telefone).
 
-**⚠ Os modelos têm um relógio que não é nosso.** A Meta revisa cada um, e o
-relógio só começa quando o texto é submetido. Por isso eles saíram na frente da
-aba de conversas: **os cinco textos estão prontos para colar em
-`MODELOS_WHATSAPP.md`**, com a categoria de cada um, os exemplos de variável que
-a Meta pede e a ordem de submissão. Falta só o cadastro no WhatsApp Manager e a
-forma de pagamento — sem ela, modelo aprovado não entrega nada.
+**Falta do seu lado:** trocar o nome de exibicao (ainda aparece "Be Fitness2"
+para quem recebe — numa reativacao e a unica coisa que a pessoa le antes de
+decidir se abre ou bloqueia) e publicar o app.
 
-O que ficou decidido junto e não é detalhe: **o modelo abre a janela, não
-vende.** Material de venda dentro de um `UTILITY` faz a Meta recategorizar em
-silêncio e cobrar como marketing, e argumento fixo é o oposto do que a
-biblioteca curada existe para fazer. E **o motivo `lembrete` não terá modelo** —
-data marcada sem motivo anotado não tem pretexto conhecido, e texto fixo ali só
-poderia inventar um.
+**Falta do meu lado, e e UMA peca so: o motor.** A decisao de quem sai agora
+esta pronta e testada (`lib/motor.ts`, 26 testes, com as seis regras
+anti-bloqueio finalmente sendo obedecidas). O que nao existe e o EXECUTOR, o
+GATILHO e a TELA DA SIMULACAO — o fundador ja tentou usar o modo simulacao em
+19/ago e nao encontrou botao nenhum, porque nao ha. Ver `ESTADO_DO_PROJETO.md`
+§0 para a ordem combinada.
 
 **Decisão de operação:** o número novo cuida dos EX-ALUNOS; a recepção segue no
 número antigo. Separação por público, não por ferramenta — o conflito real é
