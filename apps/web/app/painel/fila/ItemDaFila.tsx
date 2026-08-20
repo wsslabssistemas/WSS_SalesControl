@@ -141,7 +141,7 @@ export function ItemDaFila({
           {nome}
         </a>
         <span className="text-faint" style={{ fontSize: 12 }}>{ROTULO[motivo]}</span>
-        {!texto && !enviado && (
+        {texto === null && !enviado && (
           <button type="button" className="btn btn-sm" onClick={preparar} disabled={carregando}>
             {carregando ? "preparando…" : "✨ Preparar mensagem"}
           </button>
@@ -159,7 +159,20 @@ export function ItemDaFila({
       {limite && <AvisoDeCota mensagem={limite} />}
       {erro && <p className="badge badge-danger" style={{ marginTop: 8 }}>{erro}</p>}
 
-      {texto && !enviado && (
+      {/* ⚠ `texto !== null`, NUNCA `texto &&` — e a diferença é o defeito que a
+          Luciana reportou como "o botão de preparar mensagem não funciona".
+
+          Quando a trava anti-invenção dispara, o motor devolve `escalar: true`
+          e a mensagem VAZIA — que é o comportamento certo dele. Só que `""` é
+          falso em JavaScript, então `{texto && ...}` não renderizava nada: nem
+          a mensagem (que não existe), nem o aviso explicando por quê. A pessoa
+          clicava, o botão girava, e a tela ficava exatamente igual.
+
+          Do lado de fora isso não parece uma trava funcionando. Parece um
+          botão quebrado — e é a terceira vez nesta casa que um comportamento
+          CORRETO do motor chega ao usuário como defeito, porque a tela não
+          soube mostrar a recusa. */}
+      {texto !== null && !enviado && (
         <div className="card" style={{ marginTop: 10, background: "var(--bg-elev)" }}>
           {escalar ? (
             <>

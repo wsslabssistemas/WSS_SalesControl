@@ -12,6 +12,16 @@ import type { Stage } from "./skill";
 
 const DAY = 86400000;
 
+/**
+ * Quantos toques o alarme de silêncio dá antes de desistir, quando a etapa NÃO
+ * declara cadência no manifesto.
+ *
+ * Três porque é o `max_attempts` que todas as réguas curadas usam — o número
+ * sai da curadoria, não de chute. Etapa sem cadência é lacuna de manifesto, e
+ * o padrão dela tem que ser o mesmo do resto da casa, nunca "infinito".
+ */
+export const MAX_TOQUES_SEM_CADENCIA = 3;
+
 export type CadenceStep = { offset_days: number; intent: string };
 export type Cadence = {
   key: string;
@@ -182,10 +192,13 @@ export function computeDueTouches(
     const cad = cadKey ? byKey.get(cadKey) : undefined;
     const steps = (cad?.steps ?? []).slice().sort((a, b) => a.offset_days - b.offset_days);
 
+    // Quantos toques NOSSOS já saíram nesta etapa. Sai do bloco da cadência
+    // porque o alarme de silêncio também precisa dele — ver a nota lá embaixo.
+    const dados = toquesNossos[c.id] ?? 0;
+
     let expirou = false;
     if (steps.length > 0) {
       // QUAL passo: o próximo que ainda não foi dado.
-      const dados = toquesNossos[c.id] ?? 0;
       // Régua cumprida. É o `max_attempts` do manifesto: insistir além disso
       // em ticket de mensalidade queima o contato para a reativação, que é
       // onde ele volta a valer.
@@ -288,7 +301,34 @@ export function computeDueTouches(
     // Se um dia aparecer etapa sem `goal`, o texto de último recurso continua
     // existindo — mas agora ele é o que ele realmente é: um aviso de que falta
     // curadoria, não uma instrução de venda.
-    if (daysSince >= silenceDays) {
+    // ⚠ O ALARME DE SILÊNCIO PRECISA ACABAR — E PRECISA ESPAÇAR.
+    //
+    // Reportado pela Luciana em 19/ago sobre duas alunas: *"voltaram para a
+    // lista e não tem cristo que faça elas sair"*. Ela estava certa, e eram
+    // dois defeitos somados neste bloco.
+    //
+    // **1. Ele não tinha teto quando a etapa não declara cadência.** O
+    // `max_attempts` do manifesto só guardava o caminho de cima; aqui embaixo
+    // a pessoa reaparecia a cada 5 dias, para sempre, sem nada que a fizesse
+    // sair. `max_attempts` deixava de existir exatamente onde a régua já tinha
+    // desistido de saber o que dizer.
+    //
+    // **2. E ele batia sempre no mesmo ritmo.** Cinco dias entre toques faz
+    // sentido para um lead que esfriou ontem. Para quem está em silêncio há
+    // três meses é perseguição — e é o padrão que faz o WhatsApp marcar a
+    // conta. Agora o intervalo cresce com os toques já dados: 5, 10, 15 dias.
+    //
+    // ⚠ E O QUE ISSO CONSERTA DE VERDADE não é a lista: é a contradição. A
+    // fila pedia um toque que o motor se RECUSAVA a escrever — vencidas todas
+    // as janelas, o assunto vira o `goal` genérico da etapa, e a trava
+    // anti-invenção escala em vez de inventar. Pedir todo dia 5 um trabalho
+    // que a própria casa não sustenta é o que fazia a fila parecer quebrada.
+    const tetoDeToques = steps.length > 0 ? steps.length : MAX_TOQUES_SEM_CADENCIA;
+    if (dados >= tetoDeToques) continue;
+
+    const intervaloDoSilencio = silenceDays * (dados + 1);
+
+    if (daysSince >= intervaloDoSilencio) {
       out.push({
         contactId: c.id,
         name: c.name,
@@ -301,7 +341,7 @@ export function computeDueTouches(
           ? stage.goal
           : `Etapa "${stage.label}" não declara objetivo nem cadência no manifesto — o sistema não sabe o que este toque deve fazer. Abra a ficha antes de escrever.`,
         daysSince,
-        overdueDays: daysSince - silenceDays,
+        overdueDays: daysSince - intervaloDoSilencio,
         cadenceKey: null,
         semCadencia: true,
       });

@@ -244,4 +244,69 @@ if (falhas.length) {
   for (const f of falhas) console.log(`  ✗ ${f}`);
   process.exit(1);
 }
+
+// =====================================================================
+// O ALARME DE SILENCIO TEM QUE ACABAR, E TEM QUE ESPACAR
+//
+// ⚠ Reportado pela Luciana em 19/ago sobre duas alunas: "voltaram para a lista
+// e nao tem cristo que faca elas sair". Dois defeitos somados:
+//
+//   1. Sem cadencia declarada, o alarme nao tinha TETO — a pessoa reaparecia a
+//      cada 5 dias para sempre. O `max_attempts` do manifesto deixava de
+//      existir exatamente onde a regua ja tinha desistido de saber o que dizer.
+//   2. E ele batia sempre no MESMO ritmo. Cinco dias faz sentido para um lead
+//      que esfriou ontem; para quem esta em silencio ha tres meses e
+//      perseguicao — o padrao que faz o WhatsApp marcar a conta.
+//
+// E o que isso conserta de verdade nao e a lista: e a CONTRADICAO. A fila
+// pedia um toque que o motor se RECUSAVA a escrever (assunto generico → trava
+// anti-invencao escala). Pedir todo dia 5 um trabalho que a casa nao sustenta
+// e o que fazia a fila parecer quebrada.
+// =====================================================================
+
+const etapaSemRegua = [{ key: "limbo", label: "Limbo", goal: "Objetivo da etapa." }];
+const silencioso = (diasNaEtapa) => [{
+  id: "s1", name: "Silenciosa", phone: "51999999999", owner_id: "m1",
+  journey_stage: "limbo",
+  stage_entered_at: new Date(Date.now() - diasNaEtapa * DIA).toISOString(),
+}];
+const faz = (dias) => ({ s1: new Date(Date.now() - dias * DIA).toISOString() });
+
+// Esperado: 1. Sem toque nenhum, 6 dias de silencio vencem o intervalo base.
+eq(
+  "sem toque nenhum, o alarme dispara depois de 5 dias",
+  () => computeDueTouches(silencioso(6), {}, etapaSemRegua, [], {}, 5).length,
+  1,
+);
+
+// ⚠ Esperado: 0. Com UM toque dado o intervalo dobra para 10 dias, entao aos 6
+// dias ela ainda nao volta. Era exatamente aqui que a Catarina reaparecia.
+eq(
+  "com um toque dado, o intervalo dobra e ela nao volta aos 6 dias",
+  () => computeDueTouches(silencioso(30), faz(6), etapaSemRegua, [], { s1: 1 }, 5).length,
+  0,
+);
+
+// Esperado: 1. Passados os 10 dias ela volta — espacar nao e sumir.
+eq(
+  "passados os 10 dias, ela volta",
+  () => computeDueTouches(silencioso(30), faz(11), etapaSemRegua, [], { s1: 1 }, 5).length,
+  1,
+);
+
+// ⚠ Esperado: 0. O TETO. Tres toques sem resposta e o fim — o mesmo numero do
+// `max_attempts` de todas as reguas curadas. Sem isto, para sempre.
+eq(
+  "no terceiro toque sem resposta, ela sai de vez",
+  () => computeDueTouches(silencioso(365), faz(300), etapaSemRegua, [], { s1: 3 }, 5).length,
+  0,
+);
+
+// Esperado: 0. E nao volta nem depois de um ano.
+eq(
+  "e nao volta nem depois de um ano",
+  () => computeDueTouches(silencioso(999), faz(900), etapaSemRegua, [], { s1: 9 }, 5).length,
+  0,
+);
+
 console.log(`✓ PASSOU — ${ok}/${ok}`);
