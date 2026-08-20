@@ -207,6 +207,31 @@ export async function gerarResposta(input: {
     // agenda é complemento; se falhar, o motor segue sem oferecer horário
   }
 
+  /**
+   * ⚠ A REGRA DE HORÁRIO VEM DO SEGMENTO, e a versão fixa dela produziu um
+   * erro real em 20/ago: o motor respondeu *"Segunda à tarde infelizmente não
+   * temos horário livre"* para uma lead da academia.
+   *
+   * O prompt mandava, literalmente, "diga que aquele já está ocupado" para
+   * qualquer horário fora da lista sugerida. Numa academia isso é **invenção
+   * de um fato negativo**: não existe grade de atendimento para consultar, e o
+   * próprio manifesto diz que todo horário aberto vale porque nenhum está
+   * disputado.
+   *
+   * A trava anti-invenção sempre olhou para o lado de afirmar demais (preço,
+   * condição, promoção). Este é o lado oposto e ninguém tinha olhado: **negar
+   * uma coisa que existe.** E ele é pior de detectar — a lead desiste na hora,
+   * não reclama, e nada aparece em tela nenhuma.
+   *
+   * Onde o recurso É disputado (clínica, salão: um profissional atende um por
+   * vez), a lista de livres é exaustiva e "não está livre" é fato. Por isso a
+   * chave é do manifesto, não do código.
+   */
+  const agendaDoRamo = (manifest.scheduling ?? {}) as { todo_horario_aberto_vale?: boolean };
+  const regraDeHorario = agendaDoRamo.todo_horario_aberto_vale
+    ? "- Horário: a lista de HORÁRIOS LIVRES é apenas SUGESTÃO — neste ramo o atendimento é por ordem de chegada, dentro do horário de funcionamento, e NADA está disputado. Se o cliente pedir um dia ou turno que cai dentro do funcionamento (ver os FATOS), **confirme que dá**. NUNCA diga que está ocupado, cheio ou sem vaga: o sistema não tem essa informação, e negar horário que existe faz a pessoa desistir na hora. Só se o pedido cair FORA do funcionamento, diga o horário em que a empresa abre."
+    : "- Horário SÓ pode ser oferecido a partir da lista de HORÁRIOS REALMENTE LIVRES. Nunca invente data nem confirme um horário que não esteja lá. Se o cliente pedir um que não está na lista, diga que **aquele horário não está livre na agenda** (não afirme o motivo) e ofereça DOIS da lista — nunca deixe a pessoa sem opção concreta.";
+
   // Catálogo: itens que casam com o que o cliente pediu. É extensão da trava
   // anti-invenção — preço e estoque só podem sair daqui.
   let catalogo = "";
@@ -340,7 +365,7 @@ export async function gerarResposta(input: {
 REGRAS INEGOCIÁVEIS:
 - Use SOMENTE os FATOS fornecidos (DNA) e o CATÁLOGO. NUNCA invente preço, condição, horário, serviço, promoção ou política que não esteja neles.
 - Preço, disponibilidade e código de produto SÓ podem vir do CATÁLOGO. Se o item pedido não está lá, diga que vai confirmar — nunca estime valor nem afirme que tem em estoque.
-- Horário SÓ pode ser oferecido a partir da lista de HORÁRIOS REALMENTE LIVRES. Nunca invente data nem confirme um horário que não esteja lá. Se o cliente pedir um horário que não está na lista, diga que aquele já está ocupado e ofereça DOIS da lista — nunca deixe a pessoa sem opção concreta.
+${regraDeHorario}
 - Quando o cliente aceitar um horário, preencha "horario_escolhido" com a data e hora exatas (formato AAAA-MM-DDTHH:MM) daquele item da lista. Se ele não escolheu ainda, deixe vazio.
 - Se faltar um fato essencial para responder com segurança, liste em "faltam_fatos", marque "escalar": true e NÃO invente — deixe "resposta_sugerida" como uma mensagem breve e segura que encaminha para um humano/verificação.
 - Escreva em português do Brasil, natural, simpático e conciso — pronto para copiar e enviar no WhatsApp. Evite CTA fraca como "o que acha?"; use fechamento por alternativa ou pressuposto.
@@ -367,7 +392,7 @@ ${library || "(biblioteca vazia)"}
 ${notaDoAprendizado ? `
 ${notaDoAprendizado}` : ""}
 
-HORÁRIOS REALMENTE LIVRES na agenda (ofereça DOIS destes quando o assunto for marcar; nunca invente outro):
+HORÁRIOS SUGERIDOS pela agenda (ofereça DOIS destes quando o assunto for marcar):
 ${horarios || "(agenda não configurada — não ofereça horário específico; combine que vai confirmar)"}
 
 CATÁLOGO — itens da empresa que casam com o pedido (preço e estoque SÓ podem sair daqui):

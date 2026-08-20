@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
-import { normalizePhone } from "@/lib/phone";
+import { normalizePhone, paraE164BR, variantesArmazenadas } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -53,15 +53,41 @@ async function findPhoneDup(
   phone: string,
   exceptId?: string,
 ): Promise<{ id: string; name: string } | null> {
-  // paginacao-ok: procura UM contato por telefone exato, e o `.limit(1)` com
-  // `.maybeSingle()` vem no fim do encadeamento, depois do `if`. É a forma de
-  // consulta montada em etapas — a trava não consegue ver o fim dela, e o
-  // motivo fica escrito aqui em vez de a trava afrouxar para todo mundo.
+  // ⚠ AS QUATRO FORMAS DO MESMO NÚMERO — e a falta disto criou a Lilian duas
+  // vezes, em 20/ago/2026.
+  //
+  // A comparação era `.eq("phone", phone)`: TEXTO EXATO. Em Porto Alegre o
+  // nono dígito foi acrescentado aos celulares, mas o WhatsApp ainda mostra
+  // muita gente sem ele — então a mesma pessoa é cadastrada ora como
+  // `51994473319`, ora como `5194473319`. Para o `.eq` são dois números
+  // diferentes, a checagem passava limpa, e o cadastro duplicado nascia.
+  //
+  // O efeito só apareceu semanas depois, na reativação: a Lilian renovou (na
+  // linha nova) e o motor ofereceu retorno (para a linha velha, parada em
+  // `ex_aluno`). O fundador nomeou: *"não daria para automatizar e oferecer
+  // algo para alguém já matriculado."*
+  //
+  // ⚠ E o defeito era MUDO nos dois lados: quem cadastrava não via aviso
+  // nenhum, e quem lia a lista via dois nomes parecidos sem saber que eram a
+  // mesma pessoa. `lib/gemeo.ts` é a rede embaixo disto — ela impede o dano.
+  // Aqui é a origem, e origem corrigida não conserta o que já entrou.
+  //
+  // `variantesArmazenadas` é a MESMA função que o webhook usa para achar o
+  // contato quando a Meta entrega o número sem o nono dígito. Duas telas
+  // procurando a mesma pessoa de jeitos diferentes é como se cria a
+  // divergência que este projeto já pagou várias vezes.
+  const alvo = paraE164BR(phone);
+  const formas = alvo.ok ? variantesArmazenadas(alvo.digitos) : [phone];
+
+  // paginacao-ok: procura UM contato entre as formas do mesmo número, e o
+  // `.limit(1)` com `.maybeSingle()` vem no fim do encadeamento, depois do
+  // `if`. É a forma de consulta montada em etapas — a trava não consegue ver o
+  // fim dela, e o motivo fica escrito aqui em vez de ela afrouxar para todos.
   let q = supabase
     .from("contacts")
     .select("id, name")
     .eq("tenant_id", tenantId)
-    .eq("phone", phone)
+    .in("phone", formas)
     .is("deleted_at", null);
   if (exceptId) q = q.neq("id", exceptId);
   const { data } = await q.limit(1).maybeSingle();

@@ -245,6 +245,24 @@ scheduling:
   slot_step_min: 60
   min_advance_min: 120
   offer_by_turno: true
+  # ⚠ NADA AQUI ESTA DISPUTADO — e esta linha existe por causa de um erro real.
+  #
+  # Em 20/ago o motor respondeu a uma lead: "Segunda a tarde infelizmente nao
+  # temos horario livre". O fundador pegou na hora: *"se estamos abertos, entao
+  # tem horario"*. E ele estava certo — o comentario logo acima ja dizia, com
+  # todas as letras, que todo horario aberto e valido porque nenhum esta
+  # disputado.
+  #
+  # A culpa era do prompt, que mandava a IA dizer "aquele ja esta ocupado" para
+  # qualquer horario fora da lista sugerida. Numa academia isso e INVENCAO de
+  # um fato negativo: o sistema nao tem grade de atendimento para consultar.
+  #
+  # E negar horario e pior que errar preco: a lead desiste na hora, ninguem
+  # fica sabendo, e o defeito nao aparece em tela nenhuma.
+  #
+  # Numa clinica ou num salao seria diferente — la o profissional atende um por
+  # vez e a lista de livres E exaustiva. Por isso a chave e do SEGMENTO.
+  todo_horario_aberto_vale: true
 
 lead_sources:
   - whatsapp
