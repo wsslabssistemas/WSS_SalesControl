@@ -7,6 +7,7 @@ import { origemDoSite } from "@/lib/site";
 import { Canal } from "./Canal";
 import { Guia } from "./Guia";
 import { Roteamento } from "./Roteamento";
+import { Simulacao } from "./Simulacao";
 import { lerRoteamento, lerModelos } from "@/lib/roteamento";
 import { lerTetoDeMensagens } from "@/lib/custo_mensagem";
 
@@ -198,6 +199,8 @@ export default async function AutomacaoPage({
           tetoCents={lerTetoDeMensagens(data?.settings)}
         />
       )}
+
+      {canEdit && <Simulacao modo={a.mode} />}
 
       <div className="card mt-16">
         <p className="eyebrow" style={{ marginBottom: 8 }}>Histórico de execuções</p>

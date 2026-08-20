@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveTenant } from "@/lib/auth";
-import { getSkillFormConfig } from "@/lib/skill";
-import { computeDueTouches, historicoPorContato } from "@/lib/cadence";
-import { computeDue, stagesWithoutRecurrence, stagesForaDeJogo } from "@/lib/recurrence";
-import { computeRenovacoes } from "@/lib/renovacao";
-import { construirFila, comCarimbo, ROTULO, type ItemDaFila as Item } from "@/lib/fila";
+import { ROTULO, type ItemDaFila as Item } from "@/lib/fila";
+import { carregarFila } from "@/lib/fila-db";
 import { paraE164BR } from "@/lib/phone";
-import { lerTudo } from "@/lib/paginado";
 import { lerRacao, estadoDaRacao, toquesDeHoje } from "@/lib/racao";
 import { ItemDaFila } from "./ItemDaFila";
 import { lerRoteamento } from "@/lib/roteamento";
@@ -31,19 +27,6 @@ export const metadata = { title: "Fila de envio" };
  */
 export const maxDuration = 60;
 
-type Contact = {
-  id: string;
-  name: string;
-  phone: string | null;
-  owner_id: string | null;
-  journey_stage: string;
-  stage_entered_at: string;
-  next_action_at: string | null;
-  next_action: string | null;
-  next_action_note: string | null;
-  contract_end: string | null;
-  custom: Record<string, unknown> | null;
-};
 
 /**
  * A FILA DE ENVIO DE UM TOQUE.
@@ -69,52 +52,7 @@ export default async function FilaPage({
     return (<main><h1>Fila de envio</h1><p className="text-dim">Sem empresa vinculada.</p></main>);
   }
 
-  const { stages, cadences, recurrence, contract } = await getSkillFormConfig(tenant.skill_key);
   const supabase = await createClient();
-
-  // LEITURA PAGINADA, e não é otimização — é correção.
-  //
-  // Estas duas consultas não tinham `.range()`, e o PostgREST corta em 1.000
-  // linhas SEM AVISAR. Com 273 contatos ninguém via; com os 9 mil que vão
-  // entrar, a fila passaria a calcular sobre 1.000 contatos ARBITRÁRIOS (não
-  // há ordenação declarada) e a lista do dia sairia errada com cara de certa.
-  //
-  // O `limit(3000)` das interações era a mesma doença com número maior: quem
-  // tivesse o último contato mais antigo que a 3.000ª interação apareceria
-  // como "nunca contatado", e entraria na fila indevidamente.
-  const [cData, ixData, { data: mData }, { data: tRow }] = await Promise.all([
-    lerTudo<Contact>(
-      (de, ate) => supabase
-        .from("contacts")
-        .select("id, name, phone, owner_id, journey_stage, stage_entered_at, next_action_at, next_action, next_action_note, contract_end, custom")
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .order("id")
-        .range(de, ate),
-      { rotulo: "contatos da fila" },
-    ),
-    lerTudo<{ contact_id: string | null; occurred_at: string; direction: string; created_by: string | null }>(
-      (de, ate) => supabase
-        .from("interactions")
-        .select("contact_id, occurred_at, direction, created_by")
-        .eq("tenant_id", tenant.id)
-        .order("occurred_at", { ascending: false })
-        .range(de, ate),
-      { rotulo: "interações da fila" },
-    ),
-    supabase
-      .from("memberships")
-      .select("id, user:profiles(full_name, email)")
-      .eq("tenant_id", tenant.id)
-      .eq("status", "active"),
-    // A ração do dia mora em `tenants.settings`, como a aparência e o token do
-    // calendário. `getActiveTenant` não traz `settings` de propósito: ele roda
-    // em toda página do painel e é o caminho mais quente do sistema.
-    supabase.from("tenants").select("settings").eq("id", tenant.id).maybeSingle(),
-  ]);
-
-  const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
-    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }));
 
   // ⚠ O VENDEDOR ABRE NA CARTEIRA DELE, o gestor abre na equipe inteira.
   //
@@ -126,29 +64,30 @@ export default async function FilaPage({
   // é outra: a operação está em dia?
   const ehGestor = membership.role === "owner" || membership.role === "admin";
   const alvo = resp || (ehGestor ? "" : membership.membershipId);
-  const todos = cData;
-  const contatos = alvo ? todos.filter((c) => c.owner_id === alvo) : todos;
+
+  // ⚠ A CARGA MORA EM `lib/fila-db.ts`, e essa mudança é o que destrava o
+  // motor proativo. Ele precisa da MESMA lista e não tem tela; copiar a carga
+  // para dentro dele criaria duas filas divergindo em silêncio — o defeito que
+  // esta casa já pagou quando o Painel inicial montava as suas cinco listas
+  // próprias e a mesma aluna aparecia em três lugares.
+  const carga = await carregarFila({
+    supabase,
+    tenantId: tenant.id,
+    skillKey: tenant.skill_key,
+    ownerId: alvo || null,
+  });
+  const { fila, todos, interacoes: ixData, settings, hojeISO } = carga;
+
+  const { data: mData } = await supabase
+    .from("memberships")
+    .select("id, user:profiles(full_name, email)")
+    .eq("tenant_id", tenant.id)
+    .eq("status", "active");
+
+  const membros = ((mData as { id: string; user: { full_name: string | null; email: string | null } | null }[] | null) ?? [])
+    .map((m) => ({ id: m.id, nome: m.user?.full_name ?? m.user?.email ?? "—" }));
   const nomeDoAlvo = membros.find((m) => m.id === alvo)?.nome ?? null;
 
-  // O `toques` é o que diz em QUAL passo da régua cada pessoa está. Sem ele a
-  // cadência colapsa no acervo: uma mensagem quitava a sequência inteira e a
-  // pessoa nunca mais voltava à fila. Ver `computeDueTouches`.
-  const { ultimo, toques } = historicoPorContato(
-    ixData,
-    Object.fromEntries(todos.map((c) => [c.id, c.stage_entered_at])),
-  );
-
-  const hojeISO = new Date().toISOString().slice(0, 10);
-
-  // AS QUATRO ORIGENS MORAM EM `lib/fila.ts`, não aqui. Enquanto a montagem
-  // vivia nesta tela, o Painel inicial montava as SUAS cinco listas e a
-  // dedução "uma pessoa, um motivo" não valia lá — a mesma aluna aparecia em
-  // três lugares. Fila é lógica, não é tela.
-  const fila = construirFila({
-    contatos: contatos.map(comCarimbo), ultimoContato: ultimo, toquesNossos: toques,
-    stages, cadences, recurrence, renewal: contract?.renewal, etapaDeSaida: contract?.ended_stage ?? null, hojeISO,
-    deps: { stagesForaDeJogo, stagesWithoutRecurrence, computeRenovacoes, computeDueTouches, computeDue },
-  });
   const porMotivo = (m: string) => fila.filter((f) => f.motivo === m).length;
 
   // ⚠ A RAÇÃO DO DIA — ver `lib/racao.ts` para os três motivos de ela existir.
@@ -162,8 +101,8 @@ export default async function FilaPage({
   // quer trabalhar mais não pode esbarrar numa trava que existe para quem
   // trabalha de menos. `?mais=1` libera outra leva do mesmo tamanho.
   const levas = Math.max(1, Math.min(20, Number(mais) || 1));
-  const teto = lerRacao((tRow?.settings ?? null) as Record<string, unknown> | null) * levas;
-  const roteamento = lerRoteamento(tRow?.settings ?? null);
+  const teto = lerRacao(settings) * levas;
+  const roteamento = lerRoteamento(settings);
   const feitosHoje = alvo ? (toquesDeHoje(ixData, hojeISO)[alvo] ?? 0) : 0;
   const racao = estadoDaRacao({ teto, feitos: feitosHoje, naFila: fila.length });
   const doDia = alvo ? fila.slice(0, racao.restam) : fila.slice(0, 40);
