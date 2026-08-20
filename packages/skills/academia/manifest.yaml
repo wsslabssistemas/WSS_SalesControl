@@ -174,6 +174,30 @@ contract:
   # encerramento continua sendo marcado, só não move ninguém de etapa: mover
   # por engano é pior que deixar parado.
   ended_stage: ex_aluno
+
+  # ⚠ O QUE CADA NOME DE PLANO SIGNIFICA — lido da coluna `Plano` da planilha.
+  #
+  # A exportação da Be Fitness (20/ago) tem 393 linhas: ~331 são plano de
+  # verdade, **46 são "Treino Avulso"** e **16 são "Semana FREE"**. O sistema
+  # ignorava a coluna e tratava os três como contrato — o que faz gente de
+  # passagem virar "ex-aluno" e receber oferta de retorno sem nunca ter sido
+  # cliente. Mesma classe do Gympass: mensagem plausível chegando em quem não
+  # deveria receber, no nome da academia.
+  #
+  # E infla o denominador: 46 pessoas de passagem contadas como carteira fazem
+  # a conversão e a retenção mentirem para baixo.
+  #
+  # A COMPARAÇÃO É POR PEDAÇO DO NOME, não igualdade — a mesma planilha traz
+  # "Semana FREE" e "Semana FREE2", porque quem cria plano é a recepção.
+  planos:
+    # Sessão única: NÃO é contrato e NÃO vira ex-aluno. Quem pagou uma aula não
+    # deixou de ser aluno — ele nunca foi.
+    # ⚠ As duas formas de gênero: "treino avulso" e "aula avulsa".
+    avulso: ["treino avulso", "avulso", "avulsa", "diaria", "day use"]
+    # Experimentação gratuita. PODE virar ex-aluno, e a diferença para o avulso
+    # é de intenção: quem faz a semana experimental está avaliando a academia,
+    # então se não fechou é lead esfriado — exatamente o público da reativação.
+    experimental: ["semana free", "semana gratis", "experimental"]
   # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
   #
   # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que

@@ -68,6 +68,15 @@ export function linhasDe(texto: string): string[][] {
 /** Cabeçalhos que servem como CHAVE de reconciliação, em ordem de confiança. */
 const CHAVE_H = ["codigo", "código", "cod", "matricula", "matrícula", "id", "registro"];
 
+/**
+ * Cabeçalhos que dizem O NOME DO PLANO.
+ *
+ * ⚠ Esta coluna existia na exportação desde sempre e era ignorada. Ela é o que
+ * separa um contrato de um "Treino Avulso" (gente de passagem) e de uma
+ * "Semana FREE" — e sem ela os três viram a mesma coisa. Ver `lib/planos.ts`.
+ */
+const PLANO_H = ["plano", "produto", "servico", "serviço", "modalidade", "contrato"];
+
 /** Cabeçalhos que dizem o CICLO do plano — é o que separa renovação de ajuste. */
 const CICLO_H = ["meses", "periodicidade", "ciclo", "duracao", "duração"];
 const CICLO_PALAVRA: Record<string, number> = {
@@ -127,6 +136,9 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
   const h = cab.map(strip);
   const det = detectColumns(cab);
   const iCiclo = h.findIndex((c) => CICLO_H.some((k) => c === k || c.startsWith(k)));
+  // O NOME do plano, cru. Quem classifica é `lib/planos.ts`, com a lista do
+  // manifesto do segmento — este arquivo não pode conhecer "Treino Avulso".
+  const iPlano = h.findIndex((c) => PLANO_H.some((k) => c === k || c.startsWith(k)));
 
   // ⚠ A CHAVE NUNCA É ADIVINHADA.
   //
@@ -195,6 +207,7 @@ export function ler(csv: string, opts: { exigeVigencia?: boolean } = {}): Leitur
       nome: (r[det.nameIdx] ?? "").trim() || null,
       vigencia_ate: vigencia,
       ciclo_dias: iCiclo >= 0 ? cicloEmDias(r[iCiclo] ?? "") : null,
+      plano: iPlano >= 0 ? (r[iPlano] ?? "").trim() || null : null,
     });
   }
 

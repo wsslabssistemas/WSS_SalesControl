@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { tipoDaLinha, type RegrasDePlano } from "@/lib/planos";
 import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { lerTudo } from "@/lib/paginado";
@@ -174,7 +175,23 @@ export async function prever(
       `${mat.entendeu.lidas} linhas → ${mat.linhas.length} pessoas` +
       (mat.ignoradas ? ` (${mat.ignoradas} linhas colapsadas ou ignoradas)` : "");
 
-    const cmp = comparar(mat.linhas, await estadoConhecido(m.tenant!.id), undefined, confirmado);
+    // ⚠ A CLASSIFICAÇÃO ACONTECE AQUI, e não no leitor da planilha.
+    //
+    // `lib/planilha.ts` roda no NAVEGADOR (é o que evita mandar 4,2 MB para o
+    // servidor) e não pode conhecer o manifesto do segmento. E o núcleo não
+    // pode conhecer "Treino Avulso" — isso é vocabulário de academia, Lei 1.
+    //
+    // Então o leitor traz o NOME cru do plano e quem interpreta é este ponto,
+    // com a lista que o segmento declara. Um segmento novo classifica sozinho
+    // ao declarar `contract.planos`, sem tocar em código.
+    const cfg = await getSkillFormConfig(m.tenant!.skill_key);
+    const regrasDePlano = (cfg.contract as { planos?: RegrasDePlano } | null)?.planos ?? null;
+    const linhasClassificadas = mat.linhas.map((l) => ({
+      ...l,
+      tipo: tipoDaLinha(l.plano, regrasDePlano),
+    }));
+
+    const cmp = comparar(linhasClassificadas, await estadoConhecido(m.tenant!.id), undefined, confirmado);
     bloqueio = cmp.bloqueio;
     fonteVazia = mat.linhas.length === 0;
     resumo = {

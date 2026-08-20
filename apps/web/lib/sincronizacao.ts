@@ -41,6 +41,23 @@ export type LinhaDaFonte = {
   /** Marcação derivada pelo sistema (ex.: veio da aba de convênio). */
   marcacoes?: string[];
   /**
+   * O que a linha REPRESENTA — contrato, aula avulsa ou cortesia.
+   *
+   * ⚠ Vem da coluna `Plano`, classificada pelo manifesto do segmento
+   * (`lib/planos.ts`). Ausente significa `contrato`, que é o padrão seguro:
+   * plano desconhecido tratado como contrato entra na carteira e alguém
+   * percebe; tratado como avulso, some da renovação em silêncio.
+   */
+  tipo?: "contrato" | "avulso" | "experimental";
+  /**
+   * O NOME do plano, cru, como veio da planilha ("Treino Avulso", "Anual").
+   *
+   * Fica separado de `tipo` de propósito: o nome é FATO da fonte, o tipo é
+   * INTERPRETAÇÃO nossa. Guardar os dois deixa a classificação conferível — dá
+   * para ver que "Semana FREE2" virou `experimental` e por quê.
+   */
+  plano?: string | null;
+  /**
    * Duração do ciclo em dias, quando a fonte declara (Mensal=30, Anual=365…).
    *
    * ⚠ SEM ISTO, TODO PROLONGAMENTO VIRA "RENOVOU" — e a primeira execução
@@ -181,6 +198,22 @@ export function comparar(
 
   // ------------------------------------------------------------- O QUE ESTÁ LÁ
   for (const l of fonte) {
+    // ⚠ AULA AVULSA NÃO É CONTRATO — e ignorá-la aqui é o que impede gente de
+    // passagem de virar "aluno" e depois "ex-aluno".
+    //
+    // Na exportação da Be Fitness são 46 linhas de "Treino Avulso": turista
+    // que treinou um dia. Tratá-las como contrato faz o sistema oferecer
+    // RETORNO a quem nunca foi cliente — a mesma classe do Gympass, mensagem
+    // plausível chegando em quem não deveria receber, no nome da academia.
+    //
+    // E o efeito não para na mensagem: 46 pessoas de passagem contadas como
+    // carteira fazem a conversão e a retenção mentirem para baixo.
+    //
+    // `experimental` NÃO cai aqui de propósito: quem fez a semana grátis estava
+    // avaliando a academia, e se não fechou é lead esfriado — exatamente o
+    // público da reativação. Decisão do fundador em 20/ago.
+    if (l.tipo === "avulso") continue;
+
     const b = noBanco.get(l.chave);
 
     if (!b) {

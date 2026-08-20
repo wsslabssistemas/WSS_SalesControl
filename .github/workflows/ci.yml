@@ -196,6 +196,14 @@ jobs:
       # nenhuma" — nada quebrou, a lista voltava vazia com motivo plausivel.
       - name: Fuso — a hora da empresa, nao a do servidor
         run: node packages/db/tests/fuso_test.mjs
+      # O que cada nome de plano SIGNIFICA. A coluna `Plano` da exportacao era
+      # ignorada: das 393 linhas da Be Fitness, 46 sao "Treino Avulso" (gente
+      # de passagem) e 16 sao "Semana FREE". Tratar os tres como contrato faz o
+      # avulso virar ex-aluno e receber oferta de RETORNO sem nunca ter sido
+      # cliente. ⚠ Metade do teste guarda o padrao: plano desconhecido cai em
+      # `contrato`, porque excluir alguem da renovacao e silencioso.
+      - name: Tipo de plano — contrato, avulso ou cortesia
+        run: node packages/db/tests/planos_test.mjs
       # A regua de follow-up no ACERVO. Ela escolhia o ULTIMO passo vencido, e
       # com isso uma mensagem quitava a sequencia inteira de quem estava parado
       # ha meses: a regua de tres toques virava um toque so, exatamente na base
