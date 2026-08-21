@@ -193,11 +193,14 @@ contract:
     # Sessão única: NÃO é contrato e NÃO vira ex-aluno. Quem pagou uma aula não
     # deixou de ser aluno — ele nunca foi.
     # ⚠ As duas formas de gênero: "treino avulso" e "aula avulsa".
-    avulso: ["treino avulso", "avulso", "avulsa", "diaria", "day use"]
+    # ⚠ Pode escrever com acento: a comparação tira acento dos DOIS lados antes
+    # de casar (`lib/planos.ts`). Este arquivo é lido por gente — português
+    # sem acento aqui é sujeira, não requisito técnico.
+    avulso: ["treino avulso", "avulso", "avulsa", "diária", "day use"]
     # Experimentação gratuita. PODE virar ex-aluno, e a diferença para o avulso
     # é de intenção: quem faz a semana experimental está avaliando a academia,
     # então se não fechou é lead esfriado — exatamente o público da reativação.
-    experimental: ["semana free", "semana gratis", "experimental"]
+    experimental: ["semana free", "semana grátis", "experimental"]
   # A RENOVAÇÃO, NA VOZ DESTE RAMO (ago/2026)
   #
   # Estes textos moravam no NÚCLEO e nasceram com a academia — "pergunte o que
@@ -277,9 +280,9 @@ scheduling:
   # todas as letras, que todo horario aberto e valido porque nenhum esta
   # disputado.
   #
-  # A culpa era do prompt, que mandava a IA dizer "aquele ja esta ocupado" para
-  # qualquer horario fora da lista sugerida. Numa academia isso e INVENCAO de
-  # um fato negativo: o sistema nao tem grade de atendimento para consultar.
+  # A culpa era do prompt, que mandava a IA dizer "aquele já está ocupado" para
+  # qualquer horário fora da lista sugerida. Numa academia isso é INVENÇÃO de
+  # um fato negativo: o sistema não tem grade de atendimento para consultar.
   #
   # E negar horario e pior que errar preco: a lead desiste na hora, ninguem
   # fica sabendo, e o defeito nao aparece em tela nenhuma.

@@ -159,6 +159,13 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   lento podia segurar o webhook da Meta ate ela DESATIVAR a assinatura. No
   estouro, degradar (deixar passar) e melhor que redirecionar: a defesa dos
   dados e a RLS, nao o middleware.
+- **Rodar a SUÍTE DO CI, não um subconjunto dela.** Em 20/ago quatro commits
+  seguidos foram para a `main` com o CI vermelho, porque eu rodava só os testes
+  que julgava afetados. O que quebrou foi o `acentuacao_check` — prosa sem
+  acento num manifesto, que é arquivo LIDO POR GENTE. "Rodei os testes
+  relevantes" é o mesmo erro do typecheck: cobertura escolhida por quem
+  escreveu o código. O comando tira a lista do próprio `ci.yml`:
+  `grep -oP '(?<=run: )node packages/db/tests/\S+' .github/workflows/ci.yml`
 - **`npx next build` ANTES do push, sempre que mexer em rota, página ou ação.**
   `tsc --noEmit` não vê as regras do Next: em 18/ago o typecheck passou limpo e
   a Vercel quebrou em 20 segundos com `exited with 1`, porque um arquivo
