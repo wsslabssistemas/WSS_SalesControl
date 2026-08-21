@@ -99,6 +99,9 @@ export default async function PainelLayout({
     // que se vê se ele está entregando. Configurar e conferir o resultado são
     // a mesma tarefa em dois momentos.
     { href: "/painel/conversas", label: "Canal oficial" },
+    // Colada no Canal oficial: as duas respondem "o sistema está indo bem?",
+    // uma pela entrega e a outra pela qualidade do texto.
+    ...(showManager ? [{ href: "/painel/correcoes", label: "O que a IA aprendeu" }] : []),
     { href: "/painel/tutorial", label: "Tutorial" },
     ...(showManager ? [{ href: "/painel/sincronizar", label: "Sincronizar" }] : []),
     // Fica COLADA na Sincronizar de propósito: é ali que as contradições

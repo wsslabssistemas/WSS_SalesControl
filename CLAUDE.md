@@ -139,6 +139,24 @@ vazar para produção ou biblioteca faltar em ambiente novo:
   encolhe — que não parece defeito, parece trabalho acumulado. Já aconteceu
   duas vezes: `combinado` (10/ago) e `renovacao` (15/ago), e na segunda o
   comentário do código afirmava que só o primeiro tinha o problema.
+- **CAMPO CINZA COM O MOTIVO ESCRITO GANHA DE CAMPO QUE SOME.** A caixa de
+  resposta do canal sumia quando a janela de 24h fechava, e o fundador leu isso
+  como "a aba só serve para olhar, não dá para escrever". Campo AUSENTE é
+  indistinguível de campo que NÃO FOI FEITO. Vale para lista vazia também: ela
+  precisa dizer se é "ainda não aconteceu" ou "está quebrado".
+- **A trava anti-invenção também vale para NEGAR.** Ela nasceu olhando o lado de
+  afirmar demais (preço, condição, promoção) e deixou passar o oposto: o prompt
+  mandava *"diga que aquele horário já está ocupado"* para qualquer horário fora
+  da lista — numa academia, onde nada está disputado. **Negar o que existe é
+  pior de detectar que afirmar o que não existe:** a lead desiste na hora, não
+  reclama, e nada aparece em tela nenhuma.
+- **O sinal mais rápido de qualidade da IA é a CORREÇÃO DO VENDEDOR.** Quando
+  alguém adapta a mensagem antes de enviar, é um vendedor experiente corrigindo
+  o modelo no contexto exato, de graça. Isso era jogado fora. Hoje o par
+  sugerido × enviado é guardado (`0060`) e os 6 mais recentes voltam para o
+  prompt. Vale mais que o desfecho HOJE: são 14 fechamentos na base inteira e
+  desfecho demora semanas — vinte mensagens adaptadas geram vinte lições numa
+  tarde. **Prefira isto a reescrever prompt no escuro.**
 - **QUANDO O MOTOR SE RECUSA, A RECUSA TEM QUE APARECER NA TELA.** Ja custou
   TRES relatos de "esta quebrado" para acertos do produto. O pior deles: a
   trava anti-invencao devolve a mensagem **vazia** junto com `escalar: true`, e

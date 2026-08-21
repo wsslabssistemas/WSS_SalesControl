@@ -8,7 +8,7 @@
 > segmentos e o Kairós vendendo o Kairós estão fora daqui de propósito — cada
 > item que não é para agora é ruído para quem está tentando entregar.
 >
-> Atualizado: 19 de agosto de 2026.
+> Atualizado: 21 de agosto de 2026.
 
 ---
 
@@ -119,20 +119,29 @@ cria o contato, atribui dono e fica registrada sozinha.
 número registrado na plataforma sai do aplicativo do WhatsApp, e a equipe perde
 o que usa hoje.
 
-**🟢 OS CINCO MODELOS FORAM APROVADOS (19/ago)** e os nomes ja estao em
-Automacao. O cartao esta cadastrado na Meta. Isso destrava a reativacao dos
-**1.088 ex-alunos** (1.051 com telefone).
+**🟢 O CANAL ESTA COMPLETO (21/ago).** Modelos aprovados e colados em
+Automacao, cartao cadastrado na Meta, motor com gatilho no GitHub Actions
+(rodou com sucesso), simulacao com veredito por pessoa, aba de responder pelo
+numero oficial, e o aprendizado por correcao do vendedor.
 
-**Falta do seu lado:** trocar o nome de exibicao (ainda aparece "Be Fitness2"
-para quem recebe — numa reativacao e a unica coisa que a pessoa le antes de
-decidir se abre ou bloqueia) e publicar o app.
+**O QUE FALTA PARA A PRIMEIRA CAMPANHA — e nada disso e codigo:**
 
-**Falta do meu lado, e e UMA peca so: o motor.** A decisao de quem sai agora
-esta pronta e testada (`lib/motor.ts`, 26 testes, com as seis regras
-anti-bloqueio finalmente sendo obedecidas). O que nao existe e o EXECUTOR, o
-GATILHO e a TELA DA SIMULACAO — o fundador ja tentou usar o modo simulacao em
-19/ago e nao encontrou botao nenhum, porque nao ha. Ver `ESTADO_DO_PROJETO.md`
-§0 para a ordem combinada.
+1. **Decidir a oferta de retorno.** Os brindes ja estao no DNA. Falta dizer se
+   ha isencao de adesao para quem volta (a adesao so existe no anual
+   recorrente).
+2. **Trocar o nome de exibicao** na Meta — ainda sai "Be Fitness2" para quem
+   recebe. Numa reativacao e a unica coisa que a pessoa le antes de decidir se
+   abre ou bloqueia.
+3. **Publicar o app** na Meta.
+
+**E UMA peca minha:** o recorte por data na simulacao. Hoje ela pega os 1.049
+de uma vez; o plano combinado comeca pelos **35 que sairam nos ultimos 90
+dias** (R$ 10,94) e so cresce se a taxa de resposta sustentar.
+
+⚠ **E A AUTOMACAO NAO RESPONDE O CLIENTE.** Quando alguem responder ao modelo,
+quem escreve de volta e uma PESSOA, pela aba Canal oficial. A IA nao envia
+resposta sozinha — esse caminho nao existe e nao deve existir antes de haver
+medicao (hoje: `decisions = 0`).
 
 **Decisão de operação:** o número novo cuida dos EX-ALUNOS; a recepção segue no
 número antigo. Separação por público, não por ferramenta — o conflito real é

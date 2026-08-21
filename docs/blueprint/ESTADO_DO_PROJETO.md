@@ -15,7 +15,151 @@
 
 ---
 
-## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 19 de agosto de 2026
+## 0. ⚠ LEIA ISTO PRIMEIRO — repasse de 21 de agosto de 2026
+
+> O repasse de 19/ago continua abaixo, em §0.0. As armadilhas dele seguem
+> valendo — este aqui e o que mudou desde entao.
+
+### 🟢 O CANAL ESTA COMPLETO. Falta LIGAR.
+
+| Peca | Estado |
+|---|---|
+| Canal oficial (envia e recebe) | no ar |
+| Os 5 modelos | **APROVADOS** pela Meta, nomes colados em Automacao |
+| Forma de pagamento na Meta | cadastrada |
+| Motor proativo (decisao + executor) | pronto, 26 testes |
+| Gatilho | **GitHub Actions**, rodou com sucesso (`Motor proativo #1`) |
+| `MOTOR_CRON_SECRET` | configurado nos dois lados (a rota devolve 401, nao 503) |
+| Simulacao | tela com o veredito de cada pessoa |
+| Responder pelo numero oficial | `/painel/conversas` |
+| Aprendizado por correcao | `0060` + `/painel/correcoes` |
+
+O repo foi renomeado para **`wss-kairos`**. O remote local ja aponta para la.
+
+⚠ **O modo ainda esta em `simulation`.** Ligar e trocar para `Automatico` em
+Automacao e salvar. NAO ligar antes de resolver o bloco seguinte.
+
+### 🔴 O QUE IMPEDE LIGAR HOJE — e nao e tecnico
+
+**1. A automacao NAO responde o cliente.** O fundador acreditava que sim, e
+essa foi a confusao mais cara da conversa. Hoje: a mensagem chega, e gravada, a
+janela de 24h abre — e **um humano responde**. A IA nao escreve resposta
+automatica. Esse caminho nao existe.
+
+Se 35 mensagens sairem e 8 pessoas responderem, as 8 esperam ate alguem abrir a
+aba Canal oficial.
+
+**2. Nao existe oferta de retorno.** O modelo pergunta "quer que eu te conte
+como esta a academia hoje?". Se a pessoa disser SIM, o que ela ouve? Os brindes
+ja estao no DNA (aromatizador na experimental; bolsa termica + chaveiro no
+anual; vale-presente de 15 dias por indicacao). Falta decidir se ha **isencao
+de adesao para quem volta** — e a adesao so existe no anual recorrente.
+
+**3. O publico ainda nao tem recorte.** A simulacao pega os 1.049 de uma vez. O
+plano combinado e por lote, e ele PRECISA do recorte por data para existir.
+
+### O PLANO DA PRIMEIRA CAMPANHA (combinado, nao executado)
+
+Medido no banco: a data de saida e REAL (`stage_entered_at`, distribuida mes a
+mes — nao e data de importacao).
+
+| Saiu ha | Pessoas | Custo do 1o toque |
+|---|---|---|
+| ate 30 dias | 4 | R$ 1,25 |
+| ate 90 dias | **35** | **R$ 10,94** |
+| ate 180 dias | 107 | R$ 33,44 |
+| ate 1 ano | 286 | R$ 89,38 |
+| todos | 1.049 | R$ 327,81 |
+
+**Comecar pelos 35 dos ultimos 90 dias.** A primeira campanha nao existe para
+converter — existe para ENSINAR. Com `decisions = 0` e zero dados de conversa,
+disparar 1.049 e experimento sem controle no ativo mais caro (a reputacao do
+numero). R$ 11 para descobrir se o texto funciona.
+
+⚠ O fundador sugeriu comecar pela SEMANA EXPERIMENTAL. Recusado com motivo:
+quem fez a experimental e nao fechou tem uma objecao ESPECIFICA que ninguem
+registrou (zero notas na base), entao a mensagem sairia generica para quem tem
+objecao concreta — e objecao nao tratada vira "nao" definitivo.
+
+### 🔴 O QUE NAO PROPAGOU PARA OS OUTROS 14 SEGMENTOS
+
+Conferido em 21/ago. **Tudo que foi feito para a Be Fitness esta so na
+academia.** Dois desses sao defeitos latentes esperando o segundo cliente:
+
+| Campo | Segmentos com | Se faltar |
+|---|---|---|
+| `contract.ended_stage` | **1 de 15** | ⚠ a reativacao NAO EXISTE para o segmento |
+| `intencao_sem_historico` | **1 de 15** | ⚠ a janela de 30 dias da renovacao ESCALA PARA TODO MUNDO — o defeito exato que a Luciana reportou |
+| `contract.planos` | 1 de 15 | avulso vira ex-aluno (padrao seguro: tudo vira contrato) |
+| `todo_horario_aberto_vale` | 1 de 15 | padrao correto para clinica/salao/barbearia (recurso disputado) |
+
+Os dois primeiros sao trabalho obrigatorio antes de qualquer segundo cliente.
+
+### O QUE FOI CONSERTADO EM 20-21/AGO
+
+Sequencia de defeitos achados pelo fundador USANDO o produto — nenhum apareceu
+como erro:
+
+- **"O botao de preparar mensagem nao funciona"** — a trava anti-invencao
+  devolve mensagem VAZIA, e `{texto && ...}` nao renderizava nada. String vazia
+  e falsa em JavaScript. Hoje e `texto !== null`.
+- **"Falta fato no DNA" para TODO MUNDO** — a janela de 30 dias pedia "o ganho
+  que ele mesmo contou", que exige um fato DO ALUNO e ninguem registrou (zero
+  notas em 257 contatos com data). E a tela mandava procurar no DNA um fato que
+  nunca estaria la.
+- **"As duas voltaram e nao tem cristo que faca elas sair"** — o alarme de
+  silencio nao tinha teto nem espacamento.
+- **A Lilian renovou e a reativacao mirava o cadastro velho** — DUAS Lilians,
+  mesmo telefone com um digito a menos. Causa raiz: `findPhoneDup` comparava
+  texto exato, e em Porto Alegre o WhatsApp mostra numero sem o nono digito.
+- **"Segunda a tarde nao temos horario livre"** — o prompt mandava, literalmente,
+  "diga que aquele ja esta ocupado". ⚠ **A trava anti-invencao so olhava para o
+  lado de AFIRMAR demais. Este e o lado oposto: NEGAR uma coisa que existe** — e
+  e pior de detectar, porque a lead desiste na hora e nao reclama.
+- **A simulacao voltava vazia** — `getHours()` devolvia UTC. As 18h de Porto
+  Alegre o processo lia 21h e se declarava fora da janela de 9h-19h.
+- **O teto do dia contava toque manual** — um toque pelo `wa.me` comia vaga da
+  automacao. O comentario da funcao ja dizia "pelo canal oficial".
+- **A trava dos 78% nao tinha saida** — e o arquivo estava CERTO. Trava sem
+  saida vira "nunca aplique", e quem precisa aplicar edita a planilha ate caber
+  no limite.
+- **A coluna `Plano` era ignorada** — 46 "Treino Avulso" viravam ex-alunos.
+
+### ⚠ A CLASSE QUE APARECEU **CINCO** VEZES
+
+Comportamento CORRETO do sistema que chega ao usuario como defeito, porque a
+tela nao mostra a recusa:
+
+1. `{texto && ...}` com string vazia — botao que nao faz nada
+2. "falta fato no DNA" apontando o lugar errado
+3. o formulario de registrar dentro do ramo `escalar`
+4. a caixa de resposta SUMINDO quando a janela fecha ("so serve para olhar")
+5. lista vazia sem dizer se e "ainda nao aconteceu" ou "esta quebrado"
+
+**A regra, agora tambem para telas: campo cinza com o motivo escrito ganha de
+campo que some.**
+
+### A RESPOSTA PARA "COMO DEIXAR A IA MAIS INTELIGENTE"
+
+Pergunta do fundador depois de testar ao vivo e adaptar as duas mensagens que
+gerou. A resposta NAO e mexer no prompt.
+
+**O sinal ja existia e estava sendo jogado fora**: cada adaptacao e um vendedor
+experiente corrigindo o modelo, no contexto exato, de graca. `0060` guarda o
+par sugerido x enviado; `lib/correcoes.ts` devolve os 6 mais recentes para
+dentro do prompt; `/painel/correcoes` mostra o antes e depois.
+
+⚠ Vale mais que o desfecho HOJE: `lib/aprendizado.ts` esta certo em calar (14
+fechamentos na base inteira) e desfecho demora semanas. Vinte mensagens
+adaptadas geram vinte licoes numa tarde. Nao substitui — prepara.
+
+E a mensagem da fila virou EDITAVEL: enquanto era so leitura, a pessoa colava
+no WhatsApp e ajustava LA, fora do sistema.
+
+---
+
+## 0.0. Repasse anterior — 19 de agosto de 2026
+
 
 > Escrito no fim de uma conversa longa, para a proxima comecar sabendo. O que
 > esta aqui e **o que existe, o que quebrou e o que continua aberto** — nesta
