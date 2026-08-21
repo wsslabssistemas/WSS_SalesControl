@@ -61,6 +61,15 @@ export function ItemDaFila({
   saiPeloSistema?: boolean;
 }) {
   const [texto, setTexto] = useState<string | null>(null);
+  /**
+   * O que o MOTOR escreveu, intocado.
+   *
+   * ⚠ Existe separado de `texto` para o par "sugerido × enviado" sobreviver
+   * à edição. Um segundo depois de a pessoa ajustar, só a versão dela
+   * continuaria existindo — e essa comparação é o único sinal rápido de
+   * qualidade que o produto tem. Ver `lib/correcoes.ts`.
+   */
+  const [sugerido, setSugerido] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [limite, setLimite] = useState<string | null>(null);
@@ -112,6 +121,7 @@ export function ItemDaFila({
       const r = await prepararToque(contactId, motivo, intencao, observacao);
       if (r.ok) {
         setTexto(r.texto);
+        setSugerido(r.texto);
         setEscalar(r.escalar);
         setFaltam(r.faltam);
         setRecusa(r.recusa);
@@ -212,7 +222,26 @@ export function ItemDaFila({
             </>
           ) : (
             <>
-              <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: 14 }}>{texto}</p>
+              {/* ⚠ EDITÁVEL, e isto é o que torna o aprendizado possível.
+                  Enquanto o texto era só leitura, a pessoa copiava, colava no
+                  WhatsApp e ajustava LÁ — e a correção morria fora do sistema.
+                  O fundador fez exatamente isso hoje nas duas mensagens que
+                  testou, e as duas adaptações se perderam.
+                  Editar aqui não é conveniência: é o que faz o par
+                  "sugerido × enviado" existir. */}
+              <textarea
+                value={texto ?? ""}
+                onChange={(e) => setTexto(e.target.value)}
+                rows={5}
+                style={{ width: "100%", fontSize: 14, lineHeight: 1.5 }}
+                aria-label="Mensagem — pode ajustar antes de enviar"
+              />
+              {texto !== sugerido && (
+                <p className="text-faint" style={{ fontSize: 11, margin: "4px 0 0" }}>
+                  Você ajustou o texto. O sistema guarda o antes e o depois para
+                  aprender o jeito da casa.
+                </p>
+              )}
               {linkComTexto && ajusteNoNumero && (
                 <p className="badge badge-warn" style={{ marginTop: 10, whiteSpace: "normal", textAlign: "left" }}>
                   {ajusteNoNumero}
@@ -309,6 +338,11 @@ export function ItemDaFila({
               fila, sem texto registrado)". O toque conta igual; o que não
               existe é a cópia do que foi dito. */}
           <input type="hidden" name="texto" value={escalar ? "" : texto ?? ""} />
+          {/* O par que ensina: o que o motor escreveu e a situação em que
+              escreveu. Sem a situação, "tirou o horário" é lição errada —
+              certa quando o cliente não pediu horário, errada quando pediu. */}
+          <input type="hidden" name="sugerido" value={sugerido} />
+          <input type="hidden" name="contexto" value={`${ROTULO[motivo]} — ${intencao}`} />
 
           {/* A saída de quem vai escrever à mão. Só aparece quando não há
               texto para levar — com mensagem pronta, o botão verde acima já

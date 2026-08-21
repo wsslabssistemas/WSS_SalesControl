@@ -8,6 +8,7 @@ import { getActiveTenant } from "@/lib/auth";
 import { getSkillFormConfig } from "@/lib/skill";
 import { matchEntries } from "@/lib/match";
 import { checkRequiredFacts } from "@/lib/facts";
+import { correcoesRecentes, blocoDeCorrecoes, guardarCorrecao } from "@/lib/correcoes";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
 import { ROTULO, type MotivoDaFila } from "@/lib/fila";
@@ -168,6 +169,13 @@ export async function prepararToque(
       .map((e) => `• ${e.category} — ${e.technique ?? ""}\n  ${e.strategy ?? ""}\n  Evitar: ${(e.common_errors ?? []).join("; ")}`)
       .join("\n\n") || "(biblioteca vazia)";
 
+    // ⚠ AS CORREÇÕES DESTA EMPRESA ENTRAM NO PROMPT.
+    //
+    // É a resposta para "como deixar a IA mais inteligente" que não passa por
+    // reescrever prompt no escuro: quem sabe como a academia fala é a academia,
+    // e ela já corrige o texto na tela todo dia. Ver `lib/correcoes.ts`.
+    const correcoes = blocoDeCorrecoes(await correcoesRecentes(tenant.id));
+
     const hardRules = Array.isArray(manifest.hard_rules) ? (manifest.hard_rules as string[]).join("\n- ") : "";
 
     const system = `Você escreve UMA mensagem proativa de WhatsApp para um contato que JÁ conhece a empresa.
@@ -204,7 +212,9 @@ FATOS QUE A BIBLIOTECA EXIGE E NÃO EXISTEM NO DNA (verificado no banco):
 ${trava.faltando.length ? trava.faltando.map((f) => `- ${f}`).join("\n") : "(nenhum)"}
 ${trava.travou ? "→ Falta fato EXIGIDO. Marque \"escalar\": true e não escreva a mensagem." : ""}
 
-TÉCNICA A APLICAR (biblioteca curada do ramo):
+${correcoes ? `${correcoes}
+
+` : ""}TÉCNICA A APLICAR (biblioteca curada do ramo):
 ${libText}
 
 CONTATO: ${contact.name} · etapa: ${stages.find((s) => s.key === contact.journey_stage)?.label ?? contact.journey_stage} · origem: ${contact.source ?? "—"}
@@ -262,6 +272,9 @@ export async function marcarEnviado(formData: FormData) {
   if (!tenant) return;
   const contactId = String(formData.get("contact_id") ?? "");
   const texto = String(formData.get("texto") ?? "").trim();
+  // O que o motor tinha escrito, para comparar com o que de fato saiu.
+  const sugerido = String(formData.get("sugerido") ?? "").trim();
+  const contextoDoToque = String(formData.get("contexto") ?? "").trim();
   if (!contactId) return;
 
   // O QUE FICOU COMBINADO — a pergunta feita onde a resposta é sabida.
@@ -336,6 +349,20 @@ export async function marcarEnviado(formData: FormData) {
       throw new Error(`O envio foi registrado, mas não consegui salvar o combinado: ${e2.message}`);
     }
   }
+
+  // ⚠ A CORREÇÃO DO VENDEDOR É CAPTURADA AQUI, e este é o ponto exato em que
+  // ela existe: depois de a pessoa ajustar o texto e antes de a tela esquecer
+  // as duas versões. Um segundo depois, só o que saiu continua existindo.
+  //
+  // Best-effort: falhar em aprender não pode desfazer um envio que aconteceu.
+  await guardarCorrecao({
+    tenantId: tenant.id,
+    contactId,
+    membershipId: membership!.membershipId,
+    contexto: contextoDoToque || "(toque da fila, sem contexto informado)",
+    sugerido,
+    enviado: texto,
+  });
 
   revalidatePath("/painel/fila");
   revalidatePath("/painel");

@@ -31,15 +31,6 @@ export function Responder({
   const [erro, setErro] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
 
-  if (!podeResponder) {
-    return (
-      <div className="card" style={{ background: "var(--bg-elev)" }}>
-        <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left", margin: 0 }}>
-          {motivoDoBloqueio ?? "Não dá para responder por aqui agora."}
-        </p>
-      </div>
-    );
-  }
 
   const enviar = async () => {
     setEnviando(true);
@@ -59,6 +50,20 @@ export function Responder({
 
   return (
     <div className="card" style={{ background: "var(--bg-elev)" }}>
+      {/* ⚠ A CAIXA APARECE SEMPRE, MESMO BLOQUEADA — e isso não é enfeite.
+          O fundador abriu esta aba e disse "não consigo escrever, só serve
+          para olhar". O campo existia; ele nunca apareceu porque a única
+          conversa do sistema era o teste dele de três dias antes, com a janela
+          de 24h fechada. O componente trocava a caixa por um aviso, e campo
+          AUSENTE é indistinguível de campo que NÃO FOI FEITO.
+          É a quarta vez que um comportamento correto chega como defeito por
+          causa disso. A regra vale para telas também: **campo cinza com o
+          motivo escrito ganha de campo que some.** */}
+      {!podeResponder && (
+        <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left" }}>
+          {motivoDoBloqueio ?? "Não dá para responder por aqui agora."}
+        </p>
+      )}
       {aviso && (
         <p className="badge badge-warn" style={{ whiteSpace: "normal", textAlign: "left" }}>
           {aviso}
@@ -67,17 +72,21 @@ export function Responder({
       <textarea
         value={texto}
         onChange={(e) => { setTexto(e.target.value); setEnviado(false); }}
-        placeholder="Escreva a resposta — ela sai pelo mesmo número em que ele escreveu."
+        placeholder={
+          podeResponder
+            ? "Escreva a resposta — ela sai pelo mesmo número em que ele escreveu."
+            : "A janela de 24h fechou. O campo volta a funcionar assim que ele escrever de novo."
+        }
         rows={3}
-        style={{ width: "100%", marginTop: aviso ? 8 : 0 }}
-        disabled={enviando}
+        style={{ width: "100%", marginTop: 8, opacity: podeResponder ? 1 : 0.55 }}
+        disabled={enviando || !podeResponder}
       />
       <div className="row wrap" style={{ gap: 8, alignItems: "center", marginTop: 8 }}>
         <button
           type="button"
           className="btn btn-sm btn-primary"
           onClick={enviar}
-          disabled={enviando || !texto.trim()}
+          disabled={enviando || !texto.trim() || !podeResponder}
         >
           {enviando ? "enviando…" : "Responder pelo número da empresa"}
         </button>
