@@ -137,9 +137,36 @@ numero oficial, e o aprendizado por correcao do vendedor.
    evitar.
 2. **Trocar o nome de exibicao** na Meta — ainda sai "Be Fitness2" para quem
    recebe. Numa reativacao e a unica coisa que a pessoa le antes de decidir se
-   abre ou bloqueia. **Passo 10 do guia da aba Automacao.**
-3. **Publicar o app** na Meta. **Passo 11 do guia**, com os tres campos que
-   destravam a chave (politica de privacidade, icone, categoria).
+   abre ou bloqueia. **Passo 10 do guia da aba Automacao.** Junto: foto,
+   descricao, endereco, e-mail e site do perfil, todos da ACADEMIA.
+3. ✅ **App PUBLICADO na Meta** (22/ago). O que travou ate o fim foi a
+   **politica de privacidade**: nao existia pagina nenhuma, e a Meta ABRE o
+   endereco para conferir. Hoje sao duas paginas publicas —
+   `/privacidade` e `/exclusao-de-dados`. ⚠ **Nenhum dos dois campos aceita
+   ancora** (`#`): cada um exige uma pagina inteira. A secao "Login do Facebook
+   para Empresas" nao precisou de nada, e nao deve mesmo — ela e o fluxo em que
+   OUTRA empresa autoriza o app.
+
+### O ESTADO MEDIDO DA CAMPANHA — conferido no banco em 22/ago
+
+| | |
+|---|---|
+| Ex-alunos na base | 1.088 |
+| Ja marcados "nao contatar" | 4 |
+| Sem telefone | 37 |
+| Eleigiveis sem recorte | **1.049** (bate com o levantado em 21/ago) |
+| **No recorte de 90 dias** | **34** |
+| Modo | `simulation` · teto **10/dia** · janela 9h-19h |
+| Roteamento | so `reativacao` pelo numero oficial ✔ |
+| Modelos | os 5 nomeados ✔ · credencial gravada ✔ |
+| `pricing.joining_fee` no DNA | **vazio** — falta o clique do item 1 |
+
+⚠ **34 e TETO, nao lista.** A fila ainda aplica cadencia (toque vencido),
+gemeo ativo e as regras anti-bloqueio. **Quem manda e a simulacao.**
+
+⚠ **E com teto de 10/dia, os 34 saem em ~4 dias.** Isso e bom para uma
+primeira campanha — da tempo de ler as respostas antes do resto sair — mas
+precisa estar dito, senao "so sairam 10" parece defeito.
 
 **E a peca minha esta PRONTA (22/ago):** o recorte por data. Em Automacao,
 **"Reativacao: so quem saiu nos ultimos (dias)"**, padrao **90**. A simulacao

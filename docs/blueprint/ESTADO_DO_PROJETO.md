@@ -39,6 +39,28 @@ O repo foi renomeado para **`wss-kairos`**. O remote local ja aponta para la.
 ⚠ **O modo ainda esta em `simulation`.** Ligar e trocar para `Automatico` em
 Automacao e salvar. NAO ligar antes de resolver o bloco seguinte.
 
+### ✅ APP PUBLICADO NA META (22/ago)
+
+O que travou ate o fim foi a **politica de privacidade**: nao existia pagina
+nenhuma, e a Meta ABRE o endereco para conferir — documento em Drive nao
+serve. Hoje sao duas paginas publicas, `/privacidade` e `/exclusao-de-dados`,
+escritas a partir do que o sistema faz de verdade (campos de `contacts` e
+`interactions`, subprocessadores reais, descadastro do `lib/optout.ts`).
+
+⚠ **Nenhum dos dois campos de URL aceita ancora** (`#`) — cada um exige uma
+pagina inteira. `/privacidade#exclusao` foi recusado com "should represent a
+valid URL", e a mensagem nao diz qual e o problema.
+
+⚠ **A secao "Login do Facebook para Empresas" nao precisa de nada.** Ela e o
+fluxo em que OUTRA empresa autoriza o app a usar o WhatsApp dela. URI de
+redirecionamento vazio e a configuracao CERTA, nao a incompleta.
+
+⚠ **E o app mora no Business Manager de quem passou na verificacao.** Se foi o
+CNPJ da Be Fitness — provavel, porque a WSS Labs nao tem CNPJ —, conectar a
+WABA de um SEGUNDO cliente a este mesmo app e o caminho de provedor de
+tecnologia, com Analise do app e Acesso Avancado. Nao trava nada hoje; e a
+conta que chega junto com a Darvil ou a Feltros.
+
 ### 🔴 O QUE IMPEDE LIGAR HOJE — e nao e tecnico
 
 **1. A automacao NAO responde o cliente.** O fundador acreditava que sim, e
