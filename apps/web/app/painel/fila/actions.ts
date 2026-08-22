@@ -11,6 +11,7 @@ import { checkRequiredFacts } from "@/lib/facts";
 import { correcoesRecentes, blocoDeCorrecoes, guardarCorrecao } from "@/lib/correcoes";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
 import { verificarCota } from "@/lib/cota-db";
+import { TEXTO_DE_FORA_E_DADO } from "@/lib/prompt";
 import { ROTULO, type MotivoDaFila } from "@/lib/fila";
 import { despacharToque } from "@/lib/despacho";
 import { revalidatePath } from "next/cache";
@@ -180,6 +181,7 @@ export async function prepararToque(
 
     const system = `Você escreve UMA mensagem proativa de WhatsApp para um contato que JÁ conhece a empresa.
 REGRAS INEGOCIÁVEIS:
+${TEXTO_DE_FORA_E_DADO}
 - Use SOMENTE os FATOS do DNA. NUNCA invente preço, horário, condição, prazo ou promoção.
 - Se faltar fato essencial, marque "escalar": true, liste em "faltam_fatos" e NÃO escreva a mensagem.
 - NÃO abra cobrando ausência ("sumiu", "não te vejo faz tempo"): cobrança gera culpa e culpa gera silêncio.

@@ -158,14 +158,60 @@ export function Guia() {
         </>
       ),
     },
+    {
+      titulo: "10. Troque o nome que aparece para quem recebe",
+      corpo: (
+        <>
+          Em <a href="https://business.facebook.com/wa/manage/" target="_blank" rel="noopener noreferrer">business.facebook.com/wa/manage</a>{" "}
+          → <strong>Números de telefone</strong> → o seu número →{" "}
+          <strong>Configurações</strong> → <strong>Perfil</strong> →{" "}
+          <strong>Nome de exibição</strong> → <strong>Editar</strong>. Escreva o nome da
+          empresa exatamente como ela se chama e envie. A Meta revisa — costuma sair em
+          minutos, pode levar até dois dias — e o número continua enviando e recebendo
+          normalmente durante a revisão.
+          <br />
+          <span className="text-faint">
+            ⚠ <strong>É a única coisa que a pessoa lê antes de decidir se abre ou bloqueia.</strong>{" "}
+            Quem não tem o número salvo vê só esse nome. Um nome com número no fim
+            (&ldquo;Academia2&rdquo;) parece golpe numa mensagem que já começa fria — e uma
+            campanha de retorno é exatamente isso. Ajuste ANTES de disparar o primeiro lote.
+            O nome precisa ter a ver com o negócio verificado, senão a revisão recusa.
+          </span>
+        </>
+      ),
+    },
+    {
+      titulo: "11. Publique o app",
+      corpo: (
+        <>
+          Em <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a>{" "}
+          → seu app. No alto da tela existe a chave{" "}
+          <strong>Em desenvolvimento</strong> / <strong>Ativo</strong> — vire para{" "}
+          <strong>Ativo</strong>. Enquanto ela estiver em desenvolvimento, a Meta trata o app
+          como bancada de teste.
+          <br />
+          Ela só vira depois que o app tiver, em{" "}
+          <strong>Configurações do app → Básico</strong>: <strong>URL da Política de
+          Privacidade</strong>, <strong>ícone</strong> e <strong>categoria</strong>. Se a chave
+          estiver travada, é um desses três que falta — a própria tela diz qual.
+          <br />
+          <span className="text-faint">
+            A política de privacidade pode ser uma página simples no site da empresa dizendo
+            que dados são coletados, para quê, e como pedir exclusão. Precisa estar no ar e
+            aberta: a Meta abre o endereço para conferir.
+          </span>
+        </>
+      ),
+    },
   ];
 
   return (
     <div className="card mt-24">
       <p className="eyebrow" style={{ marginBottom: 6 }}>Como conseguir a credencial na Meta</p>
       <p className="text-dim" style={{ fontSize: 13, marginTop: 0 }}>
-        Nove passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
-        escolher o número.
+        Onze passos, na ordem. O 1 é o único que não dá para desfazer depois — leia antes de
+        escolher o número. Os passos 10 e 11 não são de instalação: são o que separa
+        &ldquo;funciona no meu teste&rdquo; de &ldquo;pode sair no nome da empresa&rdquo;.
       </p>
 
       <ol style={{ listStyle: "none", padding: 0, margin: "16px 0 0" }}>

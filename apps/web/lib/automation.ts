@@ -14,6 +14,25 @@ export type AutomationSettings = {
   window_end: number; // hora em que a automação para
   stop_after_days: number; // sem engajamento por N dias → bloqueia
   monthly_budget_credits: number; // 0 = sem limite; ao atingir, suspende até virar o mês
+  /**
+   * O RECORTE DA REATIVAÇÃO — só fala com quem saiu nos últimos N dias.
+   *
+   * ⚠ ELE É O QUE FAZ A PRIMEIRA CAMPANHA CABER NUM LOTE. Sem recorte, a
+   * reativação da Be Fitness são **1.049 pessoas** (R$ 327 no primeiro toque),
+   * e o `max_per_day` só as espalha ao longo de semanas — ele fatia o acervo,
+   * não escolhe QUEM. O plano combinado começa pelos **35 dos últimos 90
+   * dias** (R$ 10,94): a primeira campanha não existe para converter, existe
+   * para ENSINAR, e disparar o acervo inteiro é experimento sem controle no
+   * ativo mais caro que existe aqui, que é a reputação do número.
+   *
+   * Vale SÓ para `reativacao`, e isso não é detalhe: a data de referência é a
+   * entrada na etapa (`stage_entered_at`), que para o ex-aluno é a data em que
+   * ele saiu. Aplicá-la à `renovacao` barraria justamente o aluno antigo —
+   * quem está na mesma etapa há três anos é o melhor cliente da casa.
+   *
+   * 0 = sem recorte (o acervo inteiro).
+   */
+  reativacao_max_dias: number;
 };
 
 export const AUTOMATION_DEFAULTS: AutomationSettings = {
@@ -26,6 +45,11 @@ export const AUTOMATION_DEFAULTS: AutomationSettings = {
   window_end: 19,
   stop_after_days: 14,
   monthly_budget_credits: 0,
+  // ⚠ O PADRÃO É CONSERVADOR DE PROPÓSITO, e ele MUDA o comportamento de quem
+  // já tinha `automation` salvo sem este campo. É deliberado: o erro de barrar
+  // demais aparece na simulação, com o motivo escrito em cada pessoa; o erro
+  // de soltar demais aparece na fatura da Meta e no número marcado.
+  reativacao_max_dias: 90,
 };
 
 const MODES: AutomationMode[] = ["off", "simulation", "auto"];
@@ -46,6 +70,7 @@ export function readAutomation(settings: unknown): AutomationSettings {
     window_end: num(a.window_end, AUTOMATION_DEFAULTS.window_end, 0, 23),
     stop_after_days: num(a.stop_after_days, AUTOMATION_DEFAULTS.stop_after_days, 0, 365),
     monthly_budget_credits: num(a.monthly_budget_credits, 0, 0, 100000000),
+    reativacao_max_dias: num(a.reativacao_max_dias, AUTOMATION_DEFAULTS.reativacao_max_dias, 0, 3650),
   };
 }
 

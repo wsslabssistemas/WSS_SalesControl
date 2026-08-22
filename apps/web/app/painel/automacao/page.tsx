@@ -23,6 +23,10 @@ const FIELDS: { key: keyof ReturnType<typeof readAutomation>; label: string; hin
   { key: "window_start", label: "Início da janela (h)", hint: "Horário a partir do qual a automação opera", min: 0, max: 23 },
   { key: "window_end", label: "Fim da janela (h)", hint: "Horário em que a automação para", min: 0, max: 23 },
   { key: "stop_after_days", label: "Parar de incomodar (dias)", hint: "Sem engajamento por N dias → bloqueia", min: 0, max: 365 },
+  // ⚠ O RECORTE DA CAMPANHA. Ele é o único campo aqui que escolhe QUEM, e não
+  // quanto nem quando: o `máx. por dia` fatia o acervo em semanas, mas manda
+  // para todo mundo do mesmo jeito. Ver `lib/automation.ts`.
+  { key: "reativacao_max_dias", label: "Reativação: só quem saiu nos últimos (dias)", hint: "Recorte da campanha de retorno. 0 = a base inteira, do mais antigo ao mais novo", min: 0, max: 3650 },
   { key: "monthly_budget_credits", label: "Orçamento mensal (créditos)", hint: "0 = sem limite. Ao atingir, suspende até a virada do mês", min: 0, max: 100000000 },
 ];
 

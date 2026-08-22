@@ -36,6 +36,15 @@ export type Candidato = {
   diasSemEngajamento: number | null;
   /** Ele respondeu recentemente — dispara o cooldown. Horas, ou `null`. */
   horasDesdeRespostaDele: number | null;
+  /**
+   * Dias desde a entrada na etapa atual. Para o ex-aluno, é **há quanto tempo
+   * ele saiu** — a data real, não a da importação.
+   *
+   * `null` = sem data registrada. Nesse caso o recorte NÃO barra: barrar por
+   * ausência de dado tiraria a pessoa da campanha em silêncio, e "sem data" é
+   * problema de cadastro, não decisão de campanha.
+   */
+  diasNaEtapa: number | null;
 };
 
 export type RegrasDoMotor = {
@@ -47,11 +56,27 @@ export type RegrasDoMotor = {
   window_start: number;
   window_end: number;
   stop_after_days: number;
+  /** O recorte da reativação, em dias. 0 = sem recorte. Ver `automation.ts`. */
+  reativacao_max_dias: number;
 };
 
 export type Veredito =
   | { contactId: string; enviar: true }
-  | { contactId: string; enviar: false; motivo: string };
+  | {
+      contactId: string;
+      enviar: false;
+      motivo: string;
+      /**
+       * Barrado pelo RECORTE da campanha, não por comportamento dele.
+       *
+       * ⚠ Existe para a tela poder AGRUPAR. O recorte barra centenas de
+       * pessoas pelo mesmo motivo, e uma lista de 1.014 linhas iguais enterra
+       * os poucos vereditos que alguém precisa de fato ler. Agrupar com a
+       * contagem à vista continua honrando a regra da casa: o barrado aparece
+       * e diz por quê — sumir é que não pode.
+       */
+      recorte?: true;
+    };
 
 export type PlanoDoMotor = {
   /** `false` quando NADA sai agora — e `porque` diz o motivo, sempre. */
@@ -132,6 +157,31 @@ export function planejar(entrada: {
   for (const c of candidatos) {
     const nao = (motivo: string) => vereditos.push({ contactId: c.contactId, enviar: false, motivo });
 
+    // ⚠ O RECORTE DA CAMPANHA, e ele vem ANTES das regras de comportamento de
+    // propósito: quem está fora do lote não devia nem ser avaliado, e um
+    // veredito dizendo "cooldown" para alguém que saiu há três anos manda a
+    // pessoa procurar um problema que não existe.
+    //
+    // Vale SÓ para a reativação. A renovação também mede tempo de etapa, e ali
+    // etapa antiga é o CLIENTE FIEL — barrá-lo seria o recorte fazendo o
+    // oposto exato do que existe para fazer.
+    if (
+      c.motivo === "reativacao" &&
+      regras.reativacao_max_dias > 0 &&
+      c.diasNaEtapa !== null &&
+      c.diasNaEtapa > regras.reativacao_max_dias
+    ) {
+      vereditos.push({
+        contactId: c.contactId,
+        enviar: false,
+        recorte: true,
+        motivo:
+          `Saiu há ${c.diasNaEtapa} dias — a campanha está recortada nos últimos ` +
+          `${regras.reativacao_max_dias}. Ele volta a ser candidato quando o recorte aumentar.`,
+      });
+      continue;
+    }
+
     // ⚠ PAROU DE INTERAGIR HÁ MUITO TEMPO — a regra que protege o número.
     // Insistir com quem nunca dá sinal é o padrão que faz o WhatsApp marcar a
     // conta. Vem PRIMEIRO porque é a mais grave: as outras adiam, esta veta.
@@ -185,11 +235,20 @@ export function planejar(entrada: {
     vereditos.push({ contactId: c.contactId, enviar: true });
   }
 
+  // Quantos o RECORTE barrou. Sem este número, "nenhum candidato passou nas
+  // regras" diria a mesma coisa para "as regras estão apertadas demais" e para
+  // "a campanha está recortada em 90 dias e ninguém saiu nesse prazo" — que são
+  // o defeito e o funcionamento normal, respectivamente.
+  const foraDoRecorte = vereditos.filter((v) => !v.enviar && v.recorte).length;
+
   return {
     ativo: enviar.length > 0,
     porque: enviar.length
       ? `${enviar.length} de ${candidatos.length} podem sair agora (restavam ${resta} no teto do dia).`
-      : "Nenhum candidato passou nas regras agora.",
+      : foraDoRecorte > 0 && foraDoRecorte === candidatos.length
+        ? `Ninguém saiu: os ${candidatos.length} candidatos estão fora do recorte de ` +
+          `${regras.reativacao_max_dias} dias. O recorte se muda em Automação.`
+        : "Nenhum candidato passou nas regras agora.",
     enviar,
     vereditos,
     simulado: regras.mode === "simulation",

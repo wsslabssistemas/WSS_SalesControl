@@ -22,6 +22,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.
 const { planejar, dentroDaJanela } = await import(
   pathToFileURL(path.join(ROOT, "apps/web/lib/motor.ts")).href
 );
+const { readAutomation, AUTOMATION_DEFAULTS } = await import(
+  pathToFileURL(path.join(ROOT, "apps/web/lib/automation.ts")).href
+);
 
 let falhas = 0;
 function verifica(nome, obtido, esperado) {
@@ -34,12 +37,16 @@ function verifica(nome, obtido, esperado) {
 const REGRAS = {
   mode: "auto", max_per_day: 30, min_hours_between: 24, max_no_reply: 3,
   cooldown_hours: 48, window_start: 9, window_end: 19, stop_after_days: 14,
+  reativacao_max_dias: 90,
 };
 
 const livre = (id) => ({
   contactId: id, motivo: "reativacao",
   horasDesdeUltimoContato: null, semResposta: 0,
   diasSemEngajamento: null, horasDesdeRespostaDele: null,
+  // Sem data de entrada na etapa. O recorte NAO barra quem nao tem data — ver
+  // o bloco 6. Quem tem data diz isso explicitamente, com `exAluno`.
+  diasNaEtapa: null,
 });
 
 const plano = (over = {}, cands = [livre("a")], enviadosHoje = 0, horaLocal = 10) =>
@@ -174,6 +181,78 @@ verifica("cada candidato tem um veredito", p5.vereditos.length, 3);
 verifica("só um sai", p5.enviar, ["a"]);
 verifica("e os dois barrados têm motivo escrito",
   p5.vereditos.filter((v) => !v.enviar && v.motivo.length > 10).length, 2);
+
+// ---------------------------------------------------------------------
+// 6. O RECORTE DA CAMPANHA — quem saiu HÁ QUANTO TEMPO entra no lote
+// ---------------------------------------------------------------------
+//
+// ⚠ POR QUE ELE EXISTE. Sem recorte, a reativação da Be Fitness são 1.049
+// pessoas. O `max_per_day` não resolve: ele fatia o acervo em semanas e manda
+// para todo mundo do mesmo jeito — quem escolhe QUEM é este campo. A primeira
+// campanha começa pelos 35 dos últimos 90 dias porque ela existe para ENSINAR,
+// e disparar o acervo inteiro é experimento sem controle na reputação do
+// número, que é o ativo mais caro que existe aqui.
+
+const exAluno = (id, dias) => ({ ...livre(id), diasNaEtapa: dias });
+
+// Esperado: barrado, com o recorte marcado — é o que deixa a tela AGRUPAR os
+// mil e poucos numa linha só, em vez de enterrar os vereditos que importam.
+const p6 = plano({}, [exAluno("velho", 200)]);
+verifica("saiu há 200 dias, recorte de 90: não sai", p6.enviar.length, 0);
+verifica("e o veredito se declara recorte", p6.vereditos[0].recorte, true);
+verifica("e o motivo diz há quantos dias ele saiu", p6.vereditos[0].motivo.includes("200 dias"), true);
+
+// Esperado: sai. É o lote da primeira campanha.
+verifica("saiu há 30 dias: entra no lote", plano({}, [exAluno("novo", 30)]).enviar, ["novo"]);
+
+// O limite é inclusivo: 90 dias com recorte de 90 ainda é "dentro dos últimos
+// 90". Exclusivo seria o erro de borda que tira uma pessoa da campanha sem
+// ninguém notar.
+verifica("exatamente no limite ainda entra", plano({}, [exAluno("borda", 90)]).enviar, ["borda"]);
+verifica("um dia além do limite não entra", plano({}, [exAluno("borda", 91)]).enviar.length, 0);
+
+// Zero desliga o recorte, como todo limite desta tela. Quem quiser o acervo
+// inteiro escreve 0 — e aí é decisão tomada, não esquecimento.
+verifica("recorte zero libera o acervo inteiro",
+  plano({ reativacao_max_dias: 0 }, [exAluno("velho", 2000)]).enviar, ["velho"]);
+
+// ⚠ O RECORTE É SÓ DA REATIVAÇÃO. A renovação também mede tempo de etapa, e
+// ali etapa antiga é o CLIENTE FIEL: aplicar o recorte barraria o melhor aluno
+// da casa — o oposto exato do que o campo existe para fazer.
+verifica("renovação não é barrada pelo recorte",
+  plano({}, [{ ...exAluno("fiel", 900), motivo: "renovacao" }]).enviar, ["fiel"]);
+
+// Sem data registrada o recorte não barra: barrar por ausência de dado tiraria
+// a pessoa da campanha em silêncio, e "sem data" é problema de cadastro.
+verifica("sem data de entrada na etapa, o recorte não barra",
+  plano({}, [livre("sem-data")]).enviar, ["sem-data"]);
+
+// ⚠ O RECORTE VEM ANTES DAS OUTRAS REGRAS. Dizer "cooldown" para quem saiu há
+// três anos manda a pessoa procurar um problema que não existe.
+verifica("o recorte tem precedência sobre o cooldown",
+  plano({}, [{ ...exAluno("velho", 800), horasDesdeRespostaDele: 1 }]).vereditos[0].recorte, true);
+
+// ⚠ E QUANDO NINGUÉM PASSA, A TELA PRECISA SABER SE FOI O RECORTE. "Nenhum
+// candidato passou nas regras" seria a mesma frase para um defeito e para o
+// funcionamento normal de uma campanha recortada.
+const p6b = plano({}, [exAluno("a", 200), exAluno("b", 300)]);
+verifica("o porquê aponta o recorte quando ele barrou todo mundo",
+  p6b.porque.includes("recorte de 90 dias"), true);
+
+// ---------------------------------------------------------------------
+// 7. O PADRÃO DA EMPRESA QUE NUNCA CONFIGUROU
+// ---------------------------------------------------------------------
+//
+// ⚠ Campo ausente vale 90, e isso MUDA o comportamento de quem já tinha
+// `automation` salvo. É deliberado: barrar demais aparece na simulação com o
+// motivo escrito em cada pessoa; soltar demais aparece na fatura da Meta e no
+// número marcado.
+verifica("sem nada salvo, o recorte já vem em 90 dias",
+  readAutomation(null).reativacao_max_dias, 90);
+verifica("e o padrão declarado é o mesmo",
+  AUTOMATION_DEFAULTS.reativacao_max_dias, 90);
+verifica("zero salvo é respeitado, não substituído pelo padrão",
+  readAutomation({ automation: { reativacao_max_dias: 0 } }).reativacao_max_dias, 0);
 
 console.log(falhas === 0 ? "\nmotor: tudo certo." : `\nmotor: ${falhas} falha(s).`);
 process.exit(falhas === 0 ? 0 : 1);

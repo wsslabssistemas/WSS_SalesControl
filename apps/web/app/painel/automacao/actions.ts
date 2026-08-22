@@ -35,6 +35,7 @@ export async function saveAutomation(formData: FormData) {
       window_start: num("window_start"),
       window_end: num("window_end"),
       stop_after_days: num("stop_after_days"),
+      reativacao_max_dias: num("reativacao_max_dias"),
       monthly_budget_credits: num("monthly_budget_credits"),
     },
   });
@@ -43,7 +44,7 @@ export async function saveAutomation(formData: FormData) {
 
   // ⚠ MESCLAR, NUNCA SUBSTITUIR — e a versão anterior substituía.
   //
-  // `readAutomation` devolve só os NOVE campos que ele conhece. Gravar o
+  // `readAutomation` devolve só os campos que ele conhece. Gravar o
   // resultado dele por cima de `automation` apaga tudo o que mora ali e não
   // está neste formulário — hoje `canal_por_motivo` e `modelos`, amanhã o que
   // vier. E apaga em silêncio: a tela diz "salvo", o roteamento volta ao

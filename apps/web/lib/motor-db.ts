@@ -76,9 +76,16 @@ export async function rodarMotor(entrada: {
   // vendedor sumir sem que a mensagem existisse.
   const doCanal = carga.fila.filter((f) => roteamento[f.motivo as MotivoDaFila]);
 
+  // A ENTRADA NA ETAPA, por contato. Para o ex-aluno ela é a data em que ele
+  // SAIU — real, distribuída mês a mês, não a data da importação. É o que o
+  // recorte da campanha usa. Vem de `carga.todos` porque a fila só carrega o
+  // que a montagem precisou.
+  const entrouNaEtapa = new Map(carga.todos.map((c) => [c.id, c.stage_entered_at]));
+
   const candidatos: Candidato[] = doCanal.map((f) => ({
     contactId: f.contactId,
     motivo: f.motivo,
+    diasNaEtapa: diasDesde(entrouNaEtapa.get(f.contactId), agora),
     horasDesdeUltimoContato: horasDesde(carga.ultimo[f.contactId], agora),
     semResposta: semRespostaDele(carga.interacoes, f.contactId),
     diasSemEngajamento: diasDesdeEntradaDele(carga.interacoes, f.contactId, agora),
@@ -152,6 +159,12 @@ type Ix = {
   direction: string;
   external_id?: string | null;
 };
+
+/** Dias inteiros desde uma data. `null` quando não há data — ver `Candidato`. */
+function diasDesde(iso: string | undefined | null, agora: Date): number | null {
+  const h = horasDesde(iso, agora);
+  return h === null ? null : Math.floor(h / 24);
+}
 
 function horasDesde(iso: string | undefined | null, agora: Date): number | null {
   if (!iso) return null;

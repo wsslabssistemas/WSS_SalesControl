@@ -8,7 +8,7 @@
 > segmentos e o Kairós vendendo o Kairós estão fora daqui de propósito — cada
 > item que não é para agora é ruído para quem está tentando entregar.
 >
-> Atualizado: 21 de agosto de 2026.
+> Atualizado: 22 de agosto de 2026.
 
 ---
 
@@ -124,19 +124,27 @@ Automacao, cartao cadastrado na Meta, motor com gatilho no GitHub Actions
 (rodou com sucesso), simulacao com veredito por pessoa, aba de responder pelo
 numero oficial, e o aprendizado por correcao do vendedor.
 
-**O QUE FALTA PARA A PRIMEIRA CAMPANHA — e nada disso e codigo:**
+**O QUE FALTA PARA A PRIMEIRA CAMPANHA — atualizado em 22/ago:**
 
-1. **Decidir a oferta de retorno.** Os brindes ja estao no DNA. Falta dizer se
-   ha isencao de adesao para quem volta (a adesao so existe no anual
-   recorrente).
+1. ✅ **A oferta de retorno foi DECIDIDA** (22/ago): a adesao existe **so no
+   plano recorrente**, e **quem ja foi aluno e isento**. Virou campo no
+   manifesto de academia (`pricing.joining_fee`), com a decisao como uma das
+   opcoes prontas.
+   ⚠ **Falta ELE marcar a opcao** em `/painel/dna/editar` → *Planos e valores*
+   → *Taxa de adesao* → **"So no plano recorrente, e quem ja foi aluno e
+   isento"**. Enquanto nao estiver la, a trava anti-invencao esta certa em nao
+   afirmar isso — e o vendedor responde de cabeca, que e o que ela existe para
+   evitar.
 2. **Trocar o nome de exibicao** na Meta — ainda sai "Be Fitness2" para quem
    recebe. Numa reativacao e a unica coisa que a pessoa le antes de decidir se
-   abre ou bloqueia.
-3. **Publicar o app** na Meta.
+   abre ou bloqueia. **Passo 10 do guia da aba Automacao.**
+3. **Publicar o app** na Meta. **Passo 11 do guia**, com os tres campos que
+   destravam a chave (politica de privacidade, icone, categoria).
 
-**E UMA peca minha:** o recorte por data na simulacao. Hoje ela pega os 1.049
-de uma vez; o plano combinado comeca pelos **35 que sairam nos ultimos 90
-dias** (R$ 10,94) e so cresce se a taxa de resposta sustentar.
+**E a peca minha esta PRONTA (22/ago):** o recorte por data. Em Automacao,
+**"Reativacao: so quem saiu nos ultimos (dias)"**, padrao **90**. A simulacao
+agrupa numa linha so quem o recorte barrou, com a contagem — some e que nao
+pode. Zero libera o acervo inteiro, e ai e decisao tomada, nao esquecimento.
 
 ⚠ **E A AUTOMACAO NAO RESPONDE O CLIENTE.** Quando alguem responder ao modelo,
 quem escreve de volta e uma PESSOA, pela aba Canal oficial. A IA nao envia

@@ -16,6 +16,15 @@ export type LinhaDaSimulacao = {
   /** Por que NÃO sai. Vazio quando sai. */
   motivoDaRecusa: string;
   /**
+   * Barrado pelo RECORTE de data da campanha, não por comportamento dele.
+   *
+   * ⚠ A tela agrupa estes numa linha só, com a contagem. São centenas de
+   * pessoas com o MESMO motivo — listar uma a uma enterra os poucos vereditos
+   * que alguém precisa ler de verdade. Continua aparecendo: o que a casa proíbe
+   * é sumir, não é resumir.
+   */
+  recorte: boolean;
+  /**
    * O que a Meta vai preencher nas variáveis DESTA pessoa.
    *
    * ⚠ O corpo do modelo NÃO aparece aqui de propósito. Ele é fixo, mora na
@@ -74,19 +83,34 @@ export async function simularMotor(): Promise<SimulacaoResult> {
       simular: true,
     });
 
-    // Os nomes vêm numa consulta só, e só dos que apareceram no plano.
-    const ids = r.plano.vereditos.map((v) => v.contactId);
+    // OS NOMES — só de quem a tela mostra NOMINALMENTE.
+    //
+    // ⚠ Quem o recorte barrou fica fora desta busca de propósito: a tela os
+    // agrupa numa linha com a contagem, e buscar 1.014 nomes para não escrever
+    // nenhum seria pagar a consulta mais cara da tela por nada.
+    //
+    // ⚠ E ANTES ISTO TINHA UM `.slice(0, 200)` — que não era limite de produto,
+    // era o teto do PostgREST escrito à mão. Com o acervo inteiro na fila, a
+    // pessoa de número 201 aparecia como "(contato sem nome)" numa tela cujo
+    // trabalho é justamente conferir NOME por NOME antes de disparar.
+    const ids = r.plano.vereditos
+      .filter((v) => v.enviar || !v.recorte)
+      .map((v) => v.contactId);
     const nomes = new Map<string, string>();
     if (ids.length) {
       const supabase = await createClient();
-      // paginacao-ok: busca por lista de ids já limitada pelo plano.
-      const { data } = await supabase
-        .from("contacts")
-        .select("id, name")
-        .eq("tenant_id", tenant.id)
-        .in("id", ids.slice(0, 200));
-      for (const c of ((data as { id: string; name: string }[] | null) ?? [])) {
-        nomes.set(c.id, c.name);
+      for (let i = 0; i < ids.length; i += 500) {
+        // paginacao-ok: o lote é de 500 ids e a resposta traz no máximo 500
+        // linhas — metade do teto do PostgREST. É a paginação feita pela lista
+        // de ids, como no aprendizado de `responder/ai-actions.ts`.
+        const { data } = await supabase
+          .from("contacts")
+          .select("id, name")
+          .eq("tenant_id", tenant.id)
+          .in("id", ids.slice(i, i + 500));
+        for (const c of ((data as { id: string; name: string }[] | null) ?? [])) {
+          nomes.set(c.id, c.name);
+        }
       }
     }
 
@@ -106,6 +130,7 @@ export async function simularMotor(): Promise<SimulacaoResult> {
         motivo: ROTULO[m] ?? "",
         sai: v.enviar,
         motivoDaRecusa: v.enviar ? "" : v.motivo,
+        recorte: v.enviar ? false : v.recorte === true,
         variaveis: [pn.ok ? pn.valor : "(sem nome — não sai)", tenant.name],
         modelo: modelos[m] ?? "(nenhum modelo cadastrado para este motivo)",
       };

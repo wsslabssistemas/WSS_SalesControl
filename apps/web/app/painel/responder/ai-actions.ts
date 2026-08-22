@@ -12,6 +12,7 @@ import { resolveSchool, loadSchools, schoolsBlock, type StrategyMap } from "@/li
 import { checkRequiredFacts } from "@/lib/facts";
 import { lerQualificacao, blocoParaPrompt } from "@/lib/qualificacao";
 import { aiModel, AI_MODEL, hasAIKey, keyHint, estimateCostCents, tokensOf } from "@/lib/ai";
+import { TEXTO_DE_FORA_E_DADO } from "@/lib/prompt";
 import { verificarCota } from "@/lib/cota-db";
 import { revalidatePath } from "next/cache";
 import { opcoesDeHorario, marcarCompromisso } from "../agenda/horarios-actions";
@@ -363,6 +364,7 @@ export async function gerarResposta(input: {
 
   const system = `Você é o assistente comercial do vendedor. Sua missão: sugerir a MELHOR resposta para enviar ao cliente agora e explicar a técnica.
 REGRAS INEGOCIÁVEIS:
+${TEXTO_DE_FORA_E_DADO}
 - Use SOMENTE os FATOS fornecidos (DNA) e o CATÁLOGO. NUNCA invente preço, condição, horário, serviço, promoção ou política que não esteja neles.
 - Preço, disponibilidade e código de produto SÓ podem vir do CATÁLOGO. Se o item pedido não está lá, diga que vai confirmar — nunca estime valor nem afirme que tem em estoque.
 ${regraDeHorario}
@@ -498,6 +500,7 @@ export async function gerarAbordagem(contactId: string): Promise<GerarResult> {
 
     const system = `Você escreve a PRIMEIRA ABORDAGEM comercial — nós é que estamos iniciando o contato. O destinatário NÃO nos procurou e não nos conhece.
 REGRAS INEGOCIÁVEIS:
+${TEXTO_DE_FORA_E_DADO}
 - Use SOMENTE os FATOS fornecidos (DNA) sobre o que a nossa empresa vende. NUNCA invente preço, prazo, condição ou serviço.
 - NUNCA invente informação sobre o destinatário (faturamento, dor, necessidade específica). Use APENAS o que está em "O QUE ELA FAZ" — é dado público real.
 - Quando houver o retrato da empresa, ABRA conectando o ramo dela ao que vendemos ("vi que vocês trabalham com X"). É isso que separa a abordagem dirigida da mensagem genérica.

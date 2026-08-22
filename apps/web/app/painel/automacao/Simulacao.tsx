@@ -21,6 +21,10 @@ export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
   const [tirados, setTirados] = useState<Record<string, string>>({});
   const [erroAoTirar, setErroAoTirar] = useState<string | null>(null);
 
+  // Quantos o RECORTE de data barrou. Eles não entram na lista nominal — são
+  // centenas com o mesmo motivo — e aparecem numa linha só, logo acima dela.
+  const foraDoRecorte = r && r.ok ? r.linhas.filter((l) => l.recorte).length : 0;
+
   /**
    * ⚠ O MOTIVO É PEDIDO NA HORA, e não é burocracia.
    *
@@ -103,6 +107,29 @@ export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
             </p>
           )}
 
+          {/* ⚠ O RECORTE DA CAMPANHA, EM UMA LINHA SÓ.
+              São centenas de pessoas barradas pelo MESMO motivo — uma linha por
+              pessoa enterraria os poucos vereditos que alguém precisa de fato
+              ler (o cooldown, o "sem telefone", o "já falamos ontem"). Aqui ele
+              aparece com a contagem e o número de dias: some é que não pode. */}
+          {foraDoRecorte > 0 && (
+            <p
+              className="text-dim"
+              style={{
+                fontSize: 13,
+                marginTop: 8,
+                padding: "8px 10px",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+              }}
+            >
+              <strong>{foraDoRecorte}</strong> ficaram de fora pelo <strong>recorte de data</strong>{" "}
+              da campanha — saíram antes do prazo configurado em{" "}
+              <em>Reativação: só quem saiu nos últimos (dias)</em>, ali em cima. Eles não
+              sumiram: voltam a ser candidatos no dia em que você aumentar o recorte.
+            </p>
+          )}
+
           {r.avaliados === 0 ? (
             <p className="text-dim" style={{ fontSize: 14, marginBottom: 0 }}>
               Nenhum contato da fila está marcado para sair pelo número da empresa. Isso
@@ -112,65 +139,68 @@ export function Simulacao({ modo }: { modo: "off" | "simulation" | "auto" }) {
             </p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>
-              {[...r.linhas].sort((a, b) => Number(b.sai) - Number(a.sai)).map((l) => {
-                const foraAgora = tirados[l.contactId];
-                return (
-                  <li
-                    key={l.contactId}
-                    style={{
-                      padding: "10px 0",
-                      borderTop: "1px solid var(--border)",
-                      opacity: foraAgora ? 0.5 : 1,
-                    }}
-                  >
-                    <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
-                      <span
-                        className={foraAgora ? "badge" : l.sai ? "badge badge-success" : "badge"}
-                        style={{ minWidth: 64, justifyContent: "center" }}
-                      >
-                        {foraAgora ? "fora" : l.sai ? "sai" : "fica"}
-                      </span>
-                      <strong style={{ fontSize: 14 }}>{l.nome}</strong>
-                      <span className="text-faint grow" style={{ fontSize: 12 }}>{l.motivo}</span>
-                      {!foraAgora && (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-ghost"
-                          onClick={() => tirar(l.contactId, l.nome)}
+              {[...r.linhas]
+                .filter((l) => !l.recorte)
+                .sort((a, b) => Number(b.sai) - Number(a.sai))
+                .map((l) => {
+                  const foraAgora = tirados[l.contactId];
+                  return (
+                    <li
+                      key={l.contactId}
+                      style={{
+                        padding: "10px 0",
+                        borderTop: "1px solid var(--border)",
+                        opacity: foraAgora ? 0.5 : 1,
+                      }}
+                    >
+                      <div className="row wrap" style={{ gap: 8, alignItems: "center" }}>
+                        <span
+                          className={foraAgora ? "badge" : l.sai ? "badge badge-success" : "badge"}
+                          style={{ minWidth: 64, justifyContent: "center" }}
                         >
-                          Não contatar
-                        </button>
+                          {foraAgora ? "fora" : l.sai ? "sai" : "fica"}
+                        </span>
+                        <strong style={{ fontSize: 14 }}>{l.nome}</strong>
+                        <span className="text-faint grow" style={{ fontSize: 12 }}>{l.motivo}</span>
+                        {!foraAgora && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => tirar(l.contactId, l.nome)}
+                          >
+                            Não contatar
+                          </button>
+                        )}
+                      </div>
+
+                      {foraAgora && (
+                        <p className="text-faint" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
+                          Fora de todas as listas — motivo: &ldquo;{foraAgora}&rdquo;. Some da fila
+                          do vendedor também.
+                        </p>
                       )}
-                    </div>
 
-                    {foraAgora && (
-                      <p className="text-faint" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
-                        Fora de todas as listas — motivo: &ldquo;{foraAgora}&rdquo;. Some da fila
-                        do vendedor também.
-                      </p>
-                    )}
+                      {!foraAgora && !l.sai && (
+                        <p className="text-dim" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
+                          {l.motivoDaRecusa}
+                        </p>
+                      )}
 
-                    {!foraAgora && !l.sai && (
-                      <p className="text-dim" style={{ fontSize: 12, margin: "4px 0 0 72px" }}>
-                        {l.motivoDaRecusa}
-                      </p>
-                    )}
-
-                    {/* ⚠ O QUE VAI SER PREENCHIDO NESTA PESSOA.
-                        O corpo do modelo é fixo, mora na Meta e foi aprovado
-                        por ela — copiá-lo para cá criaria uma segunda fonte do
-                        mesmo texto, e as duas divergiriam no dia em que alguém
-                        editasse o modelo lá. O que varia, e o que de fato pode
-                        sair errado, são as variáveis. */}
-                    {!foraAgora && l.sai && (
-                      <p className="text-faint" style={{ fontSize: 11, margin: "4px 0 0 72px" }}>
-                        modelo <code>{l.modelo}</code> · {"{{1}}"} = <strong>{l.variaveis[0]}</strong>
-                        {" · "}{"{{2}}"} = <strong>{l.variaveis[1]}</strong>
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
+                      {/* ⚠ O QUE VAI SER PREENCHIDO NESTA PESSOA.
+                          O corpo do modelo é fixo, mora na Meta e foi aprovado
+                          por ela — copiá-lo para cá criaria uma segunda fonte do
+                          mesmo texto, e as duas divergiriam no dia em que alguém
+                          editasse o modelo lá. O que varia, e o que de fato pode
+                          sair errado, são as variáveis. */}
+                      {!foraAgora && l.sai && (
+                        <p className="text-faint" style={{ fontSize: 11, margin: "4px 0 0 72px" }}>
+                          modelo <code>{l.modelo}</code> · {"{{1}}"} = <strong>{l.variaveis[0]}</strong>
+                          {" · "}{"{{2}}"} = <strong>{l.variaveis[1]}</strong>
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
             </ul>
           )}
         </div>
