@@ -177,6 +177,14 @@ export function Guia() {
             campanha de retorno é exatamente isso. Ajuste ANTES de disparar o primeiro lote.
             O nome precisa ter a ver com o negócio verificado, senão a revisão recusa.
           </span>
+          <br />
+          <span className="text-faint">
+            ⚠ <strong>E na MESMA tela, preencha o perfil inteiro com a cara da EMPRESA:</strong>{" "}
+            foto (a logo dela, não a do sistema), descrição, endereço, e-mail e site. É o que a
+            pessoa vê ao tocar no nome para decidir se aquilo é confiável — e o perfil vazio,
+            com foto cinza, é o retrato de número descartável. Nada aqui é do fornecedor de
+            software: quem manda a mensagem é a empresa.
+          </span>
         </>
       ),
     },
@@ -192,8 +200,17 @@ export function Guia() {
           <br />
           O que costuma faltar está em{" "}
           <strong>Configurações do app → Básico</strong>: <strong>URL da Política de
-          Privacidade</strong>, <strong>ícone</strong> (1024×1024, sem transparência) e{" "}
-          <strong>categoria</strong>.
+          Privacidade</strong>, <strong>Instruções de exclusão de dados</strong>,{" "}
+          <strong>ícone</strong> (1024×1024, sem transparência) e <strong>categoria</strong>.
+          <br />
+          ⚠ <strong>Os dois campos de URL não aceitam âncora</strong> (endereço com{" "}
+          <code>#</code>) — cada um precisa de uma página inteira. As deste sistema são{" "}
+          <code>/privacidade</code> e <code>/exclusao-de-dados</code>.
+          <br />
+          <span className="text-faint">
+            O ícone e a política aqui são do SISTEMA, não da empresa cliente — quem os vê é o
+            revisor da Meta e mais ninguém. O que o cliente final vê é o perfil do passo 10.
+          </span>
           <br />
           <span className="text-faint">
             ⚠ <strong>Enquanto o app não está publicado, a Meta pode entregar mensagem só

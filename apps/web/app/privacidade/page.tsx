@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND_NAME, MAKER } from "@/lib/brand";
+import { CONTATO_PRIVACIDADE as CONTATO } from "@/lib/contato";
 
 /**
  * A POLÍTICA DE PRIVACIDADE — página pública, sem login.
@@ -29,16 +30,6 @@ export const metadata = {
   title: `Política de Privacidade — ${BRAND_NAME}`,
   description: `Como o ${BRAND_NAME} trata dados pessoais, quem são os subprocessadores e como pedir exclusão.`,
 };
-
-/**
- * ⚠ O CANAL DE CONTATO É REAL E PRECISA CONTINUAR REAL.
- *
- * A Meta escreve para cá durante a análise, e o titular de dados escreve para
- * cá para pedir exclusão. E-mail que não existe transforma o direito da LGPD
- * em texto decorativo — é a mesma classe do campo que some: parece que existe.
- * Trocar é uma linha; conferir que responde é obrigação de quem trocar.
- */
-const CONTATO = "wsslabs.sistemas@gmail.com";
 
 /** Última revisão do texto. Muda quando o CONTEÚDO muda, não quando o build roda. */
 const ATUALIZADO_EM = "22 de agosto de 2026";
@@ -173,6 +164,10 @@ export default function PrivacidadePage() {
           empresa contratante, encaminhamos o pedido a ela como controladora e executamos a
           exclusão em seguida — apagar o cadastro apaga também o histórico de conversas
           vinculado a ele.
+        </p>
+        <p className="text-dim" style={{ marginBottom: 8 }}>
+          O passo a passo do pedido está em{" "}
+          <Link href="/exclusao-de-dados">Exclusão de dados</Link>.
         </p>
         <p className="text-dim" style={{ marginBottom: 0 }}>
           Podemos reter o mínimo necessário quando houver obrigação legal (por exemplo, registros
