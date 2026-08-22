@@ -213,6 +213,17 @@ export function Guia() {
           </span>
           <br />
           <span className="text-faint">
+            ⚠ <strong>A seção &ldquo;Login do Facebook para Empresas&rdquo; não precisa de
+            nada.</strong> Ela é o fluxo em que OUTRA empresa autoriza o seu app a usar o
+            WhatsApp dela — este sistema entra por e-mail e senha, e cada empresa traz a conta
+            dela. Deixe <strong>URIs de redirecionamento vazios</strong> e não desligue{" "}
+            <em>Forçar HTTPS</em> nem o <em>modo estrito</em>: são eles que tornam inofensivas
+            as chaves que já vêm em &ldquo;Sim&rdquo;. O único campo dali que vale é a{" "}
+            <strong>URL de solicitação de exclusão de dados</strong> — e a tela não salva
+            sozinha, tem botão no rodapé.
+          </span>
+          <br />
+          <span className="text-faint">
             ⚠ <strong>Enquanto o app não está publicado, a Meta pode entregar mensagem só
             para quem tem papel no app</strong> (administrador, desenvolvedor, testador). O
             teste com o seu próprio número passa — e a campanha para os clientes falha. Antes
