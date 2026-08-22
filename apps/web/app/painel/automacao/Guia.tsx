@@ -185,20 +185,23 @@ export function Guia() {
       corpo: (
         <>
           Em <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps</a>{" "}
-          → seu app. No alto da tela existe a chave{" "}
-          <strong>Em desenvolvimento</strong> / <strong>Ativo</strong> — vire para{" "}
-          <strong>Ativo</strong>. Enquanto ela estiver em desenvolvimento, a Meta trata o app
-          como bancada de teste.
+          → seu app → <strong>Publicar</strong>, no menu da esquerda (ele mostra{" "}
+          <strong>&ldquo;Não publicado&rdquo;</strong> enquanto falta algo). Essa tela lista o
+          que ainda impede e libera o botão quando os requisitos estiverem atendidos — é ela
+          que manda, não o painel inicial, que mistura requisito obrigatório com sugestão.
           <br />
-          Ela só vira depois que o app tiver, em{" "}
+          O que costuma faltar está em{" "}
           <strong>Configurações do app → Básico</strong>: <strong>URL da Política de
-          Privacidade</strong>, <strong>ícone</strong> e <strong>categoria</strong>. Se a chave
-          estiver travada, é um desses três que falta — a própria tela diz qual.
+          Privacidade</strong>, <strong>ícone</strong> (1024×1024, sem transparência) e{" "}
+          <strong>categoria</strong>.
           <br />
           <span className="text-faint">
-            A política de privacidade pode ser uma página simples no site da empresa dizendo
-            que dados são coletados, para quê, e como pedir exclusão. Precisa estar no ar e
-            aberta: a Meta abre o endereço para conferir.
+            ⚠ <strong>Enquanto o app não está publicado, a Meta pode entregar mensagem só
+            para quem tem papel no app</strong> (administrador, desenvolvedor, testador). O
+            teste com o seu próprio número passa — e a campanha para os clientes falha. Antes
+            de disparar um lote, mande UMA mensagem para um número que não tenha papel nenhum
+            e confira em <strong>Canal oficial</strong> se ela aparece como entregue ou como
+            falha: isso decide a questão em cinco minutos, sem depender de documentação.
           </span>
         </>
       ),

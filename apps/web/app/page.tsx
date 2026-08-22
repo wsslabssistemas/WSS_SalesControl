@@ -100,6 +100,12 @@ export default function Home() {
         </div>
         <p className="text-faint" style={{ textAlign: "center", marginTop: 48, fontSize: 13 }}>
           {BRAND_NAME} · {MAKER} — modelo manual em operação. Versão automática em construção.
+          {" · "}
+          {/* ⚠ O LINK PRECISA EXISTIR NUMA PÁGINA ABERTA. A Meta abre o endereço
+              da política para conferir antes de publicar o app, e quem revisa
+              procura o link no rodapé do site. Política que só existe dentro do
+              painel é política que ninguém acha. */}
+          <Link href="/privacidade">Política de Privacidade</Link>
         </p>
       </section>
     </main>
